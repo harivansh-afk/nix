@@ -1,8 +1,0 @@
-/Library/LaunchDaemons/com.docker.vmnetd.plist
-/Library/LaunchDaemons/com.docker.socket.plist
-/Library/LaunchDaemons/org.nixos.darwin-store.plist
-/Library/LaunchDaemons/com.autodesk.adskaccessservicehost.plist
-/Library/LaunchDaemons/com.logi.optionsplus.updater.plist
-/Library/LaunchDaemons/org.nixos.nix-daemon.plist
-/Library/LaunchDaemons/us.zoom.ZoomDaemon.plist
-/Library/LaunchDaemons/com.autodesk.AdskLicensingService.plist

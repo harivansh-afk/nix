@@ -1,4 +1,0 @@
-agentikube
-goimports
-golangci-lint
-gonew

@@ -1,1 +1,0 @@
-Darwin hari-macbook-pro.local 25.3.0 Darwin Kernel Version 25.3.0: Thu Jan 22 21:54:23 PST 2026; root:xnu-12377.80.0.501.1~2/RELEASE_ARM64_T8132 arm64

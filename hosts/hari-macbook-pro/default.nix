@@ -8,6 +8,7 @@
   imports = [
     ../../modules/base.nix
     ../../modules/macos.nix
+    ../../modules/packages.nix
     ../../modules/homebrew.nix
   ];
 

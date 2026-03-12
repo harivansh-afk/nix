@@ -32,13 +32,12 @@
   environment.shells = [pkgs.zsh];
 
   environment.systemPackages = with pkgs; [
-    bat
     curl
     fd
     fzf
     git
     gnupg
-    go
+    go_1_26
     jq
     just
     neovim

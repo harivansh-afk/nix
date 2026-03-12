@@ -14,7 +14,6 @@
   };
 in {
   environment.systemPackages = with pkgs; [
-    aerospace
     arrow-cpp
     binwalk
     cloc
@@ -29,15 +28,12 @@ in {
     emacs
     ffmpeg_7
     flyctl
-    gh
-    ghostty-bin
     git-filter-repo
     git-lfs
     gitleaks
     gogcli
     google-cloud-sdk
     imagemagickBig
-    k9s
     kind
     kubernetes-helm-wrapped
     lazygit
@@ -73,7 +69,6 @@ in {
     tailscale
     terraform
     time
-    tmux
     trivy
     universal-ctags
     warp-terminal
@@ -81,8 +76,6 @@ in {
     yazi-unwrapped
     yq
     yt-dlp
-    zsh-autosuggestions
-    zsh-syntax-highlighting
   ];
 
   fonts.packages = with pkgs; [

@@ -1,0 +1,32 @@
+git:
+  pagers:
+    - pager: delta --paging=never
+      colorArg: always
+gui:
+  showBottomLine: false
+  showListFooter: false
+  showPanelJumps: false
+  showCommandLog: false
+  showRandomTip: false
+  splitDiff: auto
+  border: rounded
+  theme:
+    activeBorderColor:
+      - "#b8bb26"
+      - bold
+    inactiveBorderColor:
+      - "#504945"
+    selectedLineBgColor:
+      - "#3c3836"
+    optionsTextColor:
+      - "#fabd2f"
+    selectedRangeBgColor:
+      - "#504945"
+    cherryPickedCommitBgColor:
+      - "#689d6a"
+    cherryPickedCommitFgColor:
+      - "#282828"
+    unstagedChangesColor:
+      - "#fb4934"
+    defaultFgColor:
+      - "#ebdbb2"

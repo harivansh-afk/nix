@@ -9,8 +9,6 @@
     };
 
     taps = [
-      "daytonaio/tap"
-      "getcompanion-ai/tap"
       "humanlayer/humanlayer"
       "jnsahaj/lumen"
       "nicosuave/tap"
@@ -25,23 +23,14 @@
       "nicosuave/tap/memex"
       "postgresql@17"
       "python@3.13"
-      "steipete/tap/bird"
-      "steipete/tap/summarize"
       "withgraphite/tap/graphite"
       "worktrunk"
     ];
 
     casks = [
       "anaconda"
-      "codelayer"
-      "codexbar"
-      "companion"
-      "osaurus"
       "pants"
-      "riptide-beta"
       "riptide-dev"
-      "riptide-experimental"
-      "virtualbox"
     ];
   };
 }

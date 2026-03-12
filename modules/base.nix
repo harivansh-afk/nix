@@ -35,12 +35,10 @@
     curl
     fd
     fzf
-    git
     gnupg
     go_1_26
     jq
     just
-    neovim
     nodejs_22
     python3
     ripgrep

@@ -1,0 +1,37 @@
+model = "gpt-5.3-codex"
+model_reasoning_effort = "medium"
+personality = "pragmatic"
+suppress_unstable_features_warning = true
+web_search = "live"
+
+[features]
+undo = true
+shell_tool = true
+unified_exec = true
+shell_snapshot = true
+apply_patch_freeform = true
+request_rule = true
+remote_models = true
+steer = true
+collaboration_modes = true
+personality = true
+collab = true
+apps = true
+js_repl = true
+runtime_metrics = true
+sqlite = true
+memory_tool = true
+child_agents_md = true
+use_linux_sandbox_bwrap = true
+powershell_utf8 = true
+enable_request_compression = true
+skill_mcp_dependency_install = true
+skill_env_var_dependency_prompt = true
+responses_websockets = true
+responses_websockets_v2 = true
+
+[sandbox_workspace_write]
+network_access = true
+
+[notice.model_migrations]
+"gpt-5.2" = "gpt-5.2-codex"

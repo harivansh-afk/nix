@@ -1,0 +1,8 @@
+/undodir
+/tmp
+.DS_Store
+.nvimlog
+*.swp
+*.swo
+*~
+rpi/

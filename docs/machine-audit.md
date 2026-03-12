@@ -48,6 +48,8 @@ There is also a duplicate clone at `~/Documents/GitHub/dots`. Content matched du
 
 This repo currently mirrors the top-level Homebrew inventory rather than every transitive dependency.
 
+For a raw rerunnable dump, use `./scripts/snapshot-machine.sh`. The generated files go under `inventory/current/`.
+
 ### Taps
 
 - `daytonaio/tap`
@@ -73,8 +75,8 @@ The current leaves were captured into [`modules/homebrew.nix`](../modules/homebr
 
 - `python@3.13` was installed but `link: false` in the generated Brewfile
 - `withgraphite/tap/graphite` was also `link: false`
-- Go tools and one cargo tool were present in the Brewfile but are not yet expressed in the Nix module
-- VS Code extension `anthropic.claude-code` was also present in the Brewfile and is not yet managed here
+- Go tools and one cargo tool were present in the generated Brewfile and are not yet expressed in the Nix module
+- VS Code extension `anthropic.claude-code` was also present in the generated Brewfile and is not yet managed here
 
 ### Casks
 
@@ -140,6 +142,14 @@ Some of these may belong in:
 - manual vendor installers
 - future Homebrew casks that were not part of the current audit
 
+App Store apps confirmed by receipt search:
+
+- `Amphetamine.app`
+- `Klack.app`
+- `Numbers.app`
+- `PastePal.app`
+- `Xcode.app`
+
 ## Launch Agents Found
 
 These are current launch agents worth deciding on explicitly:
@@ -154,6 +164,12 @@ These are current launch agents worth deciding on explicitly:
 - iMazing mini agent
 
 These are not yet represented in Nix.
+
+Current login items:
+
+- `Rectangle`
+- `Raycast`
+- `PastePal`
 
 ## Config Directories Found
 
@@ -200,6 +216,37 @@ Notable app state under `~/Library/Application Support`:
 
 These paths are exactly why the first config keeps Homebrew and dotfile migration conservative.
 
+## Additional Package Managers And Tool State
+
+Global npm packages found:
+
+- `@anthropic-ai/claude-code`
+- `@augmentcode/auggie`
+- `@companion-ai/cli`
+- `@googleworkspace/cli`
+- `@humanlayer/linear-cli`
+- `@kubasync/cli`
+- `agent-browser`
+- `aws-cdk`
+- `bun`
+- `clawdbot`
+- `markserv`
+- `pnpm`
+- `prisma`
+- `vercel`
+- `wscat`
+- `yarn`
+
+Other tool inventories found:
+
+- `pipx`: `supabase-mcp-server`
+- `uv tool`: `mistral-vibe`, `nano-pdf`
+- `cargo install`: `lumen`
+- Go bin tools: `agentikube`, `goimports`, `golangci-lint`, `gonew`
+- Python user packages under `python3 -m pip list --user`
+
+These are not represented in the first-pass Nix config yet.
+
 ## Codebase Summary
 
 Code roots found:
@@ -207,6 +254,7 @@ Code roots found:
 - `~/Documents/GitHub` with `108` repos
 - `~/code/symphony-workspaces`
 - `~/dev/diffs.nvim`
+- extra git repos outside those roots: `~/dots`, `~/meta-agent`, `~/Documents/College`, `~/Documents/better`, `~/.config/nvim.bak`, `~/.veetcode`, `~/.kubasync/clank-artifacts`, `~/.oh-my-zsh`
 
 Repo manifest counts under `~/Documents/GitHub`:
 
@@ -242,8 +290,13 @@ Should stay manual or secret-managed for now:
 - `~/.secrets`
 - `~/.npmrc`
 - `~/.yarnrc`
+- `~/.claude.json`
+- `~/.opencode.json`
 - cloud credentials and tokens under `~/.config`
 - app-internal state in `~/Library/Application Support`
+- App Store apps and login items
+- fonts installed directly under `~/Library/Fonts`
+- global npm, pipx, uv, cargo, and Go-installed tools
 - custom launch agents until they are rewritten declaratively
 
 Recommended next steps:

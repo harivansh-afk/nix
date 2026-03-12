@@ -1,0 +1,5 @@
+mistral-vibe v1.0.4
+- vibe
+- vibe-acp
+nano-pdf v0.2.1
+- nano-pdf

@@ -1,0 +1,6 @@
+venvs are in /Users/rathi/.local/pipx/venvs
+apps are exposed on your $PATH at /Users/rathi/.local/bin
+manual pages are exposed at /Users/rathi/.local/share/man
+   package supabase-mcp-server 0.3.1, installed using Python 3.13.1
+    - supabase-mcp-inspector
+    - supabase-mcp-server

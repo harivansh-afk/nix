@@ -1,0 +1,3 @@
+Chrome Apps.localized
+Comet Apps.localized
+Genspark Browser Apps.localized

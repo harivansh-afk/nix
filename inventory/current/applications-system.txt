@@ -1,0 +1,45 @@
+AeroSpace.app
+Amphetamine.app
+Autodesk
+Cap.app
+ChatGPT.app
+Claude.app
+Cluely.app
+CodeLayer.app
+Codex.app
+CodexBar.app
+Companion.app
+Conductor.app
+DJUCED
+Dia.app
+Docker.app
+Ghostty.app
+Granola.app
+Helium.app
+Karabiner-Elements.app
+Karabiner-EventViewer.app
+Klack.app
+My apps
+Numbers.app
+OpenCode.app
+Osaurus.app
+PastePal.app
+Pioneer
+Raycast.app
+Readout.app
+Rectangle.app
+Riptide-Dev.app
+Safari.app
+Screen Studio.app
+Signal.app
+Tailscale.app
+Telegram.app
+Typora.app
+Utilities
+VirtualBox.app
+Warp.app
+Wispr Flow.app
+Zen.app
+kitty.app
+logioptionsplus.app
+rekordbox 7

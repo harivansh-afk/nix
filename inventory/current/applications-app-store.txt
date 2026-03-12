@@ -1,0 +1,5 @@
+/Applications/Amphetamine.app
+/Applications/Klack.app
+/Applications/My apps/Xcode.app
+/Applications/Numbers.app
+/Applications/PastePal.app

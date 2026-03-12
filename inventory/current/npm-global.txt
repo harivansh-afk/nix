@@ -1,0 +1,43 @@
+/opt/homebrew/lib
+├── @anthropic-ai/claude-code@2.1.5
+├── @augmentcode/auggie@0.4.0
+├── @companion-ai/cli@0.1.10
+├── @fission-ai/openspec@1.2.0
+├── @googleworkspace/cli@0.8.1
+├── @humanlayer/linear-cli@0.4.1
+├── @humanlayer/rpi@0.7.0
+├── @kubasync/cli@1.0.0 -> ./../../../Users/rathi/Documents/GitHub/kubasync/apps/cli
+├── @letta-ai/letta-code@0.6.3
+├── @mariozechner/pi-coding-agent@0.56.1
+├── @mermaid-js/mermaid-cli@11.12.0
+├── @polarityinc/paragon@0.1.1
+├── @qodo/gen@0.20.2
+├── @railway/cli@4.0.0
+├── @shopify/cli@3.75.4
+├── @shopify/theme@3.58.2
+├── @withgraphite/graphite-cli@1.6.6
+├── agent-browser@0.9.0
+├── aws-cdk@2.1033.0
+├── bun@1.2.8
+├── claude-task-master@1.6.4
+├── clawdbot@2026.1.15
+├── corepack@0.31.0
+├── cors@2.8.5
+├── evaluclaude-harness@0.1.0 -> ./../../../Users/rathi/Documents/GitHub/evaluclaude-harness
+├── express@4.21.2
+├── happy-coder@0.13.0
+├── markserv@1.17.4
+├── moltbot@0.1.0
+├── npm@10.9.2
+├── osgrep@0.5.16
+├── phia-partnerships@1.0.0 -> ./../../../Users/rathi/Documents/GitHub/phia/trending
+├── pnpm@9.15.2
+├── prisma@6.1.0
+├── remodex@1.1.2
+├── task-master-ai@0.13.1
+├── task-master@2.3.0
+├── vercel@50.28.0
+├── ws@8.18.1
+├── wscat@6.0.1
+└── yarn@1.22.22
+

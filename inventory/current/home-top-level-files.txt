@@ -1,0 +1,47 @@
+/Users/rathi/.zcompdump-hari-macbook-pro-5.9
+/Users/rathi/.claude.json.backup
+/Users/rathi/.zcompdump-Mac-5.9
+/Users/rathi/.zcompdump-MacBook-Pro-8-5.9.zwc
+/Users/rathi/.zcompdump-MacBook-Pro-8-5.9
+/Users/rathi/.zcompdump-MacBook Pro-5.9.zwc
+/Users/rathi/.zcompdump-MacBook-Pro-9-5.9
+/Users/rathi/.zcompdump-MacBook-Pro-9-5.9.zwc
+/Users/rathi/.opencode.json
+/Users/rathi/.DS_Store
+/Users/rathi/.yarnrc
+/Users/rathi/.CFUserTextEncoding
+/Users/rathi/.xonshrc
+/Users/rathi/.zcompdump-Mac-5.9.zwc
+/Users/rathi/atlas-ssh.txt.pub
+/Users/rathi/.zshrc
+/Users/rathi/.aerospace.toml
+/Users/rathi/.nix-profile
+/Users/rathi/.secrets
+/Users/rathi/.zcompdump-Unknown-5.9
+/Users/rathi/.zcompdump-MacBook Pro (3)-5.9.zwc
+/Users/rathi/.zsh_history
+/Users/rathi/ci_deploy_key
+/Users/rathi/.npmrc
+/Users/rathi/.lesshst
+/Users/rathi/atlas-ssh.txt
+/Users/rathi/package-lock.json
+/Users/rathi/.zshenv
+/Users/rathi/ci_deploy_key.pub
+/Users/rathi/.profile
+/Users/rathi/.zcompdump-hari-macbook-pro-5.9.zwc
+/Users/rathi/.zcompdump
+/Users/rathi/.zcompdump-MacBook Pro-5.9
+/Users/rathi/.zcompdump-MacBook-Pro-5-5.9.zwc
+/Users/rathi/.hushlogin
+/Users/rathi/.claude.json
+/Users/rathi/.bash_profile
+/Users/rathi/.claude-handoff.conf
+/Users/rathi/.zcompdump-MacBook Pro (3)-5.9
+/Users/rathi/.python_history
+/Users/rathi/.zcompdump-MacBook-Pro-4-5.9
+/Users/rathi/.gitconfig
+/Users/rathi/.zcompdump-MacBook-Pro-5-5.9
+/Users/rathi/.bash_history
+/Users/rathi/.viminfo
+/Users/rathi/.zcompdump-Unknown-5.9.zwc
+/Users/rathi/.zcompdump-MacBook-Pro-4-5.9.zwc

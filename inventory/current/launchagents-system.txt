@@ -1,0 +1,6 @@
+/Library/LaunchAgents/com.displaylink.loginscreen.plist
+/Library/LaunchAgents/us.zoom.updater.login.check.plist
+/Library/LaunchAgents/com.pioneerdj.FwUpdateManagerd.plist
+/Library/LaunchAgents/com.logi.optionsplus.plist
+/Library/LaunchAgents/us.zoom.updater.plist
+/Library/LaunchAgents/com.logitech.LogiRightSight.Agent.plist

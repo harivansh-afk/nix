@@ -44,6 +44,12 @@ just build
 just check
 ```
 
+Capture a fresh machine inventory before any destructive changes:
+
+```bash
+./scripts/snapshot-machine.sh
+```
+
 ## What Still Needs Manual Work
 
 - Secrets and tokens under `~/.secrets`, `~/.npmrc`, `~/.config/gcloud`, `~/.config/gh`, and similar paths
@@ -52,7 +58,8 @@ just check
 - Apps installed outside Homebrew casks or the App Store
 - Translating raw files from `~/dots` into pure Home Manager modules over time
 
+The snapshot script writes raw inventories under `inventory/current/` so you can diff the machine state over time instead of relying on memory.
+
 ## Important Note About Dotfiles
 
 Your live machine currently points at `~/dots`, not `~/Documents/GitHub/dots`. This config follows the live machine and expects `~/dots` to exist.
-

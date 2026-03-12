@@ -1,0 +1,9 @@
+/Users/rathi/.config/nvim.bak
+/Users/rathi/.kubasync/clank-artifacts
+/Users/rathi/.oh-my-zsh
+/Users/rathi/.veetcode
+/Users/rathi/Documents/College
+/Users/rathi/Documents/better
+/Users/rathi/dev/diffs.nvim
+/Users/rathi/dots
+/Users/rathi/meta-agent

@@ -1,0 +1,8 @@
+Name          Status User  File
+cloudflared   none                  
+postgresql@14 none                  
+postgresql@16 none            rathi 
+postgresql@17 none                  
+redis         none                  
+tailscale     none                  
+unbound       none                  

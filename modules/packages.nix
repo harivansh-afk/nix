@@ -1,4 +1,5 @@
 {
+  inputs,
   pkgs,
   username,
   ...
@@ -12,69 +13,30 @@
       install -Dm644 "$src" "$out/share/fonts/opentype/BerkeleyMono-Regular.otf"
     '';
   };
+
+  gwsPackage =
+    inputs.googleworkspace-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in {
   environment.systemPackages = with pkgs; [
-    arrow-cpp
-    binwalk
-    cloc
-    cloudflared
-    cmakeCurses
     codex
     coreutils-prefixed
-    criterion
     delta
     diff-so-fancy
-    e2fsprogs
-    emacs
-    ffmpeg_7
-    flyctl
     git-filter-repo
     git-lfs
-    gitleaks
-    gogcli
     google-cloud-sdk
+    gwsPackage
     imagemagickBig
-    kind
-    kubernetes-helm-wrapped
     lazygit
     libpq
     librsvg
-    livekit
-    livekit-cli
     llmfit
-    mactop
-    minikube
-    mint
     mise
     ngrok
-    opencode-desktop
-    javaPackages.compiler.openjdk25
-    p7zip
-    pandoc
-    pipx
-    poppler
-    portaudio
-    postgresql_14
     postgresql_16
-    potrace
     redis
-    resvg
-    semgrep
-    sox
-    stow
-    stripe-cli
-    supabase-cli
-    swiftformat
-    swiftlint
     tailscale
     terraform
-    time
-    trivy
-    universal-ctags
-    warp-terminal
-    websocat
-    yazi-unwrapped
-    yq
     yt-dlp
   ];
 

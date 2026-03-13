@@ -12,6 +12,7 @@
 
   programs.zsh = {
     enable = true;
+    dotDir = config.home.homeDirectory;
     enableCompletion = false;
     defaultKeymap = "viins";
 

@@ -40,7 +40,6 @@ Most tools come from `nixpkgs`. Fast-moving CLIs that you want to update on
 their own cadence are pinned as dedicated flake inputs:
 
 - `googleworkspace-cli`
-- `codex`
 - `claudeCode`
 
 ## Commands
@@ -69,8 +68,14 @@ just switch
 Update only Codex or Claude:
 
 ```bash
-nix flake lock --update-input codex
 nix flake lock --update-input claudeCode
+just switch
+```
+
+Update Codex:
+
+```bash
+brew upgrade --cask codex
 just switch
 ```
 
@@ -86,6 +91,7 @@ just switch
 The current Homebrew boundary is only:
 
 - `cap`
+- `codex`
 - `raycast`
 - `riptide-dev`
 - `thebrowsercompany-dia`

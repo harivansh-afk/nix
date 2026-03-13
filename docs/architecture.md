@@ -18,7 +18,8 @@ The structure is intentionally split into three layers:
 - [modules/packages.nix](/Users/rathi/Documents/GitHub/nix/modules/packages.nix)
   owns the heavier developer tooling and fonts
 - [modules/homebrew.nix](/Users/rathi/Documents/GitHub/nix/modules/homebrew.nix)
-  is the explicitly narrow Brew escape hatch for GUI casks
+  is the explicitly narrow Brew escape hatch for GUI casks, including Codex
+  because the Homebrew-distributed app is a better fit here than a source build
 - [modules/macos.nix](/Users/rathi/Documents/GitHub/nix/modules/macos.nix)
   owns system defaults and macOS-specific integration
 
@@ -47,7 +48,6 @@ Exceptions:
 Current dedicated inputs:
 
 - `googleworkspace-cli`
-- `codex`
 - `claudeCode`
 
 ## Intentional Pragmatism

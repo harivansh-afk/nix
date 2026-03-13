@@ -24,11 +24,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    codex = {
-      url = "github:openai/codex";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     nix-homebrew = {
       url = "github:zhaofengli-wip/nix-homebrew";
     };
@@ -40,7 +35,6 @@
     nix-darwin,
     home-manager,
     claudeCode,
-    codex,
     nix-homebrew,
     ...
   }: let
@@ -63,6 +57,7 @@
 
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = {inherit inputs self username hostname;};
           home-manager.backupFileExtension = "hm-bak";
           home-manager.users.${username} = import ./home;
 

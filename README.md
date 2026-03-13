@@ -1,13 +1,6 @@
-# Rathi's Nix Config
+# Nix Config
 
-This repo is the source of truth for your macOS setup, built with:
-
-- `nix-darwin` for system settings
-- `home-manager` for home directory files
-- upstream flakes where that is the cleanest package source, such as `github:googleworkspace/cli`
-- `nix-homebrew` plus `homebrew.*` only for the small set of apps and holdouts still kept in Homebrew
-
-## Current approach
+## Approach
 
 The repo now owns the active shell/editor/tool config directly:
 
@@ -50,12 +43,3 @@ just check
 - App state under `~/Library/Application Support`
 - Anything that depends on local credentials, keychains, or encrypted stores
 - Deciding whether the remaining Homebrew entries should stay there or be eliminated
-
-## Current Homebrew Scope
-
-The current Homebrew boundary is intentionally small:
-
-- CLI holdouts: `memex`, `postgresql@17`, `python@3.13`, `graphite`, `worktrunk`
-- GUI apps: `cap`, `raycast`, `thebrowsercompany-dia`, `wispr-flow`
-
-If you want a zero-Homebrew machine, this is the list that still has to be replaced or intentionally dropped.

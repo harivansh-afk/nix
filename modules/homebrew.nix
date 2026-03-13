@@ -5,7 +5,7 @@
     onActivation = {
       autoUpdate = false;
       upgrade = false;
-      cleanup = "none";
+      cleanup = "uninstall";
     };
 
     taps = [];
@@ -15,6 +15,7 @@
     casks = [
       "cap"
       "raycast"
+      "riptide-dev"
       "thebrowsercompany-dia"
       "wispr-flow"
     ];

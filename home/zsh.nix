@@ -77,26 +77,29 @@
           source ~/.secrets
         fi
 
-        export PATH="$HOME/.local/bin:$PATH"
-        export PATH="${pkgs.postgresql_17}/bin:$PATH"
-        export PATH="$HOME/.opencode/bin:$PATH"
-
         eval "$(zoxide init zsh)"
 
         [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
-        export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
-
         export BUN_INSTALL="$HOME/.bun"
-        export PATH="$BUN_INSTALL/bin:$PATH"
-
         export PNPM_HOME="$HOME/Library/pnpm"
-        case ":$PATH:" in
-          *":$PNPM_HOME:"*) ;;
-          *) export PATH="$PNPM_HOME:$PATH" ;;
-        esac
-
-        export PATH="$HOME/.amp/bin:$PATH"
+        typeset -U path PATH
+        path=(
+          "$HOME/.amp/bin"
+          "$PNPM_HOME"
+          "$BUN_INSTALL/bin"
+          "$HOME/.antigravity/antigravity/bin"
+          "$HOME/.opencode/bin"
+          "${pkgs.postgresql_17}/bin"
+          "$HOME/.local/bin"
+          "$HOME/.nix-profile/bin"
+          "/etc/profiles/per-user/${config.home.username}/bin"
+          "/run/current-system/sw/bin"
+          "/nix/var/nix/profiles/default/bin"
+          "/opt/homebrew/bin"
+          "/opt/homebrew/sbin"
+          $path
+        )
 
         unalias ga 2>/dev/null
         ga() {

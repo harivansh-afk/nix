@@ -78,6 +78,7 @@
   };
 in {
   environment.systemPackages = with pkgs; [
+    awscli2
     codex
     coreutils-prefixed
     delta
@@ -87,13 +88,17 @@ in {
     graphite
     google-cloud-sdk
     gwsPackage
+    helm
     imagemagickBig
+    kind
+    kubectl
     lazygit
     libpq
     librsvg
     llmfit
     memex
     mise
+    minikube
     ngrok
     postgresql_17
     redis

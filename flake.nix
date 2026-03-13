@@ -19,6 +19,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    codex = {
+      url = "github:openai/codex";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nix-homebrew = {
       url = "github:zhaofengli-wip/nix-homebrew";
     };
@@ -29,6 +34,7 @@
     nixpkgs,
     nix-darwin,
     home-manager,
+    codex,
     nix-homebrew,
     ...
   }: let

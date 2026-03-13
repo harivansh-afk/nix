@@ -6,6 +6,8 @@
 }: let
   gwsPackage =
     inputs.googleworkspace-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  codexPackage =
+    inputs.codex.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
   memex = pkgs.stdenvNoCC.mkDerivation rec {
     pname = "memex";
@@ -79,7 +81,7 @@
 in {
   environment.systemPackages = with pkgs; [
     awscli2
-    codex
+    codexPackage
     coreutils-prefixed
     delta
     diff-so-fancy

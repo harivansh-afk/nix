@@ -8,18 +8,9 @@
       cleanup = "none";
     };
 
-    taps = [
-      "nicosuave/tap"
-      "withgraphite/tap"
-    ];
+    taps = [];
 
-    brews = [
-      "nicosuave/tap/memex"
-      "postgresql@17"
-      "python@3.13"
-      "withgraphite/tap/graphite"
-      "worktrunk"
-    ];
+    brews = [];
 
     casks = [
       "cap"

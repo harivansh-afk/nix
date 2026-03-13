@@ -2,14 +2,16 @@ default:
   just --list
 
 check:
-  nix flake check
+  nix --extra-experimental-features 'nix-command flakes' flake check
 
 build:
-  nix build .#darwinConfigurations.hari-macbook-pro.system
+  nix --extra-experimental-features 'nix-command flakes' build .#darwinConfigurations.hari-macbook-pro.system
 
 switch:
-  nix run github:LnL7/nix-darwin/master#darwin-rebuild -- switch --flake .#hari-macbook-pro
+  sudo env PATH="$PATH" nix --extra-experimental-features 'nix-command flakes' run github:LnL7/nix-darwin/master#darwin-rebuild -- switch --flake .#hari-macbook-pro
+
+backup:
+  ./scripts/backup-machine.sh
 
 fmt:
-  nix fmt
-
+  nix --extra-experimental-features 'nix-command flakes' fmt

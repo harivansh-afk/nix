@@ -57,13 +57,6 @@
       '')
 
       (lib.mkOrder 1000 ''
-        export HOMEBREW_PREFIX="/opt/homebrew"
-        export HOMEBREW_CELLAR="/opt/homebrew/Cellar"
-        export HOMEBREW_REPOSITORY="/opt/homebrew"
-        export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
-        export MANPATH="/opt/homebrew/share/man''${MANPATH+:$MANPATH}:"
-        export INFOPATH="/opt/homebrew/share/info:''${INFOPATH:-}"
-
         if [[ -f ~/.config/secrets/shell.zsh ]]; then
           source ~/.config/secrets/shell.zsh
         elif [[ -f ~/.secrets ]]; then
@@ -71,7 +64,7 @@
         fi
 
         export PATH="$HOME/.local/bin:$PATH"
-        export PATH="${pkgs.postgresql_16}/bin:$PATH"
+        export PATH="${pkgs.postgresql_17}/bin:$PATH"
         export PATH="$HOME/.opencode/bin:$PATH"
 
         eval "$(zoxide init zsh)"

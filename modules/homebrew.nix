@@ -8,7 +8,9 @@
       cleanup = "uninstall";
     };
 
-    taps = [];
+    taps = [
+      "humanlayer/humanlayer"
+    ];
 
     brews = [];
 

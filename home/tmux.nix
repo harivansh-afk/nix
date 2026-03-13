@@ -23,8 +23,10 @@
       set -g mouse on
 
       # Enable extended keys so Shift+Enter and other modified keys work
+      set -g default-terminal "tmux-256color"
       set -s extended-keys on
       set -as terminal-features 'xterm*:extkeys'
+      set -as terminal-features 'xterm-ghostty:RGB'
 
       # Use Vim-style pane navigation (prefix + h/j/k/l)
       bind h select-pane -L

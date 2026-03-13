@@ -4,6 +4,9 @@
   pkgs,
   ...
 }: {
+  home.file.".oh-my-zsh/custom/themes/agnoster.zsh-theme".source =
+    ../config/agnoster.zsh-theme;
+
   home.activation.removeLegacyZshLinks = lib.hm.dag.entryBefore ["checkLinkTargets"] ''
     for path in "$HOME/.zshenv" "$HOME/.zshrc"; do
       if [ -L "$path" ]; then
@@ -53,6 +56,7 @@
 
     envExtra = ''
       . "$HOME/.cargo/env"
+      export GHOSTTY_RESOURCES_DIR="${pkgs.ghostty-bin}/Applications/Ghostty.app/Contents/Resources/ghostty"
     '';
 
     initContent = lib.mkMerge [
@@ -63,6 +67,7 @@
 
       (lib.mkOrder 800 ''
         export ZSH="${pkgs.oh-my-zsh}/share/oh-my-zsh"
+        export ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
         export ZSH_CACHE_DIR="${config.xdg.cacheHome}/oh-my-zsh"
         ZSH_THEME="agnoster"
         plugins=(git)

@@ -88,6 +88,7 @@
 
         export BUN_INSTALL="$HOME/.bun"
         export PNPM_HOME="$HOME/Library/pnpm"
+        bindkey -v
         typeset -U path PATH
         path=(
           "$HOME/.amp/bin"
@@ -128,6 +129,41 @@
           esac
 
           return $exit_code
+        }
+
+        function _codex_set_cursor {
+          if [[ "$1" == block ]]; then
+            printf '\e[2 q'
+          else
+            printf '\e[6 q'
+          fi
+        }
+
+        function zle-keymap-select {
+          if [[ "$KEYMAP" == vicmd ]]; then
+            _codex_set_cursor block
+          else
+            _codex_set_cursor beam
+          fi
+        }
+        zle -N zle-keymap-select
+
+        function zle-line-init {
+          _codex_set_cursor beam
+        }
+        zle -N zle-line-init
+
+        function zle-line-finish {
+          _codex_set_cursor beam
+        }
+        zle -N zle-line-finish
+
+        precmd() {
+          _codex_set_cursor beam
+        }
+
+        preexec() {
+          _codex_set_cursor beam
         }
 
         iosrun() {

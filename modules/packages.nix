@@ -88,7 +88,7 @@ in {
     graphite
     google-cloud-sdk
     gwsPackage
-    helm
+    kubernetes-helm
     imagemagickBig
     kind
     kubectl

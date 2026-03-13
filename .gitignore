@@ -1,3 +1,4 @@
 result
 .direnv
-
+.cache-home
+private-backup/

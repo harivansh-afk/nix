@@ -1,4 +1,16 @@
-{...}: {
+{lib, ...}: {
+  home.activation.removeLegacyTmuxLink = lib.hm.dag.entryBefore ["checkLinkTargets"] ''
+    path="$HOME/.config/tmux/tmux.conf"
+    if [ -L "$path" ]; then
+      target="$(readlink "$path")"
+      case "$target" in
+        ../../dots/tmux/*|dots/tmux/*|"$HOME"/dots/tmux/*)
+          rm -f "$path"
+          ;;
+      esac
+    fi
+  '';
+
   programs.tmux = {
     enable = true;
     extraConfig = ''

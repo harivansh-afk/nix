@@ -3,7 +3,8 @@ set -euo pipefail
 
 umask 077
 
-backup_root="${HOME}/Backups/nix-migration"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+backup_root="${repo_root}/private-backup"
 timestamp="$(date +%Y%m%d-%H%M%S)"
 backup_dir="${1:-${backup_root}/${timestamp}}"
 
@@ -36,7 +37,6 @@ if command -v nix >/dev/null 2>&1; then
   nix --version > "${backup_dir}/manifests/nix-version.txt" 2>&1 || true
 fi
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 git -C "${repo_root}" status --short > "${backup_dir}/manifests/nix-repo-status.txt" 2>&1 || true
 git -C "${repo_root}" rev-parse HEAD > "${backup_dir}/manifests/nix-repo-head.txt" 2>&1 || true
 
@@ -71,7 +71,6 @@ home_paths=(
   ".claude.json"
   ".claude.json.backup"
   "dots"
-  "Documents/GitHub/nix"
 )
 
 library_paths=(

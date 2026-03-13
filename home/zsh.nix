@@ -4,6 +4,19 @@
   pkgs,
   ...
 }: {
+  home.activation.removeLegacyZshLinks = lib.hm.dag.entryBefore ["checkLinkTargets"] ''
+    for path in "$HOME/.zshenv" "$HOME/.zshrc"; do
+      if [ -L "$path" ]; then
+        target="$(readlink "$path")"
+        case "$target" in
+          dots/zsh/*|"$HOME"/dots/zsh/*)
+            rm -f "$path"
+            ;;
+        esac
+      fi
+    done
+  '';
+
   home.activation.ensureOhMyZshCache = lib.hm.dag.entryAfter ["writeBoundary"] ''
     mkdir -p "${config.xdg.cacheHome}/oh-my-zsh"
   '';

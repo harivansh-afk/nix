@@ -286,7 +286,7 @@
             ]
           },
           {
-            "description": "Right Command = Option+W (tmux prefix)",
+            "description": "Right Command = Ctrl+B (tmux prefix)",
             "manipulators": [
               {
                 "from": {
@@ -299,9 +299,9 @@
                 },
                 "to": [
                   {
-                    "key_code": "w",
+                    "key_code": "b",
                     "modifiers": [
-                      "left_option"
+                      "left_control"
                     ]
                   }
                 ],

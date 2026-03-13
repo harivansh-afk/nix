@@ -1,16 +1,4 @@
 {lib, ...}: {
-  home.activation.removeLegacyTmuxLink = lib.hm.dag.entryBefore ["checkLinkTargets"] ''
-    path="$HOME/.config/tmux/tmux.conf"
-    if [ -L "$path" ]; then
-      target="$(readlink "$path")"
-      case "$target" in
-        ../../dots/tmux/*|dots/tmux/*|"$HOME"/dots/tmux/*)
-          rm -f "$path"
-          ;;
-      esac
-    fi
-  '';
-
   programs.tmux = {
     enable = true;
     extraConfig = ''
@@ -38,12 +26,6 @@
       bind H switch-client -p
       bind J switch-client -n
       bind K switch-client -p
-      bind L switch-client -n
-
-      # Switch sessions with prefix + H/J/K/L (capital)
-      bind J switch-client -n
-      bind K switch-client -p
-      bind H switch-client -p
       bind L switch-client -n
 
       # fzf pane switcher

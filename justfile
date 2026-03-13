@@ -10,8 +10,5 @@ build:
 switch:
   sudo env PATH="$PATH" nix --extra-experimental-features 'nix-command flakes' run github:LnL7/nix-darwin/master#darwin-rebuild -- switch --flake .#hari-macbook-pro
 
-backup:
-  ./scripts/backup-machine.sh
-
 fmt:
   nix --extra-experimental-features 'nix-command flakes' fmt

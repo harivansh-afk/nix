@@ -7,19 +7,6 @@
   home.file.".oh-my-zsh/custom/themes/agnoster.zsh-theme".source =
     ../config/agnoster.zsh-theme;
 
-  home.activation.removeLegacyZshLinks = lib.hm.dag.entryBefore ["checkLinkTargets"] ''
-    for path in "$HOME/.zshenv" "$HOME/.zshrc"; do
-      if [ -L "$path" ]; then
-        target="$(readlink "$path")"
-        case "$target" in
-          dots/zsh/*|"$HOME"/dots/zsh/*)
-            rm -f "$path"
-            ;;
-        esac
-      fi
-    done
-  '';
-
   home.activation.ensureOhMyZshCache = lib.hm.dag.entryAfter ["writeBoundary"] ''
     mkdir -p "${config.xdg.cacheHome}/oh-my-zsh"
   '';
@@ -56,6 +43,9 @@
 
     envExtra = ''
       . "$HOME/.cargo/env"
+
+      # Ghostty shell integration expects a resource directory; the Nix app
+      # bundle lives in the store instead of /Applications.
       export GHOSTTY_RESOURCES_DIR="${pkgs.ghostty-bin}/Applications/Ghostty.app/Contents/Resources/ghostty"
     '';
 

@@ -11,6 +11,8 @@ in {
 
   services.karabiner-elements.enable = true;
 
+  # Upstream nix-darwin still expects Karabiner's old agent layout. Override it
+  # here until the built-in module catches up to the 15.7+ bundle structure.
   # Karabiner-Elements 15.7.0 moved its user launch agents into the
   # Non-Privileged Agents v2 bundle and renamed karabiner_grabber.
   # nix-darwin's built-in module still points at the old top-level paths.

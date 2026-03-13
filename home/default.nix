@@ -10,6 +10,7 @@
     ./karabiner.nix
     ./k9s.nix
     ./lazygit.nix
+    ./migration.nix
     ./nvim.nix
     ./rectangle.nix
     ./tmux.nix

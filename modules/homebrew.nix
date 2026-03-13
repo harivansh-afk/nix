@@ -9,6 +9,7 @@
     };
 
     taps = [
+      # riptide-dev is still sourced from this tap.
       "humanlayer/humanlayer"
     ];
 

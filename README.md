@@ -2,12 +2,16 @@
 
 ## Approach
 
-The repo now owns the active shell/editor/tool config directly:
+This repo is the source of truth for the machine's reproducible developer
+environment:
 
 - `home/` contains the Home Manager modules for user-facing tools
 - `config/` contains the repo-owned config trees copied from your daily setup
-- `modules/homebrew.nix` is intentionally narrow and should eventually disappear
-- Homebrew cleanup is still set to `"none"` so the first switch is non-destructive
+- `modules/` contains host-level `nix-darwin` policy and package layers
+- `modules/homebrew.nix` is intentionally narrow and only exists for GUI apps
+  that are still easier to keep in Brew on macOS
+- `home/migration.nix` contains one-time ownership handoff logic from `~/dots`
+  into Home Manager so the steady-state modules can stay focused on real config
 
 ## Layout
 
@@ -18,11 +22,30 @@ The repo now owns the active shell/editor/tool config directly:
 - `modules/packages.nix`: system packages and fonts
 - `modules/homebrew.nix`: the remaining Homebrew-managed GUI apps
 - `home/`: Home Manager modules for shell, editor, CLI tools, and app config
+- `home/migration.nix`: transitional cleanup for old `~/dots` symlinks
 - `config/`: repo-owned config files consumed by Home Manager
+
+## Ownership Boundaries
+
+- Nix owns packages, dotfiles, shell/editor config, launchd services, and
+  selected macOS defaults
+- Homebrew is retained only for a narrow GUI cask boundary
+- Keychain items, TCC/privacy permissions, browser history, and most
+  `~/Library/Application Support` state are intentionally outside declarative
+  Nix ownership
+
+## Dedicated Inputs
+
+Most tools come from `nixpkgs`. Fast-moving CLIs that you want to update on
+their own cadence are pinned as dedicated flake inputs:
+
+- `googleworkspace-cli`
+- `codex`
+- `claudeCode`
 
 ## Commands
 
-Bootstrap the host:
+First switch:
 
 ```bash
 nix run github:LnL7/nix-darwin/master#darwin-rebuild -- switch --flake .#hari-macbook-pro
@@ -36,13 +59,27 @@ just build
 just check
 ```
 
-## What Still Needs Manual Work
+Update everything pinned by the flake:
+
+```bash
+nix flake update
+just switch
+```
+
+Update only Codex or Claude:
+
+```bash
+nix flake lock --update-input codex
+nix flake lock --update-input claudeCode
+just switch
+```
+
+## What Still Needs Manual Handling
 
 - Secrets and tokens under `~/.secrets`, `~/.npmrc`, `~/.config/gcloud`, `~/.config/gh`, and similar paths
-- Launch agents that are currently outside Nix
 - App state under `~/Library/Application Support`
 - Anything that depends on local credentials, keychains, or encrypted stores
-- Replacing or intentionally dropping the remaining GUI apps still delivered via Homebrew
+- Manual cleanup of old non-Nix installs that are no longer wanted
 
 ## Current Homebrew Scope
 
@@ -50,5 +87,9 @@ The current Homebrew boundary is only:
 
 - `cap`
 - `raycast`
+- `riptide-dev`
 - `thebrowsercompany-dia`
 - `wispr-flow`
+
+Homebrew activation is currently `cleanup = "uninstall"`, so anything outside
+that list is treated as drift and removed on `darwin-rebuild switch`.

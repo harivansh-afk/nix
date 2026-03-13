@@ -17,6 +17,27 @@
         "type": "github"
       }
     },
+    "claudeCode": {
+      "inputs": {
+        "flake-utils": "flake-utils",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1773421907,
+        "narHash": "sha256-TN8Qf8RhmOX7TAwhdjGaE/clgAxzfHwsOjGSxz0Bz/0=",
+        "owner": "sadjow",
+        "repo": "claude-code-nix",
+        "rev": "4746a848ccb3e1ba1a1c99fd063bf998045b81ac",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sadjow",
+        "repo": "claude-code-nix",
+        "type": "github"
+      }
+    },
     "codex": {
       "inputs": {
         "nixpkgs": [
@@ -56,19 +77,37 @@
         "type": "github"
       }
     },
+    "flake-utils_2": {
+      "inputs": {
+        "systems": "systems_2"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
     "googleworkspace-cli": {
       "inputs": {
-        "flake-utils": "flake-utils",
+        "flake-utils": "flake-utils_2",
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1773431608,
-        "narHash": "sha256-VnbyLo7+0r7x/DOwqAFMzynH8qZi2nft3UgQBeo2ls8=",
+        "lastModified": 1773432102,
+        "narHash": "sha256-JWI1Qsk1P5CNNrgK6qgpBsIWh3N8Xw8eTWtozZY35tw=",
         "owner": "googleworkspace",
         "repo": "cli",
-        "rev": "fc873dcc0035bbe3a6f112be130dd07a33860fc8",
+        "rev": "6e639604a83f5f7af906706290abe9fc590f51f9",
         "type": "github"
       },
       "original": {
@@ -154,6 +193,7 @@
     },
     "root": {
       "inputs": {
+        "claudeCode": "claudeCode",
         "codex": "codex",
         "googleworkspace-cli": "googleworkspace-cli",
         "home-manager": "home-manager",
@@ -184,6 +224,21 @@
       }
     },
     "systems": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_2": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",

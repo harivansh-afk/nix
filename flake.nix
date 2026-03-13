@@ -19,6 +19,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    claudeCode = {
+      url = "github:sadjow/claude-code-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     codex = {
       url = "github:openai/codex";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -34,6 +39,7 @@
     nixpkgs,
     nix-darwin,
     home-manager,
+    claudeCode,
     codex,
     nix-homebrew,
     ...

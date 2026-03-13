@@ -1,8 +1,10 @@
-model = "gpt-5.3-codex"
-model_reasoning_effort = "medium"
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
 personality = "pragmatic"
 suppress_unstable_features_warning = true
 web_search = "live"
+plan_mode_reasoning_effort = "xhigh"
+service_tier = "fast"
 
 [features]
 undo = true
@@ -10,28 +12,100 @@ shell_tool = true
 unified_exec = true
 shell_snapshot = true
 apply_patch_freeform = true
-request_rule = true
-remote_models = true
-steer = true
-collaboration_modes = true
 personality = true
-collab = true
-apps = true
+multi_agent = true
+memories = true
 js_repl = true
 runtime_metrics = true
-sqlite = true
-memory_tool = true
 child_agents_md = true
 use_linux_sandbox_bwrap = true
-powershell_utf8 = true
 enable_request_compression = true
 skill_mcp_dependency_install = true
 skill_env_var_dependency_prompt = true
-responses_websockets = true
 responses_websockets_v2 = true
+apps = true
+codex_git_commit = true
+prevent_idle_sleep = true
+request_permissions = true
+guardian_approval = true
+
+[agents]
+max_threads = 8
+
+[agents.worker]
+description = "Implementation-focused role for scoped coding tasks."
+
+[agents.reviewer]
+description = "Review-focused role that prioritizes bugs, regressions, and missing tests."
+
+[memories]
+max_raw_memories_for_consolidation = 512
+max_rollout_age_days = 30
+max_rollouts_per_startup = 8
+min_rollout_idle_hours = 24
 
 [sandbox_workspace_write]
 network_access = true
 
+[notice]
+hide_rate_limit_model_nudge = true
+
 [notice.model_migrations]
 "gpt-5.2" = "gpt-5.2-codex"
+
+[projects."/Users/rathi/Documents/GitHub/mixbridge/mixbridge-web"]
+trust_level = "trusted"
+
+[projects."/Users/rathi/Documents/GitHub/companion/companion-cloud"]
+trust_level = "trusted"
+
+[projects."/Users/rathi/Documents/GitHub/clank-artifacts"]
+trust_level = "trusted"
+
+[projects."/Users/rathi/dots/.git/modules/nvim/.config"]
+trust_level = "trusted"
+
+[projects."/Users/rathi/Documents/GitHub/kubasync"]
+trust_level = "trusted"
+
+[projects."/Users/rathi/Documents/GitHub/codex"]
+trust_level = "trusted"
+
+[projects."/Users/rathi/Documents/GitHub/openclaw"]
+trust_level = "trusted"
+
+[projects."/Users/rathi/.config/tmux"]
+trust_level = "trusted"
+
+[projects."/Users/rathi/Documents/Coding/CSES"]
+trust_level = "trusted"
+
+[projects."/Users/rathi/Documents/GitHub/agentikube"]
+trust_level = "trusted"
+
+[projects."/Users/rathi/Documents/GitHub/companion/pi-mono"]
+trust_level = "trusted"
+
+[projects."/Users/rathi/.humanlayer/riptide/artifacts/019cc50f-02a6-75fe-9279-3cdc300448a4"]
+trust_level = "trusted"
+
+[projects."/Users/rathi/Documents/GitHub/companion/nanoclaw"]
+trust_level = "trusted"
+
+[projects."/Users/rathi/Documents/GitHub/companion"]
+trust_level = "trusted"
+
+[projects."/Users/rathi/Documents/GitHub/symphony"]
+trust_level = "trusted"
+
+[projects."/Users/rathi/Documents/GitHub/nix"]
+trust_level = "trusted"
+
+[projects."/Users/rathi/Documents/GitHub/PersonalWebsite"]
+trust_level = "trusted"
+
+[projects."/Users/rathi"]
+trust_level = "trusted"
+
+[tui]
+status_line = ["model-name", "git-branch", "context-remaining"]

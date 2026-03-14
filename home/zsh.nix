@@ -42,7 +42,9 @@
     };
 
     envExtra = ''
-      . "$HOME/.cargo/env"
+      if [[ -f "$HOME/.cargo/env" ]]; then
+        . "$HOME/.cargo/env"
+      fi
 
       # Ghostty shell integration expects a resource directory; the Nix app
       # bundle lives in the store instead of /Applications.

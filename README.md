@@ -42,6 +42,12 @@ their own cadence are pinned as dedicated flake inputs:
 - `googleworkspace-cli`
 - `claudeCode`
 
+Bitwarden note:
+
+- `bw` is installed via Homebrew as `bitwarden-cli`
+- `bws` is not currently managed in this repo because I did not find a
+  supported nixpkgs or Homebrew package for it on macOS during verification
+
 ## Commands
 
 First switch:

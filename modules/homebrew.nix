@@ -13,7 +13,9 @@
       "humanlayer/humanlayer"
     ];
 
-    brews = [];
+    brews = [
+      "bitwarden-cli"
+    ];
 
     casks = [
       "cap"

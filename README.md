@@ -85,6 +85,13 @@ brew upgrade --cask codex
 just switch
 ```
 
+Sync Bitwarden-backed shell secrets:
+
+```bash
+export BW_SESSION="$(bw unlock --raw)"
+just secrets-sync
+```
+
 ## What Still Needs Manual Handling
 
 - Secrets and tokens under `~/.secrets`, `~/.npmrc`, `~/.config/gcloud`, `~/.config/gh`, and similar paths

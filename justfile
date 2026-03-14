@@ -12,3 +12,6 @@ switch:
 
 fmt:
   nix --extra-experimental-features 'nix-command flakes' fmt
+
+secrets-sync:
+  ./scripts/render-bw-shell-secrets.sh

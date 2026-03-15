@@ -20,6 +20,7 @@
     casks = [
       "cap"
       "codex"
+      "rectangle"
       "raycast"
       "riptide-dev"
       "thebrowsercompany-dia"

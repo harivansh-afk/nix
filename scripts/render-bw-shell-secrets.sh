@@ -24,7 +24,13 @@ mkdir -p "${out_dir}"
 
 read_note() {
   local item_name="$1"
-  bw get item "${item_name}" --session "${BW_SESSION}" | jq -r '.notes'
+  local item_id
+  item_id="$(bw list items --session "${BW_SESSION}" | jq -r --arg n "${item_name}" '.[] | select(.name == $n) | .id' | head -1)"
+  if [[ -z "${item_id}" ]]; then
+    echo "Bitwarden item not found: ${item_name}" >&2
+    exit 1
+  fi
+  bw get item "${item_id}" --session "${BW_SESSION}" | jq -r '.notes'
 }
 
 extract_env_value() {

@@ -96,6 +96,13 @@ export BW_SESSION="$(bw unlock --raw)"
 just secrets-sync
 ```
 
+Restore file-based secrets from Bitwarden:
+
+```bash
+export BW_SESSION="$(bw unlock --raw)"
+just secrets-restore-files
+```
+
 ## What Still Needs Manual Handling
 
 - Promoting vault-backed secrets into Bitwarden Secrets Manager machine-account

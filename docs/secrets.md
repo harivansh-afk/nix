@@ -20,8 +20,10 @@ secret values.
   `~/.config/secrets/shell.zsh` when present
 - [scripts/render-bw-shell-secrets.sh](/Users/rathi/Documents/GitHub/nix/scripts/render-bw-shell-secrets.sh)
   renders that file from Bitwarden vault items
+- [scripts/restore-bw-files.sh](/Users/rathi/Documents/GitHub/nix/scripts/restore-bw-files.sh)
+  restores file-based credentials and SSH material from Bitwarden vault items
 - [justfile](/Users/rathi/Documents/GitHub/nix/justfile) exposes this as
-  `just secrets-sync`
+  `just secrets-sync` and `just secrets-restore-files`
 
 ## Daily Shell Flow
 
@@ -60,7 +62,7 @@ For a fresh sandbox or new machine, the clean bootstrap is:
 1. `darwin-rebuild switch` or Home Manager activation
 2. authenticate `bw`
 3. `just secrets-sync`
-4. restore any file-based credentials you actually need from Bitwarden
+4. `just secrets-restore-files`
 
 That gives you a usable dev shell quickly without committing any secret values
 into the repo.

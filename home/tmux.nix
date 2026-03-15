@@ -85,6 +85,7 @@
 
       set-option -g status-position top
       set-option -g status-style bg=''${BG},fg=''${FG}
+      set-option -g prompt-cursor-colour '#d4be98'
       set-option -g status-justify left
       set-option -g status-left ""
       set-option -g status-right "#(~/.config/tmux/session-list.sh)"

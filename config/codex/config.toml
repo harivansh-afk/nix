@@ -4,7 +4,6 @@ personality = "pragmatic"
 suppress_unstable_features_warning = true
 web_search = "live"
 plan_mode_reasoning_effort = "xhigh"
-service_tier = "fast"
 
 [features]
 undo = true

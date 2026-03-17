@@ -11,13 +11,12 @@ shell_tool = true
 unified_exec = true
 shell_snapshot = true
 apply_patch_freeform = true
+code_mode = true
 personality = true
-multi_agent = true
 memories = true
 js_repl = true
 runtime_metrics = true
 child_agents_md = true
-use_linux_sandbox_bwrap = true
 enable_request_compression = true
 skill_mcp_dependency_install = true
 skill_env_var_dependency_prompt = true
@@ -25,11 +24,16 @@ responses_websockets_v2 = true
 apps = true
 codex_git_commit = true
 prevent_idle_sleep = true
-request_permissions = true
+exec_permission_approvals = true
+request_permissions_tool = true
+enable_fanout = true
+codex_hooks = true
 guardian_approval = true
 
 [agents]
 max_threads = 8
+max_depth = 3
+job_max_runtime_seconds = 1800
 
 [agents.worker]
 description = "Implementation-focused role for scoped coding tasks."

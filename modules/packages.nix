@@ -106,6 +106,7 @@ in {
     redis
     tailscale
     terraform
+    texliveFull
     worktrunk
     yt-dlp
   ];

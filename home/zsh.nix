@@ -39,6 +39,14 @@
       nim = "nvim .";
       sshnet = "ssh -i ~/.ssh/atlas-ssh.txt rathiharivansh@152.53.195.59";
       tailscale = "/Applications/Tailscale.app/Contents/MacOS/Tailscale";
+
+      # nix helpers
+      ni = "nix profile install nixpkgs#";    # ni <pkg> - quick imperative install
+      nr = "nix profile remove";               # nr <index> - remove from profile
+      ns = "nix search nixpkgs";               # ns <query> - search packages
+      nls = "nix profile list";                # nls - list installed profile packages
+      nrb = "darwin-rebuild switch --flake ~/Documents/GitHub/nix";  # nrb - rebuild declarative config
+      nup = "nix flake update ~/Documents/GitHub/nix && darwin-rebuild switch --flake ~/Documents/GitHub/nix";  # nup - update flake + rebuild
     };
 
     envExtra = ''

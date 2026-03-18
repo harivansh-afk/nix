@@ -56,18 +56,5 @@
     "type": "command",
     "command": "/Users/rathi/.claude/statusline.sh"
   },
-  "enabledPlugins": {
-    "compound-engineering@every-marketplace": true
-  },
-  "skipDangerousModePermissionPrompt": true,
-  "mcpServers": {
-    "context7": {
-      "type": "http",
-      "url": "https://mcp.context7.com/mcp",
-      "headers": {
-        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
-      }
-    }
-  },
   "voiceEnabled": true
 }

@@ -25,7 +25,7 @@
     shellAliases = {
       c = "codex --dangerously-bypass-approvals-and-sandbox";
       ca = "cursor-agent";
-      cc = "claude --dangerously-skip-permissions";
+      cc = "claude";
       ch = "claude-handoff";
       cl = "clear";
       gc = "git commit";
@@ -106,7 +106,7 @@
           $path
         )
 
-        ni() { nix profile install "nixpkgs#$1"; }
+        ni() { nix profile add "nixpkgs#$1"; }
 
         unalias ga 2>/dev/null
         ga() {

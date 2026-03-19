@@ -1,6 +1,16 @@
-{lib, ...}: {
+{lib, pkgs, ...}: {
   programs.tmux = {
     enable = true;
+    plugins = with pkgs.tmuxPlugins; [
+      resurrect
+      {
+        plugin = continuum;
+        extraConfig = ''
+          set -g @continuum-restore 'on'
+          set -g @continuum-save-interval '5'
+        '';
+      }
+    ];
     extraConfig = ''
       # custom
 
@@ -109,13 +119,6 @@
 
       set-option -g window-status-separator ""
 
-      # Plugins (TPM)
-      set -g @plugin 'tmux-plugins/tpm'
-      set -g @plugin 'tmux-plugins/tmux-resurrect'
-      set -g @plugin 'tmux-plugins/tmux-continuum'
-
-      set -g @continuum-save-interval '10'
-      run '~/.tmux/plugins/tpm/tpm'
     '';
   };
 

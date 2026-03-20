@@ -13,6 +13,7 @@
     ./migration.nix
     ./nvim.nix
     ./rectangle.nix
+    ./scripts.nix
     ./tmux.nix
     ./zsh.nix
   ];

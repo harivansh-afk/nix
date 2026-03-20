@@ -41,11 +41,11 @@
       tailscale = "/Applications/Tailscale.app/Contents/MacOS/Tailscale";
 
       # nix helpers
-      nr = "nix profile remove";               # nr <index> - remove from profile
-      ns = "nix search nixpkgs";               # ns <query> - search packages
-      nls = "nix profile list";                # nls - list installed profile packages
-      nrb = "sudo darwin-rebuild switch --flake ~/Documents/GitHub/nix";  # nrb - rebuild declarative config
-      nup = "nix flake update ~/Documents/GitHub/nix && sudo darwin-rebuild switch --flake ~/Documents/GitHub/nix";  # nup - update flake + rebuild
+      nr = "nix profile remove"; # nr <index> - remove from profile
+      ns = "nix search nixpkgs"; # ns <query> - search packages
+      nls = "nix profile list"; # nls - list installed profile packages
+      nrb = "sudo darwin-rebuild switch --flake ~/Documents/GitHub/nix"; # nrb - rebuild declarative config
+      nup = "nix flake update ~/Documents/GitHub/nix && sudo darwin-rebuild switch --flake ~/Documents/GitHub/nix"; # nup - update flake + rebuild
     };
 
     envExtra = ''
@@ -108,16 +108,7 @@
           $path
         )
 
-        ni() { nix profile add "nixpkgs#$1"; }
-
         unalias ga 2>/dev/null
-        ga() {
-          if [[ $# -eq 0 ]]; then
-            git add .
-          else
-            git add "$@"
-          fi
-        }
 
         git() {
           command git "$@"
@@ -169,136 +160,9 @@
           _codex_set_cursor beam
         }
 
-        iosrun() {
-          local project=$(find . -maxdepth 1 -name "*.xcodeproj" | head -1)
-          local scheme=$(basename "$project" .xcodeproj)
-          local derived=".derived-data"
-          local sim_name="''${1:-iPhone 16e}"
-
-          if [[ -z "$project" ]]; then
-            echo "No .xcodeproj found in current directory"
-            return 1
-          fi
-
-          echo "Building $scheme..."
-          if ! xcodebuild -project "$project" -scheme "$scheme" \
-            -destination "platform=iOS Simulator,name=$sim_name" \
-            -derivedDataPath "$derived" build -quiet; then
-            echo "Build failed"
-            return 1
-          fi
-
-          echo "Build succeeded. Launching simulator..."
-
-          xcrun simctl boot "$sim_name" 2>/dev/null
-          open -a Simulator
-
-          local app_path="$derived/Build/Products/Debug-iphonesimulator/$scheme.app"
-          local bundle_id=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$app_path/Info.plist")
-
-          echo "Installing $scheme..."
-          while ! xcrun simctl install "$sim_name" "$app_path" 2>/dev/null; do
-            sleep 0.5
-          done
-
-          echo "Launching $bundle_id..."
-          while ! xcrun simctl launch "$sim_name" "$bundle_id" 2>&1 | grep -q "$bundle_id"; do
-            sleep 0.5
-          done
-
-          echo "Launched $bundle_id - streaming logs (Ctrl+C to stop)"
-          echo "----------------------------------------"
-
-          xcrun simctl spawn "$sim_name" log stream \
-            --predicate "(subsystem CONTAINS '$bundle_id' OR process == '$scheme') AND NOT subsystem BEGINSWITH 'com.apple'" \
-            --style compact \
-            --color always 2>/dev/null | while read -r line; do
-            if [[ "$line" == *"error"* ]] || [[ "$line" == *"Error"* ]]; then
-              echo "\033[31m$line\033[0m"
-            elif [[ "$line" == *"warning"* ]] || [[ "$line" == *"Warning"* ]]; then
-              echo "\033[33m$line\033[0m"
-            else
-              echo "$line"
-            fi
-          done
-        }
-
-        mdview() {
-          markserv "$1"
-        }
-
         if command -v wt >/dev/null 2>&1; then
           eval "$(command wt config shell init zsh)"
         fi
-
-        wtc() { wt switch --create --base @ "$@"; }
-
-        unalias gpr 2>/dev/null
-        gpr() {
-          while true; do
-            local pr=$(gh pr list --limit 50 \
-              --json number,title,author,headRefName \
-              --template '{{range .}}#{{.number}} {{.title}} ({{.author.login}}) [{{.headRefName}}]{{"\n"}}{{end}}' \
-              | fzf --preview 'gh pr view {1} --comments' \
-                    --preview-window=right:60%:wrap \
-                    --header 'enter: view | ctrl-m: merge | ctrl-x: close | ctrl-o: checkout | ctrl-b: browser' \
-                    --bind 'ctrl-o:execute(gh pr checkout {1})' \
-                    --bind 'ctrl-b:execute(gh pr view {1} --web)' \
-                    --expect=ctrl-m,ctrl-x,enter)
-
-            [[ -z "$pr" ]] && return
-
-            local key=$(echo "$pr" | head -1)
-            local selection=$(echo "$pr" | tail -1)
-            local num=$(echo "$selection" | grep -o '#[0-9]*' | tr -d '#')
-
-            [[ -z "$num" ]] && return
-
-            case "$key" in
-              ctrl-m)
-                echo "Merge PR #$num? (y/n)"
-                read -q && gh pr merge "$num" --merge
-                echo
-                ;;
-              ctrl-x)
-                echo "Close PR #$num? (y/n)"
-                read -q && gh pr close "$num"
-                echo
-                ;;
-              enter|"")
-                gh pr view "$num"
-                ;;
-            esac
-          done
-        }
-
-        ghpr() {
-          local base=$(git rev-parse --abbrev-ref HEAD)
-          local upstream="''${1:-main}"
-          local remote_ref="origin/$upstream"
-          local unpushed=$(git log "$remote_ref"..HEAD --oneline 2>/dev/null)
-
-          if [[ -z "$unpushed" ]]; then
-            if git diff --cached --quiet; then
-              echo "No unpushed commits and no staged changes"
-              return 1
-            fi
-            echo "No unpushed commits, but staged changes found. Opening commit dialog..."
-            git commit || return 1
-          fi
-
-          local msg=$(git log "$remote_ref"..HEAD --format='%s' --reverse | head -1)
-          local branch=$(echo "$msg" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
-
-          git checkout -b "$branch"
-          git checkout "$base"
-          git reset --hard "$remote_ref"
-          git checkout "$branch"
-
-          git push -u origin "$branch"
-          gh pr create --base "$upstream" --fill --web 2>/dev/null || gh pr create --base "$upstream" --fill
-          gh pr view "$branch" --json url -q '.url'
-        }
       '')
 
       (lib.mkAfter ''

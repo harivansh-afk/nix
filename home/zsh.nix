@@ -23,7 +23,7 @@
     syntaxHighlighting.enable = true;
 
     shellAliases = {
-      c = "codex --dangerously-bypass-approvals-and-sandbox";
+      co = "codex --dangerously-bypass-approvals-and-sandbox";
       ca = "cursor-agent";
       cc = "claude";
       ch = "claude-handoff";

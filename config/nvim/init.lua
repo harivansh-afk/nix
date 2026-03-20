@@ -25,7 +25,6 @@ local disabled_plugins = {
     'gzip',
     'logipat',
     'matchit',
-    'matchparen',
     'netrw',
     'netrwFileHandlers',
     'netrwPlugin',

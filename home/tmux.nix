@@ -83,9 +83,9 @@
       MAGENTA="#d3869b"
       CYAN="#89b482"
       BLACK="#1d2021"
-      DARK_GRAY="#32302F"
+      DARK_GRAY="#282828"
       LIGHT_GRAY="#4F4946"
-      BG="#32302F"
+      BG="#1d2021"
       FG="#d4be98"
 
       HALF_ROUND_OPEN="#(printf '\uE0B2')"
@@ -93,7 +93,7 @@
       TRIANGLE_OPEN="#(printf '\uE0B2')"
       TRIANGLE_CLOSE="#(printf '\uE0B0')"
 
-      set-option -g status-position top
+      set-option -g status-position bottom
       set-option -g status-style bg=''${BG},fg=''${FG}
       set-option -g prompt-cursor-colour '#d4be98'
       set-option -g status-justify left
@@ -111,13 +111,17 @@
       "
 
       set-option -g window-status-current-format "\
-      #[bg=''${LIGHT_GRAY},fg=default] #I\
-      #[fg=''${RED}]:\
-      #[fg=default]#W \
-      #[bg=default]\
+       \
+      *#I\
+      #[fg=''${MAGENTA}]:\
+      #[fg=default]#W\
+       \
       "
 
       set-option -g window-status-separator ""
+
+      set-option -g pane-border-style fg=''${BG}
+      set-option -g pane-active-border-style fg=''${BG}
 
     '';
   };
@@ -129,7 +133,7 @@
       current=$(tmux display-message -p '#S')
       tmux list-sessions -F '#S' | while IFS= read -r s; do
         if [ "$s" = "$current" ]; then
-          printf '#[bg=#4F4946,fg=#d8a657] %s #[bg=default,fg=default]' "$s"
+          printf ' *%s ' "$s"
         else
           printf ' %s ' "$s"
         fi

@@ -47,9 +47,9 @@
         | awk '{print \$1}' \
         | xargs tmux switch-client -t"
 
-      # Auto-rename windows to the current running command
+      # Auto-rename windows to the current directory basename
       set -g automatic-rename on
-      set -g automatic-rename-format '#{pane_current_command}'
+      set -g automatic-rename-format '#{b:pane_current_path}'
 
       # Start all numbering at 1 instead of 0 for better key reachability
       set-option -g base-index 1

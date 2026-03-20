@@ -85,7 +85,8 @@
       BLACK="#1d2021"
       DARK_GRAY="#282828"
       LIGHT_GRAY="#4F4946"
-      BG="#1d2021"
+      # Match Ghostty theme "Gruvbox Material Dark" (see programs.ghostty.settings.theme)
+      BG="#282828"
       FG="#d4be98"
 
       HALF_ROUND_OPEN="#(printf '\uE0B2')"

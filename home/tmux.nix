@@ -77,16 +77,16 @@
 
       # Styling
       RED="#ea6962"
-      GREEN="#a9b665"
+      GREEN="#8ec97c"
       YELLOW="#d8a657"
-      BLUE="#7daea3"
+      BLUE="#4672d4"
       MAGENTA="#d3869b"
       CYAN="#89b482"
       BLACK="#1d2021"
-      DARK_GRAY="#282828"
+      DARK_GRAY="#181818"
       LIGHT_GRAY="#4F4946"
-      # Match Ghostty theme "Gruvbox Material Dark" (see programs.ghostty.settings.theme)
-      BG="#282828"
+      # Match Ghostty theme (cozybox-override palette + Gruvbox Material Dark base)
+      BG="#181818"
       FG="#d4be98"
 
       HALF_ROUND_OPEN="#(printf '\uE0B2')"

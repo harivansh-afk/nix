@@ -1,11 +1,11 @@
-{ pkgs, ... }:
-let
+{
+  config,
+  pkgs,
+  ...
+}: let
+  theme = import ../lib/theme.nix {inherit config;};
   ghosttyConfig = ''
-    theme = "Gruvbox Material Dark"
-    background = #181818
-    cursor-color = #ddc7a1
-    selection-background = #504945
-    selection-foreground = #ebdbb2
+    theme = "cozybox-current"
     font-family = Berkeley Mono
     font-codepoint-map = U+f101-U+f25c=nonicons
     background-opacity = 1
@@ -38,12 +38,6 @@ let
     keybind = vim/i=deactivate_key_table
     keybind = vim/catch_all=ignore
     mouse-hide-while-typing = true
-    palette = 2=#8ec97c
-    palette = 10=#8ec97c
-    palette = 4=#4672d4
-    palette = 12=#4672d4
-    palette = 6=#8ec07c
-    palette = 14=#8ec07c
     macos-titlebar-style = hidden
     macos-option-as-alt = true
     confirm-close-surface = true
@@ -66,6 +60,9 @@ in {
     text = ghosttyConfig;
     force = true;
   };
+
+  xdg.configFile."ghostty/themes/cozybox-dark".text = theme.renderGhostty "dark";
+  xdg.configFile."ghostty/themes/cozybox-light".text = theme.renderGhostty "light";
 
   home.file."Library/Application Support/com.mitchellh.ghostty/config.ghostty" = {
     text = ghosttyConfig;

@@ -3,6 +3,7 @@
     ./bat.nix
     ./claude.nix
     ./codex.nix
+    ./fzf.nix
     ./gcloud.nix
     ./gh.nix
     ./ghostty.nix
@@ -13,6 +14,7 @@
     ./migration.nix
     ./nvim.nix
     ./rectangle.nix
+    ./scripts.nix
     ./tmux.nix
     ./zsh.nix
   ];

@@ -41,11 +41,11 @@
       tailscale = "/Applications/Tailscale.app/Contents/MacOS/Tailscale";
 
       # nix helpers
-      nr = "nix profile remove";               # nr <index> - remove from profile
-      ns = "nix search nixpkgs";               # ns <query> - search packages
-      nls = "nix profile list";                # nls - list installed profile packages
-      nrb = "sudo darwin-rebuild switch --flake ~/Documents/GitHub/nix";  # nrb - rebuild declarative config
-      nup = "nix flake update ~/Documents/GitHub/nix && sudo darwin-rebuild switch --flake ~/Documents/GitHub/nix";  # nup - update flake + rebuild
+      nr = "nix profile remove"; # nr <index> - remove from profile
+      ns = "nix search nixpkgs"; # ns <query> - search packages
+      nls = "nix profile list"; # nls - list installed profile packages
+      nrb = "sudo darwin-rebuild switch --flake ~/Documents/GitHub/nix"; # nrb - rebuild declarative config
+      nup = "nix flake update ~/Documents/GitHub/nix && sudo darwin-rebuild switch --flake ~/Documents/GitHub/nix"; # nup - update flake + rebuild
     };
 
     envExtra = ''
@@ -108,16 +108,92 @@
           $path
         )
 
-        ni() { nix profile add "nixpkgs#$1"; }
+        _codex_read_theme_mode() {
+          local mode_file="$HOME/.local/state/theme/current"
+          if [[ -f "$mode_file" ]]; then
+            local mode
+            mode=$(tr -d '[:space:]' < "$mode_file")
+            if [[ "$mode" == light || "$mode" == dark ]]; then
+              printf '%s' "$mode"
+              return
+            fi
+          fi
+
+          printf 'dark'
+        }
+
+        _codex_apply_highlight_styles() {
+          local mode="$(_codex_read_theme_mode)"
+          if [[ "$mode" == "''${_CODEX_LAST_HIGHLIGHT_THEME:-}" ]]; then
+            return
+          fi
+
+          typeset -gA ZSH_HIGHLIGHT_STYLES
+
+          if [[ "$mode" == light ]]; then
+            ZSH_HIGHLIGHT_STYLES[arg0]='fg=#427b58'
+            ZSH_HIGHLIGHT_STYLES[autodirectory]='fg=#427b58,underline'
+            ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]='fg=#076678'
+            ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]='fg=#076678'
+            ZSH_HIGHLIGHT_STYLES[back-quoted-argument-delimiter]='fg=#8f3f71'
+            ZSH_HIGHLIGHT_STYLES[bracket-error]='fg=#ea6962,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-1]='fg=#076678,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-2]='fg=#427b58,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-3]='fg=#8f3f71,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-4]='fg=#b57614,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-5]='fg=#076678,bold'
+            ZSH_HIGHLIGHT_STYLES[comment]='fg=#928374'
+            ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter]='fg=#8f3f71'
+            ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]='fg=#076678'
+            ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=#b57614'
+            ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=#b57614'
+            ZSH_HIGHLIGHT_STYLES[global-alias]='fg=#076678'
+            ZSH_HIGHLIGHT_STYLES[globbing]='fg=#076678'
+            ZSH_HIGHLIGHT_STYLES[history-expansion]='fg=#076678'
+            ZSH_HIGHLIGHT_STYLES[path]='fg=#3c3836,underline'
+            ZSH_HIGHLIGHT_STYLES[precommand]='fg=#427b58,underline'
+            ZSH_HIGHLIGHT_STYLES[process-substitution-delimiter]='fg=#8f3f71'
+            ZSH_HIGHLIGHT_STYLES[rc-quote]='fg=#076678'
+            ZSH_HIGHLIGHT_STYLES[redirection]='fg=#b57614'
+            ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=#b57614'
+            ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=#b57614'
+            ZSH_HIGHLIGHT_STYLES[suffix-alias]='fg=#427b58,underline'
+            ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=#ea6962,bold'
+          else
+            ZSH_HIGHLIGHT_STYLES[arg0]='fg=#8ec97c'
+            ZSH_HIGHLIGHT_STYLES[autodirectory]='fg=#8ec97c,underline'
+            ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]='fg=#8ec07c'
+            ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]='fg=#8ec07c'
+            ZSH_HIGHLIGHT_STYLES[back-quoted-argument-delimiter]='fg=#d3869b'
+            ZSH_HIGHLIGHT_STYLES[bracket-error]='fg=#ea6962,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-1]='fg=#5b84de,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-2]='fg=#8ec97c,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-3]='fg=#d3869b,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-4]='fg=#d8a657,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-5]='fg=#8ec07c,bold'
+            ZSH_HIGHLIGHT_STYLES[comment]='fg=#7c6f64'
+            ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter]='fg=#d3869b'
+            ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]='fg=#8ec07c'
+            ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=#d8a657'
+            ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=#d8a657'
+            ZSH_HIGHLIGHT_STYLES[global-alias]='fg=#8ec07c'
+            ZSH_HIGHLIGHT_STYLES[globbing]='fg=#5b84de'
+            ZSH_HIGHLIGHT_STYLES[history-expansion]='fg=#5b84de'
+            ZSH_HIGHLIGHT_STYLES[path]='fg=#d4be98,underline'
+            ZSH_HIGHLIGHT_STYLES[precommand]='fg=#8ec97c,underline'
+            ZSH_HIGHLIGHT_STYLES[process-substitution-delimiter]='fg=#d3869b'
+            ZSH_HIGHLIGHT_STYLES[rc-quote]='fg=#8ec07c'
+            ZSH_HIGHLIGHT_STYLES[redirection]='fg=#d8a657'
+            ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=#d8a657'
+            ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=#d8a657'
+            ZSH_HIGHLIGHT_STYLES[suffix-alias]='fg=#8ec97c,underline'
+            ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=#ea6962,bold'
+          fi
+
+          typeset -g _CODEX_LAST_HIGHLIGHT_THEME="$mode"
+        }
 
         unalias ga 2>/dev/null
-        ga() {
-          if [[ $# -eq 0 ]]; then
-            git add .
-          else
-            git add "$@"
-          fi
-        }
 
         git() {
           command git "$@"
@@ -162,6 +238,7 @@
         zle -N zle-line-finish
 
         precmd() {
+          _codex_apply_highlight_styles
           _codex_set_cursor beam
         }
 
@@ -169,136 +246,11 @@
           _codex_set_cursor beam
         }
 
-        iosrun() {
-          local project=$(find . -maxdepth 1 -name "*.xcodeproj" | head -1)
-          local scheme=$(basename "$project" .xcodeproj)
-          local derived=".derived-data"
-          local sim_name="''${1:-iPhone 16e}"
-
-          if [[ -z "$project" ]]; then
-            echo "No .xcodeproj found in current directory"
-            return 1
-          fi
-
-          echo "Building $scheme..."
-          if ! xcodebuild -project "$project" -scheme "$scheme" \
-            -destination "platform=iOS Simulator,name=$sim_name" \
-            -derivedDataPath "$derived" build -quiet; then
-            echo "Build failed"
-            return 1
-          fi
-
-          echo "Build succeeded. Launching simulator..."
-
-          xcrun simctl boot "$sim_name" 2>/dev/null
-          open -a Simulator
-
-          local app_path="$derived/Build/Products/Debug-iphonesimulator/$scheme.app"
-          local bundle_id=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$app_path/Info.plist")
-
-          echo "Installing $scheme..."
-          while ! xcrun simctl install "$sim_name" "$app_path" 2>/dev/null; do
-            sleep 0.5
-          done
-
-          echo "Launching $bundle_id..."
-          while ! xcrun simctl launch "$sim_name" "$bundle_id" 2>&1 | grep -q "$bundle_id"; do
-            sleep 0.5
-          done
-
-          echo "Launched $bundle_id - streaming logs (Ctrl+C to stop)"
-          echo "----------------------------------------"
-
-          xcrun simctl spawn "$sim_name" log stream \
-            --predicate "(subsystem CONTAINS '$bundle_id' OR process == '$scheme') AND NOT subsystem BEGINSWITH 'com.apple'" \
-            --style compact \
-            --color always 2>/dev/null | while read -r line; do
-            if [[ "$line" == *"error"* ]] || [[ "$line" == *"Error"* ]]; then
-              echo "\033[31m$line\033[0m"
-            elif [[ "$line" == *"warning"* ]] || [[ "$line" == *"Warning"* ]]; then
-              echo "\033[33m$line\033[0m"
-            else
-              echo "$line"
-            fi
-          done
-        }
-
-        mdview() {
-          markserv "$1"
-        }
+        _codex_apply_highlight_styles
 
         if command -v wt >/dev/null 2>&1; then
           eval "$(command wt config shell init zsh)"
         fi
-
-        wtc() { wt switch --create --base @ "$@"; }
-
-        unalias gpr 2>/dev/null
-        gpr() {
-          while true; do
-            local pr=$(gh pr list --limit 50 \
-              --json number,title,author,headRefName \
-              --template '{{range .}}#{{.number}} {{.title}} ({{.author.login}}) [{{.headRefName}}]{{"\n"}}{{end}}' \
-              | fzf --preview 'gh pr view {1} --comments' \
-                    --preview-window=right:60%:wrap \
-                    --header 'enter: view | ctrl-m: merge | ctrl-x: close | ctrl-o: checkout | ctrl-b: browser' \
-                    --bind 'ctrl-o:execute(gh pr checkout {1})' \
-                    --bind 'ctrl-b:execute(gh pr view {1} --web)' \
-                    --expect=ctrl-m,ctrl-x,enter)
-
-            [[ -z "$pr" ]] && return
-
-            local key=$(echo "$pr" | head -1)
-            local selection=$(echo "$pr" | tail -1)
-            local num=$(echo "$selection" | grep -o '#[0-9]*' | tr -d '#')
-
-            [[ -z "$num" ]] && return
-
-            case "$key" in
-              ctrl-m)
-                echo "Merge PR #$num? (y/n)"
-                read -q && gh pr merge "$num" --merge
-                echo
-                ;;
-              ctrl-x)
-                echo "Close PR #$num? (y/n)"
-                read -q && gh pr close "$num"
-                echo
-                ;;
-              enter|"")
-                gh pr view "$num"
-                ;;
-            esac
-          done
-        }
-
-        ghpr() {
-          local base=$(git rev-parse --abbrev-ref HEAD)
-          local upstream="''${1:-main}"
-          local remote_ref="origin/$upstream"
-          local unpushed=$(git log "$remote_ref"..HEAD --oneline 2>/dev/null)
-
-          if [[ -z "$unpushed" ]]; then
-            if git diff --cached --quiet; then
-              echo "No unpushed commits and no staged changes"
-              return 1
-            fi
-            echo "No unpushed commits, but staged changes found. Opening commit dialog..."
-            git commit || return 1
-          fi
-
-          local msg=$(git log "$remote_ref"..HEAD --format='%s' --reverse | head -1)
-          local branch=$(echo "$msg" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
-
-          git checkout -b "$branch"
-          git checkout "$base"
-          git reset --hard "$remote_ref"
-          git checkout "$branch"
-
-          git push -u origin "$branch"
-          gh pr create --base "$upstream" --fill --web 2>/dev/null || gh pr create --base "$upstream" --fill
-          gh pr view "$branch" --json url -q '.url'
-        }
       '')
 
       (lib.mkAfter ''

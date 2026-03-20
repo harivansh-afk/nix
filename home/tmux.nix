@@ -1,4 +1,11 @@
-{lib, pkgs, ...}: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
+  theme = import ../lib/theme.nix {inherit config;};
+in {
   programs.tmux = {
     enable = true;
     plugins = with pkgs.tmuxPlugins; [
@@ -75,54 +82,14 @@
       # Disable waiting time when pressing escape, for smoother Neovim usage.
       set-option -s escape-time 0
 
-      # Styling
-      RED="#ea6962"
-      GREEN="#8ec97c"
-      YELLOW="#d8a657"
-      BLUE="#4672d4"
-      MAGENTA="#d3869b"
-      CYAN="#89b482"
-      BLACK="#1d2021"
-      DARK_GRAY="#181818"
-      LIGHT_GRAY="#4F4946"
-      # Match Ghostty theme (cozybox-override palette + Gruvbox Material Dark base)
-      BG="#181818"
-      FG="#d4be98"
-
-      HALF_ROUND_OPEN="#(printf '\uE0B2')"
-      HALF_ROUND_CLOSE="#(printf '\uE0B0')"
-      TRIANGLE_OPEN="#(printf '\uE0B2')"
-      TRIANGLE_CLOSE="#(printf '\uE0B0')"
-
+      set-option -g prompt-cursor-colour default
       set-option -g status-position bottom
-      set-option -g status-style bg=''${BG},fg=''${FG}
       set-option -g status-justify left
       set-option -g status-left ""
       set-option -g status-right "#(~/.config/tmux/session-list.sh)"
       set-option -g status-left-length 100
       set-option -g status-right-length 100
-
-      set-option -g window-status-format "\
-       \
-      #I\
-      #[fg=''${MAGENTA}]:\
-      #[fg=default]#W\
-       \
-      "
-
-      set-option -g window-status-current-format "\
-       \
-      #[fg=''${MAGENTA}]*#[fg=default]#I\
-      #[fg=''${MAGENTA}]:\
-      #[fg=default]#W\
-       \
-      "
-
-      set-option -g window-status-separator ""
-
-      set-option -g pane-border-style fg=''${BG}
-      set-option -g pane-active-border-style fg=''${BG}
-
+      source-file "${theme.paths.tmuxCurrentFile}"
     '';
   };
 
@@ -131,9 +98,10 @@
     text = ''
       #!/bin/sh
       current=$(tmux display-message -p '#S')
+      accent=$(tmux show -gv @cozybox-accent 2>/dev/null || printf '#d3869b')
       tmux list-sessions -F '#S' | while IFS= read -r s; do
         if [ "$s" = "$current" ]; then
-          printf ' #[fg=#d3869b]*#[fg=default]%s ' "$s"
+          printf ' #[fg=%s]*#[fg=default]%s ' "$accent" "$s"
         else
           printf ' %s ' "$s"
         fi

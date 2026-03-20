@@ -1,107 +1,60 @@
 return {
     {
-        'ellisonleao/gruvbox.nvim',
+        'harivansh-afk/cozybox.nvim',
         lazy = false,
         priority = 1000,
         config = function()
-            local themeBlue = '#3c6aaa'
-            local themeGreen = '#8ec97c'
-            require('gruvbox').setup({
-                contrast = 'hard',
-                transparent_mode = false,
-                italic = { comments = true },
-                palette_overrides = {
-                    bright_blue = themeBlue,
-                    blue = themeBlue,
-                    neutral_blue = themeBlue,
-                    faded_blue = '#4a5fb0',
-                    bright_green = themeGreen,
-                    green = themeGreen,
-                    neutral_green = themeGreen,
-                    faded_green = '#6fae70',
-                },
-                overrides = {
-                    MatchParen = { bold = true, underline = true, fg = '#d8a657', bg = '#3c3836' },
-                    Normal = { bg = '#181818' },
-                    NormalFloat = { bg = '#181818' },
-                    SignColumn = { bg = '#181818' },
-                    StatusLine = { bg = '#181818' },
-                    StatusLineNC = { bg = '#181818' },
-                    GruvboxOrange = { fg = '#bdae93' },
-                    GruvboxOrangeBold = { fg = '#bdae93', bold = true },
-                    GruvboxBlue = { fg = themeBlue },
-                    GruvboxBlueBold = { fg = themeBlue, bold = true },
-                    GruvboxGreen = { fg = themeGreen },
-                    GruvboxGreenBold = { fg = themeGreen, bold = true },
-                    ['@operator'] = { fg = '#bdae93' },
-                    Delimiter = { fg = '#bdae93' },
-                    ['@punctuation.bracket'] = { fg = '#bdae93' },
-                    ['@punctuation.delimiter'] = { fg = '#bdae93' },
-                    GitSignsAdd = { fg = '#a9b665', bg = '#181818' },
-                    GitSignsChange = { fg = '#d8a657', bg = '#181818' },
-                    GitSignsDelete = { fg = '#ea6962', bg = '#181818' },
-                    GitSignsTopdelete = { fg = '#ea6962', bg = '#181818' },
-                    GitSignsChangedelete = { fg = '#d8a657', bg = '#181818' },
-                    GitSignsUntracked = { fg = '#7daea3', bg = '#181818' },
-                    GitSignsStagedAdd = { fg = '#6c7842', bg = '#181818' },
-                    GitSignsStagedChange = { fg = '#8a6d39', bg = '#181818' },
-                    GitSignsStagedDelete = { fg = '#94433f', bg = '#181818' },
-                    GitSignsStagedTopdelete = { fg = '#94433f', bg = '#181818' },
-                    GitSignsStagedChangedelete = { fg = '#8a6d39', bg = '#181818' },
-                    LineNr = { bg = '#181818' },
-                    CursorLineNr = { bg = '#181818' },
-                    CursorLine = { bg = '#1e1e1e' },
-                    FoldColumn = { bg = '#181818' },
-                    DiffAdd = { bg = '#1e2718' },
-                    DiffChange = { bg = '#1e1e18' },
-                    DiffDelete = { bg = '#2a1818' },
-                },
+            local function apply_cozybox_overrides()
+                local links = {
+                    { 'DiffsAdd', 'DiffAdd' },
+                    { 'DiffsDelete', 'DiffDelete' },
+                    { 'DiffsChange', 'DiffChange' },
+                    { 'DiffsText', 'DiffText' },
+                    { 'DiffsClear', 'Normal' },
+                }
+                for _, pair in ipairs(links) do
+                    vim.api.nvim_set_hl(0, pair[1], { link = pair[2], default = false })
+                end
+            end
+
+            vim.api.nvim_create_augroup('cozybox_fallback_highlights', { clear = true })
+            vim.api.nvim_create_autocmd('ColorScheme', {
+                group = 'cozybox_fallback_highlights',
+                callback = function()
+                    if vim.g.colors_name == 'cozybox' then
+                        apply_cozybox_overrides()
+                    end
+                end,
             })
-            vim.cmd.colorscheme('gruvbox')
-            -- Neutralize blue in property highlights and use the custom green tone instead.
-            vim.api.nvim_set_hl(0, '@property', { link = 'GruvboxGreen', force = true })
-            vim.api.nvim_set_hl(0, '@property.lua', { link = 'GruvboxGreen', force = true })
-            vim.api.nvim_set_hl(0, '@lsp.type.property', { link = 'GruvboxGreen', force = true })
-            vim.api.nvim_set_hl(0, '@lsp.type.property.lua', { link = 'GruvboxGreen', force = true })
+
+            vim.cmd.colorscheme('cozybox')
+            apply_cozybox_overrides()
         end,
     },
     {
         'nvim-lualine/lualine.nvim',
         dependencies = { 'nvim-tree/nvim-web-devicons' },
         config = function()
-            local bg = '#181818'
-            local fg = '#d4be98'
-            local gray = '#7c6f64'
             local theme = {
                 normal = {
-                    a = { bg = bg, fg = fg, gui = 'bold' },
-                    b = { bg = bg, fg = fg },
-                    c = { bg = bg, fg = gray },
-                },
-                insert = {
-                    a = { bg = bg, fg = '#a9b665', gui = 'bold' },
+                    a = { gui = 'bold' },
                 },
                 visual = {
-                    a = { bg = bg, fg = '#d3869b', gui = 'bold' },
+                    a = { gui = 'bold' },
                 },
                 replace = {
-                    a = { bg = bg, fg = '#ea6962', gui = 'bold' },
+                    a = { gui = 'bold' },
                 },
                 command = {
-                    a = { bg = bg, fg = '#d8a657', gui = 'bold' },
-                },
-                inactive = {
-                    a = { bg = bg, fg = gray },
-                    b = { bg = bg, fg = gray },
-                    c = { bg = bg, fg = gray },
+                    a = { gui = 'bold' },
                 },
             }
             require('lualine').setup({
                 options = {
-                    theme = theme,
                     icons_enabled = false,
                     component_separators = '',
                     section_separators = { left = '', right = '' },
+                    theme = theme,
                 },
                 sections = {
                     lualine_a = { 'mode' },

@@ -56,6 +56,8 @@
       # Ghostty shell integration expects a resource directory; the Nix app
       # bundle lives in the store instead of /Applications.
       export GHOSTTY_RESOURCES_DIR="${pkgs.ghostty-bin}/Applications/Ghostty.app/Contents/Resources/ghostty"
+
+      export MANPAGER="nvim +Man!"
     '';
 
     initContent = lib.mkMerge [

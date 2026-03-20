@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   ...
@@ -41,6 +42,10 @@ in {
       nodePackages.typescript
       nodePackages.typescript-language-server
     ];
+  };
+
+  home.sessionVariables = lib.mkIf config.programs.neovim.enable {
+    MANPAGER = "nvim +Man!";
   };
 
   xdg.configFile."nvim" = {

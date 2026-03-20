@@ -87,6 +87,7 @@ in {
     diff-so-fancy
     git-filter-repo
     git-lfs
+    goose
     graphite
     google-cloud-sdk
     gwsPackage

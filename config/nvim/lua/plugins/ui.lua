@@ -10,6 +10,7 @@ return {
     "nvim-lualine/lualine.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     config = function()
+      local theme_status = function() return require("theme").statusline_label() end
       local theme = {
         normal = {
           a = { gui = "bold" },
@@ -37,7 +38,7 @@ return {
           lualine_c = { { "filename", path = 0 } },
           lualine_x = { "diagnostics" },
           lualine_y = { "filetype" },
-          lualine_z = { "progress" },
+          lualine_z = { theme_status, "progress" },
         },
       }
     end,

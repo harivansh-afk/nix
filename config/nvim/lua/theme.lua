@@ -1,6 +1,7 @@
 local M = {}
 
-local theme_state_file = vim.fn.stdpath "state" .. "/theme/current"
+local xdg_state_home = vim.env.XDG_STATE_HOME or (vim.env.HOME .. "/.local/state")
+local theme_state_file = xdg_state_home .. "/theme/current"
 local active_schemes = {
   cozybox = true,
   ["cozybox-light"] = true,
@@ -50,6 +51,16 @@ local function colorscheme_for_mode(mode)
   return "cozybox"
 end
 
+function M.statusline_label()
+  local mode = vim.g.cozybox_theme_mode or read_mode()
+  local scheme = vim.g.colors_name or colorscheme_for_mode(mode)
+  local expected_scheme = colorscheme_for_mode(mode)
+
+  if scheme == expected_scheme then return "theme:" .. mode end
+
+  return ("theme:%s/%s"):format(mode, scheme)
+end
+
 function M.apply(mode)
   local next_mode = mode or read_mode()
   local next_scheme = colorscheme_for_mode(next_mode)
@@ -60,7 +71,11 @@ function M.apply(mode)
 
   vim.g.cozybox_theme_mode = next_mode
   apply_cozybox_overrides()
-  vim.schedule(function() pcall(vim.cmd, "redraw!") end)
+  vim.schedule(function()
+    local ok, lualine = pcall(require, "lualine")
+    if ok then pcall(lualine.refresh, { place = { "statusline" } }) end
+    pcall(vim.cmd, "redraw!")
+  end)
 end
 
 function M.setup()

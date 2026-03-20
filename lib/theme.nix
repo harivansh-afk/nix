@@ -53,7 +53,7 @@
       text = "#3c3836";
       mutedText = "#665c54";
       purple = "#d3869b";
-      border = "#c3c7c9";
+      border = "#e7e7e7";
       palette = [
         "#f9f5d7"
         "#ea6962"

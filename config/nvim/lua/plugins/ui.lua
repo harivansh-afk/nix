@@ -4,10 +4,22 @@ return {
         lazy = false,
         priority = 1000,
         config = function()
+            local themeBlue = '#3c6aaa'
+            local themeGreen = '#8ec97c'
             require('gruvbox').setup({
                 contrast = 'hard',
                 transparent_mode = false,
                 italic = { comments = true },
+                palette_overrides = {
+                    bright_blue = themeBlue,
+                    blue = themeBlue,
+                    neutral_blue = themeBlue,
+                    faded_blue = '#4a5fb0',
+                    bright_green = themeGreen,
+                    green = themeGreen,
+                    neutral_green = themeGreen,
+                    faded_green = '#6fae70',
+                },
                 overrides = {
                     MatchParen = { bold = true, underline = true, fg = '#d8a657', bg = '#3c3836' },
                     Normal = { bg = '#181818' },
@@ -17,6 +29,10 @@ return {
                     StatusLineNC = { bg = '#181818' },
                     GruvboxOrange = { fg = '#bdae93' },
                     GruvboxOrangeBold = { fg = '#bdae93', bold = true },
+                    GruvboxBlue = { fg = themeBlue },
+                    GruvboxBlueBold = { fg = themeBlue, bold = true },
+                    GruvboxGreen = { fg = themeGreen },
+                    GruvboxGreenBold = { fg = themeGreen, bold = true },
                     ['@operator'] = { fg = '#bdae93' },
                     Delimiter = { fg = '#bdae93' },
                     ['@punctuation.bracket'] = { fg = '#bdae93' },
@@ -42,6 +58,11 @@ return {
                 },
             })
             vim.cmd.colorscheme('gruvbox')
+            -- Neutralize blue in property highlights and use the custom green tone instead.
+            vim.api.nvim_set_hl(0, '@property', { link = 'GruvboxGreen', force = true })
+            vim.api.nvim_set_hl(0, '@property.lua', { link = 'GruvboxGreen', force = true })
+            vim.api.nvim_set_hl(0, '@lsp.type.property', { link = 'GruvboxGreen', force = true })
+            vim.api.nvim_set_hl(0, '@lsp.type.property.lua', { link = 'GruvboxGreen', force = true })
         end,
     },
     {

@@ -96,7 +96,6 @@
 
       set-option -g status-position bottom
       set-option -g status-style bg=''${BG},fg=''${FG}
-      set-option -g prompt-cursor-colour '#d4be98'
       set-option -g status-justify left
       set-option -g status-left ""
       set-option -g status-right "#(~/.config/tmux/session-list.sh)"
@@ -113,7 +112,7 @@
 
       set-option -g window-status-current-format "\
        \
-      *#I\
+      #[fg=''${MAGENTA}]*#[fg=default]#I\
       #[fg=''${MAGENTA}]:\
       #[fg=default]#W\
        \
@@ -134,7 +133,7 @@
       current=$(tmux display-message -p '#S')
       tmux list-sessions -F '#S' | while IFS= read -r s; do
         if [ "$s" = "$current" ]; then
-          printf ' *%s ' "$s"
+          printf ' #[fg=#d3869b]*#[fg=default]%s ' "$s"
         else
           printf ' %s ' "$s"
         fi

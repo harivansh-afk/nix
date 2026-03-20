@@ -1,5 +1,17 @@
 {config, ...}: let
   defaultMode = "dark";
+  sharedPalette = {
+    red = "#ea6962";
+    green = "#8ec97c";
+    yellow = "#d79921";
+    yellowBright = "#fabd2f";
+    blue = "#5b84de";
+    purple = "#d3869b";
+    purpleNeutral = "#b16286";
+    aqua = "#8ec07c";
+    aquaNeutral = "#689d6a";
+    gray = "#928374";
+  };
   paths = {
     stateDir = "${config.xdg.stateHome}/theme";
     stateFile = "${config.xdg.stateHome}/theme/current";
@@ -22,26 +34,26 @@
       foreground = "#ebdbb2";
       text = "#d4be98";
       mutedText = "#7c6f64";
-      blue = "#5b84de";
-      green = "#8ec97c";
-      purple = "#d3869b";
+      blue = sharedPalette.blue;
+      green = sharedPalette.green;
+      purple = sharedPalette.purple;
       border = "#181818";
       palette = [
         "#1d2021"
-        "#ea6962"
-        "#8ec97c"
-        "#d79921"
-        "#5b84de"
-        "#b16286"
-        "#689d6a"
+        sharedPalette.red
+        sharedPalette.green
+        sharedPalette.yellow
+        sharedPalette.blue
+        sharedPalette.purpleNeutral
+        sharedPalette.aquaNeutral
         "#a89984"
-        "#928374"
-        "#ea6962"
-        "#8ec97c"
-        "#fabd2f"
-        "#5b84de"
-        "#d3869b"
-        "#8ec07c"
+        sharedPalette.gray
+        sharedPalette.red
+        sharedPalette.green
+        sharedPalette.yellowBright
+        sharedPalette.blue
+        sharedPalette.purple
+        sharedPalette.aqua
         "#ebdbb2"
       ];
     };
@@ -56,26 +68,26 @@
       foreground = "#3c3836";
       text = "#3c3836";
       mutedText = "#665c54";
-      blue = "#076678";
-      green = "#427b58";
-      purple = "#d3869b";
+      blue = sharedPalette.blue;
+      green = sharedPalette.green;
+      purple = sharedPalette.purple;
       border = "#e7e7e7";
       palette = [
         "#f9f5d7"
-        "#ea6962"
-        "#8ec97c"
-        "#d8a657"
-        "#5b84de"
-        "#d3869b"
-        "#8ec07c"
+        "#923f3a"
+        sharedPalette.green
+        sharedPalette.yellow
+        "#4261a5"
+        sharedPalette.purpleNeutral
+        sharedPalette.aquaNeutral
         "#7c6f64"
-        "#928374"
-        "#ea6962"
-        "#8ec97c"
-        "#d8a657"
-        "#5b84de"
-        "#d3869b"
-        "#8ec07c"
+        sharedPalette.gray
+        "#923f3a"
+        sharedPalette.green
+        sharedPalette.yellowBright
+        "#4261a5"
+        sharedPalette.purple
+        sharedPalette.aqua
         "#3c3836"
       ];
     };

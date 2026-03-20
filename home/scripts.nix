@@ -9,7 +9,7 @@ in {
   home.packages = builtins.attrValues customScripts.packages;
 
   home.activation.initializeThemeState = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    mkdir -p "${customScripts.theme.paths.stateDir}" "${customScripts.theme.paths.tmuxDir}"
+    mkdir -p "${customScripts.theme.paths.stateDir}" "${customScripts.theme.paths.ghosttyDir}" "${customScripts.theme.paths.tmuxDir}"
 
     if [[ -f "${customScripts.theme.paths.stateFile}" ]]; then
       mode=$(tr -d '[:space:]' < "${customScripts.theme.paths.stateFile}")
@@ -20,14 +20,17 @@ in {
 
     case "$mode" in
       light)
+        ghostty_target="${customScripts.theme.paths.ghosttyDir}/cozybox-light"
         tmux_target="${customScripts.tmuxConfigs.light}"
         ;;
       *)
         printf '%s\n' "${customScripts.theme.defaultMode}" > "${customScripts.theme.paths.stateFile}"
+        ghostty_target="${customScripts.theme.paths.ghosttyDir}/cozybox-dark"
         tmux_target="${customScripts.tmuxConfigs.dark}"
         ;;
     esac
 
+    ln -sfn "$ghostty_target" "${customScripts.theme.paths.ghosttyCurrentFile}"
     ln -sfn "$tmux_target" "${customScripts.theme.paths.tmuxCurrentFile}"
   '';
 }

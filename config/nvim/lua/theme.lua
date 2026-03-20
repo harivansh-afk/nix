@@ -7,11 +7,16 @@ local active_schemes = {
 }
 
 local function ensure_server_socket()
-  if vim.v.servername ~= nil and vim.v.servername ~= "" then
-    return
+  local socket_path = ("/tmp/nvim-%d.sock"):format(vim.fn.getpid())
+  local active_servers = vim.fn.serverlist()
+
+  for _, server in ipairs(active_servers) do
+    if server == socket_path then return end
   end
 
-  local socket_path = ("/tmp/nvim-%d.sock"):format(vim.fn.getpid())
+  local stat = vim.uv.fs_stat(socket_path)
+  if stat and stat.type == "socket" then vim.fn.delete(socket_path) end
+
   vim.fn.serverstart(socket_path)
 end
 
@@ -55,6 +60,7 @@ function M.apply(mode)
 
   vim.g.cozybox_theme_mode = next_mode
   apply_cozybox_overrides()
+  vim.schedule(function() pcall(vim.cmd, "redraw!") end)
 end
 
 function M.setup()

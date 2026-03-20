@@ -64,11 +64,15 @@
     theme = mkScript {
       name = "theme";
       file = ./theme.sh;
-      runtimeInputs = with pkgs; [coreutils neovim tmux];
+      runtimeInputs = with pkgs; [coreutils findutils neovim tmux];
       replacements = {
         "@DEFAULT_MODE@" = theme.defaultMode;
         "@STATE_DIR@" = theme.paths.stateDir;
         "@STATE_FILE@" = theme.paths.stateFile;
+        "@GHOSTTY_DIR@" = theme.paths.ghosttyDir;
+        "@GHOSTTY_CURRENT_FILE@" = theme.paths.ghosttyCurrentFile;
+        "@GHOSTTY_DARK_FILE@" = "${theme.paths.ghosttyDir}/cozybox-dark";
+        "@GHOSTTY_LIGHT_FILE@" = "${theme.paths.ghosttyDir}/cozybox-light";
         "@TMUX_DIR@" = theme.paths.tmuxDir;
         "@TMUX_CURRENT_FILE@" = theme.paths.tmuxCurrentFile;
         "@TMUX_DARK_FILE@" = "${tmuxConfigs.dark}";

@@ -108,6 +108,91 @@
           $path
         )
 
+        _codex_read_theme_mode() {
+          local mode_file="$HOME/.local/state/theme/current"
+          if [[ -f "$mode_file" ]]; then
+            local mode
+            mode=$(tr -d '[:space:]' < "$mode_file")
+            if [[ "$mode" == light || "$mode" == dark ]]; then
+              printf '%s' "$mode"
+              return
+            fi
+          fi
+
+          printf 'dark'
+        }
+
+        _codex_apply_highlight_styles() {
+          local mode="$(_codex_read_theme_mode)"
+          if [[ "$mode" == "''${_CODEX_LAST_HIGHLIGHT_THEME:-}" ]]; then
+            return
+          fi
+
+          typeset -gA ZSH_HIGHLIGHT_STYLES
+
+          if [[ "$mode" == light ]]; then
+            ZSH_HIGHLIGHT_STYLES[arg0]='fg=#427b58'
+            ZSH_HIGHLIGHT_STYLES[autodirectory]='fg=#427b58,underline'
+            ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]='fg=#076678'
+            ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]='fg=#076678'
+            ZSH_HIGHLIGHT_STYLES[back-quoted-argument-delimiter]='fg=#8f3f71'
+            ZSH_HIGHLIGHT_STYLES[bracket-error]='fg=#ea6962,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-1]='fg=#076678,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-2]='fg=#427b58,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-3]='fg=#8f3f71,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-4]='fg=#b57614,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-5]='fg=#076678,bold'
+            ZSH_HIGHLIGHT_STYLES[comment]='fg=#928374'
+            ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter]='fg=#8f3f71'
+            ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]='fg=#076678'
+            ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=#b57614'
+            ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=#b57614'
+            ZSH_HIGHLIGHT_STYLES[global-alias]='fg=#076678'
+            ZSH_HIGHLIGHT_STYLES[globbing]='fg=#076678'
+            ZSH_HIGHLIGHT_STYLES[history-expansion]='fg=#076678'
+            ZSH_HIGHLIGHT_STYLES[path]='fg=#3c3836,underline'
+            ZSH_HIGHLIGHT_STYLES[precommand]='fg=#427b58,underline'
+            ZSH_HIGHLIGHT_STYLES[process-substitution-delimiter]='fg=#8f3f71'
+            ZSH_HIGHLIGHT_STYLES[rc-quote]='fg=#076678'
+            ZSH_HIGHLIGHT_STYLES[redirection]='fg=#b57614'
+            ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=#b57614'
+            ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=#b57614'
+            ZSH_HIGHLIGHT_STYLES[suffix-alias]='fg=#427b58,underline'
+            ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=#ea6962,bold'
+          else
+            ZSH_HIGHLIGHT_STYLES[arg0]='fg=#8ec97c'
+            ZSH_HIGHLIGHT_STYLES[autodirectory]='fg=#8ec97c,underline'
+            ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]='fg=#8ec07c'
+            ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]='fg=#8ec07c'
+            ZSH_HIGHLIGHT_STYLES[back-quoted-argument-delimiter]='fg=#d3869b'
+            ZSH_HIGHLIGHT_STYLES[bracket-error]='fg=#ea6962,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-1]='fg=#5b84de,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-2]='fg=#8ec97c,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-3]='fg=#d3869b,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-4]='fg=#d8a657,bold'
+            ZSH_HIGHLIGHT_STYLES[bracket-level-5]='fg=#8ec07c,bold'
+            ZSH_HIGHLIGHT_STYLES[comment]='fg=#7c6f64'
+            ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter]='fg=#d3869b'
+            ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]='fg=#8ec07c'
+            ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=#d8a657'
+            ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=#d8a657'
+            ZSH_HIGHLIGHT_STYLES[global-alias]='fg=#8ec07c'
+            ZSH_HIGHLIGHT_STYLES[globbing]='fg=#5b84de'
+            ZSH_HIGHLIGHT_STYLES[history-expansion]='fg=#5b84de'
+            ZSH_HIGHLIGHT_STYLES[path]='fg=#d4be98,underline'
+            ZSH_HIGHLIGHT_STYLES[precommand]='fg=#8ec97c,underline'
+            ZSH_HIGHLIGHT_STYLES[process-substitution-delimiter]='fg=#d3869b'
+            ZSH_HIGHLIGHT_STYLES[rc-quote]='fg=#8ec07c'
+            ZSH_HIGHLIGHT_STYLES[redirection]='fg=#d8a657'
+            ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=#d8a657'
+            ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=#d8a657'
+            ZSH_HIGHLIGHT_STYLES[suffix-alias]='fg=#8ec97c,underline'
+            ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=#ea6962,bold'
+          fi
+
+          typeset -g _CODEX_LAST_HIGHLIGHT_THEME="$mode"
+        }
+
         unalias ga 2>/dev/null
 
         git() {
@@ -153,12 +238,15 @@
         zle -N zle-line-finish
 
         precmd() {
+          _codex_apply_highlight_styles
           _codex_set_cursor beam
         }
 
         preexec() {
           _codex_set_cursor beam
         }
+
+        _codex_apply_highlight_styles
 
         if command -v wt >/dev/null 2>&1; then
           eval "$(command wt config shell init zsh)"

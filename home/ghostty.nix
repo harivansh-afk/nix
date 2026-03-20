@@ -5,7 +5,7 @@
 }: let
   theme = import ../lib/theme.nix {inherit config;};
   ghosttyConfig = ''
-    theme = "dark:cozybox-dark,light:cozybox-light"
+    theme = "cozybox-current"
     font-family = Berkeley Mono
     font-codepoint-map = U+f101-U+f25c=nonicons
     background-opacity = 1

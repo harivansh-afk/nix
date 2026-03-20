@@ -69,6 +69,10 @@
         "@DEFAULT_MODE@" = theme.defaultMode;
         "@STATE_DIR@" = theme.paths.stateDir;
         "@STATE_FILE@" = theme.paths.stateFile;
+        "@FZF_DIR@" = theme.paths.fzfDir;
+        "@FZF_CURRENT_FILE@" = theme.paths.fzfCurrentFile;
+        "@FZF_DARK_FILE@" = "${theme.paths.fzfDir}/cozybox-dark";
+        "@FZF_LIGHT_FILE@" = "${theme.paths.fzfDir}/cozybox-light";
         "@GHOSTTY_DIR@" = theme.paths.ghosttyDir;
         "@GHOSTTY_CURRENT_FILE@" = theme.paths.ghosttyCurrentFile;
         "@GHOSTTY_DARK_FILE@" = "${theme.paths.ghosttyDir}/cozybox-dark";

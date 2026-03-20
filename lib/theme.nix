@@ -3,6 +3,8 @@
   paths = {
     stateDir = "${config.xdg.stateHome}/theme";
     stateFile = "${config.xdg.stateHome}/theme/current";
+    fzfDir = "${config.xdg.configHome}/fzf/themes";
+    fzfCurrentFile = "${config.xdg.configHome}/fzf/themes/theme";
     ghosttyDir = "${config.xdg.configHome}/ghostty/themes";
     ghosttyCurrentFile = "${config.xdg.configHome}/ghostty/themes/cozybox-current";
     tmuxDir = "${config.xdg.configHome}/tmux/theme";
@@ -20,6 +22,8 @@
       foreground = "#ebdbb2";
       text = "#d4be98";
       mutedText = "#7c6f64";
+      blue = "#5b84de";
+      green = "#8ec97c";
       purple = "#d3869b";
       border = "#181818";
       palette = [
@@ -52,6 +56,8 @@
       foreground = "#3c3836";
       text = "#3c3836";
       mutedText = "#665c54";
+      blue = "#076678";
+      green = "#427b58";
       purple = "#d3869b";
       border = "#e7e7e7";
       palette = [
@@ -104,6 +110,14 @@
     set-option -g pane-border-style fg=${theme.border}
     set-option -g pane-active-border-style fg=${theme.border}
   '';
+
+  renderFzf = mode: let
+    theme = themes.${mode};
+  in ''
+    --color=fg:${theme.text},bg:${theme.background},hl:${theme.blue}
+    --color=fg+:${theme.text},bg+:${theme.surface},hl+:${theme.blue}
+    --color=info:${theme.green},prompt:${theme.blue},pointer:${theme.text},marker:${theme.green},spinner:${theme.text}
+  '';
 in {
-  inherit defaultMode paths renderGhostty renderTmux themes;
+  inherit defaultMode paths renderFzf renderGhostty renderTmux themes;
 }

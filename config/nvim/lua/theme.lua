@@ -71,6 +71,8 @@ function M.apply(mode)
 
   vim.g.cozybox_theme_mode = next_mode
   apply_cozybox_overrides()
+  local ok_reload, fzf_reload = pcall(require, "config.fzf_reload")
+  if ok_reload then pcall(fzf_reload.reload) end
   vim.schedule(function()
     local ok, lualine = pcall(require, "lualine")
     if ok then pcall(lualine.refresh, { place = { "statusline" } }) end

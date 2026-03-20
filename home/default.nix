@@ -3,6 +3,7 @@
     ./bat.nix
     ./claude.nix
     ./codex.nix
+    ./fzf.nix
     ./gcloud.nix
     ./gh.nix
     ./ghostty.nix

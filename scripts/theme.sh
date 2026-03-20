@@ -16,17 +16,20 @@ read_mode() {
 
 link_mode_assets() {
   local mode="$1"
+  local fzf_target
   local ghostty_target
   local tmux_target
   local apple_dark_mode
 
   case "$mode" in
     dark)
+      fzf_target="@FZF_DARK_FILE@"
       ghostty_target="@GHOSTTY_DARK_FILE@"
       tmux_target="@TMUX_DARK_FILE@"
       apple_dark_mode=true
       ;;
     light)
+      fzf_target="@FZF_LIGHT_FILE@"
       ghostty_target="@GHOSTTY_LIGHT_FILE@"
       tmux_target="@TMUX_LIGHT_FILE@"
       apple_dark_mode=false
@@ -37,8 +40,9 @@ link_mode_assets() {
       ;;
   esac
 
-  mkdir -p "@STATE_DIR@" "@GHOSTTY_DIR@" "@TMUX_DIR@"
+  mkdir -p "@STATE_DIR@" "@FZF_DIR@" "@GHOSTTY_DIR@" "@TMUX_DIR@"
   printf '%s\n' "$mode" > "@STATE_FILE@"
+  ln -sfn "$fzf_target" "@FZF_CURRENT_FILE@"
   ln -sfn "$ghostty_target" "@GHOSTTY_CURRENT_FILE@"
   ln -sfn "$tmux_target" "@TMUX_CURRENT_FILE@"
 

@@ -69,21 +69,21 @@
       text = "#3c3836";
       mutedText = "#665c54";
       blue = sharedPalette.blue;
-      green = sharedPalette.green;
+      green = "#427b58";
       purple = sharedPalette.purple;
       border = "#e7e7e7";
       palette = [
         "#f9f5d7"
-        "#923f3a"
-        sharedPalette.green
+        "#c5524a"
+        "#427b58"
         sharedPalette.yellow
         "#4261a5"
         sharedPalette.purpleNeutral
         sharedPalette.aquaNeutral
         "#7c6f64"
         sharedPalette.gray
-        "#923f3a"
-        sharedPalette.green
+        "#c5524a"
+        "#427b58"
         sharedPalette.yellowBright
         "#4261a5"
         sharedPalette.purple

@@ -6,8 +6,12 @@
 }: let
   nvimConfig = lib.cleanSourceWith {
     src = ../config/nvim;
-    filter = path: type: builtins.baseNameOf path != ".git";
+    filter = path: type:
+      builtins.baseNameOf path != ".git"
+      && builtins.baseNameOf path != "lazy-lock.json";
   };
+  lazyLockSeed = ../config/nvim/lazy-lock.json;
+  lazyLockPath = "${config.xdg.stateHome}/nvim/lazy-lock.json";
   python = pkgs.writeShellScriptBin "python" ''
     exec ${pkgs.python3}/bin/python3 "$@"
   '';
@@ -52,4 +56,15 @@ in {
     source = nvimConfig;
     recursive = true;
   };
+
+  home.activation.seedNvimLazyLock = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    state_dir="${config.xdg.stateHome}/nvim"
+    lockfile="${lazyLockPath}"
+
+    if [ ! -e "$lockfile" ]; then
+      mkdir -p "$state_dir"
+      cp ${lazyLockSeed} "$lockfile"
+      chmod u+w "$lockfile"
+    fi
+  '';
 }

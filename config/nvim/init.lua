@@ -48,6 +48,7 @@ for _, plugin in ipairs(disabled_plugins) do
 end
 
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
+local lazylock = vim.fn.stdpath('state') .. '/lazy-lock.json'
 if not vim.uv.fs_stat(lazypath) then
     vim.fn.system({
         'git',
@@ -63,4 +64,5 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup('plugins', {
     defaults = { lazy = false },
     change_detection = { enabled = false },
+    lockfile = lazylock,
 })

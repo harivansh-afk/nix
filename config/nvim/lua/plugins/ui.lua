@@ -36,9 +36,9 @@ return {
           lualine_a = { "mode" },
           lualine_b = { "FugitiveHead", "diff" },
           lualine_c = { { "filename", path = 0 } },
-          lualine_x = { "diagnostics" },
-          lualine_y = { "filetype" },
-          lualine_z = { theme_status, "progress" },
+          lualine_x = {},
+          lualine_y = {},
+          lualine_z = { "progress" },
         },
       }
     end,

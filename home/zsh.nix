@@ -250,6 +250,12 @@
 
         if command -v wt >/dev/null 2>&1; then
           eval "$(command wt config shell init zsh)"
+
+          # `wt` changes directories by sourcing directives into the current shell,
+          # so wrappers around it must stay shell functions instead of scripts.
+          wtc() {
+            wt switch --create --base @ "$@"
+          }
         fi
       '')
 

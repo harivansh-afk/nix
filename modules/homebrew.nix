@@ -22,7 +22,7 @@
       "codex"
       "rectangle"
       "raycast"
-      "riptide-dev"
+      "riptide-beta"
       "thebrowsercompany-dia"
       "wispr-flow"
     ];

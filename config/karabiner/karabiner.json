@@ -38,7 +38,7 @@
                 },
                 "to": [
                   {
-                    "shell_command": "open -a 'Riptide-dev'"
+                    "shell_command": "open -a 'Riptide-Beta'"
                   }
                 ],
                 "type": "basic"

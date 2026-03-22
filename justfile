@@ -15,7 +15,7 @@ build config='darwin':
 switch config='darwin':
   #!/usr/bin/env bash
   if [[ "{{config}}" == "darwin" ]]; then
-    sudo env PATH="$PATH" nix --extra-experimental-features 'nix-command flakes' run github:LnL7/nix-darwin/master#darwin-rebuild -- switch --flake path:.#{{config}}
+    sudo env PATH="$PATH" nix --extra-experimental-features 'nix-command flakes' run github:nix-darwin/nix-darwin/master#darwin-rebuild -- switch --flake path:.#{{config}}
   else
     nix --extra-experimental-features 'nix-command flakes' run github:nix-community/home-manager -- switch --flake path:.#{{config}} -b hm-bak
   fi

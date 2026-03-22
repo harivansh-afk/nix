@@ -1,7 +1,5 @@
 {...}: {
   imports = [
     ./common.nix
-    ./karabiner.nix
-    ./rectangle.nix
   ];
 }

@@ -4,11 +4,21 @@ default:
 check:
   nix --extra-experimental-features 'nix-command flakes' flake check
 
-build:
-  nix --extra-experimental-features 'nix-command flakes' build .#darwinConfigurations.hari-macbook-pro.system
+build config='darwin':
+  #!/usr/bin/env bash
+  if [[ "{{config}}" == "darwin" ]]; then
+    nix --extra-experimental-features 'nix-command flakes' build path:.#darwinConfigurations.{{config}}.system
+  else
+    nix --extra-experimental-features 'nix-command flakes' run github:nix-community/home-manager -- build --flake path:.#{{config}}
+  fi
 
-switch:
-  sudo env PATH="$PATH" nix --extra-experimental-features 'nix-command flakes' run github:LnL7/nix-darwin/master#darwin-rebuild -- switch --flake .#hari-macbook-pro
+switch config='darwin':
+  #!/usr/bin/env bash
+  if [[ "{{config}}" == "darwin" ]]; then
+    sudo env PATH="$PATH" nix --extra-experimental-features 'nix-command flakes' run github:LnL7/nix-darwin/master#darwin-rebuild -- switch --flake path:.#{{config}}
+  else
+    nix --extra-experimental-features 'nix-command flakes' run github:nix-community/home-manager -- switch --flake path:.#{{config}} -b hm-bak
+  fi
 
 fmt:
   nix --extra-experimental-features 'nix-command flakes' fmt

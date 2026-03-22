@@ -1,8 +1,12 @@
 {
+  inputs,
+  lib,
   pkgs,
   username,
   ...
-}: {
+}: let
+  packageSets = import ../lib/package-sets.nix {inherit inputs lib pkgs;};
+in {
   nix.enable = true;
 
   nix.settings = {
@@ -31,23 +35,7 @@
   programs.zsh.enable = true;
   environment.shells = [pkgs.zsh];
 
-  environment.systemPackages = with pkgs; [
-    curl
-    fd
-    fzf
-    gnupg
-    go_1_26
-    jq
-    just
-    nodejs_22
-    python3
-    ripgrep
-    rustup
-    tree
-    uv
-    wget
-    zoxide
-  ];
+  environment.systemPackages = packageSets.core;
 
   environment.variables = {
     EDITOR = "nvim";

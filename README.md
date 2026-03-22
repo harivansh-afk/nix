@@ -1,5 +1,32 @@
 # Nix Config
 
+## New Machine
+
+### Darwin
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+git clone https://github.com/harivansh-afk/nix.git ~/Documents/GitHub/nix
+cd ~/Documents/GitHub/nix
+sudo nix --extra-experimental-features 'nix-command flakes' run github:nix-darwin/nix-darwin/master#darwin-rebuild -- switch --flake path:.#darwin
+exec zsh -l
+bw login
+export BW_SESSION="$(bw unlock --raw)"
+just secrets-sync
+just secrets-restore-files
+exec zsh -l
+```
+
+### Linux
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+git clone https://github.com/harivansh-afk/nix.git ~/Documents/GitHub/nix
+cd ~/Documents/GitHub/nix
+nix run github:nix-community/home-manager -- switch --flake path:.#linux -b hm-bak
+exec zsh -l
+```
+
 ## Layout
 
 - `flake.nix`: top-level flake and host wiring

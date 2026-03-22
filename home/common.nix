@@ -13,6 +13,7 @@
     ./lazygit.nix
     ./migration.nix
     ./nvim.nix
+    ./skills.nix
     ./scripts.nix
     ./tmux.nix
     ./zsh.nix

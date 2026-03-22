@@ -7,6 +7,8 @@
     inputs.googleworkspace-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
   claudePackage =
     inputs.claudeCode.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  agentcomputerPackage =
+    inputs.agentcomputer-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
   memex = pkgs.stdenvNoCC.mkDerivation rec {
     pname = "memex";
@@ -126,6 +128,9 @@ in {
       texliveFull
       yt-dlp
     ])
+    ++ [
+      agentcomputerPackage
+    ]
     ++ lib.optionals pkgs.stdenv.isDarwin [
       graphite
       memex

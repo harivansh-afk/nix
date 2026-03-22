@@ -3,8 +3,8 @@
 ## Layout
 
 - `flake.nix`: top-level flake and host wiring
-- `hosts/hari-macbook-pro/default.nix`: this machine's host config
-- `hosts/workstation/default.nix`: standalone Linux Home Manager host config
+- `hosts/darwin/default.nix`: macOS nix-darwin host config
+- `hosts/linux/default.nix`: standalone Linux Home Manager host config
 - `modules/base.nix`: Nix settings and core packages
 - `modules/macos.nix`: macOS defaults and host-level settings
 - `modules/packages.nix`: system packages and fonts

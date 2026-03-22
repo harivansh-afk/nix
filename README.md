@@ -3,7 +3,7 @@
 ## Approach
 
 This repo is the source of truth for the machine's reproducible developer
-environment:
+environment across macOS and Linux:
 
 - `home/` contains the Home Manager modules for user-facing tools
 - `config/` contains the repo-owned config trees copied from your daily setup
@@ -12,16 +12,21 @@ environment:
   that are still easier to keep in Brew on macOS
 - `home/migration.nix` contains one-time ownership handoff logic from `~/dots`
   into Home Manager so the steady-state modules can stay focused on real config
+- `lib/package-sets.nix` defines the shared CLI package subsets used by both
+  macOS and Linux hosts
 
 ## Layout
 
 - `flake.nix`: top-level flake and host wiring
 - `hosts/hari-macbook-pro/default.nix`: this machine's host config
+- `hosts/workstation/default.nix`: standalone Linux Home Manager host config
 - `modules/base.nix`: Nix settings and core packages
 - `modules/macos.nix`: macOS defaults and host-level settings
 - `modules/packages.nix`: system packages and fonts
 - `modules/homebrew.nix`: the remaining Homebrew-managed GUI apps
 - `home/`: Home Manager modules for shell, editor, CLI tools, and app config
+- `home/common.nix`: shared Home Manager imports used by macOS and Linux
+- `home/linux.nix`: Linux Home Manager entrypoint
 - `home/migration.nix`: transitional cleanup for old `~/dots` symlinks
 - `config/`: repo-owned config files consumed by Home Manager
 
@@ -57,14 +62,22 @@ Bitwarden note:
 First switch:
 
 ```bash
-nix run github:LnL7/nix-darwin/master#darwin-rebuild -- switch --flake .#hari-macbook-pro
+nix run github:LnL7/nix-darwin/master#darwin-rebuild -- switch --flake path:.#hari-macbook-pro
+```
+
+First Linux switch:
+
+```bash
+nix run github:nix-community/home-manager -- switch --flake path:.#workstation -b hm-bak
 ```
 
 After the first successful switch:
 
 ```bash
 just switch
+just switch workstation
 just build
+just build workstation
 just check
 ```
 

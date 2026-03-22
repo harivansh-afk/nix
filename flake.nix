@@ -1,5 +1,5 @@
 {
-  description = "Rathi's macOS nix-darwin + Home Manager config";
+  description = "Rathi's macOS nix-darwin + Linux Home Manager config";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -38,18 +38,28 @@
     nix-homebrew,
     ...
   }: let
-    system = "aarch64-darwin";
+    darwinSystem = "aarch64-darwin";
+    linuxSystem = "x86_64-linux";
     username = "rathi";
-    hostname = "hari-macbook-pro";
-    pkgs = import nixpkgs {inherit system;};
+    darwinHostname = "hari-macbook-pro";
+    linuxHostname = "workstation";
+    darwinPkgs = import nixpkgs {system = darwinSystem;};
+    linuxPkgs = import nixpkgs {
+      system = linuxSystem;
+      config.allowUnfree = true;
+    };
   in {
-    formatter.${system} = pkgs.alejandra;
+    formatter.${darwinSystem} = darwinPkgs.alejandra;
+    formatter.${linuxSystem} = linuxPkgs.alejandra;
 
-    darwinConfigurations.${hostname} = nix-darwin.lib.darwinSystem {
-      inherit system;
-      specialArgs = {inherit inputs self username hostname;};
+    darwinConfigurations.${darwinHostname} = nix-darwin.lib.darwinSystem {
+      system = darwinSystem;
+      specialArgs = {
+        inherit inputs self username;
+        hostname = darwinHostname;
+      };
       modules = [
-        ./hosts/${hostname}
+        ./hosts/${darwinHostname}
         home-manager.darwinModules.home-manager
         nix-homebrew.darwinModules.nix-homebrew
         {
@@ -57,7 +67,10 @@
 
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
-          home-manager.extraSpecialArgs = {inherit inputs self username hostname;};
+          home-manager.extraSpecialArgs = {
+            inherit inputs self username;
+            hostname = darwinHostname;
+          };
           home-manager.backupFileExtension = "hm-bak";
           home-manager.users.${username} = import ./home;
 
@@ -68,6 +81,17 @@
             autoMigrate = true;
           };
         }
+      ];
+    };
+
+    homeConfigurations.${linuxHostname} = home-manager.lib.homeManagerConfiguration {
+      pkgs = linuxPkgs;
+      extraSpecialArgs = {
+        inherit inputs self username;
+        hostname = linuxHostname;
+      };
+      modules = [
+        ./hosts/${linuxHostname}
       ];
     };
   };

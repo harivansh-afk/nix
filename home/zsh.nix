@@ -22,43 +22,53 @@
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
 
-    shellAliases = {
-      co = "codex --dangerously-bypass-approvals-and-sandbox";
-      ca = "cursor-agent";
-      cc = "claude";
-      ch = "claude-handoff";
-      cl = "clear";
-      gc = "git commit";
-      gd = "git diff";
-      gk = "git checkout";
-      gp = "git push";
-      gpo = "git pull origin";
-      gs = "git status";
-      ld = "lumen diff";
-      lg = "lazygit";
-      nim = "nvim .";
-      sshnet = "ssh -i ~/.ssh/atlas-ssh.txt rathiharivansh@152.53.195.59";
-      tailscale = "/Applications/Tailscale.app/Contents/MacOS/Tailscale";
+    shellAliases =
+      {
+        co = "codex --dangerously-bypass-approvals-and-sandbox";
+        ca = "cursor-agent";
+        cc = "claude";
+        ch = "claude-handoff";
+        cl = "clear";
+        gc = "git commit";
+        gd = "git diff";
+        gk = "git checkout";
+        gp = "git push";
+        gpo = "git pull origin";
+        gs = "git status";
+        ld = "lumen diff";
+        lg = "lazygit";
+        nim = "nvim .";
+        sshnet = "ssh -i ~/.ssh/atlas-ssh.txt rathiharivansh@152.53.195.59";
 
-      # nix helpers
-      nr = "nix profile remove"; # nr <index> - remove from profile
-      ns = "nix search nixpkgs"; # ns <query> - search packages
-      nls = "nix profile list"; # nls - list installed profile packages
-      nrb = "sudo darwin-rebuild switch --flake ~/Documents/GitHub/nix"; # nrb - rebuild declarative config
-      nup = "nix flake update ~/Documents/GitHub/nix && sudo darwin-rebuild switch --flake ~/Documents/GitHub/nix"; # nup - update flake + rebuild
+        # nix helpers
+        nr = "nix profile remove"; # nr <index> - remove from profile
+        ns = "nix search nixpkgs"; # ns <query> - search packages
+        nls = "nix profile list"; # nls - list installed profile packages
+    }
+    // lib.optionalAttrs pkgs.stdenv.isDarwin {
+      tailscale = "/Applications/Tailscale.app/Contents/MacOS/Tailscale";
+      nrb = "sudo darwin-rebuild switch --flake path:$HOME/Documents/GitHub/nix#hari-macbook-pro"; # nrb - rebuild declarative config
+      nup = "nix flake update $HOME/Documents/GitHub/nix && sudo darwin-rebuild switch --flake path:$HOME/Documents/GitHub/nix#hari-macbook-pro"; # nup - update flake + rebuild
+    }
+    // lib.optionalAttrs pkgs.stdenv.isLinux {
+      nrb = "nix run github:nix-community/home-manager -- switch --flake path:$HOME/Documents/GitHub/nix#workstation -b hm-bak"; # nrb - rebuild declarative config
+      nup = "nix flake update $HOME/Documents/GitHub/nix && nix run github:nix-community/home-manager -- switch --flake path:$HOME/Documents/GitHub/nix#workstation -b hm-bak"; # nup - update flake + rebuild
     };
 
-    envExtra = ''
-      if [[ -f "$HOME/.cargo/env" ]]; then
-        . "$HOME/.cargo/env"
-      fi
-
-      # Ghostty shell integration expects a resource directory; the Nix app
-      # bundle lives in the store instead of /Applications.
-      export GHOSTTY_RESOURCES_DIR="${pkgs.ghostty-bin}/Applications/Ghostty.app/Contents/Resources/ghostty"
-
-      export MANPAGER="nvim +Man!"
-    '';
+    envExtra =
+      ''
+        if [[ -f "$HOME/.cargo/env" ]]; then
+          . "$HOME/.cargo/env"
+        fi
+      ''
+      + lib.optionalString pkgs.stdenv.isDarwin ''
+        # Ghostty shell integration expects a resource directory; the Nix app
+        # bundle lives in the store instead of /Applications.
+        export GHOSTTY_RESOURCES_DIR="${pkgs.ghostty-bin}/Applications/Ghostty.app/Contents/Resources/ghostty"
+      ''
+      + ''
+        export MANPAGER="nvim +Man!"
+      '';
 
     initContent = lib.mkMerge [
       (lib.mkOrder 550 ''
@@ -88,7 +98,11 @@
         [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
         export BUN_INSTALL="$HOME/.bun"
-        export PNPM_HOME="$HOME/Library/pnpm"
+        export PNPM_HOME="${
+          if pkgs.stdenv.isDarwin
+          then "$HOME/Library/pnpm"
+          else "${config.xdg.dataHome}/pnpm"
+        }"
         bindkey -v
         typeset -U path PATH
         path=(
@@ -103,8 +117,10 @@
           "/etc/profiles/per-user/${config.home.username}/bin"
           "/run/current-system/sw/bin"
           "/nix/var/nix/profiles/default/bin"
+          ${lib.optionalString pkgs.stdenv.isDarwin ''
           "/opt/homebrew/bin"
           "/opt/homebrew/sbin"
+        ''}
           $path
         )
 

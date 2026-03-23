@@ -6,6 +6,7 @@ return {
         init = function()
             vim.g.canola = {
                 columns = { 'icon', 'git_status' },
+                delete = { wipe = false, recursive = true},
                 hidden = { enabled = false },
                 keymaps = {
                     ['g?'] = { callback = 'actions.show_help', mode = 'n' },

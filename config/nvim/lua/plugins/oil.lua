@@ -24,10 +24,10 @@ return {
 
             local ns = vim.api.nvim_create_namespace('canola_git_trailing')
             local symbols = {
-                M = { '~', 'DiagnosticWarn' },
-                A = { '+', 'DiagnosticOk' },
-                D = { '-', 'DiagnosticError' },
-                R = { '→', 'DiagnosticWarn' },
+                M = { 'M', 'DiagnosticWarn' },
+                A = { 'A', 'DiagnosticOk' },
+                D = { 'D', 'DiagnosticError' },
+                R = { 'R', 'DiagnosticWarn' },
                 ['?'] = { '?', 'DiagnosticInfo' },
                 ['!'] = { '!', 'Comment' },
             }

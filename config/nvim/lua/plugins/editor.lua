@@ -147,21 +147,6 @@ return {
             map('n', '<leader>co', open_current_cp_problem_url, { desc = 'CP open problem url' })
         end,
     },
-    {
-        'supermaven-inc/supermaven-nvim',
-        opts = {
-            keymaps = {
-                accept_suggestion = '<Tab>',
-                clear_suggestion = '<C-]>',
-                accept_word = '<C-j>',
-            },
-            ignore_filetypes = { gitcommit = true },
-            color = {
-                suggestion_color = vim.api.nvim_get_hl(0, { name = 'Comment' }).fg,
-                cterm = 244,
-            },
-        },
-    },
 {
   'barrettruth/pending.nvim',
   init = function()

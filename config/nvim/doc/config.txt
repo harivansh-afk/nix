@@ -27,7 +27,7 @@ Global helpers defined in init.lua:
 Default (no LSP, no completion): >bash
     curl -fsSL https://raw.githubusercontent.com/harivansh-afk/nvim/main/install.sh | bash
 <
-Full install (LSP + Supermaven): >bash
+Full install (LSP + completion): >bash
     curl -fsSL https://raw.githubusercontent.com/harivansh-afk/nvim/main/install.sh | bash -s -- --bells-and-whistles
 <
 Options: >
@@ -54,7 +54,8 @@ Options: >
         rust_analyzer.lua
         ts_ls.lua
       plugins/
-        editor.lua              Autopairs, flash, surround, ufo, supermaven
+        editor.lua              Autopairs, flash, surround, ufo
+        cmp.lua                 Blink.cmp completion
         fzf.lua                 Fzf-lua fuzzy finder
         git.lua                 Fugitive, gitsigns, diffs.nvim
         lsp.lua                 nvim-lspconfig
@@ -100,7 +101,7 @@ All plugins load at startup via `defaults = { lazy = false }`.
     kylechui/nvim-surround          Surround operations
     folke/flash.nvim                Jump/search motions
     kevinhwang91/nvim-ufo           Code folding
-    supermaven-inc/supermaven-nvim   Inline AI suggestions
+    saghen/blink.cmp                Autocompletion (LSP, path, buffer, snippets)
 
 ==============================================================================
 5. KEYMAPS                                                  *config-keymaps*

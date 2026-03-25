@@ -20,6 +20,5 @@
   "pending.nvim": { "branch": "main", "commit": "077e4121b4fec369ad9da00a00228a3daf4e9031" },
   "preview.nvim": { "branch": "main", "commit": "39406c559cf90255bc3046df0dbad48b7c1e8319" },
   "promise-async": { "branch": "main", "commit": "119e8961014c9bfaf1487bf3c2a393d254f337e2" },
-  "supermaven-nvim": { "branch": "main", "commit": "07d20fce48a5629686aefb0a7cd4b25e33947d50" },
   "vim-fugitive": { "branch": "master", "commit": "3b753cf8c6a4dcde6edee8827d464ba9b8c4a6f0" }
 }

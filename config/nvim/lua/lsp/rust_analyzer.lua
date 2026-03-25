@@ -1,7 +1,8 @@
 return {
     settings = {
         ['rust-analyzer'] = {
-            checkOnSave = { command = 'clippy' },
+            checkOnSave = true,
+            check = { command = 'clippy' },
             cargo = { allFeatures = true },
             procMacro = { enable = true },
             diagnostics = { enable = true },

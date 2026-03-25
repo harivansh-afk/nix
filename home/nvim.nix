@@ -16,6 +16,10 @@
     exec ${pkgs.python3}/bin/python3 "$@"
   '';
 in {
+  # Keep rust-analyzer in the user profile so it shadows rustup's proxy in
+  # /run/current-system/sw/bin when Neovim resolves LSP executables.
+  home.packages = [pkgs.rust-analyzer];
+
   programs.neovim = {
     enable = true;
     viAlias = true;
@@ -38,7 +42,6 @@ in {
       python
       python3
       ripgrep
-      rust-analyzer
       stylua
       vscode-langservers-extracted
       nodePackages.bash-language-server

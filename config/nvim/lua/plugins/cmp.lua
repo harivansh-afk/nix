@@ -23,17 +23,19 @@ return {
                 window = {
                     border = 'single',
                     scrollbar = false,
+                    winhighlight = 'Normal:BlinkCmpDoc,FloatBorder:BlinkCmpDocBorder',
                 },
             },
             menu = {
                 auto_show = true,
                 border = 'single',
                 scrollbar = false,
+                winhighlight = 'Normal:BlinkCmpMenu,FloatBorder:BlinkCmpMenuBorder,CursorLine:BlinkCmpMenuSelection',
                 draw = {
                     treesitter = { 'lsp' },
                     columns = {
+                        { 'kind_icon', gap = 1 },
                         { 'label', 'label_description', gap = 1 },
-                        { 'kind' },
                     },
                 },
             },

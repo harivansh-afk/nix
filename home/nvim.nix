@@ -39,7 +39,6 @@ in {
       python3
       ripgrep
       rust-analyzer
-      rustup
       stylua
       vscode-langservers-extracted
       nodePackages.bash-language-server

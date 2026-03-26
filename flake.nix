@@ -29,6 +29,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    openspec = {
+      url = "github:Fission-AI/OpenSpec";
+    };
+
     nix-homebrew = {
       url = "github:zhaofengli-wip/nix-homebrew";
     };

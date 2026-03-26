@@ -9,6 +9,8 @@
     inputs.claudeCode.packages.${pkgs.stdenv.hostPlatform.system}.default;
   agentcomputerPackage =
     inputs.agentcomputer-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  openspecPackage =
+    inputs.openspec.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
   memex = pkgs.stdenvNoCC.mkDerivation rec {
     pname = "memex";
@@ -130,6 +132,7 @@ in {
     ])
     ++ [
       agentcomputerPackage
+      openspecPackage
     ]
     ++ lib.optionals pkgs.stdenv.isDarwin [
       graphite

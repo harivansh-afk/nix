@@ -20,6 +20,7 @@
     casks = [
       "cap"
       "codex"
+      "hammerspoon"
       "rectangle"
       "raycast"
       "riptide-beta"

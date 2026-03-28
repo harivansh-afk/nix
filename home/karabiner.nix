@@ -3,13 +3,22 @@
   lib,
   ...
 }: {
-  # Karabiner-Elements destroys symlinks (unlink + rewrite), so we cannot use
-  # xdg.configFile.  Instead, copy the file on every activation so Karabiner
-  # sees a real mutable file whose contents match our nix-managed source.
+  # Karabiner-Elements destroys file-level symlinks (unlink + rewrite), but
+  # directory-level symlinks survive.  Point ~/.config/karabiner at the repo
+  # directory so changes are tracked in git and Karabiner can write freely.
   home.activation.karabinerConfig = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    karabiner_dir="${config.home.homeDirectory}/.config/karabiner"
-    mkdir -p "$karabiner_dir"
-    cp -f "${../config/karabiner/karabiner.json}" "$karabiner_dir/karabiner.json"
-    chmod 600 "$karabiner_dir/karabiner.json"
+    karabiner_link="${config.home.homeDirectory}/.config/karabiner"
+    karabiner_src="/Users/rathi/Documents/GitHub/nix/config/karabiner"
+
+    if [ -L "$karabiner_link" ]; then
+      # Already a symlink - nothing to do
+      :
+    elif [ -d "$karabiner_link" ]; then
+      # Real directory exists - remove it, replace with symlink
+      rm -rf "$karabiner_link"
+      ln -s "$karabiner_src" "$karabiner_link"
+    else
+      ln -s "$karabiner_src" "$karabiner_link"
+    fi
   '';
 }

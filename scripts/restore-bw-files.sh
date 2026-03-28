@@ -160,3 +160,9 @@ restore_aws_credentials
 restore_gcloud_adc
 restore_plain_note 'Machine: Codex Auth' "${HOME}/.codex/auth.json" 600
 restore_plain_note 'Machine: Vercel Auth' "${HOME}/Library/Application Support/com.vercel.cli/auth.json" 600
+
+# GitHub CLI auth
+if command -v gh >/dev/null 2>&1; then
+  read_note 'Machine: GitHub Token' | gh auth login --with-token
+  printf 'restored gh auth\n'
+fi

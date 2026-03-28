@@ -244,48 +244,6 @@
             ]
           },
           {
-            "description": "Caps Lock + U = Page Up",
-            "manipulators": [
-              {
-                "from": {
-                  "key_code": "u",
-                  "modifiers": {
-                    "mandatory": [
-                      "left_control"
-                    ]
-                  }
-                },
-                "to": [
-                  {
-                    "key_code": "page_up"
-                  }
-                ],
-                "type": "basic"
-              }
-            ]
-          },
-          {
-            "description": "Caps Lock + D = Page Down",
-            "manipulators": [
-              {
-                "from": {
-                  "key_code": "d",
-                  "modifiers": {
-                    "mandatory": [
-                      "left_control"
-                    ]
-                  }
-                },
-                "to": [
-                  {
-                    "key_code": "page_down"
-                  }
-                ],
-                "type": "basic"
-              }
-            ]
-          },
-          {
             "description": "Right Command = Ctrl+B (tmux prefix)",
             "manipulators": [
               {

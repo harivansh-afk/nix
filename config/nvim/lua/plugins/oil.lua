@@ -17,6 +17,7 @@ return {
                     ['<C-c>'] = { callback = 'actions.close', mode = 'n' },
                     ['-'] = { callback = 'actions.parent', mode = 'n' },
                     ['g.'] = { callback = 'actions.toggle_hidden', mode = 'n' },
+                    ['<C-t>'] = false,
                 },
             }
             map('n', '-', '<cmd>Canola<cr>')

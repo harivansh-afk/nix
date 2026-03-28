@@ -11,11 +11,13 @@
     taps = [
       "humanlayer/humanlayer"
       "gromgit/fuse"
+      "mutagen-io/mutagen"
     ];
 
     brews = [
       "bitwarden-cli"
       "gromgit/fuse/sshfs-mac"
+      "mutagen-io/mutagen/mutagen"
     ];
 
     casks = [

@@ -68,6 +68,17 @@ return {
         end,
     },
     {
+        'barrettruth/forge.nvim',
+        dependencies = { 'ibhagwan/fzf-lua' },
+        init = function()
+            vim.g.forge = {
+                keys = {
+                    picker = '<c-t>',
+                },
+            }
+        end,
+    },
+    {
         'barrettruth/diffs.nvim',
         enabled = true,
         init = function()

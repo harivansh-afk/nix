@@ -265,6 +265,27 @@
             ]
           },
           {
+            "description": "Control + H = Left Arrow",
+            "manipulators": [
+              {
+                "from": {
+                  "key_code": "h",
+                  "modifiers": {
+                    "mandatory": [
+                      "left_control"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "key_code": "left_arrow"
+                  }
+                ],
+                "type": "basic"
+              }
+            ]
+          },
+          {
             "description": "Right Command = Ctrl+B (tmux prefix)",
             "manipulators": [
               {

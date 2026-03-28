@@ -130,8 +130,10 @@ in {
       texliveFull
       yt-dlp
     ])
-    ++ [
+    ++ lib.optionals pkgs.stdenv.isDarwin [
       agentcomputerPackage
+    ]
+    ++ [
       openspecPackage
     ]
     ++ lib.optionals pkgs.stdenv.isDarwin [

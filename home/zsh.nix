@@ -38,7 +38,7 @@
         ld = "lumen diff";
         lg = "lazygit";
         nim = "nvim .";
-        sshnet = "ssh -i ~/.ssh/atlas-ssh.txt rathiharivansh@152.53.195.59";
+        net = "rathiharivansh@152.53.195.59";
 
         # nix helpers
         nr = "nix profile remove"; # nr <index> - remove from profile

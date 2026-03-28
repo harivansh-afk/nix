@@ -9,17 +9,20 @@
     };
 
     taps = [
-      # riptide-dev is still sourced from this tap.
       "humanlayer/humanlayer"
+      "gromgit/fuse"
     ];
 
     brews = [
       "bitwarden-cli"
+      "gromgit/fuse/sshfs-mac"
     ];
 
     casks = [
       "cap"
       "codex"
+      "karabiner-elements"
+      "macfuse"
       "rectangle"
       "raycast"
       "riptide-beta"

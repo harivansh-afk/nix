@@ -24,6 +24,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    codex = {
+      url = "github:openai/codex";
+    };
+
     agentcomputer-cli = {
       url = "path:/Users/rathi/Documents/GitHub/companion/agentcomputer/apps/cli";
       inputs.nixpkgs.follows = "nixpkgs";

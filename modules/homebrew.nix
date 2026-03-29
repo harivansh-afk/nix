@@ -15,14 +15,12 @@
     ];
 
     brews = [
-      "bitwarden-cli"
       "gromgit/fuse/sshfs-mac"
       "mutagen-io/mutagen/mutagen"
     ];
 
     casks = [
       "cap"
-      "codex"
       "karabiner-elements"
       "macfuse"
       "rectangle"

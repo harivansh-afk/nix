@@ -80,7 +80,10 @@ in {
 
   nixpkgs.config.allowUnfree = true;
 
-  environment.systemPackages = packageSets.core ++ packageSets.extras ++ [pkgs.bubblewrap];
+  environment.systemPackages = packageSets.core ++ packageSets.extras ++ [
+    pkgs.bubblewrap
+    pkgs.pnpm
+  ];
 
   systemd.tmpfiles.rules = [
     "L /usr/bin/bwrap - - - - ${pkgs.bubblewrap}/bin/bwrap"

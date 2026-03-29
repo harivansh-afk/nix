@@ -4,6 +4,8 @@ personality = "pragmatic"
 suppress_unstable_features_warning = true
 web_search = "live"
 plan_mode_reasoning_effort = "xhigh"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
 
 [features]
 undo = true

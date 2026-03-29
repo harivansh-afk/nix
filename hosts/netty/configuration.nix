@@ -80,7 +80,11 @@ in {
 
   nixpkgs.config.allowUnfree = true;
 
-  environment.systemPackages = packageSets.core ++ packageSets.extras;
+  environment.systemPackages = packageSets.core ++ packageSets.extras ++ [pkgs.bubblewrap];
+
+  systemd.tmpfiles.rules = [
+    "L /usr/bin/bwrap - - - - ${pkgs.bubblewrap}/bin/bwrap"
+  ];
 
   system.configurationRevision = self.rev or self.dirtyRev or null;
   system.stateVersion = "24.11";

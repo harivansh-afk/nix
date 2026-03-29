@@ -1,7 +1,6 @@
 return {
   {
-    dir = vim.fn.expand "~/Documents/GitHub/cozybox.nvim",
-    name = "cozybox.nvim",
+    "harivansh-afk/cozybox.nvim",
     lazy = false,
     priority = 1000,
     config = function() require("theme").setup() end,

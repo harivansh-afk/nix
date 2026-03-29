@@ -48,8 +48,6 @@
 
       push.autoSetupRemote = true;
 
-      credential."https://github.com".helper = "!gh auth git-credential";
-
       "diff-so-fancy" = {
         markEmptyLines = true;
         stripLeadingSymbols = true;

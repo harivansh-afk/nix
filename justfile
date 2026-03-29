@@ -30,4 +30,4 @@ secrets-restore-files:
   ./scripts/restore-bw-files.sh
 
 switch-netty:
-  ssh rathi@152.53.195.59 "sudo nixos-rebuild switch --flake github:harivansh-afk/nix#netty"
+  ssh root@netty "nixos-rebuild switch --flake github:harivansh-afk/nix#netty"

@@ -57,8 +57,8 @@
     username = "rathi";
     darwinConfigName = "darwin";
     darwinMachineHostname = "hari-macbook-pro";
-    linuxConfigName = "linux";
-    linuxHostname = "rathi-vps";
+    linuxConfigName = "netty";
+    linuxHostname = "netty";
     darwinPkgs = import nixpkgs {system = darwinSystem;};
     linuxPkgs = import nixpkgs {
       system = linuxSystem;
@@ -118,7 +118,7 @@
             hostname = linuxHostname;
           };
           home-manager.backupFileExtension = "hm-bak";
-          home-manager.users.${username} = import ./home/linux.nix;
+          home-manager.users.${username} = import ./home/netty.nix;
         }
       ];
     };

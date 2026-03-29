@@ -8,7 +8,7 @@
   packageSets = import ../../lib/package-sets.nix {inherit inputs lib pkgs;};
 in {
   imports = [
-    ../../home/linux.nix
+    ../../home/netty.nix
   ];
 
   targets.genericLinux.enable = true;

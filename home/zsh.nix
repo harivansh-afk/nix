@@ -39,20 +39,9 @@
         lg = "lazygit";
         nim = "nvim .";
         net = "rathiharivansh@152.53.195.59";
-
-        # nix helpers
-        nr = "nix profile remove"; # nr <index> - remove from profile
-        ns = "nix search nixpkgs"; # ns <query> - search packages
-        nls = "nix profile list"; # nls - list installed profile packages
     }
     // lib.optionalAttrs pkgs.stdenv.isDarwin {
       tailscale = "/Applications/Tailscale.app/Contents/MacOS/Tailscale";
-      nrb = "sudo darwin-rebuild switch --flake path:$HOME/Documents/GitHub/nix#darwin"; # nrb - rebuild declarative config
-      nup = "nix flake update $HOME/Documents/GitHub/nix && sudo darwin-rebuild switch --flake path:$HOME/Documents/GitHub/nix#darwin"; # nup - update flake + rebuild
-    }
-    // lib.optionalAttrs pkgs.stdenv.isLinux {
-      nrb = "nix run github:nix-community/home-manager -- switch --flake path:$HOME/Documents/GitHub/nix#linux -b hm-bak"; # nrb - rebuild declarative config
-      nup = "nix flake update $HOME/Documents/GitHub/nix && nix run github:nix-community/home-manager -- switch --flake path:$HOME/Documents/GitHub/nix#linux -b hm-bak"; # nup - update flake + rebuild
     };
 
     envExtra =

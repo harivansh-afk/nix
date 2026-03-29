@@ -71,11 +71,10 @@ return {
         'barrettruth/forge.nvim',
         dependencies = { 'ibhagwan/fzf-lua' },
         init = function()
-            vim.g.forge = {
-                keys = {
-                    picker = '<c-t>',
-                },
-            }
+            vim.g.forge = vim.g.forge or {}
+        end,
+        config = function()
+            map('n', '<c-t>', '<cmd>Forge<cr>', { desc = 'Forge picker' })
         end,
     },
     {

@@ -21,7 +21,6 @@
 
     casks = [
       "cap"
-      "codex"
       "karabiner-elements"
       "macfuse"
       "rectangle"

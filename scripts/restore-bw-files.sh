@@ -139,7 +139,9 @@ restore_ssh_key 'SSH Key - id_ed25519' 'id_ed25519'
 restore_aws_credentials
 restore_gcloud_adc
 restore_plain_note 'Machine: Codex Auth' "${HOME}/.codex/auth.json" 600
-restore_plain_note 'Machine: Vercel Auth' "${HOME}/Library/Application Support/com.vercel.cli/auth.json" 600
+if [[ "$(uname)" == "Darwin" ]]; then
+  restore_plain_note 'Machine: Vercel Auth' "${HOME}/Library/Application Support/com.vercel.cli/auth.json" 600
+fi
 
 # GitHub CLI auth
 if command -v gh >/dev/null 2>&1; then

@@ -83,6 +83,7 @@
   };
 in {
   core = with pkgs; [
+    bitwarden-cli
     curl
     fd
     fzf

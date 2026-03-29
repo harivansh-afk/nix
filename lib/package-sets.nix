@@ -7,8 +7,6 @@
     inputs.googleworkspace-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
   claudePackage =
     inputs.claudeCode.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  codexPackage =
-    inputs.codex.packages.${pkgs.stdenv.hostPlatform.system}.default;
   agentcomputerPackage =
     inputs.agentcomputer-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
   openspecPackage =
@@ -107,7 +105,7 @@ in {
     (with pkgs; [
       awscli2
       claudePackage
-      codexPackage
+      pkgs.codex
       coreutils-prefixed
       delta
       diff-so-fancy

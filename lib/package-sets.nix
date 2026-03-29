@@ -122,7 +122,6 @@ in {
       libpq
       librsvg
       llmfit
-      mise
       minikube
       ngrok
       postgresql_17

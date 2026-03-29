@@ -11,6 +11,7 @@
     ./git.nix
     ./k9s.nix
     ./lazygit.nix
+    ./mise.nix
     ./migration.nix
     ./nvim.nix
     ./skills.nix

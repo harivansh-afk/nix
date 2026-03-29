@@ -48,6 +48,7 @@
         if [[ -f "$HOME/.cargo/env" ]]; then
           . "$HOME/.cargo/env"
         fi
+        export NODE_NO_WARNINGS=1
       ''
       + lib.optionalString pkgs.stdenv.isDarwin ''
         # Ghostty shell integration expects a resource directory; the Nix app

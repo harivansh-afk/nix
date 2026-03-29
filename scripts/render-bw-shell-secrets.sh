@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export NODE_NO_WARNINGS=1
 
 if ! command -v bw >/dev/null 2>&1; then
   echo "bw is not installed" >&2

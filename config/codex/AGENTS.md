@@ -5,3 +5,8 @@ This codebase will outlive you. Every time you take a shortcut, someone else pay
 Write code with intention. The patterns you establish will be copied; the decisions you make will be repeated. Every corner you cut will be revisited by someone—often you—under more pressure and with less context.
 
 Fight entropy. Leave the codebase better than you found it.
+
+## Git Commits
+
+Never sign your name on commits.
+Do not add `Co-authored-by`, `Signed-off-by`, or any other personal or assistant attribution to commit messages.

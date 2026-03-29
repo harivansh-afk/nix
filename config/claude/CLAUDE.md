@@ -16,6 +16,11 @@
         <rule>Never use em dashes - use hyphens or colons instead</rule>
     </style>
 
+    <git>
+        <rule>Never sign your name on commits</rule>
+        <rule>Do not add Co-authored-by, Signed-off-by, or any other personal or assistant attribution to commit messages</rule>
+    </git>
+
     <epistemology>
         <principle priority="critical">Assumptions are the worst enemy</principle>
         <rule>Never guess or assume numerical values - performance metrics, benchmarks, timings, memory usage, etc.</rule>

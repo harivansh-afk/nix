@@ -115,46 +115,26 @@ restore_gcloud_adc() {
 restore_ssh_key() {
   local item_name="$1"
   local rel_path="$2"
-  local note
+  local item_json
   local private_key
   local public_key
 
-  note="$(read_note "${item_name}")"
+  item_json="$(bw list items --session "${BW_SESSION}" | jq -r --arg n "${item_name}" '.[] | select(.name == $n)')"
+  if [[ -z "${item_json}" ]]; then
+    echo "Bitwarden item not found: ${item_name}" >&2
+    exit 1
+  fi
 
-  private_key="$(
-    printf '%s\n' "${note}" | awk '
-      BEGIN {section="p"; started=0}
-      /^path=/ {next}
-      started==0 && /^$/ {started=1; next}
-      started==1 && /^public_key:$/ {section="u"; next}
-      started==1 && section=="p" {print}
-    '
-  )"
-
-  public_key="$(
-    printf '%s\n' "${note}" | awk '
-      BEGIN {capture=0}
-      /^public_key:$/ {capture=1; next}
-      capture==1 {print}
-    '
-  )"
+  private_key="$(printf '%s' "${item_json}" | jq -r '.sshKey.privateKey')"
+  public_key="$(printf '%s' "${item_json}" | jq -r '.sshKey.publicKey')"
 
   write_file "${HOME}/.ssh/${rel_path}" 600 "${private_key}"
-  if [[ -n "${public_key}" ]]; then
+  if [[ -n "${public_key}" && "${public_key}" != "null" ]]; then
     write_file "${HOME}/.ssh/${rel_path}.pub" 644 "${public_key}"
   fi
 }
 
-restore_plain_note 'Machine: SSH Config' "${HOME}/.ssh/config" 600
-restore_plain_note 'Machine: SSH CSB Config' "${HOME}/.ssh/csb/config" 600
-
-restore_ssh_key 'Machine: SSH Key atlas-ssh.txt' 'atlas-ssh.txt'
-restore_ssh_key 'Machine: SSH Key csb_id_rsa_5m2zg4' 'csb/csb_id_rsa_5m2zg4'
-restore_ssh_key 'Machine: SSH Key google_compute_engine' 'google_compute_engine'
-restore_ssh_key 'Machine: SSH Key id_ed25519' 'id_ed25519'
-restore_ssh_key 'Machine: SSH Key id_ed25519_uvacompute' 'id_ed25519_uvacompute'
-restore_ssh_key 'Machine: SSH Key id_rsa_1024' 'id_rsa_1024'
-restore_ssh_key 'Machine: SSH Key phinsta_ciuser' 'phinsta_ciuser'
+restore_ssh_key 'SSH Key - id_ed25519' 'id_ed25519'
 
 restore_aws_credentials
 restore_gcloud_adc

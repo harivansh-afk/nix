@@ -22,7 +22,7 @@ in {
   };
 
   networking = {
-    hostName = "rathi-vps";
+    hostName = "netty";
     useDHCP = true;
     firewall.allowedTCPPorts = [22 80 443];
   };

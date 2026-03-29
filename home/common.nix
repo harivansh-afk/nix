@@ -15,6 +15,7 @@
     ./nvim.nix
     ./skills.nix
     ./scripts.nix
+    ./ssh.nix
     ./tmux.nix
     ./zsh.nix
   ];

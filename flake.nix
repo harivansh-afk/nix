@@ -1,5 +1,5 @@
 {
-  description = "Rathi's macOS nix-darwin + Linux Home Manager config";
+  description = "Rathi's macOS nix-darwin + NixOS + Home Manager config";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -36,6 +36,11 @@
     nix-homebrew = {
       url = "github:zhaofengli-wip/nix-homebrew";
     };
+
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs @ {
@@ -53,6 +58,7 @@
     darwinConfigName = "darwin";
     darwinMachineHostname = "hari-macbook-pro";
     linuxConfigName = "linux";
+    linuxHostname = "rathi-vps";
     darwinPkgs = import nixpkgs {system = darwinSystem;};
     linuxPkgs = import nixpkgs {
       system = linuxSystem;
@@ -94,6 +100,30 @@
       ];
     };
 
+    nixosConfigurations.${linuxConfigName} = nixpkgs.lib.nixosSystem {
+      system = linuxSystem;
+      specialArgs = {
+        inherit inputs self username;
+        hostname = linuxHostname;
+      };
+      modules = [
+        inputs.disko.nixosModules.disko
+        ./hosts/${linuxConfigName}/configuration.nix
+        home-manager.nixosModules.home-manager
+        {
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = {
+            inherit inputs self username;
+            hostname = linuxHostname;
+          };
+          home-manager.backupFileExtension = "hm-bak";
+          home-manager.users.${username} = import ./home/linux.nix;
+        }
+      ];
+    };
+
+    # Standalone Home Manager config (fallback for non-NixOS Linux)
     homeConfigurations.${linuxConfigName} = home-manager.lib.homeManagerConfiguration {
       pkgs = linuxPkgs;
       extraSpecialArgs = {

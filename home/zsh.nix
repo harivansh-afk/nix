@@ -38,7 +38,6 @@
         ld = "lumen diff";
         lg = "lazygit";
         nim = "nvim .";
-        net = "rathiharivansh@152.53.195.59";
     }
     // lib.optionalAttrs pkgs.stdenv.isDarwin {
       tailscale = "/Applications/Tailscale.app/Contents/MacOS/Tailscale";

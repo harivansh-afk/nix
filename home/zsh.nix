@@ -3,15 +3,14 @@
   lib,
   pkgs,
   ...
-}:
-{
+}: {
   home.file.".oh-my-zsh/custom/themes/agnoster.zsh-theme".source = ../config/agnoster.zsh-theme;
 
-  home.activation.ensureOhMyZshCache = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  home.activation.ensureOhMyZshCache = lib.hm.dag.entryAfter ["writeBoundary"] ''
     mkdir -p "${config.xdg.cacheHome}/oh-my-zsh"
   '';
 
-  home.packages = [ pkgs.oh-my-zsh ];
+  home.packages = [pkgs.oh-my-zsh];
 
   programs.zsh = {
     enable = true;
@@ -22,40 +21,42 @@
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
 
-    shellAliases = {
-      co = "codex --dangerously-bypass-approvals-and-sandbox";
-      ca = "cursor-agent";
-      cc = "claude";
-      ch = "claude-handoff";
-      cl = "clear";
-      gc = "git commit";
-      gd = "git diff";
-      gk = "git checkout";
-      gp = "git push";
-      gpo = "git pull origin";
-      gs = "git status";
-      ld = "lumen diff";
-      lg = "lazygit";
-      nim = "nvim .";
-    }
-    // lib.optionalAttrs pkgs.stdenv.isDarwin {
-      tailscale = "/Applications/Tailscale.app/Contents/MacOS/Tailscale";
-    };
+    shellAliases =
+      {
+        co = "codex --dangerously-bypass-approvals-and-sandbox";
+        ca = "cursor-agent";
+        cc = "claude";
+        ch = "claude-handoff";
+        cl = "clear";
+        gc = "git commit";
+        gd = "git diff";
+        gk = "git checkout";
+        gp = "git push";
+        gpo = "git pull origin";
+        gs = "git status";
+        ld = "lumen diff";
+        lg = "lazygit";
+        nim = "nvim .";
+      }
+      // lib.optionalAttrs pkgs.stdenv.isDarwin {
+        tailscale = "/Applications/Tailscale.app/Contents/MacOS/Tailscale";
+      };
 
-    envExtra = ''
-      if [[ -f "$HOME/.cargo/env" ]]; then
-        . "$HOME/.cargo/env"
-      fi
-      export NODE_NO_WARNINGS=1
-    ''
-    + lib.optionalString pkgs.stdenv.isDarwin ''
-      # Ghostty shell integration expects a resource directory; the Nix app
-      # bundle lives in the store instead of /Applications.
-      export GHOSTTY_RESOURCES_DIR="${pkgs.ghostty-bin}/Applications/Ghostty.app/Contents/Resources/ghostty"
-    ''
-    + ''
-      export MANPAGER="nvim +Man!"
-    '';
+    envExtra =
+      ''
+        if [[ -f "$HOME/.cargo/env" ]]; then
+          . "$HOME/.cargo/env"
+        fi
+        export NODE_NO_WARNINGS=1
+      ''
+      + lib.optionalString pkgs.stdenv.isDarwin ''
+        # Ghostty shell integration expects a resource directory; the Nix app
+        # bundle lives in the store instead of /Applications.
+        export GHOSTTY_RESOURCES_DIR="${pkgs.ghostty-bin}/Applications/Ghostty.app/Contents/Resources/ghostty"
+      ''
+      + ''
+        export MANPAGER="nvim +Man!"
+      '';
 
     initContent = lib.mkMerge [
       (lib.mkOrder 550 ''
@@ -86,7 +87,9 @@
 
         export BUN_INSTALL="$HOME/.bun"
         export PNPM_HOME="${
-          if pkgs.stdenv.isDarwin then "$HOME/Library/pnpm" else "${config.xdg.dataHome}/pnpm"
+          if pkgs.stdenv.isDarwin
+          then "$HOME/Library/pnpm"
+          else "${config.xdg.dataHome}/pnpm"
         }"
         bindkey -v
         typeset -U path PATH
@@ -103,9 +106,9 @@
           "/run/current-system/sw/bin"
           "/nix/var/nix/profiles/default/bin"
           ${lib.optionalString pkgs.stdenv.isDarwin ''
-            "/opt/homebrew/bin"
-            "/opt/homebrew/sbin"
-          ''}
+          "/opt/homebrew/bin"
+          "/opt/homebrew/sbin"
+        ''}
           $path
         )
 
@@ -249,15 +252,17 @@
 
         _codex_apply_highlight_styles
 
-        if command -v wt >/dev/null 2>&1; then
-          eval "$(command wt config shell init zsh)"
+        ${lib.optionalString pkgs.stdenv.isDarwin ''
+          if command -v wt >/dev/null 2>&1; then
+            eval "$(command wt config shell init zsh)"
 
-          # `wt` changes directories by sourcing directives into the current shell,
-          # so wrappers around it must stay shell functions instead of scripts.
-          wtc() {
-            wt switch --create --base @ "$@"
-          }
-        fi
+            # `wt` changes directories by sourcing directives into the current shell,
+            # so wrappers around it must stay shell functions instead of scripts.
+            wtc() {
+              wt switch --create --base @ "$@"
+            }
+          fi
+        ''}
       '')
 
       (lib.mkAfter ''

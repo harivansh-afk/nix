@@ -3,9 +3,11 @@
   lib,
   pkgs,
   ...
-}: let
-  customScripts = import ../scripts {inherit config lib pkgs;};
-in {
+}:
+let
+  customScripts = import ../scripts { inherit config lib pkgs; };
+in
+{
   home.packages = builtins.attrValues customScripts.nettyPackages;
 
   programs.zsh.initContent = lib.mkAfter ''

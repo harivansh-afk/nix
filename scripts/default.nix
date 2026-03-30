@@ -112,16 +112,15 @@
   };
 
   nettyPackages = {
-    wt-create = mkScript {
-      name = "wt-create";
-      file = ./wt-create.sh;
+    wt = mkScript {
+      name = "wt";
+      file = ./wt.sh;
       runtimeInputs = with pkgs; [coreutils git gnused];
     };
 
-    wt-path = mkScript {
-      name = "wt-path";
-      file = ./wt-path.sh;
-      runtimeInputs = with pkgs; [coreutils git gnused];
+    wt-create = mkScript {
+      name = "wt-create";
+      file = ./wt-create.sh;
     };
   };
 in {

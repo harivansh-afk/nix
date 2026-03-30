@@ -7,8 +7,13 @@ if [[ $# -ne 1 ]]; then
   exit 1
 fi
 
-repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || {
+common_git_dir=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || {
   printf 'wt-path: not inside a git repository\n' >&2
+  exit 1
+}
+
+repo_root=$(cd "${common_git_dir}/.." && pwd -P) || {
+  printf 'wt-path: failed to resolve repository root\n' >&2
   exit 1
 }
 

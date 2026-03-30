@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
 
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin/master";
@@ -24,7 +25,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-
     agentcomputer-cli = {
       url = "path:/Users/rathi/Documents/GitHub/companion/agentcomputer/apps/cli";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -44,96 +44,14 @@
     };
   };
 
-  outputs = inputs @ {
-    self,
-    nixpkgs,
-    nix-darwin,
-    home-manager,
-    claudeCode,
-    nix-homebrew,
-    ...
-  }: let
-    darwinSystem = "aarch64-darwin";
-    linuxSystem = "x86_64-linux";
-    username = "rathi";
-    darwinConfigName = "darwin";
-    darwinMachineHostname = "hari-macbook-pro";
-    linuxConfigName = "netty";
-    linuxHostname = "netty";
-    darwinPkgs = import nixpkgs {system = darwinSystem;};
-    linuxPkgs = import nixpkgs {
-      system = linuxSystem;
-      config.allowUnfree = true;
-    };
-  in {
-    formatter.${darwinSystem} = darwinPkgs.alejandra;
-    formatter.${linuxSystem} = linuxPkgs.alejandra;
-
-    darwinConfigurations.${darwinConfigName} = nix-darwin.lib.darwinSystem {
-      system = darwinSystem;
-      specialArgs = {
-        inherit inputs self username;
-        hostname = darwinMachineHostname;
-      };
-      modules = [
-        ./hosts/${darwinConfigName}
-        home-manager.darwinModules.home-manager
-        nix-homebrew.darwinModules.nix-homebrew
-        {
-          users.users.${username}.home = "/Users/${username}";
-
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.extraSpecialArgs = {
-            inherit inputs self username;
-            hostname = darwinMachineHostname;
-          };
-          home-manager.backupFileExtension = "hm-bak";
-          home-manager.users.${username} = import ./home;
-
-          nix-homebrew = {
-            enable = true;
-            enableRosetta = true;
-            user = username;
-            autoMigrate = true;
-          };
-        }
+  outputs =
+    inputs@{ flake-parts, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [
+        ./modules/nixpkgs.nix
+        ./modules/devshells.nix
+        ./modules/hosts/darwin.nix
+        ./modules/hosts/netty.nix
       ];
     };
-
-    nixosConfigurations.${linuxConfigName} = nixpkgs.lib.nixosSystem {
-      system = linuxSystem;
-      specialArgs = {
-        inherit inputs self username;
-        hostname = linuxHostname;
-      };
-      modules = [
-        inputs.disko.nixosModules.disko
-        ./hosts/${linuxConfigName}/configuration.nix
-        home-manager.nixosModules.home-manager
-        {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.extraSpecialArgs = {
-            inherit inputs self username;
-            hostname = linuxHostname;
-          };
-          home-manager.backupFileExtension = "hm-bak";
-          home-manager.users.${username} = import ./home/netty.nix;
-        }
-      ];
-    };
-
-    # Standalone Home Manager config (fallback for non-NixOS Linux)
-    homeConfigurations.${linuxConfigName} = home-manager.lib.homeManagerConfiguration {
-      pkgs = linuxPkgs;
-      extraSpecialArgs = {
-        inherit inputs self username;
-        hostname = linuxConfigName;
-      };
-      modules = [
-        ./hosts/${linuxConfigName}
-      ];
-    };
-  };
 }

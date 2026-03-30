@@ -17,7 +17,8 @@ switch config='darwin':
   if [[ "{{config}}" == "darwin" ]]; then
     sudo env PATH="$PATH" nix --extra-experimental-features 'nix-command flakes' run github:nix-darwin/nix-darwin/master#darwin-rebuild -- switch --flake path:.#{{config}}
   else
-    nix --extra-experimental-features 'nix-command flakes' run github:nix-community/home-manager -- switch --flake path:.#{{config}} -b hm-bak
+    backup_ext="hm-bak-$(date +%Y%m%d-%H%M%S)"
+    nix --extra-experimental-features 'nix-command flakes' run github:nix-community/home-manager -- switch --flake path:.#{{config}} -b "$backup_ext"
   fi
 
 fmt:

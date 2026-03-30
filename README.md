@@ -38,13 +38,24 @@ just secrets-sync          # shell env vars -> ~/.config/secrets/shell.zsh
 just secrets-restore-files # SSH keys, AWS, GCloud, Codex, GitHub CLI
 ```
 
+## dev
+
+```bash
+nix develop
+just check
+just fmt
+```
+
 ## layout
 
 ```
-hosts/darwin/   - macOS nix-darwin config
-hosts/netty/    - NixOS VPS config (disko + hardware)
-modules/        - system-level modules (packages, macos defaults, homebrew)
-home/           - Home Manager modules (shell, editor, tools)
+hosts/darwin/   - macOS host entrypoint
+hosts/netty/    - NixOS VPS entrypoint (disko + hardware)
+modules/        - shared system modules + devshells
+modules/hosts/  - flake-parts host output definitions
+modules/nixpkgs.nix - shared flake context (hosts, args, pkgs helpers)
+home/           - Home Manager modules
+lib/hosts.nix   - host metadata used by the flake
 lib/            - shared package sets and theme system
 config/         - repo-owned config files (nvim, tmux, etc.)
 scripts/        - secret management and utility scripts

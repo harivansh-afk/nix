@@ -11,6 +11,7 @@ in {
   imports = [
     ./hardware-configuration.nix
     ./disk-config.nix
+    ../../modules/base.nix
   ];
 
   boot.loader.grub = {
@@ -52,35 +53,12 @@ in {
 
   security.sudo.wheelNeedsPassword = false;
 
-  programs.zsh.enable = true;
-  environment.shells = [pkgs.zsh];
+  nix.settings.trusted-users = lib.mkForce [
+    "root"
+    username
+  ];
 
-  environment.variables = {
-    EDITOR = "nvim";
-    VISUAL = "nvim";
-  };
-
-  nix.settings = {
-    auto-optimise-store = true;
-    experimental-features = [
-      "nix-command"
-      "flakes"
-    ];
-    trusted-users = [
-      "root"
-      username
-    ];
-  };
-
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 14d";
-  };
-
-  nixpkgs.config.allowUnfree = true;
-
-  environment.systemPackages = packageSets.core ++ packageSets.extras ++ [
+  environment.systemPackages = packageSets.extras ++ [
     pkgs.bubblewrap
     pkgs.pnpm
   ];

@@ -9,31 +9,6 @@ let
   agentcomputerPackage = inputs.agentcomputer-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
   openspecPackage = inputs.openspec.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
-  memex = pkgs.stdenvNoCC.mkDerivation rec {
-    pname = "memex";
-    version = "0.3.1";
-
-    src = pkgs.fetchurl {
-      url = "https://github.com/nicosuave/memex/releases/download/v${version}/memex-${version}-macos-arm64.tar.gz";
-      hash = "sha256-OIqT0xS+8vc0dQNi+YdDXLmN8V/7AT4Q/cnvbbhZ+3s=";
-    };
-
-    dontUnpack = true;
-
-    installPhase = ''
-      tar -xzf "$src"
-      install -Dm755 memex "$out/bin/memex"
-    '';
-
-    meta = {
-      description = "Fast local history search for Claude and Codex logs";
-      homepage = "https://github.com/nicosuave/memex";
-      license = lib.licenses.mit;
-      mainProgram = "memex";
-      platforms = lib.platforms.darwin;
-    };
-  };
-
   graphite = pkgs.stdenvNoCC.mkDerivation rec {
     pname = "graphite";
     version = "1.7.20";
@@ -140,7 +115,6 @@ in
     ]
     ++ lib.optionals pkgs.stdenv.isDarwin [
       graphite
-      memex
       worktrunk
     ];
 

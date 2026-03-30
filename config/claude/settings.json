@@ -17,39 +17,6 @@
           }
         ]
       }
-    ],
-    "SessionStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/rathi/.thread-view/hooks/session-start.sh"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "(?i)edit|write|create_file",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/rathi/.thread-view/hooks/post-edit.sh"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/rathi/.thread-view/hooks/session-stop.sh"
-          }
-        ]
-      }
     ]
   },
   "statusLine": {

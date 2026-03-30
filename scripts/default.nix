@@ -2,22 +2,20 @@
   config,
   lib,
   pkgs,
-}:
-let
-  theme = import ../lib/theme.nix { inherit config; };
+}: let
+  theme = import ../lib/theme.nix {inherit config;};
 
   tmuxConfigs = {
     dark = pkgs.writeText "tmux-theme-dark.conf" (theme.renderTmux "dark");
     light = pkgs.writeText "tmux-theme-light.conf" (theme.renderTmux "light");
   };
 
-  mkScript =
-    {
-      file,
-      name,
-      runtimeInputs ? [ ],
-      replacements ? { },
-    }:
+  mkScript = {
+    file,
+    name,
+    runtimeInputs ? [],
+    replacements ? {},
+  }:
     pkgs.writeShellApplication {
       inherit name runtimeInputs;
       text = lib.replaceStrings (builtins.attrNames replacements) (builtins.attrValues replacements) (
@@ -25,11 +23,11 @@ let
       );
     };
 
-  packages = {
+  commonPackages = {
     ga = mkScript {
       name = "ga";
       file = ./ga.sh;
-      runtimeInputs = with pkgs; [ git ];
+      runtimeInputs = with pkgs; [git];
     };
 
     ghpr = mkScript {
@@ -73,7 +71,7 @@ let
     ni = mkScript {
       name = "ni";
       file = ./ni.sh;
-      runtimeInputs = with pkgs; [ nix ];
+      runtimeInputs = with pkgs; [nix];
     };
 
     theme = mkScript {
@@ -104,13 +102,30 @@ let
         "@TMUX_CONFIG@" = "${config.xdg.configHome}/tmux/tmux.conf";
       };
     };
+  };
 
+  darwinPackages = {
     wtc = mkScript {
       name = "wtc";
       file = ./wtc.sh;
     };
   };
-in
-{
-  inherit packages theme tmuxConfigs;
+
+  nettyPackages = {
+    wt-create = mkScript {
+      name = "wt-create";
+      file = ./wt-create.sh;
+      runtimeInputs = with pkgs; [coreutils git gnused];
+    };
+
+    wt-path = mkScript {
+      name = "wt-path";
+      file = ./wt-path.sh;
+      runtimeInputs = with pkgs; [coreutils git gnused];
+    };
+  };
+in {
+  inherit commonPackages darwinPackages nettyPackages theme tmuxConfigs;
+
+  packages = commonPackages;
 }

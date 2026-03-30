@@ -3,14 +3,14 @@
   lib,
   pkgs,
   ...
-}:
-let
-  customScripts = import ../scripts { inherit config lib pkgs; };
-in
-{
-  home.packages = builtins.attrValues customScripts.packages;
+}: let
+  customScripts = import ../scripts {inherit config lib pkgs;};
+in {
+  home.packages =
+    builtins.attrValues customScripts.commonPackages
+    ++ lib.optionals pkgs.stdenv.isDarwin (builtins.attrValues customScripts.darwinPackages);
 
-  home.activation.initializeThemeState = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  home.activation.initializeThemeState = lib.hm.dag.entryAfter ["writeBoundary"] ''
     mkdir -p "${customScripts.theme.paths.stateDir}" "${customScripts.theme.paths.fzfDir}" "${customScripts.theme.paths.ghosttyDir}" "${customScripts.theme.paths.tmuxDir}"
 
     if [[ -f "${customScripts.theme.paths.stateFile}" ]]; then

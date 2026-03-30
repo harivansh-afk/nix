@@ -3,22 +3,23 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   nvimConfig = lib.cleanSourceWith {
     src = ../config/nvim;
-    filter = path: type:
-      builtins.baseNameOf path != ".git"
-      && builtins.baseNameOf path != "lazy-lock.json";
+    filter =
+      path: type: builtins.baseNameOf path != ".git" && builtins.baseNameOf path != "lazy-lock.json";
   };
   lazyLockSeed = ../config/nvim/lazy-lock.json;
   lazyLockPath = "${config.xdg.stateHome}/nvim/lazy-lock.json";
   python = pkgs.writeShellScriptBin "python" ''
     exec ${pkgs.python3}/bin/python3 "$@"
   '';
-in {
+in
+{
   # Keep rust-analyzer in the user profile so it shadows rustup's proxy in
   # /run/current-system/sw/bin when Neovim resolves LSP executables.
-  home.packages = [pkgs.rust-analyzer];
+  home.packages = [ pkgs.rust-analyzer ];
 
   programs.neovim = {
     enable = true;
@@ -59,7 +60,7 @@ in {
     recursive = true;
   };
 
-  home.activation.seedNvimLazyLock = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.seedNvimLazyLock = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     state_dir="${config.xdg.stateHome}/nvim"
     lockfile="${lazyLockPath}"
 

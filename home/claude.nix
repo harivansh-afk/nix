@@ -2,10 +2,11 @@
   inputs,
   pkgs,
   ...
-}: let
-  claudePackage =
-    inputs.claudeCode.packages.${pkgs.stdenv.hostPlatform.system}.default;
-in {
+}:
+let
+  claudePackage = inputs.claudeCode.packages.${pkgs.stdenv.hostPlatform.system}.default;
+in
+{
   # Keep the managed Claude binary on the same path the live machine was using
   # so the Nix package cleanly replaces the prior manual install.
   home.file.".local/bin/claude".source = "${claudePackage}/bin/claude";

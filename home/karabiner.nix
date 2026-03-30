@@ -2,11 +2,12 @@
   config,
   lib,
   ...
-}: {
+}:
+{
   # Karabiner-Elements destroys file-level symlinks (unlink + rewrite), but
   # directory-level symlinks survive.  Point ~/.config/karabiner at the repo
   # directory so changes are tracked in git and Karabiner can write freely.
-  home.activation.karabinerConfig = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.karabinerConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     karabiner_link="${config.home.homeDirectory}/.config/karabiner"
     karabiner_src="/Users/rathi/Documents/GitHub/nix/config/karabiner"
 

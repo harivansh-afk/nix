@@ -2,15 +2,12 @@
   inputs,
   lib,
   pkgs,
-}: let
-  gwsPackage =
-    inputs.googleworkspace-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  claudePackage =
-    inputs.claudeCode.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  agentcomputerPackage =
-    inputs.agentcomputer-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  openspecPackage =
-    inputs.openspec.packages.${pkgs.stdenv.hostPlatform.system}.default;
+}:
+let
+  gwsPackage = inputs.googleworkspace-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  claudePackage = inputs.claudeCode.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  agentcomputerPackage = inputs.agentcomputer-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  openspecPackage = inputs.openspec.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
   memex = pkgs.stdenvNoCC.mkDerivation rec {
     pname = "memex";
@@ -76,12 +73,16 @@
     meta = {
       description = "CLI for Git worktree management";
       homepage = "https://worktrunk.dev";
-      license = with lib.licenses; [asl20 mit];
+      license = with lib.licenses; [
+        asl20
+        mit
+      ];
       mainProgram = "wt";
       platforms = lib.platforms.darwin;
     };
   };
-in {
+in
+{
   core = with pkgs; [
     bitwarden-cli
     curl

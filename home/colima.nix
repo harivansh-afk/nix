@@ -2,9 +2,11 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   defaultProfile = "default";
-in {
+in
+{
   home.packages = with pkgs; [
     docker-buildx
     docker-client

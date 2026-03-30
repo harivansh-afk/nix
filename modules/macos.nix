@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   security.pam.services.sudo_local.touchIdAuth = true;
 
   # Karabiner-Elements is managed via Homebrew cask because nix-darwin's

@@ -3,9 +3,11 @@
   lib,
   pkgs,
   ...
-}: let
-  theme = import ../lib/theme.nix {inherit config;};
-in {
+}:
+let
+  theme = import ../lib/theme.nix { inherit config; };
+in
+{
   programs.tmux = {
     enable = true;
     plugins = with pkgs.tmuxPlugins; [

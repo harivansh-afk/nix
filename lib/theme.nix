@@ -1,4 +1,5 @@
-{config, ...}: let
+{ config, ... }:
+let
   defaultMode = "dark";
   sharedPalette = {
     red = "#ea6962";
@@ -93,43 +94,60 @@
     };
   };
 
-  renderGhostty = mode: let
-    theme = themes.${mode};
-    paletteLines =
-      builtins.concatStringsSep "\n"
-      (builtins.genList
-        (index: "palette = ${toString index}=${builtins.elemAt theme.palette index}")
-        (builtins.length theme.palette));
-  in ''
-    background = ${theme.background}
-    foreground = ${theme.foreground}
-    cursor-color = ${theme.cursorColor}
-    cursor-text = ${theme.cursorText}
-    selection-background = ${theme.selectionBackground}
-    selection-foreground = ${theme.selectionForeground}
-    ${paletteLines}
-  '';
+  renderGhostty =
+    mode:
+    let
+      theme = themes.${mode};
+      paletteLines = builtins.concatStringsSep "\n" (
+        builtins.genList (index: "palette = ${toString index}=${builtins.elemAt theme.palette index}") (
+          builtins.length theme.palette
+        )
+      );
+    in
+    ''
+      background = ${theme.background}
+      foreground = ${theme.foreground}
+      cursor-color = ${theme.cursorColor}
+      cursor-text = ${theme.cursorText}
+      selection-background = ${theme.selectionBackground}
+      selection-foreground = ${theme.selectionForeground}
+      ${paletteLines}
+    '';
 
-  renderTmux = mode: let
-    theme = themes.${mode};
-  in ''
-    set-option -g @cozybox-mode '${mode}'
-    set-option -g @cozybox-accent '${theme.purple}'
-    set-option -g status-style bg=${theme.background},fg=${theme.text}
-    set-option -g window-status-format " #I#[fg=${theme.purple}]:#[fg=default]#W "
-    set-option -g window-status-current-format " #[fg=${theme.purple}]*#[fg=default]#I#[fg=${theme.purple}]:#[fg=default]#W "
-    set-option -g window-status-separator ""
-    set-option -g pane-border-style fg=${theme.border}
-    set-option -g pane-active-border-style fg=${theme.border}
-  '';
+  renderTmux =
+    mode:
+    let
+      theme = themes.${mode};
+    in
+    ''
+      set-option -g @cozybox-mode '${mode}'
+      set-option -g @cozybox-accent '${theme.purple}'
+      set-option -g status-style bg=${theme.background},fg=${theme.text}
+      set-option -g window-status-format " #I#[fg=${theme.purple}]:#[fg=default]#W "
+      set-option -g window-status-current-format " #[fg=${theme.purple}]*#[fg=default]#I#[fg=${theme.purple}]:#[fg=default]#W "
+      set-option -g window-status-separator ""
+      set-option -g pane-border-style fg=${theme.border}
+      set-option -g pane-active-border-style fg=${theme.border}
+    '';
 
-  renderFzf = mode: let
-    theme = themes.${mode};
-  in ''
-    --color=fg:${theme.text},bg:${theme.background},hl:${theme.blue}
-    --color=fg+:${theme.text},bg+:${theme.surface},hl+:${theme.blue}
-    --color=info:${theme.green},prompt:${theme.blue},pointer:${theme.text},marker:${theme.green},spinner:${theme.text}
-  '';
-in {
-  inherit defaultMode paths renderFzf renderGhostty renderTmux themes;
+  renderFzf =
+    mode:
+    let
+      theme = themes.${mode};
+    in
+    ''
+      --color=fg:${theme.text},bg:${theme.background},hl:${theme.blue}
+      --color=fg+:${theme.text},bg+:${theme.surface},hl+:${theme.blue}
+      --color=info:${theme.green},prompt:${theme.blue},pointer:${theme.text},marker:${theme.green},spinner:${theme.text}
+    '';
+in
+{
+  inherit
+    defaultMode
+    paths
+    renderFzf
+    renderGhostty
+    renderTmux
+    themes
+    ;
 }

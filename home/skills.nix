@@ -3,7 +3,8 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   globalSkills = [
     {
       name = "rams";
@@ -42,8 +43,9 @@
       needs_sync=1
     fi
   '') globalSkills;
-in {
-  home.activation.ensureGlobalSkills = lib.hm.dag.entryAfter ["writeBoundary"] ''
+in
+{
+  home.activation.ensureGlobalSkills = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     state_dir="${config.xdg.stateHome}/skills"
     stamp_file="$state_dir/global-skills-manifest.sha256"
     desired_hash=${lib.escapeShellArg manifestHash}
@@ -58,14 +60,16 @@ in {
     ${missingChecks}
 
     if [ "$needs_sync" -eq 1 ]; then
-      export PATH="${lib.makeBinPath [
-        pkgs.nodejs_22
-        pkgs.git
-        pkgs.coreutils
-        pkgs.findutils
-        pkgs.gnugrep
-        pkgs.gnused
-      ]}:$PATH"
+      export PATH="${
+        lib.makeBinPath [
+          pkgs.nodejs_22
+          pkgs.git
+          pkgs.coreutils
+          pkgs.findutils
+          pkgs.gnugrep
+          pkgs.gnused
+        ]
+      }:$PATH"
 
       ${installCommands}
 

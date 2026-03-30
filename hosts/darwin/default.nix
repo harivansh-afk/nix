@@ -4,7 +4,8 @@
   username,
   hostname,
   ...
-}: {
+}:
+{
   imports = [
     ../../modules/base.nix
     ../../modules/macos.nix

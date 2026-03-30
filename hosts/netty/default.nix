@@ -4,9 +4,11 @@
   pkgs,
   username,
   ...
-}: let
-  packageSets = import ../../lib/package-sets.nix {inherit inputs lib pkgs;};
-in {
+}:
+let
+  packageSets = import ../../lib/package-sets.nix { inherit inputs lib pkgs; };
+in
+{
   imports = [
     ../../home/netty.nix
   ];

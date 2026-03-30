@@ -5,9 +5,11 @@
   username,
   self,
   ...
-}: let
-  packageSets = import ../../lib/package-sets.nix {inherit inputs lib pkgs;};
-in {
+}:
+let
+  packageSets = import ../../lib/package-sets.nix { inherit inputs lib pkgs; };
+in
+{
   imports = [
     ./hardware-configuration.nix
     ./disk-config.nix
@@ -25,7 +27,11 @@ in {
   networking = {
     hostName = "netty";
     useDHCP = true;
-    firewall.allowedTCPPorts = [22 80 443];
+    firewall.allowedTCPPorts = [
+      22
+      80
+      443
+    ];
   };
 
   services.qemuGuest.enable = true;
@@ -44,7 +50,7 @@ in {
 
   users.users.${username} = {
     isNormalUser = true;
-    extraGroups = ["wheel"];
+    extraGroups = [ "wheel" ];
     shell = pkgs.zsh;
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM6tzq33IQcurWoQ7vhXOTLjv8YkdTGb7NoNsul3Sbfu rathi@mac"

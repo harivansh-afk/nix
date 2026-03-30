@@ -20,15 +20,13 @@ let
     hostname = host.hostname;
   };
 
-  mkHomeManagerModule =
-    host:
-    {
-      home-manager.useGlobalPkgs = true;
-      home-manager.useUserPackages = true;
-      home-manager.extraSpecialArgs = mkSpecialArgs host;
-      home-manager.backupCommand = "bash ${../scripts/home-manager-backup.sh}";
-      home-manager.users.${username} = import host.homeModule;
-    };
+  mkHomeManagerModule = host: {
+    home-manager.useGlobalPkgs = true;
+    home-manager.useUserPackages = true;
+    home-manager.extraSpecialArgs = mkSpecialArgs host;
+    home-manager.backupCommand = "bash ${../scripts/home-manager-backup.sh}";
+    home-manager.users.${username} = import host.homeModule;
+  };
 in
 {
   systems = lib.unique (map (host: host.system) (builtins.attrValues hosts));

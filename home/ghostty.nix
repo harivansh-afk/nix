@@ -3,8 +3,9 @@
   lib,
   pkgs,
   ...
-}: let
-  theme = import ../lib/theme.nix {inherit config;};
+}:
+let
+  theme = import ../lib/theme.nix { inherit config; };
   ghosttyConfig = ''
     theme = "cozybox-current"
     font-family = Berkeley Mono
@@ -52,13 +53,11 @@
     focus-follows-mouse = true
     link-url = true
   '';
-in {
+in
+{
   programs.ghostty = {
     enable = true;
-    package =
-      if pkgs.stdenv.isDarwin
-      then pkgs.ghostty-bin
-      else pkgs.ghostty;
+    package = if pkgs.stdenv.isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
     installBatSyntax = true;
   };
 

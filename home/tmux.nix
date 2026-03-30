@@ -17,6 +17,7 @@ in
         extraConfig = ''
           set -g @continuum-restore 'on'
           set -g @continuum-save-interval '5'
+          set -g status-right ""
         '';
       }
     ];
@@ -88,7 +89,7 @@ in
       set-option -g status-position bottom
       set-option -g status-justify left
       set-option -g status-left ""
-      set-option -g status-right "#(~/.config/tmux/session-list.sh)"
+      set-option -ga status-right "#(~/.config/tmux/session-list.sh)"
       set-option -g status-left-length 100
       set-option -g status-right-length 100
       source-file "${theme.paths.tmuxCurrentFile}"

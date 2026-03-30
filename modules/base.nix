@@ -10,6 +10,7 @@ in {
   nix.enable = true;
 
   nix.settings = {
+    auto-optimise-store = true;
     experimental-features = [
       "nix-command"
       "flakes"
@@ -18,17 +19,28 @@ in {
       "@admin"
       username
     ];
+    use-xdg-base-directories = true;
   };
 
-  nix.gc = {
-    automatic = true;
-    interval = {
-      Weekday = 7;
-      Hour = 3;
-      Minute = 0;
-    };
-    options = "--delete-older-than 14d";
-  };
+  nix.gc =
+    {
+      automatic = true;
+      options = "--delete-older-than 14d";
+    }
+    // (
+      if pkgs.stdenv.isDarwin then
+        {
+          interval = {
+            Weekday = 7;
+            Hour = 3;
+            Minute = 0;
+          };
+        }
+      else
+        {
+          dates = "weekly";
+        }
+    );
 
   nixpkgs.config.allowUnfree = true;
 

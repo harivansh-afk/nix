@@ -91,6 +91,7 @@ return {
                 },
                 hide_prefix = true,
                 highlights = {
+                    warn_max_lines = false,
                     gutter = true,
                     blend_alpha = 0.5,
                     intra = { enabled = true },

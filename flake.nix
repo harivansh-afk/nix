@@ -45,98 +45,13 @@
   };
 
   outputs =
-    inputs@{
-      self,
-      flake-parts,
-      nixpkgs,
-      nix-darwin,
-      home-manager,
-      nix-homebrew,
-      ...
-    }:
-    let
-      username = "rathi";
-      hosts = import ./lib/hosts.nix { inherit username; };
-
-      mkPkgs =
-        system:
-        import nixpkgs {
-          inherit system;
-          config.allowUnfree = true;
-        };
-
-      mkHomeManagerModule =
-        host:
-        {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.extraSpecialArgs = {
-            inherit inputs self username;
-            hostname = host.hostname;
-          };
-          home-manager.backupFileExtension = "hm-bak";
-          home-manager.users.${username} = import host.homeModule;
-        };
-    in
+    inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [
-        hosts.darwin.system
-        hosts.netty.system
-      ];
-
       imports = [
+        ./modules/nixpkgs.nix
         ./modules/devshells.nix
+        ./modules/hosts/darwin.nix
+        ./modules/hosts/netty.nix
       ];
-
-      flake = {
-        darwinConfigurations.${hosts.darwin.name} = nix-darwin.lib.darwinSystem {
-          system = hosts.darwin.system;
-          specialArgs = {
-            inherit inputs self username;
-            hostname = hosts.darwin.hostname;
-          };
-          modules = [
-            ./hosts/${hosts.darwin.name}
-            home-manager.darwinModules.home-manager
-            nix-homebrew.darwinModules.nix-homebrew
-            {
-              users.users.${username}.home = hosts.darwin.homeDirectory;
-
-              nix-homebrew = {
-                enable = true;
-                enableRosetta = true;
-                user = username;
-                autoMigrate = true;
-              };
-            }
-            (mkHomeManagerModule hosts.darwin)
-          ];
-        };
-
-        nixosConfigurations.${hosts.netty.name} = nixpkgs.lib.nixosSystem {
-          system = hosts.netty.system;
-          specialArgs = {
-            inherit inputs self username;
-            hostname = hosts.netty.hostname;
-          };
-          modules = [
-            inputs.disko.nixosModules.disko
-            ./hosts/${hosts.netty.name}/configuration.nix
-            home-manager.nixosModules.home-manager
-            (mkHomeManagerModule hosts.netty)
-          ];
-        };
-
-        homeConfigurations.${hosts.netty.name} = home-manager.lib.homeManagerConfiguration {
-          pkgs = mkPkgs hosts.netty.system;
-          extraSpecialArgs = {
-            inherit inputs self username;
-            hostname = hosts.netty.hostname;
-          };
-          modules = [
-            hosts.netty.standaloneHomeModule
-          ];
-        };
-      };
     };
 }

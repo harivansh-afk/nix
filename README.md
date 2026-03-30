@@ -52,6 +52,8 @@ just fmt
 hosts/darwin/   - macOS host entrypoint
 hosts/netty/    - NixOS VPS entrypoint (disko + hardware)
 modules/        - shared system modules + devshells
+modules/hosts/  - flake-parts host output definitions
+modules/nixpkgs.nix - shared flake context (hosts, args, pkgs helpers)
 home/           - Home Manager modules
 lib/hosts.nix   - host metadata used by the flake
 lib/            - shared package sets and theme system

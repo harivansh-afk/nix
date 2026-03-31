@@ -27,7 +27,7 @@ Global agent skills are installed declaratively using skills.sh and only resync 
 Secrets live in Bitwarden and are rendered at activation time using cli
 Deployment is `just switch` for the laptop and `just switch-netty` for the server.
 
-- The VPS has a declarative service bundle: 
+The VPS has a declarative service bundle: 
 - static networking
 - nginx with ACME
 - Forgejo mirroring to GitHub

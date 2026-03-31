@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Full-featured status line with context window usage
 # Usage: Copy to ~/.claude/statusline.sh and make executable
 #

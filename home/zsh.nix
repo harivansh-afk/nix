@@ -9,13 +9,7 @@ let
   theme = import ../lib/theme.nix { inherit config; };
 in
 {
-  home.file.".oh-my-zsh/custom/themes/agnoster.zsh-theme".source = ../config/agnoster.zsh-theme;
-
-  home.activation.ensureOhMyZshCache = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    mkdir -p "${config.xdg.cacheHome}/oh-my-zsh"
-  '';
-
-  home.packages = [ pkgs.oh-my-zsh ];
+  home.packages = [ pkgs.pure-prompt ];
 
   programs.zsh = {
     enable = true;
@@ -74,18 +68,30 @@ in
 
     initContent = lib.mkMerge [
       (lib.mkOrder 550 ''
-        # OpenSpec shell completions configuration
-        fpath=("$HOME/.oh-my-zsh/custom/completions" $fpath)
+        # Completions
+        autoload -U compinit && compinit -d "${config.xdg.stateHome}/zcompdump" -u
+        zmodload zsh/complist
+        zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-za-z}'
       '')
 
       (lib.mkOrder 800 ''
-        export ZSH="${pkgs.oh-my-zsh}/share/oh-my-zsh"
-        export ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
-        export ZSH_CACHE_DIR="${config.xdg.cacheHome}/oh-my-zsh"
-        ZSH_THEME="agnoster"
-        plugins=(git)
-        ZSH_DISABLE_COMPFIX=true
-        source "$ZSH/oh-my-zsh.sh"
+        # Pure prompt
+        fpath+=("${pkgs.pure-prompt}/share/zsh/site-functions")
+        autoload -Uz promptinit && promptinit
+
+        export PURE_PROMPT_SYMBOL=">"
+        export PURE_PROMPT_VICMD_SYMBOL="<"
+        export PURE_GIT_UP_ARROW="^"
+        export PURE_GIT_DOWN_ARROW="v"
+        export PURE_GIT_STASH_SYMBOL="="
+        export PURE_CMD_MAX_EXEC_TIME=5
+        export PURE_GIT_PULL=0
+        export PURE_GIT_UNTRACKED_DIRTY=1
+        zstyle ':prompt:pure:git:stash' show yes
+
+        ${theme.renderPurePrompt "dark"}
+
+        prompt pure
       '')
 
       (lib.mkOrder 1000 ''
@@ -128,6 +134,21 @@ in
           fi
 
           printf 'dark'
+        }
+
+        _codex_apply_prompt_theme() {
+          local mode="$(_codex_read_theme_mode)"
+          if [[ "$mode" == "''${_CODEX_LAST_PROMPT_THEME:-}" ]]; then
+            return
+          fi
+
+          if [[ "$mode" == light ]]; then
+            ${theme.renderPurePrompt "light"}
+          else
+            ${theme.renderPurePrompt "dark"}
+          fi
+
+          typeset -g _CODEX_LAST_PROMPT_THEME="$mode"
         }
 
         _codex_apply_highlight_styles() {
@@ -192,6 +213,7 @@ in
         zle -N zle-line-finish
 
         precmd() {
+          _codex_apply_prompt_theme
           _codex_apply_highlight_styles
           _codex_set_cursor beam
         }
@@ -200,6 +222,7 @@ in
           _codex_set_cursor beam
         }
 
+        _codex_apply_prompt_theme
         _codex_apply_highlight_styles
 
         ${lib.optionalString hostConfig.isDarwin ''
@@ -216,8 +239,8 @@ in
       '')
 
       (lib.mkAfter ''
-        bindkey '^k' forward-car
-        bindkey '^j' backward-car
+        bindkey '^k' forward-char
+        bindkey '^j' backward-char
       '')
     ];
   };

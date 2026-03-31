@@ -86,7 +86,9 @@ and Neovim (via RPC) live. Bat and delta are static at build time.
 
 6. SHELL SETUP
 ---------------
-oh-my-zsh with agnoster theme (powerline arrows + git branch coloring).
+Pure prompt with gruvbox-colored git integration. Async git status
+(no blocking on large repos). Colors defined in lib/theme.nix via
+renderPurePrompt - adapts to light/dark mode at runtime.
 Vim mode via defaultKeymap = "viins" with cursor shape switching
 (beam for insert, block for normal).
 

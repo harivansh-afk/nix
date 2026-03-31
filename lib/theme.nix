@@ -140,6 +140,49 @@ let
       --color=fg+:${theme.text},bg+:${theme.surface},hl+:${theme.blue}
       --color=info:${theme.green},prompt:${theme.blue},pointer:${theme.text},marker:${theme.green},spinner:${theme.text}
     '';
+  renderPurePrompt =
+    mode:
+    let
+      theme = themes.${mode};
+      c = if mode == "light" then {
+        path = "#4261a5";
+        branch = "#427b58";
+        dirty = sharedPalette.yellow;
+        arrow = sharedPalette.purpleNeutral;
+        stash = sharedPalette.aquaNeutral;
+        success = "#427b58";
+        error = "#c5524a";
+        execTime = sharedPalette.gray;
+        host = sharedPalette.gray;
+        user = sharedPalette.gray;
+      } else {
+        path = sharedPalette.blue;
+        branch = sharedPalette.green;
+        dirty = sharedPalette.yellowBright;
+        arrow = sharedPalette.purple;
+        stash = sharedPalette.aqua;
+        success = sharedPalette.green;
+        error = sharedPalette.red;
+        execTime = sharedPalette.gray;
+        host = sharedPalette.gray;
+        user = sharedPalette.gray;
+      };
+    in
+    ''
+      zstyle ':prompt:pure:path' color '${c.path}'
+      zstyle ':prompt:pure:git:branch' color '${c.branch}'
+      zstyle ':prompt:pure:git:dirty' color '${c.dirty}'
+      zstyle ':prompt:pure:git:arrow' color '${c.arrow}'
+      zstyle ':prompt:pure:git:stash' color '${c.stash}'
+      zstyle ':prompt:pure:git:action' color '${c.dirty}'
+      zstyle ':prompt:pure:prompt:success' color '${c.success}'
+      zstyle ':prompt:pure:prompt:error' color '${c.error}'
+      zstyle ':prompt:pure:execution_time' color '${c.execTime}'
+      zstyle ':prompt:pure:host' color '${c.host}'
+      zstyle ':prompt:pure:user' color '${c.user}'
+      zstyle ':prompt:pure:user:root' color '${c.error}'
+    '';
+
   batTheme = mode: if mode == "light" then "gruvbox-light" else "gruvbox-dark";
 
   deltaTheme = mode: if mode == "light" then "gruvbox-light" else "gruvbox-dark";
@@ -210,6 +253,7 @@ in
     paths
     renderFzf
     renderGhostty
+    renderPurePrompt
     renderTmux
     renderZshHighlights
     themes

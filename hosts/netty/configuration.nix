@@ -149,9 +149,8 @@ in
     };
   };
 
-  # Emergency console access - generate hashed password and save to Bitwarden later
   users.users.root = {
-    initialPassword = "temppass123";
+    hashedPassword = "$6$T3d8stz8lq3N./Q/$QFDRHskykhr.SFozDTfX0ziisfz7ofRfyV/0tfCsBAxrZteJFj4sPTohmAiN3bOZOSVNkmaOD61vTFCMyuQ.S1";
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFbL9gJC0IPX6XUdJSWBovp+zmHvooMmvl91QG3lllwN rathiharivansh@gmail.com"
     ];

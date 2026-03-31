@@ -28,8 +28,8 @@ Secrets live in Bitwarden and are rendered at activation time using cli
 Deployment is `just switch` for the laptop and `just switch-netty` for the server.
 
 The VPS has a declarative service bundle: 
-- static networking
-- nginx with ACME and only 3 ports exposed
+- netty exposes 3 tcp ports (22:ssh, 80:http, 443:https)
+- services only listen on 127.0.0.1 (runs behind nginx with ACME)
 - Self hosts Forgejo mirroring to GitHub (git.harivan.sh)
 - Self hosts VaultWarden (vault.harivan.sh)
 - Runs sandbox agent behind a CORS proxy (netty.harivan.sh)

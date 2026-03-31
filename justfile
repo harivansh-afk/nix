@@ -26,8 +26,6 @@ fmt:
 
 secrets-sync:
   ./scripts/render-bw-shell-secrets.sh
-
-secrets-restore-files:
   ./scripts/restore-bw-files.sh
 
 switch-netty:

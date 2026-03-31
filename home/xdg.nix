@@ -40,9 +40,6 @@ in
       AWS_SHARED_CREDENTIALS_FILE = "${config.xdg.configHome}/aws/credentials";
       AWS_CONFIG_FILE = "${config.xdg.configHome}/aws/config";
     })
-    (lib.mkIf (f.claude or false) {
-      CLAUDE_CONFIG_DIR = "${config.xdg.configHome}/claude";
-    })
     {
       PSQL_HISTORY = "${config.xdg.stateHome}/psql_history";
       SQLITE_HISTORY = "${config.xdg.stateHome}/sqlite_history";

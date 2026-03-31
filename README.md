@@ -1,17 +1,35 @@
 # Nix Leveraging
 
-Everything starts at [flake.nix](./flake.nix) — one one dependency graph that owns both a macOS laptop and a Netcup VPS. Instead of managing two machines with different tools, both collapse into the same reproducible interface.
+Single dependency graph that owns a macOs laptop and a Linux KVM. 
+Both collapse into the same reproducible interface. 
 
-At the machine level, [modules/hosts/darwin.nix](./modules/hosts/darwin.nix) composes `nix-darwin`, `home-manager`, and `nix-homebrew` for macOS, while [modules/hosts/netty.nix](./modules/hosts/netty.nix) composes `nixosSystem`, `disko`, and `home-manager` for the server. The differences between hosts are encoded as data in [lib/hosts.nix](./lib/hosts.nix) and [modules/nixpkgs.nix](./modules/nixpkgs.nix) — global username, per-host metadata, feature flags — so leaf modules never need ad hoc platform checks.
+The darwin host composes nix-darwin, home-manager, and nix-homebrew. 
+The netty host composes nixosSystem, disko, and home-manager. 
 
-One layer down, packages are policy. [lib/package-sets.nix](./lib/package-sets.nix), [modules/base.nix](./modules/base.nix), [modules/packages.nix](./modules/packages.nix), and [modules/homebrew.nix](./modules/homebrew.nix) split the machine surface into `core`, `extras`, and `fonts`. Custom inputs like `claude-code-nix`, `neovim-nightly`, `disko`, and `nix-homebrew` are pinned in the flake, not installed by hand.
+Global username, per-host metadata and feature flags are encoded as data so leaf modules never need ad hoc platform checks.
 
-Below system packages sits the user environment. [home/default.nix](./home/default.nix) and [home/common.nix](./home/common.nix) make Home Manager the userland control plane. [home/xdg.nix](./home/xdg.nix) routes Rust, Go, Node, Python, AWS, and a dozen other tools into XDG-compliant paths. [home/security.nix](./home/security.nix) locks down SSH and GPG permissions on every activation. [home/migration.nix](./home/migration.nix) handles the cutover from legacy `~/dots` symlinks so nothing is left to clean up manually.
+The machine surface is split into core, extras, and fonts.
 
-The shell and terminal layer is driven by a single palette in [lib/theme.nix](./lib/theme.nix). That one definition renders colors for Ghostty, tmux, fzf, zsh syntax highlighting, bat, and delta. A generated `theme` script hot-swaps light and dark across all of them. [home/tmux.nix](./home/tmux.nix) adds session restore and directory-based window names. [home/zsh.nix](./home/zsh.nix) sets up vi mode, cursor-shape switching, XDG history, and deterministic PATH assembly. [home/scripts.nix](./home/scripts.nix) rounds out the ergonomics.
+claude-code-nix, neovim-nightly, disko, and nix-homebrew are pinned in the flake
 
-At the editor and agent layer, [home/nvim.nix](./home/nvim.nix) pins Neovim to the nightly overlay with seeded lockfile state. [home/claude.nix](./home/claude.nix) and [home/codex.nix](./home/codex.nix) keep AI tool configs repo-owned rather than scattered across `$HOME`. [home/skills.nix](./home/skills.nix) installs global skills declaratively and only resyncs when the manifest hash changes.
+Home Manager is the userland control plane. 
+Rust, Go, Node, Python, AWS, and some other tools are routed into XDG-compliant paths. 
+SSH and GPG permissions are locked down on every activation. 
 
-For day-to-day operations, [scripts/default.nix](./scripts/default.nix) wraps local scripts into managed aliases via `writeShellApplication`. Secrets stay in Bitwarden and are rendered at activation time by [scripts/render-bw-shell-secrets.sh](./scripts/render-bw-shell-secrets.sh) and [scripts/restore-bw-files.sh](./scripts/restore-bw-files.sh). Deployment is `just switch` for the laptop and `just switch-netty` for the server.
+A migration module handles the cutover from legacy symlinks so nothing is left to clean up manually.
 
-At the bottom of the stack, the VPS itself is a declarative service bundle in [hosts/netty/configuration.nix](./hosts/netty/configuration.nix): static networking, nginx with ACME, Forgejo mirroring to GitHub, a sandbox agent behind a CORS proxy, bounded GC and journald retention — a machine built to be rebuilt, not repaired.
+A single palette drives colors for Ghostty, tmux, fzf, zsh syntax highlighting, bat, and delta.
+A generated theme script hot-swaps light and dark across all of them. 
+
+Tool configs are repo-owned rather than scattered across $HOME.
+Global agent skills are installed declaratively using skills.sh and only resync when the manifest hash changes.
+
+Secrets live in Bitwarden and are rendered at activation time using cli
+Deployment is `just switch` for the laptop and `just switch-netty` for the server.
+
+- The VPS has a declarative service bundle: 
+- static networking
+- nginx with ACME
+- Forgejo mirroring to GitHub
+- sandbox agent behind a CORS proxy
+- bounded GC and journald retention

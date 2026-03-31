@@ -1,11 +1,11 @@
 Nix Config - Architecture and Operations Guide
 ================================================
 
-1. WHY STATIC IP (NOT DHCP)
+1. STATIC IP
 ----------------------------
 DHCP on a VPS is dangerous. If the DHCP lease expires or the server
 reboots while the DHCP server is unreachable, the machine loses its IP
-and becomes inaccessible via SSH. This happened on netty (2026-03-30).
+and becomes inaccessible via SSH.
 
 Static config in hosts/netty/configuration.nix:
   - IP: 152.53.195.59/22

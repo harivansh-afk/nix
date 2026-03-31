@@ -1,6 +1,8 @@
 {
   lib,
   fetchFromGitHub,
+  openssl,
+  pkg-config,
   rustPlatform,
 }:
 rustPlatform.buildRustPackage {
@@ -19,6 +21,10 @@ rustPlatform.buildRustPackage {
   prePatch = ''
     cp ${./Cargo.lock} Cargo.lock
   '';
+
+  nativeBuildInputs = [ pkg-config ];
+
+  buildInputs = [ openssl ];
 
   cargoBuildFlags = [
     "-p"

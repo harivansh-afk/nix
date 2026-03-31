@@ -60,7 +60,7 @@ return {
 
       vim.g.canola = {
         columns = { "icon" },
-        hidden = { enabled = false },
+        hidden = { enabled = true },
         highlights = { filename = {}, columns = true },
         save = "auto",
         extglob = true,

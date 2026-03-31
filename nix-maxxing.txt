@@ -106,15 +106,15 @@ in zsh.nix for entries that need conditional logic.
 All in hosts/netty/configuration.nix:
 
 Nginx reverse proxy with ACME SSL:
-  - sandbox.example.dev -> 127.0.0.1:2470 (sandbox agent)
-  - git.example.dev -> 127.0.0.1:3000 (forgejo)
+  - netty.harivan.sh -> 127.0.0.1:2470 (sandbox agent)
+  - git.harivan.sh -> 127.0.0.1:3000 (forgejo)
 
 Forgejo:
   - Self-hosted git, registration disabled
   - Runs as git user on port 3000
   - GitHub mirror sync via hourly systemd timer
   - Requires /etc/forgejo-mirror.env with GITHUB_TOKEN, FORGEJO_TOKEN,
-    FORGEJO_URL, FORGEJO_OWNER
+    FORGEJO_OWNER
 
 Sandbox Agent:
   - System-level systemd services (not user units)

@@ -9,6 +9,9 @@
 }:
 let
   packageSets = import ../../lib/package-sets.nix { inherit inputs lib pkgs; };
+  sandboxDomain = "netty.harivan.sh";
+  forgejoDomain = "git.harivan.sh";
+  forgejoApiUrl = "http://127.0.0.1:3000";
   sandboxAgentPackage = pkgs.callPackage ../../pkgs/sandbox-agent { };
   sandboxAgentDir = "/home/${username}/.config/sandbox-agent";
   sandboxAgentPath =
@@ -203,13 +206,13 @@ in
     recommendedTlsSettings = true;
     clientMaxBodySize = "512m";
 
-    virtualHosts."netty.harivan.sh" = {
+    virtualHosts.${sandboxDomain} = {
       enableACME = true;
       forceSSL = true;
       locations."/".proxyPass = "http://127.0.0.1:2470";
     };
 
-    virtualHosts."git.example.dev" = {
+    virtualHosts.${forgejoDomain} = {
       enableACME = true;
       forceSSL = true;
       locations."/".proxyPass = "http://127.0.0.1:3000";
@@ -231,10 +234,10 @@ in
     group = "git";
     settings = {
       server = {
-        DOMAIN = "git.example.dev";
-        ROOT_URL = "https://git.example.dev/";
+        DOMAIN = forgejoDomain;
+        ROOT_URL = "https://${forgejoDomain}/";
         HTTP_PORT = 3000;
-        SSH_DOMAIN = "git.example.dev";
+        SSH_DOMAIN = forgejoDomain;
       };
       service.DISABLE_REGISTRATION = true;
       session.COOKIE_SECURE = true;
@@ -258,53 +261,84 @@ in
       pkgs.curl
       pkgs.jq
       pkgs.coreutils
+      pkgs.gnused
     ];
     script = ''
       set -euo pipefail
 
-      # Fetch all GitHub repos
+      api_call() {
+        local response http_code body
+        response=$(curl -sS -w "\n%{http_code}" "$@")
+        http_code=$(printf '%s\n' "$response" | tail -n1)
+        body=$(printf '%s\n' "$response" | sed '$d')
+        if [ "$http_code" -ge 400 ]; then
+          printf '[forgejo-mirror-sync] HTTP %s\n' "$http_code" >&2
+          printf '%s\n' "$body" >&2
+          return 1
+        fi
+        printf '%s' "$body"
+      }
+
+      gh_user=$(api_call -H "Authorization: token $GITHUB_TOKEN" \
+        "https://api.github.com/user" | jq -r '.login')
+
+      repos_file=$(mktemp)
+      trap 'rm -f "$repos_file"' EXIT
+
       page=1
-      repos=""
       while true; do
-        batch=$(curl -sf -H "Authorization: token $GITHUB_TOKEN" \
-          "https://api.github.com/user/repos?per_page=100&page=$page&affiliation=owner")
-        count=$(echo "$batch" | jq length)
+        batch=$(api_call -H "Authorization: token $GITHUB_TOKEN" \
+          "https://api.github.com/user/repos?per_page=100&page=$page&visibility=all&affiliation=owner,organization_member")
+        count=$(printf '%s' "$batch" | jq length)
         [ "$count" -eq 0 ] && break
-        repos="$repos$batch"
+        printf '%s' "$batch" | jq -r '.[] | [.full_name, .clone_url] | @tsv' >> "$repos_file"
         page=$((page + 1))
       done
 
-      echo "$repos" | jq -r '.[].clone_url' | while read -r clone_url; do
-        repo_name=$(basename "$clone_url" .git)
+      sort -u "$repos_file" -o "$repos_file"
 
-        # Check if mirror already exists in Forgejo
-        status=$(curl -sf -o /dev/null -w '%{http_code}' \
+      while IFS=$'\t' read -r full_name clone_url; do
+        repo_owner="''${full_name%%/*}"
+        repo_name="''${full_name#*/}"
+
+        if [ "$repo_owner" = "$gh_user" ]; then
+          forgejo_repo_name="$repo_name"
+        else
+          forgejo_repo_name="$repo_owner--$repo_name"
+        fi
+
+        status=$(curl -sS -o /dev/null -w '%{http_code}' \
           -H "Authorization: token $FORGEJO_TOKEN" \
-          "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$repo_name")
+          "${forgejoApiUrl}/api/v1/repos/$FORGEJO_OWNER/$forgejo_repo_name" || true)
 
         if [ "$status" = "404" ]; then
-          # Create mirror
-          curl -sf -X POST \
+          api_call -X POST \
             -H "Authorization: token $FORGEJO_TOKEN" \
             -H "Content-Type: application/json" \
-            "$FORGEJO_URL/api/v1/repos/migrate" \
-            -d "{
-              \"clone_addr\": \"$clone_url\",
-              \"auth_token\": \"$GITHUB_TOKEN\",
-              \"uid\": $(curl -sf -H "Authorization: token $FORGEJO_TOKEN" "$FORGEJO_URL/api/v1/user" | jq .id),
-              \"repo_name\": \"$repo_name\",
-              \"mirror\": true,
-              \"service\": \"github\"
-            }"
-          echo "Created mirror: $repo_name"
+            "${forgejoApiUrl}/api/v1/repos/migrate" \
+            -d "$(jq -n \
+              --arg addr "$clone_url" \
+              --arg name "$forgejo_repo_name" \
+              --arg owner "$FORGEJO_OWNER" \
+              --arg token "$GITHUB_TOKEN" \
+              '{
+                clone_addr: $addr,
+                repo_name: $name,
+                repo_owner: $owner,
+                mirror: true,
+                auth_token: $token,
+                service: "github"
+              }')" \
+            > /dev/null
+          echo "Created mirror: $full_name -> $FORGEJO_OWNER/$forgejo_repo_name"
         else
-          # Trigger sync on existing mirror
-          curl -sf -X POST \
+          api_call -X POST \
             -H "Authorization: token $FORGEJO_TOKEN" \
-            "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$repo_name/mirror-sync" || true
-          echo "Synced mirror: $repo_name"
+            "${forgejoApiUrl}/api/v1/repos/$FORGEJO_OWNER/$forgejo_repo_name/mirror-sync" \
+            > /dev/null
+          echo "Synced mirror: $full_name -> $FORGEJO_OWNER/$forgejo_repo_name"
         fi
-      done
+      done < "$repos_file"
     '';
   };
 

@@ -1,68 +1,17 @@
-# nix
+# Nix Leveraging
 
-nix-darwin + NixOS + Home Manager config.
+[flake.nix](./flake.nix) is the root lever: one flake, one lockfile, one graph for both macOS and Linux. [modules/hosts/darwin.nix](./modules/hosts/darwin.nix) composes `nix-darwin`, `home-manager`, and `nix-homebrew`; [modules/hosts/netty.nix](./modules/hosts/netty.nix) composes `nixosSystem`, `disko`, and `home-manager`. The point is not “using Nix”; it is collapsing laptop state and VPS state into one reproducible interface.
 
-## machines
+[modules/nixpkgs.nix](./modules/nixpkgs.nix) and [lib/hosts.nix](./lib/hosts.nix) are the next leverage layer. They define the global `username`, per-host metadata, feature flags, and the `specialArgs` boundary. That removes random `isDarwin` checks from leaf modules and turns host differences into data.
 
-| name | type | manage |
-|------|------|--------|
-| darwin | MacBook Pro (aarch64) | `just switch` |
-| netty | NixOS VPS (x86_64) | `just switch-netty` |
+[lib/package-sets.nix](./lib/package-sets.nix), [modules/base.nix](./modules/base.nix), [modules/packages.nix](./modules/packages.nix), and [modules/homebrew.nix](./modules/homebrew.nix) are the package policy. `core`, `extras`, and `fonts` give one place to reason about the machine surface; custom inputs like `googleworkspace-cli`, `claude-code-nix`, `OpenSpec`, `neovim-nightly`, `nix-homebrew`, and `disko` are pinned in [flake.nix](./flake.nix) instead of installed ad hoc.
 
-## new machine setup
+[home/default.nix](./home/default.nix) and [home/common.nix](./home/common.nix) turn Home Manager into the userland control plane. [home/xdg.nix](./home/xdg.nix) pushes Rust, Go, Node, Python, AWS, Claude, npm, wget, psql, and sqlite into XDG paths; [home/security.nix](./home/security.nix) fixes SSH and GPG permissions on activation; [home/migration.nix](./home/migration.nix) cleans legacy `~/dots` links during the cutover instead of relying on manual cleanup.
 
-**darwin:**
-```bash
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
-git clone https://github.com/harivansh-afk/nix.git ~/Documents/GitHub/nix
-cd ~/Documents/GitHub/nix
-sudo nix --extra-experimental-features 'nix-command flakes' run github:nix-darwin/nix-darwin/master#darwin-rebuild -- switch --flake path:.#darwin
-exec zsh -l
-bw login
-export BW_SESSION="$(bw unlock --raw)"
-just secrets-sync && just secrets-restore-files
-exec zsh -l
-```
+[lib/theme.nix](./lib/theme.nix), [home/ghostty.nix](./home/ghostty.nix), [home/tmux.nix](./home/tmux.nix), [home/zsh.nix](./home/zsh.nix), and [home/scripts.nix](./home/scripts.nix) are the ergonomic leverage. One palette renders Ghostty, tmux, fzf, zsh highlights, bat, and delta. The generated `theme` script hot-swaps light/dark across those surfaces. tmux gets session restore, directory-based window names, and a generated session list; zsh gets vi mode, cursor-shape switching, XDG history, prompt theming, and deterministic PATH assembly.
 
-**netty (from mac):**
-```bash
-nix run github:nix-community/nixos-anywhere -- --flake .#netty --target-host netty --build-on-remote
-```
+[home/nvim.nix](./home/nvim.nix), [home/codex.nix](./home/codex.nix), [home/claude.nix](./home/claude.nix), and [home/skills.nix](./home/skills.nix) are the agent/editor layer. Neovim is pinned with the nightly overlay and seeded lockfile state; Codex and Claude configs are repo-owned; global skills are installed declaratively via `npx skills add -g` and hash-stamped so the activation only resyncs when the manifest changes.
 
-## secrets
+[scripts/default.nix](./scripts/default.nix), [justfile](./justfile), [scripts/render-bw-shell-secrets.sh](./scripts/render-bw-shell-secrets.sh), and [scripts/restore-bw-files.sh](./scripts/restore-bw-files.sh) are the operational leverage. `writeShellApplication` turns local scripts into managed tools (`ga`, `ghpr`, `gpr`, `ni`, `theme`, `wt`, `wtc`); Bitwarden stays the secret source of truth; `just switch`, `just switch-netty`, and `nixos-anywhere` keep deployment small.
 
-SSH keys and credentials are stored in Bitwarden. After unlocking:
-```bash
-export BW_SESSION="$(bw unlock --raw)"
-just secrets-sync          # shell env vars -> ~/.config/secrets/shell.zsh
-just secrets-restore-files # SSH keys, AWS, GCloud, Codex, GitHub CLI
-```
-
-## dev
-
-```bash
-nix develop
-just check
-just fmt
-```
-
-## layout
-
-```
-hosts/darwin/        - macOS host entrypoint
-hosts/netty/         - NixOS VPS entrypoint (disko + hardware + services)
-modules/             - shared system modules + devshells
-modules/hosts/       - flake-parts host output definitions
-modules/nixpkgs.nix  - shared flake context (hosts, specialArgs, pkgs)
-home/default.nix     - unified home entry (conditional on hostConfig)
-home/common.nix      - modules shared across all hosts
-home/xdg.nix         - XDG compliance (env vars, config files)
-home/security.nix    - SSH/GPG permission enforcement
-home/                - per-tool home-manager modules
-lib/hosts.nix        - host metadata + feature flags
-lib/theme.nix        - centralized color system (gruvbox)
-lib/package-sets.nix - shared + host-gated package lists
-config/              - repo-owned config files (nvim, tmux, etc.)
-scripts/             - secret management and utility scripts
-nix-maxxing.txt      - architecture and operations guide
-```
+Finally, [hosts/netty/configuration.nix](./hosts/netty/configuration.nix) turns the VPS into a declarative service bundle: static networking, nginx + ACME, Forgejo with GitHub mirror sync, sandbox-agent plus its CORS proxy, bounded GC/journald retention, and a machine that can be rebuilt instead of repaired.

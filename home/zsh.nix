@@ -3,11 +3,9 @@
   lib,
   pkgs,
   hostConfig,
+  theme,
   ...
 }:
-let
-  theme = import ../lib/theme.nix { inherit config; };
-in
 {
   programs.zsh = {
     enable = true;
@@ -156,12 +154,6 @@ in
         _codex_apply_prompt_theme
         _codex_apply_highlight_styles
 
-        ${lib.optionalString hostConfig.isDarwin ''
-          if command -v wt >/dev/null 2>&1; then
-            eval "$(command wt config shell init zsh)"
-            wtc() { wt switch --create --base @ "$@"; }
-          fi
-        ''}
       '')
 
       (lib.mkAfter ''

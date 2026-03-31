@@ -1,5 +1,7 @@
-{ ... }:
+{ config, ... }:
 {
+  _module.args.theme = import ../lib/theme.nix { inherit config; };
+
   imports = [
     ./bat.nix
     ./eza.nix

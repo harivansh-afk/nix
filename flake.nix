@@ -1,5 +1,5 @@
 {
-  description = "Rathi's macOS nix-darwin + NixOS + Home Manager config";
+  description = "Hari's nix config";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -22,11 +22,6 @@
 
     claudeCode = {
       url = "github:sadjow/claude-code-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    agentcomputer-cli = {
-      url = "path:/Users/rathi/Documents/GitHub/companion/agentcomputer/apps/cli";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

@@ -1,12 +1,11 @@
 {
-  config,
   lib,
   pkgs,
   hostConfig,
+  theme,
   ...
 }:
 let
-  theme = import ../lib/theme.nix { inherit config; };
   ghosttyConfig = ''
     theme = "cozybox-current"
     font-family = Berkeley Mono

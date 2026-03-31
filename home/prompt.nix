@@ -1,12 +1,9 @@
 {
-  config,
   lib,
   pkgs,
+  theme,
   ...
 }:
-let
-  theme = import ../lib/theme.nix { inherit config; };
-in
 {
   home.packages = [ pkgs.pure-prompt ];
 
@@ -38,12 +35,14 @@ in
         typeset -g prompt_pure_git_branch_color=$prompt_pure_colors[git:branch]
         [[ -n ''${prompt_pure_git_last_dirty_check_timestamp+x} ]] && prompt_pure_git_branch_color=$prompt_pure_colors[git:branch:cached]
 
-        # Branch + arrows turn yellow when dirty
+        # Branch, arrows, and prompt symbol turn yellow when dirty
         if [[ -n $prompt_pure_git_dirty ]]; then
           prompt_pure_git_branch_color=$prompt_pure_colors[git:dirty]
           prompt_pure_colors[git:arrow]=$prompt_pure_colors[git:dirty]
+          prompt_pure_colors[prompt:success]=$prompt_pure_colors[git:dirty]
         else
           prompt_pure_colors[git:arrow]=$_codex_pure_default_arrow
+          prompt_pure_colors[prompt:success]=$_codex_pure_default_success
         fi
 
         psvar[12]=; ((''${(M)#jobstates:#suspended:*} != 0)) && psvar[12]=''${PURE_SUSPENDED_JOBS_SYMBOL:-✦}
@@ -66,6 +65,7 @@ in
       }
 
       typeset -g _codex_pure_default_arrow=$prompt_pure_colors[git:arrow]
+      typeset -g _codex_pure_default_success=$prompt_pure_colors[prompt:success]
 
       _codex_apply_prompt_theme() {
         local mode="$(_codex_read_theme_mode)"
@@ -78,6 +78,7 @@ in
         fi
 
         typeset -g _codex_pure_default_arrow=$prompt_pure_colors[git:arrow]
+        typeset -g _codex_pure_default_success=$prompt_pure_colors[prompt:success]
         typeset -g _CODEX_LAST_PROMPT_THEME="$mode"
       }
     '')

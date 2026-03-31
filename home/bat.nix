@@ -1,7 +1,4 @@
-{ config, ... }:
-let
-  theme = import ../lib/theme.nix { inherit config; };
-in
+{ theme, ... }:
 {
   programs.bat = {
     enable = true;

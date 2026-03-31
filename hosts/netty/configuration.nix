@@ -159,7 +159,10 @@ in
 
   users.users.${username} = {
     isNormalUser = true;
-    extraGroups = [ "wheel" ];
+    extraGroups = [
+      "wheel"
+      "docker"
+    ];
     shell = pkgs.zsh;
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFbL9gJC0IPX6XUdJSWBovp+zmHvooMmvl91QG3lllwN rathiharivansh@gmail.com"
@@ -182,10 +185,13 @@ in
 
   services.journald.extraConfig = "MaxRetainedFileSec=1week";
 
+  virtualisation.docker.enable = true;
+
   environment.systemPackages = packageSets.extras ++ [
     pkgs.bubblewrap
     pkgs.pnpm
     pkgs.nodejs
+    pkgs.php
     sandboxAgentPackage
   ];
 

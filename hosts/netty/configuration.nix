@@ -233,6 +233,11 @@ in
     user = "git";
     group = "git";
     settings = {
+      repository = {
+        FORCE_PRIVATE = true;
+        DEFAULT_PRIVATE = "private";
+        DEFAULT_PUSH_CREATE_PRIVATE = true;
+      };
       server = {
         DOMAIN = forgejoDomain;
         ROOT_URL = "https://${forgejoDomain}/";
@@ -325,6 +330,7 @@ in
                 clone_addr: $addr,
                 repo_name: $name,
                 repo_owner: $owner,
+                private: true,
                 mirror: true,
                 auth_token: $token,
                 service: "github"

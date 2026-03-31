@@ -191,6 +191,7 @@ in
 
   systemd.tmpfiles.rules = [
     "L /usr/bin/bwrap - - - - ${pkgs.bubblewrap}/bin/bwrap"
+    "z /var/lib/vaultwarden/vaultwarden.env 0600 vaultwarden vaultwarden -"
   ];
 
   # --- ACME / Let's Encrypt ---

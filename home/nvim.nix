@@ -64,8 +64,7 @@ in
     recursive = true;
   };
 
-  xdg.configFile."nvim/nvim-pack-lock.json".source =
-    config.lib.file.mkOutOfStoreSymlink packLockPath;
+  xdg.configFile."nvim/nvim-pack-lock.json".source = config.lib.file.mkOutOfStoreSymlink packLockPath;
 
   home.activation.seedNvimPackLock = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     state_dir="${config.xdg.stateHome}/nvim"

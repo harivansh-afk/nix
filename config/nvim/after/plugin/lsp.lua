@@ -1,3 +1,5 @@
+pcall(vim.cmd.packadd, "blink.cmp")
+
 local lsp = require "config.lsp"
 
 vim.lsp.config("*", {

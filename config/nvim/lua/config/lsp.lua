@@ -2,15 +2,17 @@ local M = {}
 local cached_capabilities
 
 local function load_blink()
-  local ok_lz, lz = pcall(require, "lz.n")
-  if ok_lz then pcall(lz.trigger_load, "saghen/blink.cmp") end
+  pcall(vim.cmd.packadd, "blink.cmp")
 
   local ok_blink, blink = pcall(require, "blink.cmp")
   if ok_blink then return blink end
 
-  pcall(vim.cmd.packadd, "blink.cmp")
-  ok_blink, blink = pcall(require, "blink.cmp")
-  if ok_blink then return blink end
+  local ok_lz, lz = pcall(require, "lz.n")
+  if ok_lz then
+    pcall(lz.trigger_load, "saghen/blink.cmp")
+    ok_blink, blink = pcall(require, "blink.cmp")
+    if ok_blink then return blink end
+  end
 end
 
 function M.on_attach(_, bufnr)
@@ -33,7 +35,7 @@ function M.capabilities()
   local capabilities = vim.lsp.protocol.make_client_capabilities()
   local blink = load_blink()
   if blink and blink.get_lsp_capabilities then
-    capabilities = blink.get_lsp_capabilities(capabilities)
+    capabilities = vim.tbl_deep_extend("force", capabilities, blink.get_lsp_capabilities({}, false))
   end
 
   cached_capabilities = capabilities

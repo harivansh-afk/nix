@@ -1,6 +1,13 @@
 local api = vim.api
 local augroup = api.nvim_create_augroup("UserAutocmds", { clear = true })
 
+local function maybe_load_canola(bufnr)
+  local name = api.nvim_buf_get_name(bufnr)
+  if name == "" or vim.fn.isdirectory(name) == 0 then return end
+
+  pcall(vim.cmd, "silent keepalt Canola " .. vim.fn.fnameescape(name))
+end
+
 api.nvim_create_autocmd("TextYankPost", {
   group = augroup,
   callback = function() vim.highlight.on_yank { higroup = "Visual", timeout = 200 } end,
@@ -13,6 +20,20 @@ api.nvim_create_autocmd("BufReadPost", {
     local mark = api.nvim_buf_get_mark(0, '"')
     if mark[1] > 0 and mark[1] <= api.nvim_buf_line_count(0) then pcall(api.nvim_win_set_cursor, 0, mark) end
   end,
+})
+
+api.nvim_create_autocmd("BufEnter", {
+  group = augroup,
+  nested = true,
+  callback = function(args)
+    if vim.v.vim_did_enter == 1 then maybe_load_canola(args.buf) end
+  end,
+})
+
+api.nvim_create_autocmd("VimEnter", {
+  group = augroup,
+  nested = true,
+  callback = function() maybe_load_canola(0) end,
 })
 
 api.nvim_create_autocmd("VimResized", {

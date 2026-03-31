@@ -1,0 +1,171 @@
+Nix Config - Architecture and Operations Guide
+================================================
+
+1. WHY STATIC IP (NOT DHCP)
+----------------------------
+DHCP on a VPS is dangerous. If the DHCP lease expires or the server
+reboots while the DHCP server is unreachable, the machine loses its IP
+and becomes inaccessible via SSH. This happened on netty (2026-03-30).
+
+Static config in hosts/netty/configuration.nix:
+  - IP: 152.53.195.59/22
+  - Gateway: 152.53.192.1
+  - Interface: ens3
+  - DNS: 1.1.1.1, 8.8.8.8
+
+Always verify the interface name with `ip link show` before changing
+network config. Keep VNC console access available as a fallback.
+
+
+2. HOST ABSTRACTION (hostConfig)
+---------------------------------
+lib/hosts.nix defines each machine with:
+  - isDarwin / isLinux / isNixOS booleans
+  - features map (rust, go, node, python, aws, claude, docker, tex)
+
+modules/nixpkgs.nix passes hostConfig via specialArgs so all home-manager
+modules can use it. This replaces scattered `pkgs.stdenv.isDarwin` checks.
+
+To add a new host:
+  1. Add entry to lib/hosts.nix with all fields
+  2. Create hosts/<name>/configuration.nix (NixOS) or add darwin case
+  3. Add host output in modules/hosts/<name>.nix
+  4. home/default.nix auto-selects modules based on hostConfig flags
+
+home/default.nix is the unified entry point - no separate per-host home
+modules needed.
+
+
+3. XDG COMPLIANCE
+------------------
+home/xdg.nix sets environment variables so tools respect XDG dirs:
+
+  CARGO_HOME        -> $XDG_DATA_HOME/cargo
+  RUSTUP_HOME       -> $XDG_DATA_HOME/rustup
+  GOPATH            -> $XDG_DATA_HOME/go
+  GOMODCACHE        -> $XDG_CACHE_HOME/go/mod
+  NPM_CONFIG_USERCONFIG -> $XDG_CONFIG_HOME/npm/npmrc
+  NODE_REPL_HISTORY -> $XDG_STATE_HOME/node_repl_history
+  PYTHON_HISTORY    -> $XDG_STATE_HOME/python_history
+  AWS_CONFIG_FILE   -> $XDG_CONFIG_HOME/aws/config
+  DOCKER_CONFIG     -> $XDG_CONFIG_HOME/docker
+  CLAUDE_CONFIG_DIR -> $XDG_CONFIG_HOME/claude
+  PSQL_HISTORY      -> $XDG_STATE_HOME/psql_history
+  SQLITE_HISTORY    -> $XDG_STATE_HOME/sqlite_history
+  LESSHISTFILE      -> "-" (disabled)
+
+All gated by hostConfig.features so tools only get configured when
+the feature flag is set for that host.
+
+
+4. SECURITY MODULE
+-------------------
+home/security.nix runs activation scripts on every `home-manager switch`:
+  - ~/.ssh/ dir: 700, private keys: 600, pub/known_hosts/config: 644
+  - ~/.gnupg/ dirs: 700, files: 600
+
+No manual chmod needed after restoring keys from Bitwarden.
+
+
+5. THEME SYSTEM
+----------------
+lib/theme.nix is the single source of truth for colors.
+
+Shared palette (gruvbox-inspired) used across:
+  - Ghostty terminal (renderGhostty)
+  - Tmux status bar (renderTmux)
+  - fzf color scheme (renderFzf)
+  - Zsh syntax highlighting (renderZshHighlights)
+  - Bat (batTheme)
+  - Git delta (deltaTheme)
+
+Runtime toggle: `theme toggle` writes "light" or "dark" to
+$XDG_STATE_HOME/theme/current, then updates Ghostty, tmux, fzf,
+and Neovim (via RPC) live. Bat and delta are static at build time.
+
+
+6. SHELL SETUP
+---------------
+oh-my-zsh with agnoster theme (powerline arrows + git branch coloring).
+Vim mode via defaultKeymap = "viins" with cursor shape switching
+(beam for insert, block for normal).
+
+History: 50k entries, dedup, ignoreSpace, extended format, stored at
+$XDG_STATE_HOME/zsh_history.
+
+zoxide: declarative via programs.zoxide (no manual eval).
+
+PATH: managed via home.sessionPath in xdg.nix + initContent block
+in zsh.nix for entries that need conditional logic.
+
+
+7. SERVER SERVICES (netty)
+---------------------------
+All in hosts/netty/configuration.nix:
+
+Nginx reverse proxy with ACME SSL:
+  - sandbox.example.dev -> 127.0.0.1:2470 (sandbox agent)
+  - git.example.dev -> 127.0.0.1:3000 (forgejo)
+
+Forgejo:
+  - Self-hosted git, registration disabled
+  - Runs as git user on port 3000
+  - GitHub mirror sync via hourly systemd timer
+  - Requires /etc/forgejo-mirror.env with GITHUB_TOKEN, FORGEJO_TOKEN,
+    FORGEJO_URL, FORGEJO_OWNER
+
+Sandbox Agent:
+  - System-level systemd services (not user units)
+  - sandbox-agent on :2470, env from ~/.config/sandbox-agent/agent.env
+  - sandbox-cors-proxy on :2468 (Node.js)
+  - No cloudflared - nginx handles SSL termination
+
+Garbage collection: 3-day retention (vs 14-day on darwin).
+Disk guards: min-free 100MB, max-free 1GB.
+Journald: 1-week retention.
+
+
+8. DEPLOY COMMANDS
+-------------------
+Darwin (local):
+  just switch
+
+Netty (from mac):
+  just switch-netty
+
+First-time netty install:
+  nix run github:nix-community/nixos-anywhere -- \
+    --flake .#netty --target-host netty --build-on-remote
+
+
+9. ROLLBACK
+-------------
+Each phase is a separate git commit.
+
+NixOS rollback:
+  ssh netty "nixos-rebuild switch --rollback"
+
+Or boot previous generation from GRUB (3 kept).
+
+Darwin rollback:
+  git revert <commit> && just switch
+
+Home Manager rollback:
+  home-manager generations  # list
+  home-manager switch --flake .#<host>  # after git revert
+
+
+10. FEATURE FLAGS REFERENCE
+-----------------------------
+| Feature | darwin | netty |
+|---------|--------|-------|
+| rust    | yes    | yes   |
+| go      | yes    | yes   |
+| node    | yes    | yes   |
+| python  | yes    | yes   |
+| aws     | yes    | yes   |
+| claude  | yes    | yes   |
+| docker  | yes    | no    |
+| tex     | yes    | no    |
+
+Set in lib/hosts.nix, consumed by home/xdg.nix and lib/package-sets.nix.

@@ -49,14 +49,20 @@ just fmt
 ## layout
 
 ```
-hosts/darwin/   - macOS host entrypoint
-hosts/netty/    - NixOS VPS entrypoint (disko + hardware)
-modules/        - shared system modules + devshells
-modules/hosts/  - flake-parts host output definitions
-modules/nixpkgs.nix - shared flake context (hosts, args, pkgs helpers)
-home/           - Home Manager modules
-lib/hosts.nix   - host metadata used by the flake
-lib/            - shared package sets and theme system
-config/         - repo-owned config files (nvim, tmux, etc.)
-scripts/        - secret management and utility scripts
+hosts/darwin/        - macOS host entrypoint
+hosts/netty/         - NixOS VPS entrypoint (disko + hardware + services)
+modules/             - shared system modules + devshells
+modules/hosts/       - flake-parts host output definitions
+modules/nixpkgs.nix  - shared flake context (hosts, specialArgs, pkgs)
+home/default.nix     - unified home entry (conditional on hostConfig)
+home/common.nix      - modules shared across all hosts
+home/xdg.nix         - XDG compliance (env vars, config files)
+home/security.nix    - SSH/GPG permission enforcement
+home/                - per-tool home-manager modules
+lib/hosts.nix        - host metadata + feature flags
+lib/theme.nix        - centralized color system (gruvbox)
+lib/package-sets.nix - shared + host-gated package lists
+config/              - repo-owned config files (nvim, tmux, etc.)
+scripts/             - secret management and utility scripts
+nix-maxxing.txt      - architecture and operations guide
 ```

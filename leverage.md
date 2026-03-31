@@ -1,3 +1,5 @@
+# Nix Leveraging
+
 [flake.nix](./flake.nix) is the root lever: one flake, one lockfile, one graph for both macOS and Linux. [modules/hosts/darwin.nix](./modules/hosts/darwin.nix) composes `nix-darwin`, `home-manager`, and `nix-homebrew`; [modules/hosts/netty.nix](./modules/hosts/netty.nix) composes `nixosSystem`, `disko`, and `home-manager`. The point is not “using Nix”; it is collapsing laptop state and VPS state into one reproducible interface.
 
 [modules/nixpkgs.nix](./modules/nixpkgs.nix) and [lib/hosts.nix](./lib/hosts.nix) are the next leverage layer. They define the global `username`, per-host metadata, feature flags, and the `specialArgs` boundary. That removes random `isDarwin` checks from leaf modules and turns host differences into data.

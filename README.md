@@ -29,7 +29,7 @@ Deployment is `just switch` for the laptop and `just switch-netty` for the serve
 
 The VPS has a declarative service bundle: 
 - static networking
-- nginx with ACME
-- Forgejo mirroring to GitHub
-- sandbox agent behind a CORS proxy
-- bounded GC and journald retention
+- nginx with ACME and only 3 ports exposed
+- Self hosts Forgejo mirroring to GitHub (git.harivan.sh)
+- Self hosts VaultWarden (vault.harivan.sh)
+- Runs sandbox agent behind a CORS proxy (netty.harivan.sh)

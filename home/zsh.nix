@@ -85,6 +85,7 @@
           "$HOME/.opencode/bin"
           "${pkgs.postgresql_17}/bin"
           "$HOME/.nix-profile/bin"
+          "/run/wrappers/bin"
           "/etc/profiles/per-user/${config.home.username}/bin"
           "/run/current-system/sw/bin"
           "/nix/var/nix/profiles/default/bin"

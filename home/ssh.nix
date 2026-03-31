@@ -18,7 +18,8 @@
       netty = {
         hostname = "152.53.195.59";
         user = "rathi";
-        identityFile = "~/.ssh/id_ed25519";
+        identityFile = "~/.ssh/netty";
+        identitiesOnly = true;
       };
 
       "agentcomputer.ai" = {

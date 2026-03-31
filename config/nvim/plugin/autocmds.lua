@@ -3,8 +3,9 @@ local augroup = api.nvim_create_augroup("UserAutocmds", { clear = true })
 
 local function maybe_load_canola(bufnr)
   local name = api.nvim_buf_get_name(bufnr)
-  if name == "" or vim.fn.isdirectory(name) == 0 then return end
+  if name == "" or vim.bo[bufnr].filetype == "canola" or vim.fn.isdirectory(name) == 0 then return end
 
+  pcall(vim.cmd.packadd, "canola.nvim")
   pcall(vim.cmd, "silent keepalt Canola " .. vim.fn.fnameescape(name))
 end
 

@@ -27,12 +27,57 @@
 
       typeset -g prompt_newline=' '
       prompt pure
+      prompt_pure_state_setup() {
+        setopt localoptions noshwordsplit
+
+        local ssh_connection=''${SSH_CONNECTION:-$PROMPT_PURE_SSH_CONNECTION}
+        local username hostname
+        local pure_version=''${prompt_pure_state[version]:-1.27.0}
+
+        if [[ -z $ssh_connection ]] && (( $+commands[who] )); then
+          local who_out
+          who_out=$(who -m 2>/dev/null)
+
+          if (( $? )); then
+            local -a who_in
+            who_in=(''${(f)"$(who 2>/dev/null)"})
+            who_out="''${(M)who_in:#*[[:space:]]''${TTY#/dev/}[[:space:]]*}"
+          fi
+
+          local reIPv6='(([0-9a-fA-F]+:)|:){2,}[0-9a-fA-F]+'
+          local reIPv4='([0-9]{1,3}\\.){3}[0-9]+'
+          local reHostname='([.][^. ]+){2}'
+          local -H MATCH MBEGIN MEND
+
+          if [[ $who_out =~ "\\(?($reIPv4|$reIPv6|$reHostname)\\)?$" ]]; then
+            ssh_connection=$MATCH
+            export PROMPT_PURE_SSH_CONNECTION=$ssh_connection
+          fi
+
+          unset MATCH MBEGIN MEND
+        fi
+
+        # Pure's upstream user/host segment stores a deferred color reference,
+        # which collapses hex colors to black for this segment over SSH. Resolve
+        # the current prompt colors here and rebuild the segment after each
+        # prompt_pure_set_colors call so the rendered prompt keeps the theme hex.
+        hostname="%F{$prompt_pure_colors[host]}@%m%f"
+        [[ -n $ssh_connection ]] && username="%F{$prompt_pure_colors[user]}%n%f""$hostname"
+        [[ -z "''${CODESPACES}" ]] && prompt_pure_is_inside_container && username="%F{$prompt_pure_colors[user]}%n%f""$hostname"
+        [[ $UID -eq 0 ]] && username="%F{$prompt_pure_colors[user:root]}%n%f""$hostname"
+
+        typeset -gA prompt_pure_state
+        prompt_pure_state[version]="$pure_version"
+        prompt_pure_state+=(username "$username" prompt "''${PURE_PROMPT_SYMBOL:-❯}")
+      }
+      prompt_pure_state_setup
 
       prompt_pure_preprompt_render() {
         setopt localoptions noshwordsplit
         unset prompt_pure_async_render_requested
 
         prompt_pure_set_colors
+        prompt_pure_state_setup
         _codex_pure_default_arrow=$prompt_pure_colors[git:arrow]
         _codex_pure_default_success=$prompt_pure_colors[prompt:success]
 

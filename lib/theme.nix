@@ -155,8 +155,8 @@ let
             success = "#427b58";
             error = "#c5524a";
             execTime = sharedPalette.gray;
-            host = sharedPalette.gray;
-            user = sharedPalette.gray;
+            host = "#665c54";
+            user = "#665c54";
           }
         else
           {
@@ -168,8 +168,8 @@ let
             success = sharedPalette.green;
             error = sharedPalette.red;
             execTime = sharedPalette.gray;
-            host = sharedPalette.gray;
-            user = sharedPalette.gray;
+            host = "#ebdbb2";
+            user = "#ebdbb2";
           };
     in
     ''

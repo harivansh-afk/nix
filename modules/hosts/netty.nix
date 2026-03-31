@@ -1,7 +1,6 @@
 {
   hosts,
   inputs,
-  mkPkgs,
   mkSpecialArgs,
   mkHomeManagerModule,
   ...
@@ -19,14 +18,6 @@ in
         ../../hosts/${host.name}/configuration.nix
         inputs.home-manager.nixosModules.home-manager
         (mkHomeManagerModule host)
-      ];
-    };
-
-    homeConfigurations.${host.name} = inputs.home-manager.lib.homeManagerConfiguration {
-      pkgs = mkPkgs host.system;
-      extraSpecialArgs = mkSpecialArgs host;
-      modules = [
-        host.standaloneHomeModule
       ];
     };
   };

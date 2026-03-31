@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  hostConfig,
   ...
 }:
 let
@@ -10,7 +11,7 @@ in
 {
   home.packages =
     builtins.attrValues customScripts.commonPackages
-    ++ lib.optionals pkgs.stdenv.isDarwin (builtins.attrValues customScripts.darwinPackages);
+    ++ lib.optionals hostConfig.isDarwin (builtins.attrValues customScripts.darwinPackages);
 
   home.activation.initializeThemeState = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     mkdir -p "${customScripts.theme.paths.stateDir}" "${customScripts.theme.paths.fzfDir}" "${customScripts.theme.paths.ghosttyDir}" "${customScripts.theme.paths.tmuxDir}"

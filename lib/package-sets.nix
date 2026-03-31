@@ -104,11 +104,11 @@ in
       redis
       tailscale
       terraform
-      texliveFull
       yt-dlp
     ])
     ++ lib.optionals pkgs.stdenv.isDarwin [
       agentcomputerPackage
+      texliveFull
     ]
     ++ [
       openspecPackage

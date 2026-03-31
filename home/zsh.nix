@@ -2,8 +2,12 @@
   config,
   lib,
   pkgs,
+  hostConfig,
   ...
 }:
+let
+  theme = import ../lib/theme.nix { inherit config; };
+in
 {
   home.file.".oh-my-zsh/custom/themes/agnoster.zsh-theme".source = ../config/agnoster.zsh-theme;
 
@@ -22,6 +26,17 @@
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
 
+    history = {
+      size = 50000;
+      save = 50000;
+      ignoreDups = true;
+      ignoreAllDups = true;
+      ignoreSpace = true;
+      extended = true;
+      append = true;
+      path = "${config.xdg.stateHome}/zsh_history";
+    };
+
     shellAliases = {
       co = "codex --dangerously-bypass-approvals-and-sandbox";
       ca = "cursor-agent";
@@ -38,7 +53,7 @@
       lg = "lazygit";
       nim = "nvim .";
     }
-    // lib.optionalAttrs pkgs.stdenv.isDarwin {
+    // lib.optionalAttrs hostConfig.isDarwin {
       tailscale = "/Applications/Tailscale.app/Contents/MacOS/Tailscale";
     };
 
@@ -48,7 +63,7 @@
       fi
       export NODE_NO_WARNINGS=1
     ''
-    + lib.optionalString pkgs.stdenv.isDarwin ''
+    + lib.optionalString hostConfig.isDarwin ''
       # Ghostty shell integration expects a resource directory; the Nix app
       # bundle lives in the store instead of /Applications.
       export GHOSTTY_RESOURCES_DIR="${pkgs.ghostty-bin}/Applications/Ghostty.app/Contents/Resources/ghostty"
@@ -80,29 +95,21 @@
           source ~/.secrets
         fi
 
-        eval "$(zoxide init zsh)"
-
         [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
         export BUN_INSTALL="$HOME/.bun"
-        export PNPM_HOME="${
-          if pkgs.stdenv.isDarwin then "$HOME/Library/pnpm" else "${config.xdg.dataHome}/pnpm"
-        }"
-        bindkey -v
         typeset -U path PATH
         path=(
           "$HOME/.amp/bin"
-          "$PNPM_HOME"
           "$BUN_INSTALL/bin"
           "$HOME/.antigravity/antigravity/bin"
           "$HOME/.opencode/bin"
           "${pkgs.postgresql_17}/bin"
-          "$HOME/.local/bin"
           "$HOME/.nix-profile/bin"
           "/etc/profiles/per-user/${config.home.username}/bin"
           "/run/current-system/sw/bin"
           "/nix/var/nix/profiles/default/bin"
-          ${lib.optionalString pkgs.stdenv.isDarwin ''
+          ${lib.optionalString hostConfig.isDarwin ''
             "/opt/homebrew/bin"
             "/opt/homebrew/sbin"
           ''}
@@ -132,63 +139,9 @@
           typeset -gA ZSH_HIGHLIGHT_STYLES
 
           if [[ "$mode" == light ]]; then
-            ZSH_HIGHLIGHT_STYLES[arg0]='fg=#427b58'
-            ZSH_HIGHLIGHT_STYLES[autodirectory]='fg=#427b58,underline'
-            ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]='fg=#076678'
-            ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]='fg=#076678'
-            ZSH_HIGHLIGHT_STYLES[back-quoted-argument-delimiter]='fg=#8f3f71'
-            ZSH_HIGHLIGHT_STYLES[bracket-error]='fg=#ea6962,bold'
-            ZSH_HIGHLIGHT_STYLES[bracket-level-1]='fg=#076678,bold'
-            ZSH_HIGHLIGHT_STYLES[bracket-level-2]='fg=#427b58,bold'
-            ZSH_HIGHLIGHT_STYLES[bracket-level-3]='fg=#8f3f71,bold'
-            ZSH_HIGHLIGHT_STYLES[bracket-level-4]='fg=#b57614,bold'
-            ZSH_HIGHLIGHT_STYLES[bracket-level-5]='fg=#076678,bold'
-            ZSH_HIGHLIGHT_STYLES[comment]='fg=#928374'
-            ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter]='fg=#8f3f71'
-            ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]='fg=#076678'
-            ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=#b57614'
-            ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=#b57614'
-            ZSH_HIGHLIGHT_STYLES[global-alias]='fg=#076678'
-            ZSH_HIGHLIGHT_STYLES[globbing]='fg=#076678'
-            ZSH_HIGHLIGHT_STYLES[history-expansion]='fg=#076678'
-            ZSH_HIGHLIGHT_STYLES[path]='fg=#3c3836,underline'
-            ZSH_HIGHLIGHT_STYLES[precommand]='fg=#427b58,underline'
-            ZSH_HIGHLIGHT_STYLES[process-substitution-delimiter]='fg=#8f3f71'
-            ZSH_HIGHLIGHT_STYLES[rc-quote]='fg=#076678'
-            ZSH_HIGHLIGHT_STYLES[redirection]='fg=#b57614'
-            ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=#b57614'
-            ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=#b57614'
-            ZSH_HIGHLIGHT_STYLES[suffix-alias]='fg=#427b58,underline'
-            ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=#ea6962,bold'
+            ${theme.renderZshHighlights "light"}
           else
-            ZSH_HIGHLIGHT_STYLES[arg0]='fg=#8ec97c'
-            ZSH_HIGHLIGHT_STYLES[autodirectory]='fg=#8ec97c,underline'
-            ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]='fg=#8ec07c'
-            ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]='fg=#8ec07c'
-            ZSH_HIGHLIGHT_STYLES[back-quoted-argument-delimiter]='fg=#d3869b'
-            ZSH_HIGHLIGHT_STYLES[bracket-error]='fg=#ea6962,bold'
-            ZSH_HIGHLIGHT_STYLES[bracket-level-1]='fg=#5b84de,bold'
-            ZSH_HIGHLIGHT_STYLES[bracket-level-2]='fg=#8ec97c,bold'
-            ZSH_HIGHLIGHT_STYLES[bracket-level-3]='fg=#d3869b,bold'
-            ZSH_HIGHLIGHT_STYLES[bracket-level-4]='fg=#d8a657,bold'
-            ZSH_HIGHLIGHT_STYLES[bracket-level-5]='fg=#8ec07c,bold'
-            ZSH_HIGHLIGHT_STYLES[comment]='fg=#7c6f64'
-            ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter]='fg=#d3869b'
-            ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]='fg=#8ec07c'
-            ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=#d8a657'
-            ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=#d8a657'
-            ZSH_HIGHLIGHT_STYLES[global-alias]='fg=#8ec07c'
-            ZSH_HIGHLIGHT_STYLES[globbing]='fg=#5b84de'
-            ZSH_HIGHLIGHT_STYLES[history-expansion]='fg=#5b84de'
-            ZSH_HIGHLIGHT_STYLES[path]='fg=#d4be98,underline'
-            ZSH_HIGHLIGHT_STYLES[precommand]='fg=#8ec97c,underline'
-            ZSH_HIGHLIGHT_STYLES[process-substitution-delimiter]='fg=#d3869b'
-            ZSH_HIGHLIGHT_STYLES[rc-quote]='fg=#8ec07c'
-            ZSH_HIGHLIGHT_STYLES[redirection]='fg=#d8a657'
-            ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=#d8a657'
-            ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=#d8a657'
-            ZSH_HIGHLIGHT_STYLES[suffix-alias]='fg=#8ec97c,underline'
-            ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=#ea6962,bold'
+            ${theme.renderZshHighlights "dark"}
           fi
 
           typeset -g _CODEX_LAST_HIGHLIGHT_THEME="$mode"
@@ -249,7 +202,7 @@
 
         _codex_apply_highlight_styles
 
-        ${lib.optionalString pkgs.stdenv.isDarwin ''
+        ${lib.optionalString hostConfig.isDarwin ''
           if command -v wt >/dev/null 2>&1; then
             eval "$(command wt config shell init zsh)"
 

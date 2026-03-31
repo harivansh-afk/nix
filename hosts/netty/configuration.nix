@@ -1,6 +1,7 @@
 {
   inputs,
   lib,
+  modulesPath,
   pkgs,
   username,
   self,
@@ -14,6 +15,8 @@ in
     ./hardware-configuration.nix
     ./disk-config.nix
     ../../modules/base.nix
+    (modulesPath + "/profiles/minimal.nix")
+    (modulesPath + "/profiles/headless.nix")
   ];
 
   boot.loader.grub = {
@@ -21,12 +24,31 @@ in
     efiSupport = true;
     efiInstallAsRemovable = true;
     device = "nodev";
-    configurationLimit = 5;
+    configurationLimit = 3;
   };
+
+  documentation.enable = false;
+  fonts.fontconfig.enable = false;
 
   networking = {
     hostName = "netty";
-    useDHCP = true;
+    useDHCP = false;
+    interfaces.ens3 = {
+      ipv4.addresses = [
+        {
+          address = "152.53.195.59";
+          prefixLength = 22;
+        }
+      ];
+    };
+    defaultGateway = {
+      address = "152.53.192.1";
+      interface = "ens3";
+    };
+    nameservers = [
+      "1.1.1.1"
+      "8.8.8.8"
+    ];
     firewall.allowedTCPPorts = [
       22
       80
@@ -44,9 +66,13 @@ in
     };
   };
 
-  users.users.root.openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM6tzq33IQcurWoQ7vhXOTLjv8YkdTGb7NoNsul3Sbfu rathi@mac"
-  ];
+  # Emergency console access - generate hashed password and save to Bitwarden later
+  users.users.root = {
+    initialPassword = "temppass123";
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM6tzq33IQcurWoQ7vhXOTLjv8YkdTGb7NoNsul3Sbfu rathi@mac"
+    ];
+  };
 
   users.users.${username} = {
     isNormalUser = true;
@@ -63,6 +89,15 @@ in
     "root"
     username
   ];
+
+  nix.gc.options = lib.mkForce "--delete-older-than 3d";
+
+  nix.extraOptions = ''
+    min-free = ${toString (100 * 1024 * 1024)}
+    max-free = ${toString (1024 * 1024 * 1024)}
+  '';
+
+  services.journald.extraConfig = "MaxRetainedFileSec=1week";
 
   environment.systemPackages = packageSets.extras ++ [
     pkgs.bubblewrap

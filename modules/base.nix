@@ -26,7 +26,7 @@ in
 
   nix.gc = {
     automatic = true;
-    options = "--delete-older-than 14d";
+    options = lib.mkDefault "--delete-older-than 14d";
   }
   // (
     if pkgs.stdenv.isDarwin then

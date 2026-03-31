@@ -4,6 +4,8 @@
     ./bat.nix
     ./eza.nix
     ./claude.nix
+    ./xdg.nix
+    ./security.nix
     ./codex.nix
     ./fzf.nix
     ./gcloud.nix
@@ -25,4 +27,9 @@
   home.stateVersion = "24.11";
   programs.home-manager.enable = true;
   xdg.enable = true;
+
+  programs.zoxide = {
+    enable = true;
+    enableZshIntegration = true;
+  };
 }

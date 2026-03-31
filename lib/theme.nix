@@ -140,14 +140,78 @@ let
       --color=fg+:${theme.text},bg+:${theme.surface},hl+:${theme.blue}
       --color=info:${theme.green},prompt:${theme.blue},pointer:${theme.text},marker:${theme.green},spinner:${theme.text}
     '';
+  batTheme = mode: if mode == "light" then "gruvbox-light" else "gruvbox-dark";
+
+  deltaTheme = mode: if mode == "light" then "gruvbox-light" else "gruvbox-dark";
+
+  renderZshHighlights =
+    mode:
+    let
+      # Light mode uses gruvbox-light specific colors
+      light = {
+        arg0 = "#427b58";
+        aqua = "#076678";
+        purple = "#8f3f71";
+        yellow = "#b57614";
+        text = "#3c3836";
+        comment = "#928374";
+        error = "#ea6962";
+      };
+      # Dark mode uses our theme palette
+      dark = {
+        arg0 = sharedPalette.green;
+        aqua = sharedPalette.aqua;
+        purple = sharedPalette.purple;
+        yellow = "#d8a657";
+        text = "#d4be98";
+        comment = "#7c6f64";
+        error = sharedPalette.red;
+        blue = sharedPalette.blue;
+      };
+      c = if mode == "light" then light else dark;
+      blueOrAqua = if mode == "light" then c.aqua else c.blue;
+    in
+    ''
+      ZSH_HIGHLIGHT_STYLES[arg0]='fg=${c.arg0}'
+      ZSH_HIGHLIGHT_STYLES[autodirectory]='fg=${c.arg0},underline'
+      ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]='fg=${if mode == "light" then c.aqua else c.aqua}'
+      ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]='fg=${if mode == "light" then c.aqua else c.aqua}'
+      ZSH_HIGHLIGHT_STYLES[back-quoted-argument-delimiter]='fg=${c.purple}'
+      ZSH_HIGHLIGHT_STYLES[bracket-error]='fg=${c.error},bold'
+      ZSH_HIGHLIGHT_STYLES[bracket-level-1]='fg=${blueOrAqua},bold'
+      ZSH_HIGHLIGHT_STYLES[bracket-level-2]='fg=${c.arg0},bold'
+      ZSH_HIGHLIGHT_STYLES[bracket-level-3]='fg=${c.purple},bold'
+      ZSH_HIGHLIGHT_STYLES[bracket-level-4]='fg=${c.yellow},bold'
+      ZSH_HIGHLIGHT_STYLES[bracket-level-5]='fg=${if mode == "light" then c.aqua else c.aqua},bold'
+      ZSH_HIGHLIGHT_STYLES[comment]='fg=${c.comment}'
+      ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter]='fg=${c.purple}'
+      ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]='fg=${if mode == "light" then c.aqua else c.aqua}'
+      ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=${c.yellow}'
+      ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=${c.yellow}'
+      ZSH_HIGHLIGHT_STYLES[global-alias]='fg=${if mode == "light" then c.aqua else c.aqua}'
+      ZSH_HIGHLIGHT_STYLES[globbing]='fg=${blueOrAqua}'
+      ZSH_HIGHLIGHT_STYLES[history-expansion]='fg=${blueOrAqua}'
+      ZSH_HIGHLIGHT_STYLES[path]='fg=${c.text},underline'
+      ZSH_HIGHLIGHT_STYLES[precommand]='fg=${c.arg0},underline'
+      ZSH_HIGHLIGHT_STYLES[process-substitution-delimiter]='fg=${c.purple}'
+      ZSH_HIGHLIGHT_STYLES[rc-quote]='fg=${if mode == "light" then c.aqua else c.aqua}'
+      ZSH_HIGHLIGHT_STYLES[redirection]='fg=${c.yellow}'
+      ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=${c.yellow}'
+      ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=${c.yellow}'
+      ZSH_HIGHLIGHT_STYLES[suffix-alias]='fg=${c.arg0},underline'
+      ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=${c.error},bold'
+    '';
 in
 {
   inherit
+    batTheme
     defaultMode
+    deltaTheme
     paths
     renderFzf
     renderGhostty
     renderTmux
+    renderZshHighlights
     themes
     ;
 }

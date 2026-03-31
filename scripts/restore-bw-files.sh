@@ -137,6 +137,7 @@ restore_ssh_key() {
 }
 
 restore_ssh_key 'SSH Key - id_ed25519' 'id_ed25519'
+restore_ssh_key 'netty ssh key' 'netty'
 
 restore_aws_credentials
 restore_gcloud_adc

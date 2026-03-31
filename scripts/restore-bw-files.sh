@@ -63,7 +63,8 @@ restore_aws_credentials() {
   access_key="$(printf '%s\n' "${note}" | sed -n 's/^aws_access_key_id=//p' | head -1)"
   secret_key="$(printf '%s\n' "${note}" | sed -n 's/^aws_secret_access_key=//p' | head -1)"
 
-  write_file "${HOME}/.aws/credentials" 600 "[default]
+  local aws_creds="${AWS_SHARED_CREDENTIALS_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/aws/credentials}"
+  write_file "${aws_creds}" 600 "[default]
 aws_access_key_id = ${access_key}
 aws_secret_access_key = ${secret_key}
 "

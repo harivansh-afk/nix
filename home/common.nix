@@ -17,6 +17,7 @@
     ./mise.nix
     ./migration.nix
     ./nvim.nix
+    ./prompt.nix
     ./skills.nix
     ./scripts.nix
     ./ssh.nix

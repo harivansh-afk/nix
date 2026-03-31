@@ -108,7 +108,7 @@ in
     ])
     ++ lib.optionals pkgs.stdenv.isDarwin [
       agentcomputerPackage
-      texliveFull
+      pkgs.texliveFull
     ]
     ++ [
       openspecPackage

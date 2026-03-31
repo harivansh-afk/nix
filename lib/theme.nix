@@ -144,29 +144,33 @@ let
     mode:
     let
       theme = themes.${mode};
-      c = if mode == "light" then {
-        path = "#4261a5";
-        branch = "#427b58";
-        dirty = sharedPalette.yellow;
-        arrow = sharedPalette.purpleNeutral;
-        stash = sharedPalette.aquaNeutral;
-        success = "#427b58";
-        error = "#c5524a";
-        execTime = sharedPalette.gray;
-        host = sharedPalette.gray;
-        user = sharedPalette.gray;
-      } else {
-        path = sharedPalette.blue;
-        branch = sharedPalette.green;
-        dirty = sharedPalette.yellowBright;
-        arrow = sharedPalette.purple;
-        stash = sharedPalette.aqua;
-        success = sharedPalette.green;
-        error = sharedPalette.red;
-        execTime = sharedPalette.gray;
-        host = sharedPalette.gray;
-        user = sharedPalette.gray;
-      };
+      c =
+        if mode == "light" then
+          {
+            path = "#4261a5";
+            branch = "#427b58";
+            dirty = sharedPalette.yellow;
+            arrow = sharedPalette.purpleNeutral;
+            stash = sharedPalette.aquaNeutral;
+            success = "#427b58";
+            error = "#c5524a";
+            execTime = sharedPalette.gray;
+            host = sharedPalette.gray;
+            user = sharedPalette.gray;
+          }
+        else
+          {
+            path = sharedPalette.blue;
+            branch = sharedPalette.green;
+            dirty = sharedPalette.yellowBright;
+            arrow = sharedPalette.purple;
+            stash = sharedPalette.aqua;
+            success = sharedPalette.green;
+            error = sharedPalette.red;
+            execTime = sharedPalette.gray;
+            host = sharedPalette.gray;
+            user = sharedPalette.gray;
+          };
     in
     ''
       zstyle ':prompt:pure:path' color '${c.path}'
@@ -228,7 +232,9 @@ let
       ZSH_HIGHLIGHT_STYLES[bracket-level-5]='fg=${if mode == "light" then c.aqua else c.aqua},bold'
       ZSH_HIGHLIGHT_STYLES[comment]='fg=${c.comment}'
       ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter]='fg=${c.purple}'
-      ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]='fg=${if mode == "light" then c.aqua else c.aqua}'
+      ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]='fg=${
+        if mode == "light" then c.aqua else c.aqua
+      }'
       ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=${c.yellow}'
       ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=${c.yellow}'
       ZSH_HIGHLIGHT_STYLES[global-alias]='fg=${if mode == "light" then c.aqua else c.aqua}'

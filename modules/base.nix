@@ -22,6 +22,8 @@ in
       username
     ];
     use-xdg-base-directories = true;
+    max-jobs = "auto";
+    cores = 0;
   };
 
   nix.gc = {

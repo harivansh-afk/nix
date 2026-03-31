@@ -173,7 +173,11 @@ in
       Type = "oneshot";
       EnvironmentFile = "/etc/forgejo-mirror.env";
     };
-    path = [ pkgs.curl pkgs.jq pkgs.coreutils ];
+    path = [
+      pkgs.curl
+      pkgs.jq
+      pkgs.coreutils
+    ];
     script = ''
       set -euo pipefail
 

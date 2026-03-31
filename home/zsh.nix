@@ -9,8 +9,6 @@ let
   theme = import ../lib/theme.nix { inherit config; };
 in
 {
-  home.packages = [ pkgs.pure-prompt ];
-
   programs.zsh = {
     enable = true;
     dotDir = config.home.homeDirectory;
@@ -58,8 +56,6 @@ in
       export NODE_NO_WARNINGS=1
     ''
     + lib.optionalString hostConfig.isDarwin ''
-      # Ghostty shell integration expects a resource directory; the Nix app
-      # bundle lives in the store instead of /Applications.
       export GHOSTTY_RESOURCES_DIR="${pkgs.ghostty-bin}/Applications/Ghostty.app/Contents/Resources/ghostty"
     ''
     + ''
@@ -68,30 +64,9 @@ in
 
     initContent = lib.mkMerge [
       (lib.mkOrder 550 ''
-        # Completions
         autoload -U compinit && compinit -d "${config.xdg.stateHome}/zcompdump" -u
         zmodload zsh/complist
         zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-za-z}'
-      '')
-
-      (lib.mkOrder 800 ''
-        # Pure prompt
-        fpath+=("${pkgs.pure-prompt}/share/zsh/site-functions")
-        autoload -Uz promptinit && promptinit
-
-        export PURE_PROMPT_SYMBOL=">"
-        export PURE_PROMPT_VICMD_SYMBOL="<"
-        export PURE_GIT_UP_ARROW="^"
-        export PURE_GIT_DOWN_ARROW="v"
-        export PURE_GIT_STASH_SYMBOL="="
-        export PURE_CMD_MAX_EXEC_TIME=5
-        export PURE_GIT_PULL=0
-        export PURE_GIT_UNTRACKED_DIRTY=1
-        zstyle ':prompt:pure:git:stash' show yes
-
-        ${theme.renderPurePrompt "dark"}
-
-        prompt pure
       '')
 
       (lib.mkOrder 1000 ''
@@ -132,39 +107,19 @@ in
               return
             fi
           fi
-
           printf 'dark'
-        }
-
-        _codex_apply_prompt_theme() {
-          local mode="$(_codex_read_theme_mode)"
-          if [[ "$mode" == "''${_CODEX_LAST_PROMPT_THEME:-}" ]]; then
-            return
-          fi
-
-          if [[ "$mode" == light ]]; then
-            ${theme.renderPurePrompt "light"}
-          else
-            ${theme.renderPurePrompt "dark"}
-          fi
-
-          typeset -g _CODEX_LAST_PROMPT_THEME="$mode"
         }
 
         _codex_apply_highlight_styles() {
           local mode="$(_codex_read_theme_mode)"
-          if [[ "$mode" == "''${_CODEX_LAST_HIGHLIGHT_THEME:-}" ]]; then
-            return
-          fi
+          [[ "$mode" == "''${_CODEX_LAST_HIGHLIGHT_THEME:-}" ]] && return
 
           typeset -gA ZSH_HIGHLIGHT_STYLES
-
           if [[ "$mode" == light ]]; then
             ${theme.renderZshHighlights "light"}
           else
             ${theme.renderZshHighlights "dark"}
           fi
-
           typeset -g _CODEX_LAST_HIGHLIGHT_THEME="$mode"
         }
 
@@ -173,7 +128,6 @@ in
         git() {
           command git "$@"
           local exit_code=$?
-
           case "$1" in
             add|stage|reset|checkout)
               if command -v critic >/dev/null 2>&1; then
@@ -181,46 +135,23 @@ in
               fi
               ;;
           esac
-
           return $exit_code
         }
 
-        function _codex_set_cursor {
-          if [[ "$1" == block ]]; then
-            printf '\e[2 q'
-          else
-            printf '\e[6 q'
-          fi
-        }
-
-        function zle-keymap-select {
-          if [[ "$KEYMAP" == vicmd ]]; then
-            _codex_set_cursor block
-          else
-            _codex_set_cursor beam
-          fi
-        }
-        zle -N zle-keymap-select
-
-        function zle-line-init {
-          _codex_set_cursor beam
-        }
-        zle -N zle-line-init
-
-        function zle-line-finish {
-          _codex_set_cursor beam
-        }
-        zle -N zle-line-finish
+        autoload -Uz add-zle-hook-widget
+        _codex_cursor() { printf '\e[%s q' "''${1:-6}"; }
+        _codex_cursor_select() { [[ "$KEYMAP" == vicmd ]] && _codex_cursor 2 || _codex_cursor 6; }
+        _codex_cursor_beam() { _codex_cursor 6; }
+        add-zle-hook-widget zle-keymap-select _codex_cursor_select
+        add-zle-hook-widget zle-line-init _codex_cursor_beam
+        add-zle-hook-widget zle-line-finish _codex_cursor_beam
 
         precmd() {
           _codex_apply_prompt_theme
           _codex_apply_highlight_styles
-          _codex_set_cursor beam
+          _codex_cursor_beam
         }
-
-        preexec() {
-          _codex_set_cursor beam
-        }
+        preexec() { _codex_cursor_beam; }
 
         _codex_apply_prompt_theme
         _codex_apply_highlight_styles
@@ -228,12 +159,7 @@ in
         ${lib.optionalString hostConfig.isDarwin ''
           if command -v wt >/dev/null 2>&1; then
             eval "$(command wt config shell init zsh)"
-
-            # `wt` changes directories by sourcing directives into the current shell,
-            # so wrappers around it must stay shell functions instead of scripts.
-            wtc() {
-              wt switch --create --base @ "$@"
-            }
+            wtc() { wt switch --create --base @ "$@"; }
           fi
         ''}
       '')

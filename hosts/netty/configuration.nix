@@ -332,10 +332,13 @@ in
             > /dev/null
           echo "Created mirror: $full_name -> $FORGEJO_OWNER/$forgejo_repo_name"
         else
-          api_call -X POST \
+          if ! api_call -X POST \
             -H "Authorization: token $FORGEJO_TOKEN" \
             "${forgejoApiUrl}/api/v1/repos/$FORGEJO_OWNER/$forgejo_repo_name/mirror-sync" \
-            > /dev/null
+            > /dev/null; then
+            echo "Failed mirror sync: $full_name -> $FORGEJO_OWNER/$forgejo_repo_name" >&2
+            continue
+          fi
           echo "Synced mirror: $full_name -> $FORGEJO_OWNER/$forgejo_repo_name"
         fi
       done < "$repos_file"

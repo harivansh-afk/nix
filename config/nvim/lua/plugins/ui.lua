@@ -1,15 +1,29 @@
+vim.pack.add({
+  "https://github.com/harivansh-afk/cozybox.nvim",
+  "https://github.com/nvim-lualine/lualine.nvim",
+  "https://github.com/barrettruth/nonicons.nvim",
+  "https://github.com/nvim-tree/nvim-web-devicons",
+}, { load = function() end })
+
 return {
   {
     "harivansh-afk/cozybox.nvim",
-    lazy = false,
-    priority = 1000,
-    config = function() require("theme").setup() end,
+    after = function() require("theme").setup() end,
+  },
+  {
+    "nvim-tree/nvim-web-devicons",
+  },
+  {
+    "barrettruth/nonicons.nvim",
+    before = function() vim.cmd.packadd "nvim-web-devicons" end,
   },
   {
     "nvim-lualine/lualine.nvim",
-    dependencies = { "nvim-tree/nvim-web-devicons" },
-    config = function()
-      local theme_status = function() return require("theme").statusline_label() end
+    before = function()
+      vim.cmd.packadd "nvim-web-devicons"
+      pcall(vim.cmd.packadd, "nonicons.nvim")
+    end,
+    after = function()
       local theme = {
         normal = {
           a = { gui = "bold" },
@@ -24,6 +38,7 @@ return {
           a = { gui = "bold" },
         },
       }
+
       require("lualine").setup {
         options = {
           icons_enabled = false,
@@ -41,9 +56,5 @@ return {
         },
       }
     end,
-  },
-  {
-    "barrettruth/nonicons.nvim",
-    dependencies = { "nvim-tree/nvim-web-devicons" },
   },
 }

@@ -4,3 +4,4 @@ result
 .bw-session
 config/karabiner/assets/
 config/karabiner/automatic_backups/
+tmp/

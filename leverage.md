@@ -1,0 +1,17 @@
+# Nix Leveraging
+
+[flake.nix](./flake.nix) is the root lever: one flake, one lockfile, one graph for both macOS and Linux. [modules/hosts/darwin.nix](./modules/hosts/darwin.nix) composes `nix-darwin`, `home-manager`, and `nix-homebrew`; [modules/hosts/netty.nix](./modules/hosts/netty.nix) composes `nixosSystem`, `disko`, and `home-manager`. The point is not “using Nix”; it is collapsing laptop state and VPS state into one reproducible interface.
+
+[modules/nixpkgs.nix](./modules/nixpkgs.nix) and [lib/hosts.nix](./lib/hosts.nix) are the next leverage layer. They define the global `username`, per-host metadata, feature flags, and the `specialArgs` boundary. That removes random `isDarwin` checks from leaf modules and turns host differences into data.
+
+[lib/package-sets.nix](./lib/package-sets.nix), [modules/base.nix](./modules/base.nix), [modules/packages.nix](./modules/packages.nix), and [modules/homebrew.nix](./modules/homebrew.nix) are the package policy. `core`, `extras`, and `fonts` give one place to reason about the machine surface; custom inputs like `googleworkspace-cli`, `claude-code-nix`, `OpenSpec`, `neovim-nightly`, `nix-homebrew`, and `disko` are pinned in [flake.nix](./flake.nix) instead of installed ad hoc.
+
+[home/default.nix](./home/default.nix) and [home/common.nix](./home/common.nix) turn Home Manager into the userland control plane. [home/xdg.nix](./home/xdg.nix) pushes Rust, Go, Node, Python, AWS, Claude, npm, wget, psql, and sqlite into XDG paths; [home/security.nix](./home/security.nix) fixes SSH and GPG permissions on activation; [home/migration.nix](./home/migration.nix) cleans legacy `~/dots` links during the cutover instead of relying on manual cleanup.
+
+[lib/theme.nix](./lib/theme.nix), [home/ghostty.nix](./home/ghostty.nix), [home/tmux.nix](./home/tmux.nix), [home/zsh.nix](./home/zsh.nix), and [home/scripts.nix](./home/scripts.nix) are the ergonomic leverage. One palette renders Ghostty, tmux, fzf, zsh highlights, bat, and delta. The generated `theme` script hot-swaps light/dark across those surfaces. tmux gets session restore, directory-based window names, and a generated session list; zsh gets vi mode, cursor-shape switching, XDG history, prompt theming, and deterministic PATH assembly.
+
+[home/nvim.nix](./home/nvim.nix), [home/codex.nix](./home/codex.nix), [home/claude.nix](./home/claude.nix), and [home/skills.nix](./home/skills.nix) are the agent/editor layer. Neovim is pinned with the nightly overlay and seeded lockfile state; Codex and Claude configs are repo-owned; global skills are installed declaratively via `npx skills add -g` and hash-stamped so the activation only resyncs when the manifest changes.
+
+[scripts/default.nix](./scripts/default.nix), [justfile](./justfile), [scripts/render-bw-shell-secrets.sh](./scripts/render-bw-shell-secrets.sh), and [scripts/restore-bw-files.sh](./scripts/restore-bw-files.sh) are the operational leverage. `writeShellApplication` turns local scripts into managed tools (`ga`, `ghpr`, `gpr`, `ni`, `theme`, `wt`, `wtc`); Bitwarden stays the secret source of truth; `just switch`, `just switch-netty`, and `nixos-anywhere` keep deployment small.
+
+Finally, [hosts/netty/configuration.nix](./hosts/netty/configuration.nix) turns the VPS into a declarative service bundle: static networking, nginx + ACME, Forgejo with GitHub mirror sync, sandbox-agent plus its CORS proxy, bounded GC/journald retention, and a machine that can be rebuilt instead of repaired.

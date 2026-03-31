@@ -1,3 +1,68 @@
+local function register_query_directive_compat()
+  local query = require "vim.treesitter.query"
+
+  -- Neovim nightly now passes capture lists to custom query directives.
+  -- nvim-treesitter still assumes a single TSNode for these handlers.
+  local function capture_node(match, capture_id)
+    local capture = match[capture_id]
+    if type(capture) == "table" then return capture[1] end
+    return capture
+  end
+
+  local html_script_type_languages = {
+    ["importmap"] = "json",
+    ["module"] = "javascript",
+    ["application/ecmascript"] = "javascript",
+    ["text/ecmascript"] = "javascript",
+  }
+
+  local non_filetype_match_injection_language_aliases = {
+    ex = "elixir",
+    pl = "perl",
+    sh = "bash",
+    uxn = "uxntal",
+    ts = "typescript",
+  }
+
+  local function get_parser_from_markdown_info_string(injection_alias)
+    local match = vim.filetype.match { filename = "a." .. injection_alias }
+    return match or non_filetype_match_injection_language_aliases[injection_alias] or injection_alias
+  end
+
+  query.add_directive("set-lang-from-mimetype!", function(match, _, bufnr, pred, metadata)
+    local node = capture_node(match, pred[2])
+    if not node then return end
+
+    local type_attr_value = vim.treesitter.get_node_text(node, bufnr)
+    local configured = html_script_type_languages[type_attr_value]
+    if configured then
+      metadata["injection.language"] = configured
+      return
+    end
+
+    local parts = vim.split(type_attr_value, "/", {})
+    metadata["injection.language"] = parts[#parts]
+  end, { force = true })
+
+  query.add_directive("set-lang-from-info-string!", function(match, _, bufnr, pred, metadata)
+    local node = capture_node(match, pred[2])
+    if not node then return end
+
+    local injection_alias = vim.treesitter.get_node_text(node, bufnr):lower()
+    metadata["injection.language"] = get_parser_from_markdown_info_string(injection_alias)
+  end, { force = true })
+
+  query.add_directive("downcase!", function(match, _, bufnr, pred, metadata)
+    local capture_id = pred[2]
+    local node = capture_node(match, capture_id)
+    if not node then return end
+
+    local node_metadata = metadata[capture_id]
+    local text = vim.treesitter.get_node_text(node, bufnr, { metadata = node_metadata }) or ""
+    metadata[capture_id] = vim.tbl_extend("force", node_metadata or {}, { text = text:lower() })
+  end, { force = true })
+end
+
 vim.pack.add({
   "https://github.com/nvim-treesitter/nvim-treesitter",
   "https://github.com/nvim-treesitter/nvim-treesitter-textobjects",
@@ -14,7 +79,10 @@ vim.api.nvim_create_autocmd("PackChanged", {
 return {
   {
     "nvim-treesitter/nvim-treesitter",
-    after = function() require("nvim-treesitter").setup { auto_install = true } end,
+    after = function()
+      require("nvim-treesitter").setup { auto_install = true }
+      register_query_directive_compat()
+    end,
   },
   {
     "nvim-treesitter/nvim-treesitter-textobjects",

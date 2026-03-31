@@ -22,11 +22,13 @@ in
       username
     ];
     use-xdg-base-directories = true;
+    max-jobs = "auto";
+    cores = 0;
   };
 
   nix.gc = {
     automatic = true;
-    options = "--delete-older-than 14d";
+    options = lib.mkDefault "--delete-older-than 14d";
   }
   // (
     if pkgs.stdenv.isDarwin then

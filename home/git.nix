@@ -1,9 +1,36 @@
-{ ... }:
+{ theme, ... }:
 {
   programs.git = {
     enable = true;
     lfs.enable = true;
     signing.format = "openpgp";
+
+    ignores = [
+      "*.swp"
+      "*.swo"
+      "*~"
+      ".DS_Store"
+      "Thumbs.db"
+      ".env"
+      ".env.local"
+      ".env.*.local"
+      ".vscode/"
+      ".idea/"
+      ".claude/"
+      "CLAUDE.md"
+      "node_modules/"
+      "__pycache__/"
+      "*.pyc"
+      "venv/"
+      ".venv/"
+      "build/"
+      "dist/"
+      "out/"
+      "target/"
+      "result"
+      "result-*"
+      ".direnv/"
+    ];
 
     settings = {
       user = {
@@ -40,7 +67,7 @@
       };
 
       delta = {
-        "syntax-theme" = "gruvbox-dark";
+        "syntax-theme" = theme.deltaTheme theme.defaultMode;
         "hunk-header-style" = "omit";
         "minus-style" = ''syntax "#3c1f1e"'';
         "minus-emph-style" = ''syntax "#72261d"'';

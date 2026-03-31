@@ -18,6 +18,7 @@ let
   mkSpecialArgs = host: {
     inherit inputs self username;
     hostname = host.hostname;
+    hostConfig = host;
   };
 
   mkHomeManagerModule = host: {
@@ -25,7 +26,7 @@ let
     home-manager.useUserPackages = true;
     home-manager.extraSpecialArgs = mkSpecialArgs host;
     home-manager.backupCommand = "bash ${../scripts/home-manager-backup.sh}";
-    home-manager.users.${username} = import host.homeModule;
+    home-manager.users.${username} = import ../home;
   };
 in
 {

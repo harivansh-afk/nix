@@ -1,7 +1,4 @@
-{ config, ... }:
-let
-  theme = import ../lib/theme.nix { inherit config; };
-in
+{ theme, ... }:
 {
   home.sessionVariables = {
     FZF_DEFAULT_OPTS_FILE = theme.paths.fzfCurrentFile;

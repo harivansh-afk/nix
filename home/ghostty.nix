@@ -1,11 +1,11 @@
 {
-  config,
   lib,
   pkgs,
+  hostConfig,
+  theme,
   ...
 }:
 let
-  theme = import ../lib/theme.nix { inherit config; };
   ghosttyConfig = ''
     theme = "cozybox-current"
     font-family = Berkeley Mono
@@ -40,7 +40,7 @@ let
     keybind = vim/i=deactivate_key_table
     keybind = vim/catch_all=ignore
     mouse-hide-while-typing = true
-    ${lib.optionalString pkgs.stdenv.isDarwin ''
+    ${lib.optionalString hostConfig.isDarwin ''
       macos-titlebar-style = hidden
       macos-option-as-alt = true
     ''}
@@ -57,7 +57,7 @@ in
 {
   programs.ghostty = {
     enable = true;
-    package = if pkgs.stdenv.isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
+    package = if hostConfig.isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
     installBatSyntax = true;
   };
 
@@ -69,7 +69,7 @@ in
   xdg.configFile."ghostty/themes/cozybox-dark".text = theme.renderGhostty "dark";
   xdg.configFile."ghostty/themes/cozybox-light".text = theme.renderGhostty "light";
 
-  home.file = lib.mkIf pkgs.stdenv.isDarwin {
+  home.file = lib.mkIf hostConfig.isDarwin {
     "Library/Application Support/com.mitchellh.ghostty/config.ghostty" = {
       text = ghosttyConfig;
       force = true;

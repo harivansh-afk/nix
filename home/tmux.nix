@@ -1,12 +1,9 @@
 {
-  config,
   lib,
   pkgs,
+  theme,
   ...
 }:
-let
-  theme = import ../lib/theme.nix { inherit config; };
-in
 {
   programs.tmux = {
     enable = true;

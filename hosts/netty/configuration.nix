@@ -9,6 +9,86 @@
 }:
 let
   packageSets = import ../../lib/package-sets.nix { inherit inputs lib pkgs; };
+  sandboxAgentPackage = pkgs.callPackage ../../pkgs/sandbox-agent { };
+  sandboxAgentDir = "/home/${username}/.config/sandbox-agent";
+  sandboxAgentPath =
+    packageSets.core
+    ++ packageSets.extras
+    ++ [
+      pkgs.bubblewrap
+      pkgs.git
+      pkgs.nodejs
+      pkgs.pnpm
+      sandboxAgentPackage
+    ];
+  sandboxAgentEnvCheck = pkgs.writeShellScript "sandbox-agent-env-check" ''
+    [ -f "${sandboxAgentDir}/agent.env" ] && [ -f "${sandboxAgentDir}/public.env" ]
+  '';
+  sandboxAgentWrapper = pkgs.writeShellScript "sandbox-agent-public" ''
+    set -euo pipefail
+    set -a
+    . "${sandboxAgentDir}/public.env"
+    . "${sandboxAgentDir}/agent.env"
+    set +a
+    exec sandbox-agent server \
+      --host 127.0.0.1 \
+      --port "''${SANDBOX_AGENT_PORT}" \
+      --token "''${SANDBOX_AGENT_TOKEN}"
+  '';
+  sandboxCorsProxy = pkgs.writeText "sandbox-agent-cors-proxy.mjs" ''
+    import http from "node:http";
+
+    const listenHost = "127.0.0.1";
+    const listenPort = 2468;
+    const targetHost = "127.0.0.1";
+    const targetPort = 2470;
+
+    function setCorsHeaders(headers, req) {
+      headers["access-control-allow-origin"] = "*";
+      headers["access-control-allow-methods"] = "GET,POST,PUT,PATCH,DELETE,OPTIONS";
+      headers["access-control-allow-headers"] =
+        req.headers["access-control-request-headers"] || "authorization,content-type";
+      headers["access-control-max-age"] = "86400";
+      return headers;
+    }
+
+    const server = http.createServer((req, res) => {
+      if (req.method === "OPTIONS") {
+        res.writeHead(204, setCorsHeaders({}, req));
+        res.end();
+        return;
+      }
+
+      const proxyReq = http.request(
+        {
+          host: targetHost,
+          port: targetPort,
+          method: req.method,
+          path: req.url,
+          headers: {
+            ...req.headers,
+            host: `''${targetHost}:''${targetPort}`,
+          },
+        },
+        (proxyRes) => {
+          res.writeHead(
+            proxyRes.statusCode || 502,
+            setCorsHeaders({ ...proxyRes.headers }, req),
+          );
+          proxyRes.pipe(res);
+        },
+      );
+
+      proxyReq.on("error", () => {
+        res.writeHead(502, setCorsHeaders({ "content-type": "text/plain" }, req));
+        res.end("Upstream request failed");
+      });
+
+      req.pipe(proxyReq);
+    });
+
+    server.listen(listenPort, listenHost);
+  '';
 in
 {
   imports = [
@@ -103,6 +183,7 @@ in
     pkgs.bubblewrap
     pkgs.pnpm
     pkgs.nodejs
+    sandboxAgentPackage
   ];
 
   systemd.tmpfiles.rules = [
@@ -122,7 +203,7 @@ in
     recommendedTlsSettings = true;
     clientMaxBodySize = "512m";
 
-    virtualHosts."sandbox.example.dev" = {
+    virtualHosts."netty.harivan.sh" = {
       enableACME = true;
       forceSSL = true;
       locations."/".proxyPass = "http://127.0.0.1:2470";
@@ -239,14 +320,17 @@ in
   # --- Sandbox Agent (declarative systemd services) ---
   systemd.services.sandbox-agent = {
     description = "Sandbox Agent";
-    after = [ "network.target" ];
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
     wantedBy = [ "multi-user.target" ];
+    path = sandboxAgentPath;
     serviceConfig = {
       Type = "simple";
       User = username;
       Group = "users";
-      EnvironmentFile = "/home/${username}/.config/sandbox-agent/agent.env";
-      ExecStart = "/home/${username}/.local/bin/sandbox-agent";
+      WorkingDirectory = "/home/${username}";
+      ExecCondition = sandboxAgentEnvCheck;
+      ExecStart = sandboxAgentWrapper;
       Restart = "on-failure";
       RestartSec = 5;
     };
@@ -255,12 +339,15 @@ in
   systemd.services.sandbox-cors-proxy = {
     description = "Sandbox CORS Proxy";
     after = [ "sandbox-agent.service" ];
+    requires = [ "sandbox-agent.service" ];
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       Type = "simple";
       User = username;
       Group = "users";
-      ExecStart = "${pkgs.nodejs}/bin/node /home/${username}/.config/sandbox-agent/cors-proxy.js";
+      WorkingDirectory = "/home/${username}";
+      ExecCondition = sandboxAgentEnvCheck;
+      ExecStart = "${pkgs.nodejs}/bin/node ${sandboxCorsProxy}";
       Restart = "on-failure";
       RestartSec = 5;
     };

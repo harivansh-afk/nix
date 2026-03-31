@@ -32,6 +32,10 @@
         setopt localoptions noshwordsplit
         unset prompt_pure_async_render_requested
 
+        prompt_pure_set_colors
+        _codex_pure_default_arrow=$prompt_pure_colors[git:arrow]
+        _codex_pure_default_success=$prompt_pure_colors[prompt:success]
+
         typeset -g prompt_pure_git_branch_color=$prompt_pure_colors[git:branch]
         [[ -n ''${prompt_pure_git_last_dirty_check_timestamp+x} ]] && prompt_pure_git_branch_color=$prompt_pure_colors[git:branch:cached]
 

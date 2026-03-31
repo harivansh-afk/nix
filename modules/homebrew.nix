@@ -11,19 +11,16 @@
 
     taps = [
       "humanlayer/humanlayer"
-      "gromgit/fuse"
       "mutagen-io/mutagen"
     ];
 
     brews = [
-      "gromgit/fuse/sshfs-mac"
       "mutagen-io/mutagen/mutagen"
     ];
 
     casks = [
       "cap"
       "karabiner-elements"
-      "macfuse"
       "rectangle"
       "raycast"
       "riptide-beta"

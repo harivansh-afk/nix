@@ -46,6 +46,7 @@ in
   );
 
   nixpkgs.config.allowUnfree = true;
+  nixpkgs.overlays = [ inputs.neovim-nightly.overlays.default ];
 
   programs.zsh.enable = true;
   environment.shells = [ pkgs.zsh ];

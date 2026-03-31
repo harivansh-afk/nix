@@ -8,10 +8,14 @@ let
   nvimConfig = lib.cleanSourceWith {
     src = ../config/nvim;
     filter =
-      path: type: builtins.baseNameOf path != ".git" && builtins.baseNameOf path != "lazy-lock.json";
+      path: type:
+      let
+        baseName = builtins.baseNameOf path;
+      in
+      baseName != ".git" && baseName != "lazy-lock.json" && baseName != "nvim-pack-lock.json";
   };
-  lazyLockSeed = ../config/nvim/lazy-lock.json;
-  lazyLockPath = "${config.xdg.stateHome}/nvim/lazy-lock.json";
+  packLockSeed = ../config/nvim/nvim-pack-lock.json;
+  packLockPath = "${config.xdg.stateHome}/nvim/nvim-pack-lock.json";
   python = pkgs.writeShellScriptBin "python" ''
     exec ${pkgs.python3}/bin/python3 "$@"
   '';
@@ -60,13 +64,16 @@ in
     recursive = true;
   };
 
-  home.activation.seedNvimLazyLock = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  xdg.configFile."nvim/nvim-pack-lock.json".source =
+    config.lib.file.mkOutOfStoreSymlink packLockPath;
+
+  home.activation.seedNvimPackLock = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     state_dir="${config.xdg.stateHome}/nvim"
-    lockfile="${lazyLockPath}"
+    lockfile="${packLockPath}"
 
     if [ ! -e "$lockfile" ]; then
       mkdir -p "$state_dir"
-      cp ${lazyLockSeed} "$lockfile"
+      cp ${packLockSeed} "$lockfile"
       chmod u+w "$lockfile"
     fi
   '';

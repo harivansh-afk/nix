@@ -11,6 +11,7 @@ let
   packageSets = import ../../lib/package-sets.nix { inherit inputs lib pkgs; };
   sandboxDomain = "netty.harivan.sh";
   forgejoDomain = "git.harivan.sh";
+  vaultDomain = "vault.harivan.sh";
   forgejoApiUrl = "http://127.0.0.1:3000";
   sandboxAgentPackage = pkgs.callPackage ../../pkgs/sandbox-agent { };
   sandboxAgentDir = "/home/${username}/.config/sandbox-agent";
@@ -215,6 +216,25 @@ in
       enableACME = true;
       forceSSL = true;
       locations."/".proxyPass = "http://127.0.0.1:3000";
+    };
+
+    virtualHosts.${vaultDomain} = {
+      enableACME = true;
+      forceSSL = true;
+      locations."/".proxyPass = "http://127.0.0.1:8222";
+    };
+  };
+
+  # --- Vaultwarden ---
+  services.vaultwarden = {
+    enable = true;
+    backupDir = "/var/backup/vaultwarden";
+    environmentFile = "/var/lib/vaultwarden/vaultwarden.env";
+    config = {
+      DOMAIN = "https://${vaultDomain}";
+      SIGNUPS_ALLOWED = false;
+      ROCKET_ADDRESS = "127.0.0.1";
+      ROCKET_PORT = 8222;
     };
   };
 

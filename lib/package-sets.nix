@@ -32,6 +32,7 @@ in
   extras =
     (with pkgs; [
       awscli2
+      cadaver
       claudePackage
       pkgs.codex
       coreutils-prefixed
@@ -39,6 +40,8 @@ in
       diff-so-fancy
       git-filter-repo
       git-lfs
+      go-tools
+      golangci-lint
       goose
       google-cloud-sdk
       gwsPackage
@@ -52,6 +55,7 @@ in
       llmfit
       minikube
       ngrok
+      phpPackages.composer
       postgresql_17
       redis
       tailscale

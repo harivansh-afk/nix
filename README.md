@@ -31,5 +31,5 @@ The VPS has a declarative service bundle:
 - netty exposes 3 tcp ports (22:ssh, 80:http, 443:https)
 - services only listen on 127.0.0.1 (runs behind nginx with ACME)
 - Self hosts Forgejo mirroring to GitHub (git.harivan.sh)
-- Self hosts VaultWarden (vault.harivan.sh)
-- Runs sandbox agent behind a CORS proxy (netty.harivan.sh)
+- Self hosts VaultWarden
+- Runs sandbox agent behind a CORS proxy

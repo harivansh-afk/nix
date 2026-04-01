@@ -270,7 +270,10 @@ in
         HTTP_PORT = 19300;
         SSH_DOMAIN = forgejoDomain;
       };
-      service.DISABLE_REGISTRATION = true;
+      service = {
+        DISABLE_REGISTRATION = true;
+        REQUIRE_SIGNIN_VIEW = true;
+      };
       session.COOKIE_SECURE = true;
       mirror = {
         DEFAULT_INTERVAL = "1h";

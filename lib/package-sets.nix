@@ -32,7 +32,6 @@ in
   extras =
     (with pkgs; [
       awscli2
-      cadaver
       claudePackage
       pkgs.codex
       coreutils-prefixed
@@ -62,6 +61,9 @@ in
       terraform
       yt-dlp
     ])
+    ++ lib.optionals pkgs.stdenv.isLinux [
+      pkgs.cadaver
+    ]
     ++ lib.optionals pkgs.stdenv.isDarwin [
       pkgs.texliveFull
     ]

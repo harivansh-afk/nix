@@ -12,7 +12,7 @@ let
   sandboxDomain = "netty.harivan.sh";
   forgejoDomain = "git.harivan.sh";
   vaultDomain = "vault.harivan.sh";
-  forgejoApiUrl = "http://127.0.0.1:3000";
+  forgejoApiUrl = "http://127.0.0.1:19300";
   sandboxAgentPackage = pkgs.callPackage ../../pkgs/sandbox-agent { };
   sandboxAgentDir = "/home/${username}/.config/sandbox-agent";
   sandboxAgentPath =
@@ -222,7 +222,7 @@ in
     virtualHosts.${forgejoDomain} = {
       enableACME = true;
       forceSSL = true;
-      locations."/".proxyPass = "http://127.0.0.1:3000";
+      locations."/".proxyPass = "http://127.0.0.1:19300";
     };
 
     virtualHosts.${vaultDomain} = {
@@ -267,7 +267,7 @@ in
       server = {
         DOMAIN = forgejoDomain;
         ROOT_URL = "https://${forgejoDomain}/";
-        HTTP_PORT = 3000;
+        HTTP_PORT = 19300;
         SSH_DOMAIN = forgejoDomain;
       };
       service.DISABLE_REGISTRATION = true;

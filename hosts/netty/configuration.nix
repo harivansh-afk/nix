@@ -12,6 +12,7 @@ let
   sandboxDomain = "netty.harivan.sh";
   forgejoDomain = "git.harivan.sh";
   vaultDomain = "vault.harivan.sh";
+  betternasDomain = "api.betternas.com";
   forgejoApiUrl = "http://127.0.0.1:19300";
   sandboxAgentPackage = pkgs.callPackage ../../pkgs/sandbox-agent { };
   sandboxAgentDir = "/home/${username}/.config/sandbox-agent";
@@ -230,6 +231,12 @@ in
       forceSSL = true;
       locations."/".proxyPass = "http://127.0.0.1:8222";
     };
+
+    virtualHosts.${betternasDomain} = {
+      enableACME = true;
+      forceSSL = true;
+      locations."/".proxyPass = "http://127.0.0.1:3100";
+    };
   };
 
   # --- Vaultwarden ---
@@ -422,6 +429,25 @@ in
       ExecStart = "${pkgs.nodejs}/bin/node ${sandboxCorsProxy}";
       Restart = "on-failure";
       RestartSec = 5;
+    };
+  };
+
+  # --- betterNAS control-plane ---
+  systemd.services.betternas-control-plane = {
+    description = "betterNAS Control Plane";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "simple";
+      User = username;
+      Group = "users";
+      WorkingDirectory = "/var/lib/betternas/control-plane";
+      ExecStart = "/home/${username}/Documents/GitHub/betterNAS/betterNAS/apps/control-plane/dist/control-plane";
+      EnvironmentFile = "/var/lib/betternas/control-plane/control-plane.env";
+      Restart = "on-failure";
+      RestartSec = 5;
+      StateDirectory = "betternas/control-plane";
     };
   };
 

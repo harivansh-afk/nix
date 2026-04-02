@@ -34,4 +34,4 @@ The VPS has a declarative service bundle:
 - services only listen on 127.0.0.1 (runs behind nginx with ACME)
 - Self hosts Forgejo mirroring to GitHub (git.harivan.sh)
 - Self hosts VaultWarden
-- Runs sandbox agent behind a CORS proxy
+- betterNAS control-plane and node agent (api.betternas.com)

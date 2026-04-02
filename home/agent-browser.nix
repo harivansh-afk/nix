@@ -21,7 +21,8 @@ lib.mkIf (!hostConfig.isDarwin) {
       ]
     }:$PATH"
 
-    if ! command -v agent-browser >/dev/null 2>&1; then
+    npm_bin="$(npm prefix -g 2>/dev/null)/bin"
+    if [ ! -x "$npm_bin/agent-browser" ]; then
       npm install -g agent-browser 2>/dev/null || true
     fi
   '';

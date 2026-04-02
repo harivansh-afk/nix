@@ -83,6 +83,7 @@
           "$BUN_INSTALL/bin"
           "$HOME/.antigravity/antigravity/bin"
           "$HOME/.opencode/bin"
+          "$(npm prefix -g 2>/dev/null)/bin"
           "${pkgs.postgresql_17}/bin"
           "$HOME/.nix-profile/bin"
           "/run/wrappers/bin"

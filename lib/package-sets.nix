@@ -20,6 +20,7 @@ in
     jq
     just
     nodejs_22
+    pnpm
     python3
     ripgrep
     rsync

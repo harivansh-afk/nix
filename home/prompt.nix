@@ -129,6 +129,7 @@
         typeset -g _codex_pure_default_arrow=$prompt_pure_colors[git:arrow]
         typeset -g _codex_pure_default_success=$prompt_pure_colors[prompt:success]
         typeset -g _CODEX_LAST_PROMPT_THEME="$mode"
+        bindkey '^?' backward-delete-char
       }
     '')
   ];

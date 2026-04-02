@@ -3,6 +3,7 @@
   _module.args.theme = import ../lib/theme.nix { inherit config; };
 
   imports = [
+    ./agent-browser.nix
     ./bat.nix
     ./eza.nix
     ./claude.nix

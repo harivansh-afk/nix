@@ -3,6 +3,19 @@ set -euo pipefail
 
 remote="${AGENT_HISTORY_REMOTE:-netty}"
 remote_root="${AGENT_HISTORY_REMOTE_ROOT:-/home/rathi/.local/share/agent-history/raw/darwin}"
+local_rsync="$(command -v rsync || true)"
+
+if [[ -z "$local_rsync" ]]; then
+  printf 'rsync is not available locally.\n' >&2
+  exit 1
+fi
+
+if ssh "$remote" 'command -v rsync >/dev/null 2>&1'; then
+  remote_rsync='rsync'
+else
+  remote_rsync='nix --extra-experimental-features nix-command --extra-experimental-features flakes shell nixpkgs#rsync -c rsync'
+  printf 'Remote rsync not found on %s - using a temporary nix shell fallback.\n' "$remote" >&2
+fi
 
 remote_root_q="$(printf '%q' "$remote_root")"
 
@@ -23,7 +36,7 @@ sync_path() {
   fi
 
   printf 'Syncing %s -> %s:%s\n' "$src" "$remote" "$dest"
-  rsync -az "$src" "$remote:$dest"
+  "$local_rsync" -az --rsync-path="$remote_rsync" "$src" "$remote:$dest"
 }
 
 sync_path "$HOME/.claude/history.jsonl" "${remote_root}/claude/"

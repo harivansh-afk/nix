@@ -22,6 +22,7 @@ in
     nodejs_22
     python3
     ripgrep
+    rsync
     rustup
     tree
     uv

@@ -14,6 +14,9 @@ let
   vaultDomain = "vault.harivan.sh";
   betternasDomain = "api.betternas.com";
   forgejoApiUrl = "http://127.0.0.1:19300";
+  betternasRepoDir = "/home/${username}/Documents/GitHub/betterNAS/betterNAS";
+  betternasNodeEnvFile = "/var/lib/betternas/node-agent/node-agent.env";
+  betternasNodeBinary = "${betternasRepoDir}/apps/node-agent/dist/betternas-node";
   sandboxAgentPackage = pkgs.callPackage ../../pkgs/sandbox-agent { };
   sandboxAgentDir = "/home/${username}/.config/sandbox-agent";
   sandboxAgentPath =
@@ -28,6 +31,9 @@ let
     ];
   sandboxAgentEnvCheck = pkgs.writeShellScript "sandbox-agent-env-check" ''
     [ -f "${sandboxAgentDir}/agent.env" ] && [ -f "${sandboxAgentDir}/public.env" ]
+  '';
+  betternasNodeEnvCheck = pkgs.writeShellScript "betternas-node-env-check" ''
+    [ -f "${betternasNodeEnvFile}" ] && [ -x "${betternasNodeBinary}" ]
   '';
   sandboxAgentWrapper = pkgs.writeShellScript "sandbox-agent-public" ''
     set -euo pipefail
@@ -198,6 +204,9 @@ in
 
   systemd.tmpfiles.rules = [
     "L /usr/bin/bwrap - - - - ${pkgs.bubblewrap}/bin/bwrap"
+    "d /var/lib/betternas/export 0755 ${username} users -"
+    "d /var/lib/betternas/node-agent 0750 ${username} users -"
+    "z ${betternasNodeEnvFile} 0600 ${username} users -"
     "z /var/lib/vaultwarden/vaultwarden.env 0600 vaultwarden vaultwarden -"
   ];
 
@@ -449,6 +458,35 @@ in
       Restart = "on-failure";
       RestartSec = 5;
       StateDirectory = "betternas/control-plane";
+    };
+  };
+
+  systemd.services.betternas-node = {
+    description = "betterNAS Node";
+    after = [
+      "betternas-control-plane.service"
+      "network-online.target"
+    ];
+    wants = [ "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
+    environment = {
+      PORT = "8090";
+      BETTERNAS_CONTROL_PLANE_URL = "http://127.0.0.1:3100";
+      BETTERNAS_NODE_DIRECT_ADDRESS = "https://${betternasDomain}";
+      BETTERNAS_EXPORT_PATH = "/var/lib/betternas/export";
+      BETTERNAS_NODE_DISPLAY_NAME = "netty";
+    };
+    serviceConfig = {
+      Type = "simple";
+      User = username;
+      Group = "users";
+      WorkingDirectory = "/var/lib/betternas/node-agent";
+      ExecCondition = betternasNodeEnvCheck;
+      ExecStart = betternasNodeBinary;
+      EnvironmentFile = "-${betternasNodeEnvFile}";
+      Restart = "on-failure";
+      RestartSec = 5;
+      StateDirectory = "betternas/node-agent";
     };
   };
 

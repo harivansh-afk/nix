@@ -105,6 +105,10 @@ in
 
   services.journald.extraConfig = "MaxRetainedFileSec=1week";
 
+  # Provide /lib64/ld-linux-x86-64.so.2 so unpatched binaries
+  # from npm, cargo-install, etc. can run without patchelf.
+  programs.nix-ld.enable = true;
+
   virtualisation.docker.enable = true;
 
   environment.systemPackages = packageSets.extras ++ [

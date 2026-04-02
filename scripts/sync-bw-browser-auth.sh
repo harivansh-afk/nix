@@ -34,7 +34,7 @@ login_items="$(printf '%s' "${items_json}" | jq -c '
     .login.username != "" and
     .login.password != null and
     .login.password != "" and
-    (.login.uris // []) | length > 0
+    ((.login.uris // []) | length) > 0
   )]
 ')"
 
@@ -45,7 +45,7 @@ imported=0
 skipped=0
 failed=0
 
-printf '%s' "${login_items}" | jq -c '.[]' | while IFS= read -r item; do
+while IFS= read -r item; do
   name="$(printf '%s' "${item}" | jq -r '.name')"
   username="$(printf '%s' "${item}" | jq -r '.login.username')"
   password="$(printf '%s' "${item}" | jq -r '.login.password')"
@@ -82,6 +82,6 @@ printf '%s' "${login_items}" | jq -c '.[]' | while IFS= read -r item; do
     printf 'FAIL: %s (%s)\n' "${safe_name}" "${uri}" >&2
     failed=$((failed + 1))
   fi
-done
+done < <(printf '%s' "${login_items}" | jq -c '.[]')
 
 printf '\nDone. imported=%d skipped=%d failed=%d\n' "${imported}" "${skipped}" "${failed}"

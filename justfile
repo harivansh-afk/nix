@@ -28,5 +28,8 @@ secrets-sync:
   ./scripts/render-bw-shell-secrets.sh
   ./scripts/restore-bw-files.sh
 
+sync-browser-auth:
+  ./scripts/sync-bw-browser-auth.sh
+
 switch-netty:
   ssh root@netty "nixos-rebuild switch --flake github:harivansh-afk/nix#netty --refresh"

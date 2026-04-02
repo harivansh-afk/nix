@@ -108,6 +108,7 @@ in
   virtualisation.docker.enable = true;
 
   environment.systemPackages = packageSets.extras ++ [
+    pkgs.chromium
     pkgs.php
   ];
 

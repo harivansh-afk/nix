@@ -17,6 +17,7 @@ let
   betternasRepoDir = "/home/${username}/Documents/GitHub/betterNAS/betterNAS";
   betternasNodeEnvFile = "/var/lib/betternas/node-agent/node-agent.env";
   betternasNodeBinary = "${betternasRepoDir}/apps/node-agent/dist/betternas-node";
+  betternasNodeExportPath = "/home/${username}/Documents";
   sandboxAgentPackage = pkgs.callPackage ../../pkgs/sandbox-agent { };
   sandboxAgentDir = "/home/${username}/.config/sandbox-agent";
   sandboxAgentPath =
@@ -33,7 +34,7 @@ let
     [ -f "${sandboxAgentDir}/agent.env" ] && [ -f "${sandboxAgentDir}/public.env" ]
   '';
   betternasNodeEnvCheck = pkgs.writeShellScript "betternas-node-env-check" ''
-    [ -f "${betternasNodeEnvFile}" ] && [ -x "${betternasNodeBinary}" ]
+    [ -f "${betternasNodeEnvFile}" ] && [ -x "${betternasNodeBinary}" ] && [ -d "${betternasNodeExportPath}" ]
   '';
   sandboxAgentWrapper = pkgs.writeShellScript "sandbox-agent-public" ''
     set -euo pipefail
@@ -204,7 +205,6 @@ in
 
   systemd.tmpfiles.rules = [
     "L /usr/bin/bwrap - - - - ${pkgs.bubblewrap}/bin/bwrap"
-    "d /var/lib/betternas/export 0755 ${username} users -"
     "d /var/lib/betternas/node-agent 0750 ${username} users -"
     "z ${betternasNodeEnvFile} 0600 ${username} users -"
     "z /var/lib/vaultwarden/vaultwarden.env 0600 vaultwarden vaultwarden -"
@@ -473,7 +473,7 @@ in
       PORT = "8090";
       BETTERNAS_CONTROL_PLANE_URL = "http://127.0.0.1:3100";
       BETTERNAS_NODE_DIRECT_ADDRESS = "https://${betternasDomain}";
-      BETTERNAS_EXPORT_PATH = "/var/lib/betternas/export";
+      BETTERNAS_EXPORT_PATH = betternasNodeExportPath;
       BETTERNAS_NODE_DISPLAY_NAME = "netty";
     };
     serviceConfig = {

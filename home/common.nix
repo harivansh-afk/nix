@@ -7,6 +7,7 @@
     ./bat.nix
     ./eza.nix
     ./claude.nix
+    ./devin.nix
     ./xdg.nix
     ./security.nix
     ./codex.nix

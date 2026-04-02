@@ -31,5 +31,11 @@ secrets-sync:
 sync-browser-auth:
   ./scripts/sync-bw-browser-auth.sh
 
+sync-agent-history:
+  ./scripts/sync-agent-history.sh
+
+search-agent-history query='':
+  ./scripts/search-agent-history.sh "{{query}}"
+
 switch-netty:
   ssh root@netty "nixos-rebuild switch --flake github:harivansh-afk/nix#netty --refresh"

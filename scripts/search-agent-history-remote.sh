@@ -1,13 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-root="${AGENT_HISTORY_ROOT:-$HOME/.local/share/agent-history/raw}"
 initial_query="${INITIAL_QUERY:-}"
-
-if [[ ! -d "$root" ]]; then
-  printf 'Agent history root not found: %s\n' "$root" >&2
-  exit 1
-fi
 
 search_script="$(mktemp)"
 cleanup() {
@@ -19,14 +13,30 @@ cat > "$search_script" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
-root="${AGENT_HISTORY_ROOT:?}"
 query="${1:-}"
 
 if [[ -z "$query" ]]; then
   exit 0
 fi
 
-rg --json --line-number --smart-case --glob '*.jsonl' -- "$query" "$root" 2>/dev/null \
+paths=(
+  "$HOME/.claude/history.jsonl"
+  "$HOME/.claude/transcripts"
+  "$HOME/.claude/projects"
+  "$HOME/.codex/history.jsonl"
+  "$HOME/.codex/session_index.jsonl"
+  "$HOME/.codex/sessions"
+  "$HOME/.codex/memories"
+)
+
+args=()
+for path in "${paths[@]}"; do
+  [[ -e "$path" ]] && args+=("$path")
+done
+
+[[ "${#args[@]}" -gt 0 ]] || exit 0
+
+rg --json --line-number --smart-case --glob '*.jsonl' --glob '*.md' -- "$query" "${args[@]}" 2>/dev/null \
   | jq -r '
       select(.type == "match")
       | [
@@ -39,7 +49,6 @@ rg --json --line-number --smart-case --glob '*.jsonl' -- "$query" "$root" 2>/dev
 EOF
 
 chmod +x "$search_script"
-export AGENT_HISTORY_ROOT="$root"
 
 fzf --phony --ansi --disabled \
   --query "$initial_query" \
@@ -56,6 +65,6 @@ fzf --phony --ansi --disabled \
     sed -n "${start},${end}p" "$file"
   ' \
   --preview-window=right:70%:wrap \
-  --header 'Type to search archived Claude and Codex logs on netty' \
+  --header 'Type to search netty default Claude and Codex state' \
   --bind "start:reload:$search_script {q} || true" \
   --bind "change:reload:sleep 0.1; $search_script {q} || true"

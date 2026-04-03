@@ -42,7 +42,7 @@
       ld = "lumen diff";
       lg = "lazygit";
       nim = "nvim .";
-      pa = "dtach -a /run/pi-agent/pi-agent.sock";
+
     }
     // lib.optionalAttrs hostConfig.isDarwin {
       tailscale = "/Applications/Tailscale.app/Contents/MacOS/Tailscale";

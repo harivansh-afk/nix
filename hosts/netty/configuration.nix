@@ -18,7 +18,7 @@ in
     ./vaultwarden.nix
     ./forgejo.nix
     ./betternas.nix
-    ./pi-agent.nix
+    ./openclaw-gateway.nix
     ../../modules/base.nix
     (modulesPath + "/profiles/minimal.nix")
     (modulesPath + "/profiles/headless.nix")
@@ -114,7 +114,6 @@ in
 
   environment.systemPackages = packageSets.extras ++ [
     pkgs.chromium
-    pkgs.dtach
     pkgs.php
   ];
 

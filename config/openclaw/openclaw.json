@@ -1,0 +1,49 @@
+{
+  gateway: {
+    mode: "local",
+    bind: "loopback",
+    port: 2470,
+    trustedProxies: ["127.0.0.1", "::1"],
+    controlUi: {
+      enabled: true,
+      allowedOrigins: ["https://netty.harivan.sh"],
+    },
+    auth: {
+      mode: "token",
+      token: "${OPENCLAW_GATEWAY_TOKEN}",
+    },
+  },
+
+  channels: {
+    telegram: {
+      enabled: true,
+      botToken: "${TELEGRAM_BOT_TOKEN}",
+      dmPolicy: "pairing",
+    },
+  },
+
+  agents: {
+    defaults: {
+      workspace: "~/.openclaw/workspace",
+      model: {
+        primary: "anthropic/claude-sonnet-4-6",
+      },
+      sandbox: {
+        mode: "non-main",
+      },
+    },
+  },
+
+  tools: {
+    profile: "coding",
+    deny: [
+      "browser",
+      "canvas",
+      "cron",
+      "gateway",
+      "nodes",
+      "sessions_send",
+      "sessions_spawn",
+    ],
+  },
+}

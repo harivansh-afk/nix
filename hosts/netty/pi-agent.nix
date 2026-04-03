@@ -20,6 +20,10 @@ let
       exit 1
     fi
 
+    # RPC subprocesses spawned by pi-channels do spawn("pi", ...) and
+    # need the npm bin directory on PATH.
+    export PATH="/home/${username}/.local/share/npm/bin:$PATH"
+
     exec ${pkgs.dtach}/bin/dtach -N /run/pi-agent/pi-agent.sock \
       ${piBin} --chat-bridge
   '';

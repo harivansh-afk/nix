@@ -7,11 +7,11 @@ let
   piAgentEnvFile = "/var/lib/pi-agent/pi-agent.env";
   piBin = "/home/${username}/.local/share/npm/bin/pi";
 
-  # Start pi inside a login shell so it inherits the full user environment
-  # (PATH, XDG dirs, etc). dtach provides the PTY that pi's TUI needs.
+  # Start pi inside an interactive login shell so it inherits the full user
+  # environment (PATH, XDG dirs, etc). dtach provides the PTY that pi needs.
   piAgentStart = pkgs.writeShellScript "start-pi-agent" ''
     exec ${pkgs.dtach}/bin/dtach -N /run/pi-agent/pi-agent.sock \
-      /bin/sh -lc 'exec ${piBin} --chat-bridge'
+      /run/current-system/sw/bin/zsh -lic 'exec ${piBin} --chat-bridge'
   '';
 in
 {

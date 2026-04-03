@@ -11,19 +11,17 @@ let
 
   piBin = "/home/${username}/.local/share/npm/bin/pi";
 
-  # Wrapper that exec's pi inside tmux's foreground process so systemd
-  # tracks the actual PID. When pi dies, tmux exits, systemd sees it
-  # and triggers Restart=on-failure.
+  # Wrapper that runs pi inside dtach so it gets a PTY (systemd services
+  # don't have a terminal) and can be attached to later for debugging:
+  #   dtach -a /run/pi-agent/pi-agent.sock
   piAgentStart = pkgs.writeShellScript "start-pi-agent" ''
     if [ ! -x "${piBin}" ]; then
       echo "pi binary not found at ${piBin}" >&2
       exit 1
     fi
 
-    # tmux runs in the foreground (-D) so systemd tracks this process.
-    # The inner shell exec's pi so the tmux pane PID *is* the pi PID.
-    exec ${pkgs.tmux}/bin/tmux new-session -D -s pi-agent \
-      "exec ${piBin} --chat-bridge"
+    exec ${pkgs.dtach}/bin/dtach -N /run/pi-agent/pi-agent.sock \
+      ${piBin} --chat-bridge
   '';
 in
 {
@@ -31,9 +29,10 @@ in
   systemd.tmpfiles.rules = [
     "d /var/lib/pi-agent 0750 ${username} users -"
     "z ${piAgentEnvFile} 0600 ${username} users -"
+    "d /run/pi-agent 0750 ${username} users -"
   ];
 
-  # Pi agent running 24/7 in a foreground tmux session.
+  # Pi agent running 24/7 inside dtach.
   # Extensions (pi-channels, pi-schedule-prompt, pi-subagents) load
   # inside Pi's process and handle Telegram bridging, scheduled tasks,
   # and background subagent delegation.
@@ -42,8 +41,8 @@ in
   # Telegram bot token lives in ~/.pi/agent/settings.json (see pi-channels docs).
   # ANTHROPIC_API_KEY comes from the env file.
   #
-  # tmux session name: pi-agent
-  # Attach for debugging: tmux attach -t pi-agent
+  # Attach for debugging: dtach -a /run/pi-agent/pi-agent.sock
+  # Detach with: Ctrl+\
   systemd.services.pi-agent = {
     description = "Pi Coding Agent (24/7)";
     after = [ "network-online.target" ];
@@ -52,7 +51,7 @@ in
     path = [
       pkgs.nodejs_22
       pkgs.git
-      pkgs.tmux
+      pkgs.dtach
       pkgs.coreutils
     ];
     environment = {

@@ -10,6 +10,7 @@ let
   piBin = "${npmDir}/bin/pi";
 in
 lib.mkIf hostConfig.isLinux {
+  home.file.".pi/agent/SYSTEM.md".source = ../config/pi/SYSTEM.md;
   # Install pi-coding-agent globally via npm at activation time.
   home.activation.installPiAgent = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     export PATH="${

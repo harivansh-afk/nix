@@ -18,6 +18,7 @@ in
     ./vaultwarden.nix
     ./forgejo.nix
     ./betternas.nix
+    ./pi-agent.nix
     ../../modules/base.nix
     (modulesPath + "/profiles/minimal.nix")
     (modulesPath + "/profiles/headless.nix")

@@ -50,7 +50,7 @@ in
       };
       agents.defaults = {
         workspace = "~/.openclaw/workspace";
-        skipBootstrap = true;
+        skipBootstrap = false;
         model = {
           primary = "claude-cli/claude-opus-4-6";
           fallbacks = [ "claude-cli/claude-sonnet-4-6" ];

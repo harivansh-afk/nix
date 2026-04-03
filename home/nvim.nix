@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  hostConfig,
   ...
 }:
 let
@@ -23,7 +24,7 @@ in
 {
   # Keep rust-analyzer in the user profile so it shadows rustup's proxy in
   # /run/current-system/sw/bin when Neovim resolves LSP executables.
-  home.packages = [ pkgs.rust-analyzer ];
+  home.packages = [ pkgs.rust-analyzer ] ++ lib.optionals hostConfig.isDarwin [ pkgs.neovide ];
 
   programs.neovim = {
     enable = true;

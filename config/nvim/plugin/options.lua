@@ -1,4 +1,6 @@
 local o, opt = vim.o, vim.opt
+local gui_font_family = "Berkeley Mono"
+local gui_font_size = 15
 
 o.number = true
 o.relativenumber = true
@@ -40,3 +42,5 @@ o.foldenable = true
 o.updatetime = 250
 o.mouse = 'a'
 o.clipboard = 'unnamedplus'
+
+if vim.g.neovide then o.guifont = ("%s:h%s"):format(gui_font_family, gui_font_size) end

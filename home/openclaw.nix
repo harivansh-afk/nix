@@ -9,7 +9,6 @@ let
   openClawStateDir = "${config.home.homeDirectory}/.openclaw";
   openClawWorkspaceDir = "${openClawStateDir}/workspace";
   openClawVersion = "2026.4.2";
-  npmDir = "${config.xdg.dataHome}/npm";
 in
 lib.mkIf hostConfig.isLinux {
   home.activation.installOpenClaw = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

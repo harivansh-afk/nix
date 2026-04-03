@@ -114,6 +114,7 @@ in
 
   environment.systemPackages = packageSets.extras ++ [
     pkgs.chromium
+    pkgs.dtach
     pkgs.php
   ];
 

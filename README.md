@@ -35,4 +35,4 @@ The KVM has a declarative service bundle:
 - Self hosts Forgejo mirroring to GitHub (git.harivan.sh)
 - Self hosts VaultWarden
 - betterNAS control-plane and node agent (api.betternas.com)
-- pi-coding-agent in dtach (`pa` alias for attaching)
+- OpenClaw gateway behind nginx (netty.harivan.sh)

@@ -2,7 +2,7 @@
   ...
 }:
 let
-  sandboxDomain = "netty.harivan.sh";
+  openClawDomain = "netty.harivan.sh";
   forgejoDomain = "git.harivan.sh";
   vaultDomain = "vault.harivan.sh";
   betternasDomain = "api.betternas.com";
@@ -19,11 +19,16 @@ in
     recommendedTlsSettings = true;
     clientMaxBodySize = "512m";
 
-    # Reserved for future use - nothing listening on this port yet
-    virtualHosts.${sandboxDomain} = {
+    virtualHosts.${openClawDomain} = {
       enableACME = true;
       forceSSL = true;
-      locations."/".proxyPass = "http://127.0.0.1:2470";
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:2470";
+        proxyWebsockets = true;
+        extraConfig = ''
+          proxy_set_header X-Forwarded-For $remote_addr;
+        '';
+      };
     };
 
     virtualHosts.${forgejoDomain} = {

@@ -5,60 +5,42 @@
 }:
 let
   piAgentEnvFile = "/var/lib/pi-agent/pi-agent.env";
-  piAgentEnvCheck = pkgs.writeShellScript "pi-agent-env-check" ''
-    [ -f "${piAgentEnvFile}" ]
-  '';
+  npmBin = "/home/${username}/.local/share/npm/bin";
+  piBin = "${npmBin}/pi";
 
-  piBin = "/home/${username}/.local/share/npm/bin/pi";
-
-  # Wrapper that runs pi inside dtach so it gets a PTY (systemd services
-  # don't have a terminal) and can be attached to later for debugging:
-  #   dtach -a /run/pi-agent/pi-agent.sock
   piAgentStart = pkgs.writeShellScript "start-pi-agent" ''
-    if [ ! -x "${piBin}" ]; then
-      echo "pi binary not found at ${piBin}" >&2
-      exit 1
-    fi
-
-    # RPC subprocesses spawned by pi-channels do spawn("pi", ...) and
-    # need the npm bin directory on PATH.
-    export PATH="/home/${username}/.local/share/npm/bin:$PATH"
-
+    [ -x "${piBin}" ] || { echo "pi not found at ${piBin}" >&2; exit 1; }
+    export PATH="${npmBin}:$PATH"
     exec ${pkgs.dtach}/bin/dtach -N /run/pi-agent/pi-agent.sock \
       ${piBin} --chat-bridge
   '';
 in
 {
-  # Ensure state directory and env file have correct permissions.
   systemd.tmpfiles.rules = [
     "d /var/lib/pi-agent 0750 ${username} users -"
     "z ${piAgentEnvFile} 0600 ${username} users -"
     "d /run/pi-agent 0750 ${username} users -"
   ];
 
-  # Pi agent running 24/7 inside dtach.
-  # Extensions (pi-channels, pi-schedule-prompt, pi-subagents) load
-  # inside Pi's process and handle Telegram bridging, scheduled tasks,
-  # and background subagent delegation.
+  # Pi coding agent running as a Telegram bridge gateway.
+  # The main process hosts extensions (pi-channels, pi-schedule-prompt,
+  # pi-subagents) and polls Telegram. Actual prompts run in separate
+  # pi --mode rpc subprocesses spawned on demand.
   #
-  # The --chat-bridge flag auto-enables the Telegram bridge on startup.
-  # Telegram bot token lives in ~/.pi/agent/settings.json (see pi-channels docs).
-  # ANTHROPIC_API_KEY comes from the env file.
-  #
-  # Attach for debugging: dtach -a /run/pi-agent/pi-agent.sock
-  # Detach with: Ctrl+\
+  # Config: ~/.pi/agent/settings.json (bot token, bridge settings)
+  # API key: /var/lib/pi-agent/pi-agent.env
   systemd.services.pi-agent = {
-    description = "Pi Coding Agent (24/7)";
+    description = "Pi Telegram Bridge";
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
     wantedBy = [ "multi-user.target" ];
-    path = [
-      pkgs.nodejs_22
-      pkgs.git
-      pkgs.dtach
-      pkgs.coreutils
-      pkgs.gnutar
-      pkgs.gzip
+    path = with pkgs; [
+      nodejs_22
+      git
+      dtach
+      coreutils
+      gnutar
+      gzip
     ];
     environment = {
       HOME = "/home/${username}";
@@ -73,7 +55,9 @@ in
       User = username;
       Group = "users";
       WorkingDirectory = "/home/${username}";
-      ExecCondition = piAgentEnvCheck;
+      ExecCondition = "${pkgs.writeShellScript "pi-env-check" ''
+        [ -f "${piAgentEnvFile}" ]
+      ''}";
       EnvironmentFile = piAgentEnvFile;
       ExecStart = piAgentStart;
       Restart = "on-failure";

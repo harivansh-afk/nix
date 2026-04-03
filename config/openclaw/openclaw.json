@@ -4,48 +4,40 @@
     "bind": "loopback",
     "port": 2470,
     "trustedProxies": ["127.0.0.1", "::1"],
+    "controlUi": {
+      "allowedOrigins": ["https://netty.harivan.sh"]
+    },
     "auth": {
       "mode": "token",
       "token": "${OPENCLAW_GATEWAY_TOKEN}"
-    },
-    "controlUi": {
-      "allowedOrigins": ["https://netty.harivan.sh"]
     }
   },
-
   "channels": {
     "telegram": {
-      "enabled": true,
       "botToken": "${TELEGRAM_BOT_TOKEN}",
       "dmPolicy": "pairing"
     }
   },
-
-  "session": {
-    "dmScope": "per-channel-peer",
-    "reset": { "mode": "idle", "idleMinutes": 120 }
-  },
-
   "agents": {
     "defaults": {
       "workspace": "~/.openclaw/workspace",
+      "skipBootstrap": true,
       "model": {
-        "primary": "anthropic/claude-sonnet-4-6",
-        "fallbacks": ["anthropic/claude-haiku-4-5-20251001"]
+        "primary": "anthropic/claude-sonnet-4-6"
       },
-      "contextTokens": 200000,
-      "thinkingDefault": "adaptive",
-      "sandbox": { "mode": "non-main" },
-      "compaction": { "mode": "default", "notifyUser": true }
+      "sandbox": {
+        "mode": "non-main"
+      }
     }
   },
-
   "tools": {
-    "profile": "full",
-    "deny": ["gateway"]
-  },
-
-  "logging": {
-    "redactSensitive": "tools"
+    "profile": "coding",
+    "fs": {
+      "workspaceOnly": true
+    },
+    "loopDetection": {
+      "enabled": true
+    },
+    "deny": ["sessions_send", "sessions_spawn"]
   }
 }

@@ -1,49 +1,51 @@
 {
-  gateway: {
-    mode: "local",
-    bind: "loopback",
-    port: 2470,
-    trustedProxies: ["127.0.0.1", "::1"],
-    controlUi: {
-      enabled: true,
-      allowedOrigins: ["https://netty.harivan.sh"],
+  "gateway": {
+    "mode": "local",
+    "bind": "loopback",
+    "port": 2470,
+    "trustedProxies": ["127.0.0.1", "::1"],
+    "auth": {
+      "mode": "token",
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
     },
-    auth: {
-      mode: "token",
-      token: "${OPENCLAW_GATEWAY_TOKEN}",
-    },
+    "controlUi": {
+      "allowedOrigins": ["https://netty.harivan.sh"]
+    }
   },
 
-  channels: {
-    telegram: {
-      enabled: true,
-      botToken: "${TELEGRAM_BOT_TOKEN}",
-      dmPolicy: "pairing",
-    },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "${TELEGRAM_BOT_TOKEN}",
+      "dmPolicy": "pairing"
+    }
   },
 
-  agents: {
-    defaults: {
-      workspace: "~/.openclaw/workspace",
-      model: {
-        primary: "anthropic/claude-sonnet-4-6",
+  "session": {
+    "dmScope": "per-channel-peer",
+    "reset": { "mode": "idle", "idleMinutes": 120 }
+  },
+
+  "agents": {
+    "defaults": {
+      "workspace": "~/.openclaw/workspace",
+      "model": {
+        "primary": "anthropic/claude-sonnet-4-6",
+        "fallbacks": ["anthropic/claude-haiku-4-5-20251001"]
       },
-      sandbox: {
-        mode: "non-main",
-      },
-    },
+      "contextTokens": 200000,
+      "thinkingDefault": "adaptive",
+      "sandbox": { "mode": "non-main" },
+      "compaction": { "mode": "default", "notifyUser": true }
+    }
   },
 
-  tools: {
-    profile: "coding",
-    deny: [
-      "browser",
-      "canvas",
-      "cron",
-      "gateway",
-      "nodes",
-      "sessions_send",
-      "sessions_spawn",
-    ],
+  "tools": {
+    "profile": "full",
+    "deny": ["gateway"]
   },
+
+  "logging": {
+    "redactSensitive": "tools"
+  }
 }

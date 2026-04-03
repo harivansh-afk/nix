@@ -5,14 +5,13 @@
 }:
 let
   piAgentEnvFile = "/var/lib/pi-agent/pi-agent.env";
-  npmBin = "/home/${username}/.local/share/npm/bin";
-  piBin = "${npmBin}/pi";
+  piBin = "/home/${username}/.local/share/npm/bin/pi";
 
+  # Start pi inside a login shell so it inherits the full user environment
+  # (PATH, XDG dirs, etc). dtach provides the PTY that pi's TUI needs.
   piAgentStart = pkgs.writeShellScript "start-pi-agent" ''
-    [ -x "${piBin}" ] || { echo "pi not found at ${piBin}" >&2; exit 1; }
-    export PATH="${npmBin}:$PATH"
     exec ${pkgs.dtach}/bin/dtach -N /run/pi-agent/pi-agent.sock \
-      ${piBin} --chat-bridge
+      /bin/sh -lc 'exec ${piBin} --chat-bridge'
   '';
 in
 {
@@ -27,6 +26,8 @@ in
   # pi-subagents) and polls Telegram. Actual prompts run in separate
   # pi --mode rpc subprocesses spawned on demand.
   #
+  # Runs as a login shell so the agent has the full user environment
+  #
   # Config: ~/.pi/agent/settings.json (bot token, bridge settings)
   # API key: /var/lib/pi-agent/pi-agent.env
   systemd.services.pi-agent = {
@@ -34,30 +35,12 @@ in
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
     wantedBy = [ "multi-user.target" ];
-    path = with pkgs; [
-      nodejs_22
-      git
-      dtach
-      coreutils
-      gnutar
-      gzip
-    ];
-    environment = {
-      HOME = "/home/${username}";
-      NODE_NO_WARNINGS = "1";
-      XDG_DATA_HOME = "/home/${username}/.local/share";
-      XDG_CACHE_HOME = "/home/${username}/.cache";
-      XDG_CONFIG_HOME = "/home/${username}/.config";
-      NPM_CONFIG_USERCONFIG = "/home/${username}/.config/npm/npmrc";
-    };
+    path = [ pkgs.dtach ];
     serviceConfig = {
       Type = "simple";
       User = username;
       Group = "users";
       WorkingDirectory = "/home/${username}";
-      ExecCondition = "${pkgs.writeShellScript "pi-env-check" ''
-        [ -f "${piAgentEnvFile}" ]
-      ''}";
       EnvironmentFile = piAgentEnvFile;
       ExecStart = piAgentStart;
       Restart = "on-failure";

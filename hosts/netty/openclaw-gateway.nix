@@ -52,8 +52,8 @@ in
         workspace = "~/.openclaw/workspace";
         skipBootstrap = false;
         model = {
-          primary = "claude-cli/claude-opus-4-6";
-          fallbacks = [ "claude-cli/claude-sonnet-4-6" ];
+          primary = "anthropic/claude-opus-4-6";
+          fallbacks = [ "anthropic/claude-sonnet-4-6" ];
         };
         sandbox.mode = "non-main";
       };

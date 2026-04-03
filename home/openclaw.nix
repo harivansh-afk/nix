@@ -8,7 +8,7 @@
 let
   openClawStateDir = "${config.home.homeDirectory}/.openclaw";
   openClawWorkspaceDir = "${openClawStateDir}/workspace";
-  npmDir = "${config.xdg.dataHome}/npm";
+  openClawVersion = "2026.4.2";
 in
 lib.mkIf hostConfig.isLinux {
   home.activation.installOpenClaw = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -22,8 +22,9 @@ lib.mkIf hostConfig.isLinux {
     export XDG_DATA_HOME="${config.xdg.dataHome}"
     export XDG_CACHE_HOME="${config.xdg.cacheHome}"
 
-    if [ ! -d "${npmDir}/lib/node_modules/openclaw" ]; then
-      npm install -g openclaw@latest 2>/dev/null || true
+    INSTALLED=$(npm ls -g openclaw --depth=0 --json 2>/dev/null | ${pkgs.jq}/bin/jq -r '.dependencies.openclaw.version // empty')
+    if [ "$INSTALLED" != "${openClawVersion}" ]; then
+      npm install -g "openclaw@${openClawVersion}" 2>/dev/null || true
     fi
   '';
 

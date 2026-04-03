@@ -54,7 +54,7 @@ in
       ExecCondition = openClawCheck;
       EnvironmentFile = "-${openClawEnvFile}";
       ExecStart = "${openClawBin} gateway run";
-      Restart = "on-failure";
+      Restart = "always";
       RestartSec = 5;
     };
   };

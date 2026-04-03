@@ -30,6 +30,7 @@
       # Enable extended keys so Shift+Enter and other modified keys work
       set -g default-terminal "tmux-256color"
       set -s extended-keys on
+      set -s extended-keys-format csi-u
       set -as terminal-features 'xterm*:extkeys'
       set -as terminal-features 'xterm-ghostty:RGB'
 

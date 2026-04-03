@@ -1,9 +1,14 @@
 {
+  config,
   lib,
   pkgs,
   hostConfig,
   ...
 }:
+let
+  npmDir = "${config.xdg.dataHome}/npm";
+  piBin = "${npmDir}/bin/pi";
+in
 lib.mkIf hostConfig.isLinux {
   # Install pi-coding-agent globally via npm at activation time.
   home.activation.installPiAgent = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -13,11 +18,11 @@ lib.mkIf hostConfig.isLinux {
         pkgs.coreutils
       ]
     }:$PATH"
+    export NPM_CONFIG_USERCONFIG="${config.xdg.configHome}/npm/npmrc"
+    export XDG_DATA_HOME="${config.xdg.dataHome}"
+    export XDG_CACHE_HOME="${config.xdg.cacheHome}"
 
-    npm_prefix="$(npm prefix -g 2>/dev/null)"
-    pkg_dir="$npm_prefix/lib/node_modules/@mariozechner/pi-coding-agent"
-
-    if [ ! -d "$pkg_dir" ]; then
+    if [ ! -d "${npmDir}/lib/node_modules/@mariozechner/pi-coding-agent" ]; then
       npm install -g @mariozechner/pi-coding-agent 2>/dev/null || true
     fi
   '';
@@ -34,13 +39,13 @@ lib.mkIf hostConfig.isLinux {
         pkgs.git
       ]
     }:$PATH"
+    export NPM_CONFIG_USERCONFIG="${config.xdg.configHome}/npm/npmrc"
+    export XDG_DATA_HOME="${config.xdg.dataHome}"
+    export XDG_CACHE_HOME="${config.xdg.cacheHome}"
 
-    npm_prefix="$(npm prefix -g 2>/dev/null)"
-    pi_bin="$npm_prefix/bin/pi"
-
-    if [ -x "$pi_bin" ]; then
+    if [ -x "${piBin}" ]; then
       for pkg in "@e9n/pi-channels" "pi-schedule-prompt" "pi-subagents"; do
-        "$pi_bin" install "npm:$pkg" 2>/dev/null || true
+        "${piBin}" install "npm:$pkg" 2>/dev/null || true
       done
     fi
   '';

@@ -9,23 +9,21 @@ let
     [ -f "${piAgentEnvFile}" ]
   '';
 
+  piBin = "/home/${username}/.local/share/npm/bin/pi";
+
   # Wrapper that exec's pi inside tmux's foreground process so systemd
   # tracks the actual PID. When pi dies, tmux exits, systemd sees it
   # and triggers Restart=on-failure.
   piAgentStart = pkgs.writeShellScript "start-pi-agent" ''
-    export PATH="${pkgs.nodejs_22}/bin:$PATH"
-    npm_prefix="$(npm prefix -g 2>/dev/null)"
-    pi_bin="$npm_prefix/bin/pi"
-
-    if [ ! -x "$pi_bin" ]; then
-      echo "pi binary not found at $pi_bin" >&2
+    if [ ! -x "${piBin}" ]; then
+      echo "pi binary not found at ${piBin}" >&2
       exit 1
     fi
 
     # tmux runs in the foreground (-D) so systemd tracks this process.
     # The inner shell exec's pi so the tmux pane PID *is* the pi PID.
     exec ${pkgs.tmux}/bin/tmux new-session -D -s pi-agent \
-      "exec $pi_bin --chat-bridge"
+      "exec ${piBin} --chat-bridge"
   '';
 in
 {

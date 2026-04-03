@@ -53,10 +53,16 @@ in
       pkgs.git
       pkgs.dtach
       pkgs.coreutils
+      pkgs.gnutar
+      pkgs.gzip
     ];
     environment = {
       HOME = "/home/${username}";
       NODE_NO_WARNINGS = "1";
+      XDG_DATA_HOME = "/home/${username}/.local/share";
+      XDG_CACHE_HOME = "/home/${username}/.cache";
+      XDG_CONFIG_HOME = "/home/${username}/.config";
+      NPM_CONFIG_USERCONFIG = "/home/${username}/.config/npm/npmrc";
     };
     serviceConfig = {
       Type = "simple";

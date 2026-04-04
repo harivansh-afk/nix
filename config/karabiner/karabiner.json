@@ -72,7 +72,7 @@
             ]
           },
           {
-            "description": "Caps Lock + 1 = Open Dia",
+            "description": "Caps Lock + 1 = Open Helium",
             "manipulators": [
               {
                 "from": {
@@ -85,7 +85,7 @@
                 },
                 "to": [
                   {
-                    "shell_command": "open -a 'Dia'"
+                    "shell_command": "open -a 'Helium'"
                   }
                 ],
                 "type": "basic"

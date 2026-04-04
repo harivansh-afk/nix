@@ -35,6 +35,7 @@ in
 
     extraPackages = with pkgs; [
       bat
+      clang
       clang-tools
       fd
       fzf

@@ -136,11 +136,51 @@ restore_ssh_key() {
   fi
 }
 
+restore_gws_client_secret() {
+  local json
+  json="$(read_note 'Machine: GWS Client Secret')"
+  write_file "${HOME}/.config/gws/client_secret.json" 600 "${json}"
+}
+
+restore_gws_credentials() {
+  local note
+  note="$(read_note 'Machine: GWS Credentials')"
+
+  local client_id
+  local client_secret
+  local refresh_token
+  local type
+
+  client_id="$(printf '%s\n' "${note}" | sed -n 's/^client_id=//p' | head -1)"
+  client_secret="$(printf '%s\n' "${note}" | sed -n 's/^client_secret=//p' | head -1)"
+  refresh_token="$(printf '%s\n' "${note}" | sed -n 's/^refresh_token=//p' | head -1)"
+  type="$(printf '%s\n' "${note}" | sed -n 's/^type=//p' | head -1)"
+
+  local json
+  json="$(
+    jq -n \
+      --arg client_id "${client_id}" \
+      --arg client_secret "${client_secret}" \
+      --arg refresh_token "${refresh_token}" \
+      --arg type "${type}" \
+      '{
+        client_id: $client_id,
+        client_secret: $client_secret,
+        refresh_token: $refresh_token,
+        type: $type
+      }'
+  )"
+
+  write_file "${HOME}/.config/gws/credentials.json" 600 "${json}"
+}
+
 restore_ssh_key 'SSH Key - id_ed25519' 'id_ed25519'
 restore_ssh_key 'netty ssh key' 'netty'
 
 restore_aws_credentials
 restore_gcloud_adc
+restore_gws_client_secret
+restore_gws_credentials
 restore_plain_note 'Machine: Codex Auth' "${HOME}/.codex/auth.json" 600
 if [[ "$(uname)" == "Darwin" ]]; then
   restore_plain_note 'Machine: Vercel Auth' "${HOME}/Library/Application Support/com.vercel.cli/auth.json" 600

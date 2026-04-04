@@ -55,7 +55,7 @@ in
           primary = "anthropic/claude-opus-4-6";
           fallbacks = [ "anthropic/claude-sonnet-4-6" ];
         };
-        sandbox.mode = "non-main";
+        sandbox.mode = "off";
       };
       tools = {
         profile = "coding";

@@ -1,61 +1,68 @@
 {
+  inputs,
   pkgs,
   username,
   ...
 }:
 let
   homeDir = "/home/${username}";
-  openClawStateDir = "${homeDir}/.openclaw";
-  openClawConfigPath = "${openClawStateDir}/openclaw.json";
-  openClawEnvFile = "${openClawStateDir}/.env";
-  openClawBin = "${homeDir}/.local/share/npm/bin/openclaw";
-  openClawCheck = pkgs.writeShellScript "openclaw-gateway-check" ''
-    [ -x "${openClawBin}" ] && [ -f "${openClawConfigPath}" ] && [ -s "${openClawEnvFile}" ]
-  '';
+  stateDir = "${homeDir}/.openclaw";
+  runtimeConfig = "${stateDir}/openclaw.json";
 in
 {
-  systemd.tmpfiles.rules = [
-    "d ${openClawStateDir} 0700 ${username} users -"
-    "d ${openClawStateDir}/workspace 0700 ${username} users -"
-    "z ${openClawEnvFile} 0600 ${username} users -"
-    "z ${openClawConfigPath} 0600 ${username} users -"
-  ];
-
-  systemd.services.openclaw-gateway = {
-    description = "OpenClaw Gateway";
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    wantedBy = [ "multi-user.target" ];
-    path = with pkgs; [
-      nodejs_22
+  services.openclaw-gateway = {
+    enable = true;
+    package = inputs.openClaw.packages.${pkgs.stdenv.hostPlatform.system}.default;
+    port = 2470;
+    user = username;
+    group = "users";
+    createUser = false;
+    stateDir = stateDir;
+    environmentFiles = [ "${stateDir}/.env" ];
+    environment = {
+      OPENCLAW_NIX_MODE = "1";
+      OPENCLAW_CONFIG_PATH = runtimeConfig;
+    };
+    execStart = "${homeDir}/.local/share/npm/bin/openclaw gateway --port 2470";
+    execStartPre = [
+      "+${pkgs.coreutils}/bin/install -m 600 -o ${username} -g users /etc/openclaw/openclaw.json ${runtimeConfig}"
+    ];
+    servicePath = with pkgs; [
+      pkgs.nodejs_22
       git
-      coreutils
-      findutils
-      gnugrep
-      gawk
       docker
     ];
-    environment = {
-      HOME = homeDir;
-      NODE_NO_WARNINGS = "1";
-      OPENCLAW_NIX_MODE = "1";
-      OPENCLAW_STATE_DIR = openClawStateDir;
-      OPENCLAW_CONFIG_PATH = openClawConfigPath;
-      NPM_CONFIG_USERCONFIG = "${homeDir}/.config/npm/npmrc";
-      XDG_CACHE_HOME = "${homeDir}/.cache";
-      XDG_CONFIG_HOME = "${homeDir}/.config";
-      XDG_DATA_HOME = "${homeDir}/.local/share";
-    };
-    serviceConfig = {
-      Type = "simple";
-      User = username;
-      Group = "users";
-      WorkingDirectory = openClawStateDir;
-      ExecCondition = openClawCheck;
-      EnvironmentFile = "-${openClawEnvFile}";
-      ExecStart = "${openClawBin} gateway run";
-      Restart = "always";
-      RestartSec = 5;
+    config = {
+      gateway = {
+        mode = "local";
+        bind = "loopback";
+        port = 2470;
+        trustedProxies = [ "127.0.0.1" "::1" ];
+        controlUi.allowedOrigins = [ "https://netty.harivan.sh" ];
+        auth = {
+          mode = "token";
+          token = "\${OPENCLAW_GATEWAY_TOKEN}";
+        };
+      };
+      channels.telegram = {
+        botToken = "\${TELEGRAM_BOT_TOKEN}";
+        dmPolicy = "pairing";
+      };
+      agents.defaults = {
+        workspace = "~/.openclaw/workspace";
+        skipBootstrap = false;
+        model = {
+          primary = "anthropic/claude-opus-4-6";
+          fallbacks = [ "anthropic/claude-sonnet-4-6" ];
+        };
+        sandbox.mode = "non-main";
+      };
+      tools = {
+        profile = "coding";
+        fs.workspaceOnly = true;
+        loopDetection.enabled = true;
+        deny = [ "sessions_send" "sessions_spawn" ];
+      };
     };
   };
 }

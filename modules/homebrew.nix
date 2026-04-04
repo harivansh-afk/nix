@@ -20,6 +20,7 @@
 
     casks = [
       "cap"
+      "helium-browser"
       "karabiner-elements"
       "rectangle"
       "raycast"

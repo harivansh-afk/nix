@@ -32,4 +32,6 @@ lib.mkIf hostConfig.isLinux {
   '';
 
   home.file.".openclaw/workspace/SOUL.md".source = ../config/openclaw/SOUL.md;
+  home.file.".openclaw/workspace/TOOLS.md".source = ../config/openclaw/TOOLS.md;
+  home.file.".openclaw/workspace/HEARTBEAT.md".source = ../config/openclaw/HEARTBEAT.md;
 }

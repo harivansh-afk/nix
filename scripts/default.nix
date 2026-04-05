@@ -102,6 +102,8 @@ let
         "@TMUX_DARK_FILE@" = "${tmuxConfigs.dark}";
         "@TMUX_LIGHT_FILE@" = "${tmuxConfigs.light}";
         "@TMUX_CONFIG@" = "${config.xdg.configHome}/tmux/tmux.conf";
+        "@WALLPAPER_DARK_FILE@" = "${theme.wallpapers.dark}";
+        "@WALLPAPER_LIGHT_FILE@" = "${theme.wallpapers.light}";
       };
     };
   };

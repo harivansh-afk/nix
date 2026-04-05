@@ -13,6 +13,10 @@ let
     aquaNeutral = "#689d6a";
     gray = "#928374";
   };
+  wallpapers = {
+    dark = ../assets/wallpapers/topography-dark.jpg;
+    light = ../assets/wallpapers/topography-light.jpg;
+  };
   paths = {
     stateDir = "${config.xdg.stateHome}/theme";
     stateFile = "${config.xdg.stateHome}/theme/current";
@@ -263,5 +267,6 @@ in
     renderTmux
     renderZshHighlights
     themes
+    wallpapers
     ;
 }

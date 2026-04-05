@@ -19,6 +19,7 @@ in
     ./forgejo.nix
     ./betternas.nix
     ./openclaw-gateway.nix
+    ./github-runners.nix
     ../../modules/base.nix
     (modulesPath + "/profiles/minimal.nix")
     (modulesPath + "/profiles/headless.nix")

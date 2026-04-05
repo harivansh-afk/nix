@@ -67,10 +67,15 @@ let
         python3
         python3Packages.pip
         ripgrep
+        rustup
         stdenv.cc
         unzip
         uv
         wget
+        libx11
+        libx11.dev
+        libxtst
+        xvfb-run
         xz
         zip
       ];

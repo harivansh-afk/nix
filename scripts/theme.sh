@@ -26,12 +26,14 @@ link_mode_assets() {
       fzf_target="@FZF_DARK_FILE@"
       ghostty_target="@GHOSTTY_DARK_FILE@"
       tmux_target="@TMUX_DARK_FILE@"
+      wallpaper="@WALLPAPER_DARK_FILE@"
       apple_dark_mode=true
       ;;
     light)
       fzf_target="@FZF_LIGHT_FILE@"
       ghostty_target="@GHOSTTY_LIGHT_FILE@"
       tmux_target="@TMUX_LIGHT_FILE@"
+      wallpaper="@WALLPAPER_LIGHT_FILE@"
       apple_dark_mode=false
       ;;
     *)
@@ -52,6 +54,8 @@ link_mode_assets() {
 
   if [[ "$(uname -s)" == "Darwin" ]] && command -v osascript >/dev/null 2>&1; then
     osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to ${apple_dark_mode}" >/dev/null 2>&1 || true
+
+    osascript -e "tell application \"System Events\" to tell every desktop to set picture to \"${wallpaper}\"" >/dev/null 2>&1 || true
 
     osascript <<'EOF' >/dev/null 2>&1 || true
 tell application "System Events"

@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   changes:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, netty]
     outputs:
       quality: ${{ steps.filter.outputs.quality }}
     steps:
@@ -32,30 +32,25 @@ jobs:
 
   flake-check:
     name: Flake Check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, netty]
     needs: changes
     if: ${{ needs.changes.outputs.quality == 'true' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: Prepare local flake input shims
         run: |
           set -euo pipefail
-          # The repo currently depends on a local path flake input for agentcomputer-cli.
           sudo mkdir -p /Users/rathi/Documents/GitHub/companion/agentcomputer/apps
           sudo ln -sfn "$GITHUB_WORKSPACE/ci/agentcomputer-cli-stub" /Users/rathi/Documents/GitHub/companion/agentcomputer/apps/cli
       - run: nix flake check
 
   nix-format:
     name: Nix Format Check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, netty]
     needs: changes
     if: ${{ needs.changes.outputs.quality == 'true' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: Prepare local flake input shims
         run: |
           set -euo pipefail

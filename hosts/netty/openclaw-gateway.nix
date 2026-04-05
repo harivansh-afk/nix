@@ -52,8 +52,8 @@ in
         workspace = "~/.openclaw/workspace";
         skipBootstrap = false;
         model = {
-          primary = "anthropic/claude-opus-4-6";
-          fallbacks = [ "anthropic/claude-sonnet-4-6" ];
+          primary = "opanai-codex/gpt-5.4";
+          fallbacks = [ "opanai-codex/gpt-5.4-mini" ];
         };
         sandbox.mode = "off";
       };

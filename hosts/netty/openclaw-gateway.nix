@@ -59,7 +59,7 @@ in
       };
       tools = {
         profile = "coding";
-        fs.workspaceOnly = true;
+        fs.workspaceOnly = false;
         loopDetection.enabled = true;
         deny = [ "sessions_send" "sessions_spawn" ];
       };

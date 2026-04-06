@@ -1,11 +1,14 @@
 {
   pkgs,
+  lib,
   username,
   ...
 }:
 let
   forgejoDomain = "git.harivan.sh";
   forgejoApiUrl = "http://127.0.0.1:19300";
+  gitCredentialFile = "/var/lib/forgejo/.git-credentials";
+  mirrorEnvFile = "/etc/forgejo-mirror.env";
 in
 {
   users.users.git = {
@@ -16,11 +19,23 @@ in
   };
   users.groups.git = { };
 
+  # Generate git credential store for GitHub mirror fetches.
+  # Appended after the module's own preStart (which handles app.ini and migrations).
+  # preStart runs as the forgejo user (git), and the env file is world-readable.
+  systemd.services.forgejo.preStart = lib.mkAfter ''
+    . ${mirrorEnvFile}
+    printf 'https://oauth2:%s@github.com\n' "$GITHUB_TOKEN" > ${gitCredentialFile}
+    chmod 600 ${gitCredentialFile}
+  '';
+
   services.forgejo = {
     enable = true;
     user = "git";
     group = "git";
     settings = {
+      "git.config" = {
+        "credential.helper" = "store --file ${gitCredentialFile}";
+      };
       repository = {
         FORCE_PRIVATE = true;
         DEFAULT_PRIVATE = "private";
@@ -40,6 +55,10 @@ in
       mirror = {
         DEFAULT_INTERVAL = "1h";
         MIN_INTERVAL = "10m";
+      };
+      actions = {
+        ENABLED = true;
+        DEFAULT_ACTIONS_URL = "https://github.com";
       };
     };
   };

@@ -211,4 +211,153 @@ in
       RandomizedDelaySec = "5m";
     };
   };
+
+  # --- Forgejo heatmap reconciliation ---
+  # Runs after every mirror sync. Scans each repo for commits authored by the
+  # Forgejo user and inserts ActionCommitRepo (op_type=5) records into the
+  # action table so they appear in the contribution heatmap.
+  #
+  # Uses the action table itself as the cursor: for each repo it queries the
+  # most recent recorded timestamp, then fetches only newer commits via the
+  # Forgejo API "since" parameter. First run = full backfill, subsequent
+  # runs = incremental. Idempotent and safe to re-run.
+  systemd.services.forgejo-heatmap-reconcile = {
+    description = "Reconcile Forgejo heatmap with mirrored commit history";
+    after = [
+      "forgejo.service"
+      "forgejo-mirror-sync.service"
+    ];
+    requires = [ "forgejo.service" ];
+    wantedBy = [ "forgejo-mirror-sync.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      EnvironmentFile = mirrorEnvFile;
+      User = "git";
+      Group = "git";
+    };
+    path = [
+      pkgs.curl
+      pkgs.jq
+      pkgs.coreutils
+      pkgs.sqlite
+      pkgs.gnused
+    ];
+    script = ''
+      set -euo pipefail
+
+      DB="/var/lib/forgejo/data/forgejo.db"
+      API="${forgejoApiUrl}/api/v1"
+      OP_TYPE=5  # ActionCommitRepo
+
+      api() {
+        curl -sS -H "Authorization: token $FORGEJO_TOKEN" "$@"
+      }
+
+      # --- resolve identity ---
+      me=$(api "$API/user")
+      user_id=$(printf '%s' "$me" | jq -r '.id')
+      login=$(printf '%s' "$me" | jq -r '.login')
+
+      emails=$(api "$API/user/emails" | jq -r '.[].email')
+      primary=$(printf '%s' "$me" | jq -r '.email')
+      all_emails=$(printf '%s\n%s' "$primary" "$emails" | sort -u | grep -v '^$')
+
+      echo "Reconciling heatmap for $login (id=$user_id)"
+
+      # --- collect every repo the user can see (personal + orgs) ---
+      repo_list=$(mktemp)
+      trap 'rm -f "$repo_list"' EXIT
+
+      fetch_repos() {
+        local url="$1" p=1
+        while true; do
+          local batch
+          batch=$(api "$url?page=$p&limit=50&type=mirrors") || break
+          local n
+          n=$(printf '%s' "$batch" | jq length)
+          [ "$n" -eq 0 ] && break
+          printf '%s' "$batch" | jq -c '.[]' >> "$repo_list"
+          p=$((p + 1))
+        done
+      }
+
+      # personal repos
+      fetch_repos "$API/user/repos"
+
+      # org repos
+      orgs=$(api "$API/user/orgs" | jq -r '.[].username')
+      for org in $orgs; do
+        fetch_repos "$API/orgs/$org/repos"
+      done
+
+      inserted=0
+
+      while read -r repo; do
+        repo_id=$(printf '%s' "$repo" | jq -r '.id')
+        owner=$(printf '%s' "$repo" | jq -r '.owner.login')
+        name=$(printf '%s' "$repo" | jq -r '.name')
+        branch=$(printf '%s' "$repo" | jq -r '.default_branch')
+
+        # find the latest commit we already recorded for this repo
+        latest=$(sqlite3 "$DB" \
+          "SELECT COALESCE(MAX(created_unix),0) FROM action WHERE repo_id=$repo_id AND act_user_id=$user_id AND op_type=$OP_TYPE;")
+
+        # convert to ISO 8601 "since" param (skip if no prior records -> fetch all)
+        since_param=""
+        if [ "$latest" -gt 0 ]; then
+          # add 1 second to avoid re-processing the boundary commit
+          since_iso=$(date -u -d "@$((latest + 1))" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo "")
+          [ -n "$since_iso" ] && since_param="&since=$since_iso"
+        fi
+
+        cpage=1
+        repo_added=0
+        while true; do
+          commits=$(api "$API/repos/$owner/$name/git/commits?sha=$branch&page=$cpage&limit=50$since_param" 2>/dev/null) || break
+          ccount=$(printf '%s' "$commits" | jq 'if type == "array" then length else 0 end')
+          [ "$ccount" -eq 0 ] && break
+
+          commit_file=$(mktemp)
+          printf '%s' "$commits" | jq -c '.[]' > "$commit_file"
+
+          while read -r commit; do
+            author_email=$(printf '%s' "$commit" | jq -r '.commit.author.email // empty')
+            [ -z "$author_email" ] && continue
+
+            # match against our emails
+            matched=0
+            while IFS= read -r e; do
+              [ "$author_email" = "$e" ] && matched=1 && break
+            done <<< "$all_emails"
+            [ "$matched" -eq 0 ] && continue
+
+            iso_date=$(printf '%s' "$commit" | jq -r '.commit.author.date')
+            created_unix=$(date -u -d "$iso_date" +%s 2>/dev/null || echo "")
+            [ -z "$created_unix" ] && continue
+
+            sha=$(printf '%s' "$commit" | jq -r '.sha')
+            content="$branch\n$sha"
+
+            # deduplicate on repo + user + timestamp
+            exists=$(sqlite3 "$DB" \
+              "SELECT COUNT(*) FROM action WHERE user_id=$user_id AND repo_id=$repo_id AND op_type=$OP_TYPE AND created_unix=$created_unix;")
+            [ "$exists" -gt 0 ] && continue
+
+            sqlite3 "$DB" \
+              "INSERT INTO action (user_id, op_type, act_user_id, repo_id, ref_name, is_private, content, created_unix) VALUES ($user_id, $OP_TYPE, $user_id, $repo_id, 'refs/heads/$branch', 1, '$content', $created_unix);"
+
+            repo_added=$((repo_added + 1))
+            inserted=$((inserted + 1))
+          done < "$commit_file"
+          rm -f "$commit_file"
+
+          cpage=$((cpage + 1))
+        done
+
+        [ "$repo_added" -gt 0 ] && echo "  $owner/$name: +$repo_added commits"
+      done < "$repo_list"
+
+      echo "Reconciliation complete: $inserted new action records."
+    '';
+  };
 }

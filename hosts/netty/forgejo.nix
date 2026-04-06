@@ -38,7 +38,6 @@ in
         "credential.helper" = "store --file ${gitCredentialFile}";
       };
       repository = {
-        FORCE_PRIVATE = true;
         DEFAULT_PRIVATE = "private";
         DEFAULT_PUSH_CREATE_PRIVATE = true;
       };
@@ -49,14 +48,10 @@ in
         SSH_DOMAIN = forgejoDomain;
       };
       service = {
-        DISABLE_REGISTRATION = true;
-        REQUIRE_SIGNIN_VIEW = true;
-        # New users created by admin are restricted by default:
-        # they see nothing until explicitly added as collaborators.
-        DEFAULT_USER_IS_RESTRICTED = true;
-        # Require email confirmation when admin creates accounts
+        DISABLE_REGISTRATION = false;
+        REQUIRE_SIGNIN_VIEW = false;
+        DEFAULT_USER_IS_RESTRICTED = false;
         REGISTER_EMAIL_CONFIRM = true;
-        # Admin gets notified when new accounts are created
         SEND_NOTIFICATION_EMAIL_ON_NEW_USER = true;
       };
       mailer = {

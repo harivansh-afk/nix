@@ -77,6 +77,7 @@ in
       pkgs.jq
       pkgs.coreutils
       pkgs.gnused
+      pkgs.git
     ];
     script = ''
       set -euo pipefail
@@ -92,6 +93,45 @@ in
           return 1
         fi
         printf '%s' "$body"
+      }
+
+      fix_mirror_creds() {
+        local forgejo_owner="$1" repo_name="$2"
+        local repo_dir="/var/lib/forgejo/repositories/$forgejo_owner/$repo_name.git"
+        # Wait briefly for async migration to create the bare repo
+        local tries=0
+        while [ ! -d "$repo_dir" ] && [ "$tries" -lt 10 ]; do
+          sleep 2
+          tries=$((tries + 1))
+        done
+        if [ -d "$repo_dir" ]; then
+          local current_url
+          current_url=$(git --git-dir="$repo_dir" config --get remote.origin.url 2>/dev/null || true)
+          if [ -n "$current_url" ] && ! echo "$current_url" | grep -q "$GITHUB_TOKEN"; then
+            local new_url
+            new_url=$(printf '%s' "$current_url" | sed "s|https://oauth2@github.com/|https://oauth2:$GITHUB_TOKEN@github.com/|; s|https://github.com/|https://oauth2:$GITHUB_TOKEN@github.com/|")
+            git --git-dir="$repo_dir" remote set-url origin "$new_url" 2>/dev/null || true
+          fi
+        fi
+      }
+
+      ensure_org() {
+        local org_name="$1"
+        local status
+        status=$(curl -sS -o /dev/null -w '%{http_code}' \
+          -H "Authorization: token $FORGEJO_TOKEN" \
+          "${forgejoApiUrl}/api/v1/orgs/$org_name" || true)
+        if [ "$status" = "404" ]; then
+          api_call -X POST \
+            -H "Authorization: token $FORGEJO_TOKEN" \
+            -H "Content-Type: application/json" \
+            "${forgejoApiUrl}/api/v1/orgs" \
+            -d "$(jq -n --arg name "$org_name" '{
+              username: $name,
+              visibility: "private"
+            }')" > /dev/null
+          echo "Created org: $org_name"
+        fi
       }
 
       gh_user=$(api_call -H "Authorization: token $GITHUB_TOKEN" \
@@ -117,14 +157,15 @@ in
         repo_name="''${full_name#*/}"
 
         if [ "$repo_owner" = "$gh_user" ]; then
-          forgejo_repo_name="$repo_name"
+          forgejo_owner="$FORGEJO_OWNER"
         else
-          forgejo_repo_name="$repo_owner--$repo_name"
+          forgejo_owner="$repo_owner"
+          ensure_org "$repo_owner"
         fi
 
         status=$(curl -sS -o /dev/null -w '%{http_code}' \
           -H "Authorization: token $FORGEJO_TOKEN" \
-          "${forgejoApiUrl}/api/v1/repos/$FORGEJO_OWNER/$forgejo_repo_name" || true)
+          "${forgejoApiUrl}/api/v1/repos/$forgejo_owner/$repo_name" || true)
 
         if [ "$status" = "404" ]; then
           api_call -X POST \
@@ -133,8 +174,8 @@ in
             "${forgejoApiUrl}/api/v1/repos/migrate" \
             -d "$(jq -n \
               --arg addr "$clone_url" \
-              --arg name "$forgejo_repo_name" \
-              --arg owner "$FORGEJO_OWNER" \
+              --arg name "$repo_name" \
+              --arg owner "$forgejo_owner" \
               --arg token "$GITHUB_TOKEN" \
               '{
                 clone_addr: $addr,
@@ -146,16 +187,17 @@ in
                 service: "github"
               }')" \
             > /dev/null
-          echo "Created mirror: $full_name -> $FORGEJO_OWNER/$forgejo_repo_name"
+          fix_mirror_creds "$forgejo_owner" "$repo_name"
+          echo "Created mirror: $full_name -> $forgejo_owner/$repo_name"
         else
           if ! api_call -X POST \
             -H "Authorization: token $FORGEJO_TOKEN" \
-            "${forgejoApiUrl}/api/v1/repos/$FORGEJO_OWNER/$forgejo_repo_name/mirror-sync" \
+            "${forgejoApiUrl}/api/v1/repos/$forgejo_owner/$repo_name/mirror-sync" \
             > /dev/null; then
-            echo "Failed mirror sync: $full_name -> $FORGEJO_OWNER/$forgejo_repo_name" >&2
+            echo "Failed mirror sync: $full_name -> $forgejo_owner/$repo_name" >&2
             continue
           fi
-          echo "Synced mirror: $full_name -> $FORGEJO_OWNER/$forgejo_repo_name"
+          echo "Synced mirror: $full_name -> $forgejo_owner/$repo_name"
         fi
       done < "$repos_file"
     '';

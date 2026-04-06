@@ -89,6 +89,7 @@ in
       pkgs.coreutils
       pkgs.gnused
       pkgs.git
+      pkgs.sqlite
     ];
     script = ''
       set -euo pipefail
@@ -106,15 +107,19 @@ in
         printf '%s' "$body"
       }
 
+      # Ensure the bare repo git config has the token for fetching,
+      # but keep the DB remote_address clean (no token) so the UI
+      # never exposes it.
       fix_mirror_creds() {
-        local forgejo_owner="$1" repo_name="$2"
+        local forgejo_owner="$1" repo_name="$2" wait_for_create="''${3:-false}"
         local repo_dir="/var/lib/forgejo/repositories/$forgejo_owner/$repo_name.git"
-        # Wait briefly for async migration to create the bare repo
-        local tries=0
-        while [ ! -d "$repo_dir" ] && [ "$tries" -lt 10 ]; do
-          sleep 2
-          tries=$((tries + 1))
-        done
+        if [ "$wait_for_create" = "true" ]; then
+          local tries=0
+          while [ ! -d "$repo_dir" ] && [ "$tries" -lt 10 ]; do
+            sleep 2
+            tries=$((tries + 1))
+          done
+        fi
         if [ -d "$repo_dir" ]; then
           local current_url
           current_url=$(git --git-dir="$repo_dir" config --get remote.origin.url 2>/dev/null || true)
@@ -123,6 +128,19 @@ in
             new_url=$(printf '%s' "$current_url" | sed "s|https://oauth2@github.com/|https://oauth2:$GITHUB_TOKEN@github.com/|; s|https://github.com/|https://oauth2:$GITHUB_TOKEN@github.com/|")
             git --git-dir="$repo_dir" remote set-url origin "$new_url" 2>/dev/null || true
           fi
+        fi
+      }
+
+      clean_db_url() {
+        local forgejo_owner="$1" repo_name="$2" clone_url="$3"
+        local clean_url
+        clean_url=$(printf '%s' "$clone_url" | sed 's|https://oauth2:[^@]*@github.com/|https://github.com/|')
+        local repo_id
+        repo_id=$(sqlite3 /var/lib/forgejo/data/forgejo.db \
+          "SELECT r.id FROM repository r JOIN \"user\" u ON r.owner_id=u.id WHERE u.lower_name=LOWER('$forgejo_owner') AND r.lower_name=LOWER('$repo_name');")
+        if [ -n "$repo_id" ]; then
+          sqlite3 /var/lib/forgejo/data/forgejo.db \
+            "UPDATE mirror SET remote_address='$clean_url' WHERE repo_id=$repo_id AND remote_address LIKE '%ghp_%';"
         fi
       }
 
@@ -198,9 +216,12 @@ in
                 service: "github"
               }')" \
             > /dev/null
-          fix_mirror_creds "$forgejo_owner" "$repo_name"
+          fix_mirror_creds "$forgejo_owner" "$repo_name" true
+          clean_db_url "$forgejo_owner" "$repo_name" "$clone_url"
           echo "Created mirror: $full_name -> $forgejo_owner/$repo_name"
         else
+          fix_mirror_creds "$forgejo_owner" "$repo_name"
+          clean_db_url "$forgejo_owner" "$repo_name" "$clone_url"
           if ! api_call -X POST \
             -H "Authorization: token $FORGEJO_TOKEN" \
             "${forgejoApiUrl}/api/v1/repos/$forgejo_owner/$repo_name/mirror-sync" \

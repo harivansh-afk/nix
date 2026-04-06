@@ -7,7 +7,7 @@
   ...
 }:
 let
-  openClawVersion = "2026.4.2";
+  openClawVersion = "2026.4.5";
   npmDir = "${config.xdg.dataHome}/npm";
 in
 lib.mkIf hostConfig.isLinux {

@@ -32,6 +32,7 @@ in
     enable = true;
     user = "git";
     group = "git";
+    secrets.mailer.PASSWD = "/etc/forgejo-smtp-password";
     settings = {
       "git.config" = {
         "credential.helper" = "store --file ${gitCredentialFile}";
@@ -50,6 +51,21 @@ in
       service = {
         DISABLE_REGISTRATION = true;
         REQUIRE_SIGNIN_VIEW = true;
+        # New users created by admin are restricted by default:
+        # they see nothing until explicitly added as collaborators.
+        DEFAULT_USER_IS_RESTRICTED = true;
+        # Require email confirmation when admin creates accounts
+        REGISTER_EMAIL_CONFIRM = true;
+        # Admin gets notified when new accounts are created
+        SEND_NOTIFICATION_EMAIL_ON_NEW_USER = true;
+      };
+      mailer = {
+        ENABLED = true;
+        PROTOCOL = "smtps";
+        SMTP_ADDR = "smtp.resend.com";
+        SMTP_PORT = 465;
+        USER = "resend";
+        FROM = "Forgejo <noreply@harivan.sh>";
       };
       session.COOKIE_SECURE = true;
       mirror = {
@@ -313,7 +329,7 @@ in
         cpage=1
         repo_added=0
         while true; do
-          commits=$(api "$API/repos/$owner/$name/git/commits?sha=$branch&page=$cpage&limit=50$since_param" 2>/dev/null) || break
+          commits=$(api "$API/repos/$owner/$name/commits?sha=$branch&page=$cpage&limit=50$since_param" 2>/dev/null) || break
           ccount=$(printf '%s' "$commits" | jq 'if type == "array" then length else 0 end')
           [ "$ccount" -eq 0 ] && break
 

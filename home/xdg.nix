@@ -50,7 +50,10 @@ in
     [ "${config.home.homeDirectory}/.local/bin" ]
     (lib.mkIf (f.rust or false) [ "${config.xdg.dataHome}/cargo/bin" ])
     (lib.mkIf (f.go or false) [ "${config.xdg.dataHome}/go/bin" ])
-    (lib.mkIf (f.node or false) [ "${config.xdg.dataHome}/pnpm" ])
+    (lib.mkIf (f.node or false) [
+      "${config.xdg.dataHome}/npm/bin"
+      "${config.xdg.dataHome}/pnpm"
+    ])
   ];
 
   xdg.configFile."npm/npmrc" = lib.mkIf (f.node or false) {

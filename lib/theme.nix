@@ -13,26 +13,53 @@ let
     aquaNeutral = "#689d6a";
     gray = "#928374";
   };
-  wallpaperGeneration = {
-    view = {
-      # Lower zoom shows more terrain in each wallpaper.
-      zoom = 11;
-      tileConcurrency = 6;
+  wallpaperGeneration =
+    let
+      viewPresets = {
+        close = 12;
+        balanced = 11;
+        wide = 10;
+      };
+      densityPresets = {
+        sparse = 14;
+        balanced = 20;
+        dense = 28;
+      };
+      view = "balanced";
+      density = "balanced";
+      candidatePool = {
+        maxCached = 24;
+        randomAttempts = 20;
+        historySize = 10;
+      };
+      label = {
+        enabled = true;
+        fontSize = 14;
+      };
+    in
+    {
+      inherit
+        candidatePool
+        density
+        label
+        view
+        ;
+      presetValues = {
+        density = densityPresets;
+        view = viewPresets;
+      };
+      resolved = {
+        candidatePool = candidatePool;
+        contours = {
+          levels = densityPresets.${density};
+        };
+        label = label;
+        view = {
+          tileConcurrency = 6;
+          zoom = viewPresets.${view};
+        };
+      };
     };
-    contours = {
-      # Higher levels produce denser contour lines.
-      levels = 20;
-    };
-    candidatePool = {
-      maxCached = 24;
-      randomAttempts = 20;
-      historySize = 10;
-    };
-    label = {
-      enabled = true;
-      fontSize = 14;
-    };
-  };
   wallpapers = {
     dir = "${config.home.homeDirectory}/Pictures/Screensavers";
     dark = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper-dark.jpg";

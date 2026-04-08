@@ -12,10 +12,70 @@ let
   };
 
   wallpaperGenConfig = pkgs.writeText "wallpaper-gen-config.json" (
-    builtins.toJSON theme.wallpapers.generation
+    builtins.toJSON theme.wallpapers.generation.resolved
   );
 
   wallpaperPython = pkgs.python3.withPackages (ps: [ ps.pillow ]);
+
+  lazygitDarwinDir = "${config.home.homeDirectory}/Library/Application Support/lazygit";
+
+  modeAssets = {
+    dark = {
+      fzf = "${theme.paths.fzfDir}/cozybox-dark";
+      ghostty = "${theme.paths.ghosttyDir}/cozybox-dark";
+      tmux = "${tmuxConfigs.dark}";
+      lazygit = "${theme.paths.lazygitDir}/config-dark.yml";
+      darwinLazygit = "${lazygitDarwinDir}/config-dark.yml";
+      wallpaper = theme.wallpapers.dark;
+      appleDarkMode = "true";
+    };
+    light = {
+      fzf = "${theme.paths.fzfDir}/cozybox-light";
+      ghostty = "${theme.paths.ghosttyDir}/cozybox-light";
+      tmux = "${tmuxConfigs.light}";
+      lazygit = "${theme.paths.lazygitDir}/config-light.yml";
+      darwinLazygit = "${lazygitDarwinDir}/config-light.yml";
+      wallpaper = theme.wallpapers.light;
+      appleDarkMode = "false";
+    };
+  };
+
+  themeAssetsText = ''
+    theme_normalize_mode() {
+      case "$1" in
+        dark|light) printf '%s\n' "$1" ;;
+        *) printf '%s\n' '${theme.defaultMode}' ;;
+      esac
+    }
+
+    theme_load_mode_assets() {
+      local mode
+      mode="$(theme_normalize_mode "$1")"
+
+      case "$mode" in
+        light)
+          THEME_MODE='light'
+          THEME_FZF_TARGET='${modeAssets.light.fzf}'
+          THEME_GHOSTTY_TARGET='${modeAssets.light.ghostty}'
+          THEME_TMUX_TARGET='${modeAssets.light.tmux}'
+          THEME_LAZYGIT_TARGET='${modeAssets.light.lazygit}'
+          THEME_DARWIN_LAZYGIT_TARGET='${modeAssets.light.darwinLazygit}'
+          THEME_WALLPAPER='${modeAssets.light.wallpaper}'
+          THEME_APPLE_DARK_MODE=${modeAssets.light.appleDarkMode}
+          ;;
+        *)
+          THEME_MODE='dark'
+          THEME_FZF_TARGET='${modeAssets.dark.fzf}'
+          THEME_GHOSTTY_TARGET='${modeAssets.dark.ghostty}'
+          THEME_TMUX_TARGET='${modeAssets.dark.tmux}'
+          THEME_LAZYGIT_TARGET='${modeAssets.dark.lazygit}'
+          THEME_DARWIN_LAZYGIT_TARGET='${modeAssets.dark.darwinLazygit}'
+          THEME_WALLPAPER='${modeAssets.dark.wallpaper}'
+          THEME_APPLE_DARK_MODE=${modeAssets.dark.appleDarkMode}
+          ;;
+      esac
+    }
+  '';
 
   mkScript =
     {
@@ -107,31 +167,20 @@ let
         "@STATE_FILE@" = theme.paths.stateFile;
         "@FZF_DIR@" = theme.paths.fzfDir;
         "@FZF_CURRENT_FILE@" = theme.paths.fzfCurrentFile;
-        "@FZF_DARK_FILE@" = "${theme.paths.fzfDir}/cozybox-dark";
-        "@FZF_LIGHT_FILE@" = "${theme.paths.fzfDir}/cozybox-light";
         "@GHOSTTY_DIR@" = theme.paths.ghosttyDir;
         "@GHOSTTY_CURRENT_FILE@" = theme.paths.ghosttyCurrentFile;
-        "@GHOSTTY_DARK_FILE@" = "${theme.paths.ghosttyDir}/cozybox-dark";
-        "@GHOSTTY_LIGHT_FILE@" = "${theme.paths.ghosttyDir}/cozybox-light";
         "@TMUX_DIR@" = theme.paths.tmuxDir;
         "@TMUX_CURRENT_FILE@" = theme.paths.tmuxCurrentFile;
-        "@TMUX_DARK_FILE@" = "${tmuxConfigs.dark}";
-        "@TMUX_LIGHT_FILE@" = "${tmuxConfigs.light}";
         "@TMUX_CONFIG@" = "${config.xdg.configHome}/tmux/tmux.conf";
         "@LAZYGIT_DIR@" = theme.paths.lazygitDir;
         "@LAZYGIT_CURRENT_FILE@" = theme.paths.lazygitCurrentFile;
-        "@LAZYGIT_DARK_FILE@" = "${theme.paths.lazygitDir}/config-dark.yml";
-        "@LAZYGIT_LIGHT_FILE@" = "${theme.paths.lazygitDir}/config-light.yml";
-        "@LAZYGIT_DARWIN_DIR@" = "${config.home.homeDirectory}/Library/Application Support/lazygit";
-        "@LAZYGIT_DARWIN_FILE@" = "${config.home.homeDirectory}/Library/Application Support/lazygit/config.yml";
-        "@LAZYGIT_DARWIN_DARK_FILE@" = "${config.home.homeDirectory}/Library/Application Support/lazygit/config-dark.yml";
-        "@LAZYGIT_DARWIN_LIGHT_FILE@" = "${config.home.homeDirectory}/Library/Application Support/lazygit/config-light.yml";
+        "@LAZYGIT_DARWIN_DIR@" = lazygitDarwinDir;
+        "@LAZYGIT_DARWIN_FILE@" = "${lazygitDarwinDir}/config.yml";
         "@WALLPAPER_DIR@" = theme.wallpapers.dir;
-        "@WALLPAPER_DARK_FILE@" = theme.wallpapers.dark;
-        "@WALLPAPER_LIGHT_FILE@" = theme.wallpapers.light;
         "@WALLPAPER_CURRENT_FILE@" = theme.wallpapers.current;
         "@WALLPAPER_STATIC_DARK@" = "${theme.wallpapers.staticDark}";
         "@WALLPAPER_STATIC_LIGHT@" = "${theme.wallpapers.staticLight}";
+        "@THEME_ASSETS_TEXT@" = themeAssetsText;
       };
     };
   };
@@ -166,6 +215,7 @@ in
     darwinPackages
     nettyPackages
     theme
+    themeAssetsText
     tmuxConfigs
     ;
 

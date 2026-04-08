@@ -14,6 +14,8 @@ read_mode() {
   echo "@DEFAULT_MODE@"
 }
 
+@THEME_ASSETS_TEXT@
+
 set_wallpaper() {
   if [[ "$(uname -s)" == "Darwin" ]] && command -v osascript >/dev/null 2>&1; then
     if [[ -f "@WALLPAPER_CURRENT_FILE@" ]]; then
@@ -31,43 +33,18 @@ set_wallpaper() {
 
 link_mode_assets() {
   local mode="$1"
-  local fzf_target
-  local ghostty_target
-  local tmux_target
-  local apple_dark_mode
-
-  case "$mode" in
-    dark)
-      fzf_target="@FZF_DARK_FILE@"
-      ghostty_target="@GHOSTTY_DARK_FILE@"
-      tmux_target="@TMUX_DARK_FILE@"
-      lazygit_target="@LAZYGIT_DARK_FILE@"
-      wallpaper="@WALLPAPER_DARK_FILE@"
-      apple_dark_mode=true
-      ;;
-    light)
-      fzf_target="@FZF_LIGHT_FILE@"
-      ghostty_target="@GHOSTTY_LIGHT_FILE@"
-      tmux_target="@TMUX_LIGHT_FILE@"
-      lazygit_target="@LAZYGIT_LIGHT_FILE@"
-      wallpaper="@WALLPAPER_LIGHT_FILE@"
-      apple_dark_mode=false
-      ;;
-    *)
-      echo "invalid mode: $mode" >&2
-      exit 1
-      ;;
-  esac
+  theme_load_mode_assets "$mode"
+  mode="$THEME_MODE"
 
   mkdir -p "@STATE_DIR@" "@FZF_DIR@" "@GHOSTTY_DIR@" "@TMUX_DIR@" "@LAZYGIT_DIR@" "@WALLPAPER_DIR@"
   printf '%s\n' "$mode" > "@STATE_FILE@"
-  ln -sfn "$fzf_target" "@FZF_CURRENT_FILE@"
-  ln -sfn "$ghostty_target" "@GHOSTTY_CURRENT_FILE@"
-  ln -sfn "$tmux_target" "@TMUX_CURRENT_FILE@"
-  ln -sfn "$lazygit_target" "@LAZYGIT_CURRENT_FILE@"
+  ln -sfn "$THEME_FZF_TARGET" "@FZF_CURRENT_FILE@"
+  ln -sfn "$THEME_GHOSTTY_TARGET" "@GHOSTTY_CURRENT_FILE@"
+  ln -sfn "$THEME_TMUX_TARGET" "@TMUX_CURRENT_FILE@"
+  ln -sfn "$THEME_LAZYGIT_TARGET" "@LAZYGIT_CURRENT_FILE@"
 
-  if [[ -f "$wallpaper" ]]; then
-    ln -sfn "$wallpaper" "@WALLPAPER_CURRENT_FILE@"
+  if [[ -f "$THEME_WALLPAPER" ]]; then
+    ln -sfn "$THEME_WALLPAPER" "@WALLPAPER_CURRENT_FILE@"
   fi
 
   if command -v tmux >/dev/null 2>&1 && tmux start-server >/dev/null 2>&1; then
@@ -76,13 +53,9 @@ link_mode_assets() {
 
   if [[ "$(uname -s)" == "Darwin" ]] && command -v osascript >/dev/null 2>&1; then
     mkdir -p "@LAZYGIT_DARWIN_DIR@"
-    if [[ "$mode" == "dark" ]]; then
-      ln -sfn "@LAZYGIT_DARWIN_DARK_FILE@" "@LAZYGIT_DARWIN_FILE@"
-    else
-      ln -sfn "@LAZYGIT_DARWIN_LIGHT_FILE@" "@LAZYGIT_DARWIN_FILE@"
-    fi
+    ln -sfn "$THEME_DARWIN_LAZYGIT_TARGET" "@LAZYGIT_DARWIN_FILE@"
 
-    osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to ${apple_dark_mode}" >/dev/null 2>&1 || true
+    osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to ${THEME_APPLE_DARK_MODE}" >/dev/null 2>&1 || true
 
     set_wallpaper
 

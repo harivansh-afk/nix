@@ -102,6 +102,14 @@ let
         "@TMUX_DARK_FILE@" = "${tmuxConfigs.dark}";
         "@TMUX_LIGHT_FILE@" = "${tmuxConfigs.light}";
         "@TMUX_CONFIG@" = "${config.xdg.configHome}/tmux/tmux.conf";
+        "@LAZYGIT_DIR@" = theme.paths.lazygitDir;
+        "@LAZYGIT_CURRENT_FILE@" = theme.paths.lazygitCurrentFile;
+        "@LAZYGIT_DARK_FILE@" = "${theme.paths.lazygitDir}/config-dark.yml";
+        "@LAZYGIT_LIGHT_FILE@" = "${theme.paths.lazygitDir}/config-light.yml";
+        "@LAZYGIT_DARWIN_DIR@" = "${config.home.homeDirectory}/Library/Application Support/lazygit";
+        "@LAZYGIT_DARWIN_FILE@" = "${config.home.homeDirectory}/Library/Application Support/lazygit/config.yml";
+        "@LAZYGIT_DARWIN_DARK_FILE@" = "${config.home.homeDirectory}/Library/Application Support/lazygit/config-dark.yml";
+        "@LAZYGIT_DARWIN_LIGHT_FILE@" = "${config.home.homeDirectory}/Library/Application Support/lazygit/config-light.yml";
         "@WALLPAPER_DARK_FILE@" = "${theme.wallpapers.dark}";
         "@WALLPAPER_LIGHT_FILE@" = "${theme.wallpapers.light}";
       };

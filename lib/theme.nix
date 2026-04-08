@@ -26,6 +26,8 @@ let
     ghosttyCurrentFile = "${config.xdg.configHome}/ghostty/themes/cozybox-current";
     tmuxDir = "${config.xdg.configHome}/tmux/theme";
     tmuxCurrentFile = "${config.xdg.configHome}/tmux/theme/current.conf";
+    lazygitDir = "${config.xdg.configHome}/lazygit";
+    lazygitCurrentFile = "${config.xdg.configHome}/lazygit/config.yml";
   };
 
   themes = {
@@ -191,6 +193,59 @@ let
       zstyle ':prompt:pure:user:root' color '${c.error}'
     '';
 
+  renderLazygit =
+    mode:
+    let
+      c =
+        if mode == "light" then
+          {
+            activeBorder = "#427b58";
+            inactiveBorder = "#c3c7c9";
+            selectedLineBg = "#e1e1e1";
+            optionsText = "#b57614";
+            selectedRangeBg = "#c3c7c9";
+            cherryPickedBg = "#427b58";
+            cherryPickedFg = "#e7e7e7";
+            unstaged = "#c5524a";
+            defaultFg = "#3c3836";
+          }
+        else
+          {
+            activeBorder = "#b8bb26";
+            inactiveBorder = "#504945";
+            selectedLineBg = "#3c3836";
+            optionsText = "#fabd2f";
+            selectedRangeBg = "#504945";
+            cherryPickedBg = "#689d6a";
+            cherryPickedFg = "#282828";
+            unstaged = "#fb4934";
+            defaultFg = "#ebdbb2";
+          };
+    in
+    ''
+      gui:
+        theme:
+          activeBorderColor:
+            - "${c.activeBorder}"
+            - bold
+          inactiveBorderColor:
+            - "${c.inactiveBorder}"
+          selectedLineBgColor:
+            - "${c.selectedLineBg}"
+          optionsTextColor:
+            - "${c.optionsText}"
+          selectedRangeBgColor:
+            - "${c.selectedRangeBg}"
+          cherryPickedCommitBgColor:
+            - "${c.cherryPickedBg}"
+          cherryPickedCommitFgColor:
+            - "${c.cherryPickedFg}"
+          unstagedChangesColor:
+            - "${c.unstaged}"
+          defaultFgColor:
+            - "${c.defaultFg}"
+    '';
+
   batTheme = mode: if mode == "light" then "gruvbox-light" else "gruvbox-dark";
 
   deltaTheme = mode: if mode == "light" then "gruvbox-light" else "gruvbox-dark";
@@ -263,6 +318,7 @@ in
     paths
     renderFzf
     renderGhostty
+    renderLazygit
     renderPurePrompt
     renderTmux
     renderZshHighlights

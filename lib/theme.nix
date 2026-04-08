@@ -13,6 +13,26 @@ let
     aquaNeutral = "#689d6a";
     gray = "#928374";
   };
+  wallpaperGeneration = {
+    view = {
+      # Lower zoom shows more terrain in each wallpaper.
+      zoom = 11;
+      tileConcurrency = 6;
+    };
+    contours = {
+      # Higher levels produce denser contour lines.
+      levels = 20;
+    };
+    candidatePool = {
+      maxCached = 24;
+      randomAttempts = 20;
+      historySize = 10;
+    };
+    label = {
+      enabled = true;
+      fontSize = 14;
+    };
+  };
   wallpapers = {
     dir = "${config.home.homeDirectory}/Pictures/Screensavers";
     dark = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper-dark.jpg";
@@ -20,6 +40,7 @@ let
     current = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper.jpg";
     staticDark = ../assets/wallpapers/topography-dark.jpg;
     staticLight = ../assets/wallpapers/topography-light.jpg;
+    generation = wallpaperGeneration;
   };
   paths = {
     stateDir = "${config.xdg.stateHome}/theme";

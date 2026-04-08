@@ -1,9 +1,7 @@
-# /// script
-# dependencies = ["pillow"]
-# ///
 """Generate topographic contour wallpapers from real-world elevation data."""
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 import json
 import math
 import os
@@ -20,6 +18,28 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 Coord = tuple[float, float]
 Candidate = tuple[float, float, str]
 Rgb = tuple[int, int, int]
+TileTask = tuple[int, int, int, int, int]
+
+
+def load_settings() -> dict[str, object]:
+    config_path = os.environ.get("WALLPAPER_GEN_CONFIG")
+    if not config_path:
+        return {}
+    try:
+        with open(config_path, encoding="utf-8") as f:
+            settings = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+    return settings if isinstance(settings, dict) else {}
+
+
+SETTINGS = load_settings()
+
+
+def section(name: str) -> dict[str, object]:
+    value = SETTINGS.get(name, {})
+    return value if isinstance(value, dict) else {}
+
 
 HOME: str = os.environ["HOME"]
 DIR: str = os.path.join(HOME, "Pictures", "Screensavers")
@@ -43,10 +63,16 @@ os.makedirs(DIR, exist_ok=True)
 os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(CACHE, exist_ok=True)
 
+VIEW = section("view")
+CONTOURS = section("contours")
+CANDIDATE_POOL = section("candidatePool")
+LABEL = section("label")
+
 TILE_URL: str = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"
 TILE_SIZE: int = 256
-ZOOM: int = 11
-CONTOUR_LEVELS: int = 20
+ZOOM: int = int(VIEW.get("zoom", 11))
+TILE_FETCH_JOBS: int = max(1, int(VIEW.get("tileConcurrency", 6)))
+CONTOUR_LEVELS: int = max(1, int(CONTOURS.get("levels", 20)))
 
 # cozybox palette - matches lib/theme.nix
 THEMES: dict[str, dict[str, Rgb]] = {
@@ -81,8 +107,13 @@ LOCATIONS: list[Coord] = [
     (45.83, 6.86),       # Mont Blanc
 ]
 
+CONTOUR_OVERSAMPLE: int = 2
+CONTOUR_BLUR_RADIUS: float = 15
+CONTOUR_GROW_FILTER_SIZE: int = 3
+CONTOUR_SOFTEN_RADIUS: float = 1.5
+CONTOUR_THRESHOLD: int = 80
 MIN_RELIEF: int = 400
-MAX_RETRIES: int = 20
+MAX_RETRIES: int = max(0, int(CANDIDATE_POOL.get("randomAttempts", 20)))
 SEA_LEVEL: int = 32768
 MIN_LAND_FRACTION: float = 0.1
 PREVIEW_W: int = 384
@@ -92,8 +123,12 @@ GRID_ROWS: int = 4
 MIN_CONTOUR_COVERAGE: float = 0.15
 MIN_OCCUPIED_CELLS: int = 12
 MAX_CELL_SHARE: float = 0.15
-MAX_CACHED_CANDIDATES: int = 24
-HISTORY_SIZE: int = 10  # remember this many recent locations to avoid repeats
+MAX_CACHED_CANDIDATES: int = max(0, int(CANDIDATE_POOL.get("maxCached", 24)))
+HISTORY_SIZE: int = max(1, int(CANDIDATE_POOL.get("historySize", 10)))
+LABEL_ENABLED: bool = bool(LABEL.get("enabled", True))
+LABEL_FONT_SIZE: int = max(1, int(LABEL.get("fontSize", 14)))
+LABEL_MARGIN_X: int = 24
+LABEL_MARGIN_BOTTOM: int = 30
 RUN_ID: str = f"{datetime.now().strftime('%Y%m%dT%H%M%S')}-pid{os.getpid()}"
 
 
@@ -221,7 +256,14 @@ def fetch_tile(z: int, x: int, y: int) -> Image.Image:
     url = TILE_URL.format(z=z, x=x, y=y)
     req = urllib.request.Request(url, headers={"User-Agent": "wallpaper-gen/1.0"})
     with urllib.request.urlopen(req, timeout=15) as resp:
-        return Image.open(BytesIO(resp.read()))
+        tile = Image.open(BytesIO(resp.read()))
+        tile.load()
+        return tile
+
+
+def fetch_tile_task(task: TileTask) -> tuple[int, int, Image.Image]:
+    tx, ty, zoom, tile_x, tile_y = task
+    return tx, ty, fetch_tile(zoom, tile_x, tile_y)
 
 
 def fetch_terrain(
@@ -230,14 +272,27 @@ def fetch_terrain(
     tag = f"{lat:.2f}_{lon:.2f}_z{zoom}_{tiles_x}x{tiles_y}"
     cache_file = os.path.join(CACHE, f"terrain_{tag}.png")
     if os.path.exists(cache_file):
-        return Image.open(cache_file), True
+        with Image.open(cache_file) as cached:
+            return cached.copy(), True
     cx, cy = lat_lon_to_tile(lat, lon, zoom)
     sx, sy = cx - tiles_x // 2, cy - tiles_y // 2
     full = Image.new("RGB", (tiles_x * TILE_SIZE, tiles_y * TILE_SIZE))
-    for ty in range(tiles_y):
-        for tx in range(tiles_x):
-            tile = fetch_tile(zoom, sx + tx, sy + ty)
-            full.paste(tile, (tx * TILE_SIZE, ty * TILE_SIZE))
+    tasks = [
+        (tx, ty, zoom, sx + tx, sy + ty)
+        for ty in range(tiles_y)
+        for tx in range(tiles_x)
+    ]
+    if TILE_FETCH_JOBS == 1:
+        results = map(fetch_tile_task, tasks)
+    else:
+        with ThreadPoolExecutor(max_workers=TILE_FETCH_JOBS) as executor:
+            results = executor.map(fetch_tile_task, tasks)
+            for tx, ty, tile in results:
+                full.paste(tile, (tx * TILE_SIZE, ty * TILE_SIZE))
+            full.save(cache_file)
+            return full, False
+    for tx, ty, tile in results:
+        full.paste(tile, (tx * TILE_SIZE, ty * TILE_SIZE))
     full.save(cache_file)
     return full, False
 
@@ -259,18 +314,18 @@ def decode_terrarium(img: Image.Image) -> tuple[Image.Image, int, float]:
 
 
 def build_contour_mask(elevation: Image.Image, W: int, H: int) -> Image.Image:
-    S: int = 2
+    S: int = CONTOUR_OVERSAMPLE
     iW, iH = W * S, H * S
     terrain = elevation.resize((iW, iH), Image.BICUBIC)
-    terrain = terrain.filter(ImageFilter.GaussianBlur(radius=15 * S))
+    terrain = terrain.filter(ImageFilter.GaussianBlur(radius=CONTOUR_BLUR_RADIUS * S))
     step = max(1, 256 // CONTOUR_LEVELS)
     terrain = terrain.point(lambda p: (p // step) * step)
     eroded = terrain.filter(ImageFilter.MinFilter(3))
     edges = ImageChops.subtract(terrain, eroded)
     edges = edges.point(lambda p: 255 if p > 0 else 0)
-    edges = edges.filter(ImageFilter.MaxFilter(3))
-    edges = edges.filter(ImageFilter.GaussianBlur(radius=1.5 * S))
-    return edges.point(lambda p: 255 if p > 80 else 0)
+    edges = edges.filter(ImageFilter.MaxFilter(CONTOUR_GROW_FILTER_SIZE))
+    edges = edges.filter(ImageFilter.GaussianBlur(radius=CONTOUR_SOFTEN_RADIUS * S))
+    return edges.point(lambda p: 255 if p > CONTOUR_THRESHOLD else 0)
 
 
 def contour_stats(elevation: Image.Image) -> tuple[float, int, float]:
@@ -316,15 +371,12 @@ def candidate_summary(
     )
 
 
-def render_contours(
-    elevation: Image.Image, W: int, H: int, bg: Rgb, line_color: Rgb
-) -> Image.Image:
-    S: int = 2
+def render_contours(mask: Image.Image, W: int, H: int, bg: Rgb, line_color: Rgb) -> Image.Image:
+    S: int = CONTOUR_OVERSAMPLE
     iW, iH = W * S, H * S
-    edges = build_contour_mask(elevation, W, H)
     bg_img = Image.new("RGB", (iW, iH), bg)
     fg_img = Image.new("RGB", (iW, iH), line_color)
-    img = Image.composite(fg_img, bg_img, edges)
+    img = Image.composite(fg_img, bg_img, mask)
     return img.resize((W, H), Image.LANCZOS)
 
 
@@ -355,7 +407,10 @@ def gen() -> None:
     except FileNotFoundError:
         pass
 
-    log(f"start theme={theme} resolution={W}x{H} tiles={tiles_x}x{tiles_y}")
+    log(
+        f"start theme={theme} resolution={W}x{H} tiles={tiles_x}x{tiles_y} "
+        f"zoom={ZOOM} contours={CONTOUR_LEVELS} tile_jobs={TILE_FETCH_JOBS}"
+    )
 
     for index, (lat, lon, source) in enumerate(candidate_locations(tiles_x, tiles_y), start=1):
         log(f"candidate[{index}] source={source} lat={lat:.2f} lon={lon:.2f} begin")
@@ -377,21 +432,25 @@ def gen() -> None:
 
     elevation = elevation.crop((0, 0, min(elevation.width, W), min(elevation.height, H)))
     save_history(lat, lon)
-    place = reverse_geocode(lat, lon)
+    place = reverse_geocode(lat, lon) if LABEL_ENABLED else None
     log(f"selected lat={lat:.2f} lon={lon:.2f} place={place or '<none>'}")
 
     coords = f"{lat:.2f}, {lon:.2f}"
     label = f"{place} ({coords})" if place else coords
     font_path = find_font()
-
-    for theme_name, colors in THEMES.items():
-        img = render_contours(elevation, W, H, colors["bg"], colors["line"])
-        draw = ImageDraw.Draw(img)
+    font = None
+    if LABEL_ENABLED:
         if font_path:
-            font = ImageFont.truetype(font_path, 14)
+            font = ImageFont.truetype(font_path, LABEL_FONT_SIZE)
         else:
             font = ImageFont.load_default()
-        draw.text((24, H - 30), label, fill=colors["label"], font=font)
+    contour_mask = build_contour_mask(elevation, W, H)
+
+    for theme_name, colors in THEMES.items():
+        img = render_contours(contour_mask, W, H, colors["bg"], colors["line"])
+        if LABEL_ENABLED and font is not None:
+            draw = ImageDraw.Draw(img)
+            draw.text((LABEL_MARGIN_X, H - LABEL_MARGIN_BOTTOM), label, fill=colors["label"], font=font)
         out_path = os.path.join(DIR, f"wallpaper-{theme_name}.jpg")
         img.save(out_path, quality=95)
         log(f"wrote theme={theme_name} path={out_path}")

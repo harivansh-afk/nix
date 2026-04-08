@@ -76,6 +76,15 @@ let
       runtimeInputs = with pkgs; [ nix ];
     };
 
+    wallpaper-gen = mkScript {
+      name = "wallpaper-gen";
+      file = ./wallpaper-gen.sh;
+      runtimeInputs = with pkgs; [ uv ];
+      replacements = {
+        "@WALLPAPER_GEN_PY@" = "${./wallpaper-gen.py}";
+      };
+    };
+
     theme = mkScript {
       name = "theme";
       file = ./theme.sh;
@@ -110,8 +119,12 @@ let
         "@LAZYGIT_DARWIN_FILE@" = "${config.home.homeDirectory}/Library/Application Support/lazygit/config.yml";
         "@LAZYGIT_DARWIN_DARK_FILE@" = "${config.home.homeDirectory}/Library/Application Support/lazygit/config-dark.yml";
         "@LAZYGIT_DARWIN_LIGHT_FILE@" = "${config.home.homeDirectory}/Library/Application Support/lazygit/config-light.yml";
-        "@WALLPAPER_DARK_FILE@" = "${theme.wallpapers.dark}";
-        "@WALLPAPER_LIGHT_FILE@" = "${theme.wallpapers.light}";
+        "@WALLPAPER_DIR@" = theme.wallpapers.dir;
+        "@WALLPAPER_DARK_FILE@" = theme.wallpapers.dark;
+        "@WALLPAPER_LIGHT_FILE@" = theme.wallpapers.light;
+        "@WALLPAPER_CURRENT_FILE@" = theme.wallpapers.current;
+        "@WALLPAPER_STATIC_DARK@" = "${theme.wallpapers.staticDark}";
+        "@WALLPAPER_STATIC_LIGHT@" = "${theme.wallpapers.staticLight}";
       };
     };
   };

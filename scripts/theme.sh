@@ -1,5 +1,5 @@
 usage() {
-  echo "usage: theme <dark|light|toggle|current>"
+  echo "usage: theme <dark|light|toggle|gen>"
 }
 
 read_mode() {
@@ -12,6 +12,21 @@ read_mode() {
   fi
 
   echo "@DEFAULT_MODE@"
+}
+
+set_wallpaper() {
+  if [[ "$(uname -s)" == "Darwin" ]] && command -v osascript >/dev/null 2>&1; then
+    if [[ -f "@WALLPAPER_CURRENT_FILE@" ]]; then
+      wp_resolved=$(readlink -f "@WALLPAPER_CURRENT_FILE@" 2>/dev/null || echo "@WALLPAPER_CURRENT_FILE@")
+      # macOS caches wallpaper data by file path - copy to a unique temp path
+      # so macOS is forced to read the new image data
+      wp_dir=$(dirname "$wp_resolved")
+      wp_tmp="${wp_dir}/.wallpaper-active-$$.jpg"
+      rm -f "${wp_dir}"/.wallpaper-active-*.jpg 2>/dev/null || true
+      cp "$wp_resolved" "$wp_tmp"
+      osascript -e "tell application \"System Events\" to tell every desktop to set picture to \"${wp_tmp}\"" >/dev/null 2>&1 || true
+    fi
+  fi
 }
 
 link_mode_assets() {
@@ -44,12 +59,16 @@ link_mode_assets() {
       ;;
   esac
 
-  mkdir -p "@STATE_DIR@" "@FZF_DIR@" "@GHOSTTY_DIR@" "@TMUX_DIR@" "@LAZYGIT_DIR@"
+  mkdir -p "@STATE_DIR@" "@FZF_DIR@" "@GHOSTTY_DIR@" "@TMUX_DIR@" "@LAZYGIT_DIR@" "@WALLPAPER_DIR@"
   printf '%s\n' "$mode" > "@STATE_FILE@"
   ln -sfn "$fzf_target" "@FZF_CURRENT_FILE@"
   ln -sfn "$ghostty_target" "@GHOSTTY_CURRENT_FILE@"
   ln -sfn "$tmux_target" "@TMUX_CURRENT_FILE@"
   ln -sfn "$lazygit_target" "@LAZYGIT_CURRENT_FILE@"
+
+  if [[ -f "$wallpaper" ]]; then
+    ln -sfn "$wallpaper" "@WALLPAPER_CURRENT_FILE@"
+  fi
 
   if command -v tmux >/dev/null 2>&1 && tmux start-server >/dev/null 2>&1; then
     tmux source-file "@TMUX_CONFIG@" >/dev/null 2>&1 || true
@@ -65,7 +84,7 @@ link_mode_assets() {
 
     osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to ${apple_dark_mode}" >/dev/null 2>&1 || true
 
-    osascript -e "tell application \"System Events\" to tell every desktop to set picture to \"${wallpaper}\"" >/dev/null 2>&1 || true
+    set_wallpaper
 
     osascript <<'EOF' >/dev/null 2>&1 || true
 tell application "System Events"
@@ -91,7 +110,7 @@ EOF
   )
 }
 
-mode="${1:-current}"
+mode="${1:-}"
 
 case "$mode" in
   dark|light)
@@ -103,8 +122,10 @@ case "$mode" in
       mode="dark"
     fi
     ;;
-  current)
-    read_mode
+  gen)
+    wallpaper-gen
+    set_wallpaper
+    printf 'generated new wallpaper\n'
     exit 0
     ;;
   *)

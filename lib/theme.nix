@@ -14,8 +14,12 @@ let
     gray = "#928374";
   };
   wallpapers = {
-    dark = ../assets/wallpapers/topography-dark.jpg;
-    light = ../assets/wallpapers/topography-light.jpg;
+    dir = "${config.home.homeDirectory}/Pictures/Screensavers";
+    dark = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper-dark.jpg";
+    light = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper-light.jpg";
+    current = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper.jpg";
+    staticDark = ../assets/wallpapers/topography-dark.jpg;
+    staticLight = ../assets/wallpapers/topography-light.jpg;
   };
   paths = {
     stateDir = "${config.xdg.stateHome}/theme";

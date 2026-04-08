@@ -1,5 +1,5 @@
 usage() {
-  echo "usage: theme <dark|light|toggle|gen>"
+  echo "usage: theme <dark|light|toggle|current|gen>"
 }
 
 read_mode() {
@@ -110,7 +110,7 @@ EOF
   )
 }
 
-mode="${1:-}"
+mode="${1:-current}"
 
 case "$mode" in
   dark|light)
@@ -121,6 +121,10 @@ case "$mode" in
     else
       mode="dark"
     fi
+    ;;
+  current)
+    read_mode
+    exit 0
     ;;
   gen)
     wallpaper-gen

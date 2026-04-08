@@ -11,6 +11,12 @@ let
     light = pkgs.writeText "tmux-theme-light.conf" (theme.renderTmux "light");
   };
 
+  wallpaperGenConfig = pkgs.writeText "wallpaper-gen-config.json" (
+    builtins.toJSON theme.wallpapers.generation
+  );
+
+  wallpaperPython = pkgs.python3.withPackages (ps: [ ps.pillow ]);
+
   mkScript =
     {
       file,
@@ -79,9 +85,10 @@ let
     wallpaper-gen = mkScript {
       name = "wallpaper-gen";
       file = ./wallpaper-gen.sh;
-      runtimeInputs = with pkgs; [ uv ];
+      runtimeInputs = [ wallpaperPython ];
       replacements = {
         "@WALLPAPER_GEN_PY@" = "${./wallpaper-gen.py}";
+        "@WALLPAPER_GEN_CONFIG@" = "${wallpaperGenConfig}";
       };
     };
 

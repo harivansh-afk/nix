@@ -137,9 +137,11 @@ in
         clean_url=$(printf '%s' "$clone_url" | sed 's|https://oauth2:[^@]*@github.com/|https://github.com/|')
         local repo_id
         repo_id=$(sqlite3 /var/lib/forgejo/data/forgejo.db \
+          ".timeout 5000" \
           "SELECT r.id FROM repository r JOIN \"user\" u ON r.owner_id=u.id WHERE u.lower_name=LOWER('$forgejo_owner') AND r.lower_name=LOWER('$repo_name');")
         if [ -n "$repo_id" ]; then
           sqlite3 /var/lib/forgejo/data/forgejo.db \
+            ".timeout 5000" \
             "UPDATE mirror SET remote_address='$clean_url' WHERE repo_id=$repo_id AND remote_address LIKE '%ghp_%';"
         fi
       }
@@ -332,6 +334,7 @@ in
 
         # find the latest commit we already recorded for this repo
         latest=$(sqlite3 "$DB" \
+          ".timeout 5000" \
           "SELECT COALESCE(MAX(created_unix),0) FROM action WHERE repo_id=$repo_id AND act_user_id=$user_id AND op_type=$OP_TYPE;")
 
         # convert to ISO 8601 "since" param (skip if no prior records -> fetch all)
@@ -372,10 +375,12 @@ in
 
             # deduplicate on repo + user + timestamp
             exists=$(sqlite3 "$DB" \
+              ".timeout 5000" \
               "SELECT COUNT(*) FROM action WHERE user_id=$user_id AND repo_id=$repo_id AND op_type=$OP_TYPE AND created_unix=$created_unix;")
             [ "$exists" -gt 0 ] && continue
 
             sqlite3 "$DB" \
+              ".timeout 5000" \
               "INSERT INTO action (user_id, op_type, act_user_id, repo_id, ref_name, is_private, content, created_unix) VALUES ($user_id, $OP_TYPE, $user_id, $repo_id, 'refs/heads/$branch', 1, '$content', $created_unix);"
 
             repo_added=$((repo_added + 1))

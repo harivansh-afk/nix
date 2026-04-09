@@ -2,7 +2,7 @@
   ...
 }:
 let
-  openClawDomain = "netty.harivan.sh";
+  hermesDomain = "netty.harivan.sh";
   forgejoDomain = "git.harivan.sh";
   vaultDomain = "vault.harivan.sh";
   betternasDomain = "api.betternas.com";
@@ -19,7 +19,7 @@ in
     recommendedTlsSettings = true;
     clientMaxBodySize = "512m";
 
-    virtualHosts.${openClawDomain} = {
+    virtualHosts.${hermesDomain} = {
       enableACME = true;
       forceSSL = true;
       locations."/" = {

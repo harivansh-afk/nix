@@ -15,7 +15,7 @@ in
       specialArgs = mkSpecialArgs host;
       modules = [
         inputs.disko.nixosModules.disko
-        inputs.openClaw.nixosModules.openclaw-gateway
+        inputs.hermes-agent.nixosModules.default
         ../../hosts/${host.name}/configuration.nix
         inputs.home-manager.nixosModules.home-manager
         (mkHomeManagerModule host)

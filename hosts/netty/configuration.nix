@@ -18,7 +18,7 @@ in
     ./vaultwarden.nix
     ./forgejo.nix
     ./betternas.nix
-    ./openclaw-gateway.nix
+    ./hermes-gateway.nix
     ./forgejo-runner.nix
     ../../modules/base.nix
     (modulesPath + "/profiles/minimal.nix")

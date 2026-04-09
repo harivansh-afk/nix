@@ -276,6 +276,13 @@ let
     in
     ''
       gui:
+        showBottomLine: false
+        showListFooter: false
+        showPanelJumps: false
+        showCommandLog: false
+        showRandomTip: false
+        splitDiff: auto
+        border: rounded
         theme:
           activeBorderColor:
             - "${c.activeBorder}"

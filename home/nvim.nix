@@ -49,6 +49,7 @@ in
       python3
       ripgrep
       stylua
+      tree-sitter
       vscode-langservers-extracted
       nodePackages.bash-language-server
       nodePackages.typescript

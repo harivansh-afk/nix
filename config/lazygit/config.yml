@@ -2,11 +2,3 @@ git:
   pagers:
     - pager: delta --paging=never
       colorArg: always
-gui:
-  showBottomLine: false
-  showListFooter: false
-  showPanelJumps: false
-  showCommandLog: false
-  showRandomTip: false
-  splitDiff: auto
-  border: rounded

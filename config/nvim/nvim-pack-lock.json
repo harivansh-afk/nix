@@ -10,7 +10,8 @@
     },
     "canola.nvim": {
       "rev": "4a0dd41ca39793342177b2cdb8e784243da5a936",
-      "src": "https://github.com/barrettruth/canola.nvim"
+      "src": "https://github.com/barrettruth/canola.nvim",
+      "version": "'canola'"
     },
     "cozybox.nvim": {
       "rev": "be246810d74e3030cc5790685db3b9b8aacda5e3",

@@ -1,9 +1,12 @@
 vim.pack.add({
-  "https://github.com/barrettruth/canola.nvim",
+  {
+    src = "https://github.com/barrettruth/canola.nvim",
+    version = "canola",
+  },
   "https://github.com/barrettruth/canola-collection",
 }, { load = function() end })
 
-local canola_config = require("config.canola")
+local canola_config = require "config.canola"
 
 return {
   {

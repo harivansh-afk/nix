@@ -72,7 +72,7 @@ in
     state_dir="${config.xdg.stateHome}/nvim"
     lockfile="${packLockPath}"
 
-    if [ ! -e "$lockfile" ]; then
+    if [ ! -e "$lockfile" ] || ! cmp -s ${packLockSeed} "$lockfile"; then
       mkdir -p "$state_dir"
       cp ${packLockSeed} "$lockfile"
       chmod u+w "$lockfile"

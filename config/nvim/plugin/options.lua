@@ -40,3 +40,5 @@ o.foldenable = true
 o.updatetime = 250
 o.mouse = 'a'
 o.clipboard = 'unnamedplus'
+
+o.hlsearch = true

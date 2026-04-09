@@ -46,6 +46,7 @@ return {
         },
         ghost_text = { enabled = true },
       },
+      fuzzy = { implementation = "lua" },
       sources = {
         default = { "lsp", "path", "buffer", "snippets" },
       },

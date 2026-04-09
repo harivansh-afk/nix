@@ -23,8 +23,8 @@ set_wallpaper() {
       # macOS caches wallpaper data by file path - copy to a unique temp path
       # so macOS is forced to read the new image data
       wp_dir=$(dirname "$wp_resolved")
-      wp_tmp="${wp_dir}/.wallpaper-active-$$.jpg"
-      rm -f "${wp_dir}"/.wallpaper-active-*.jpg 2>/dev/null || true
+      wp_tmp="${wp_dir}/.wallpaper-active-$$.png"
+      rm -f "${wp_dir}"/.wallpaper-active-*.png 2>/dev/null || true
       cp "$wp_resolved" "$wp_tmp"
       osascript -e "tell application \"System Events\" to tell every desktop to set picture to \"${wp_tmp}\"" >/dev/null 2>&1 || true
     fi

@@ -62,11 +62,11 @@ let
     };
   wallpapers = {
     dir = "${config.home.homeDirectory}/Pictures/Screensavers";
-    dark = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper-dark.jpg";
-    light = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper-light.jpg";
-    current = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper.jpg";
-    staticDark = ../assets/wallpapers/topography-dark.jpg;
-    staticLight = ../assets/wallpapers/topography-light.jpg;
+    dark = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper-dark.png";
+    light = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper-light.png";
+    current = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper.png";
+    staticDark = ../assets/wallpapers/topography-dark.png;
+    staticLight = ../assets/wallpapers/topography-light.png;
     generation = wallpaperGeneration;
   };
   paths = {

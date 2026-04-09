@@ -77,8 +77,8 @@ CONTOUR_LEVELS: int = max(1, int(CONTOURS.get("levels", 20)))
 # cozybox palette - matches lib/theme.nix
 THEMES: dict[str, dict[str, Rgb]] = {
     "dark": {
-        "bg": (0x18, 0x18, 0x18),
-        "line": (0x2d, 0x2d, 0x2d),
+        "bg": (0x00, 0x00, 0x00),
+        "line": (0x1a, 0x1a, 0x1a),
         "label": (0xFF, 0xFF, 0xFF),
     },
     "light": {
@@ -451,14 +451,16 @@ def gen() -> None:
         if LABEL_ENABLED and font is not None:
             draw = ImageDraw.Draw(img)
             draw.text((LABEL_MARGIN_X, H - LABEL_MARGIN_BOTTOM), label, fill=colors["label"], font=font)
-        out_path = os.path.join(DIR, f"wallpaper-{theme_name}.jpg")
-        img.save(out_path, quality=95)
+        out_path = os.path.join(DIR, f"wallpaper-{theme_name}.png")
+        if os.path.exists(out_path):
+            os.remove(out_path)
+        img.save(out_path)
         log(f"wrote theme={theme_name} path={out_path}")
 
-    link = os.path.join(DIR, "wallpaper.jpg")
+    link = os.path.join(DIR, "wallpaper.png")
     if os.path.lexists(link):
         os.unlink(link)
-    target = os.path.join(DIR, f"wallpaper-{theme}.jpg")
+    target = os.path.join(DIR, f"wallpaper-{theme}.png")
     os.symlink(target, link)
     log(f"finish status=ok target={target} link={link}")
 

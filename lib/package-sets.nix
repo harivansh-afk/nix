@@ -16,6 +16,7 @@ in
     fd
     fzf
     gnupg
+    gcc
     go_1_26
     jq
     just

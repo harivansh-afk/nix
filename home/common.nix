@@ -26,6 +26,7 @@
     ./skills.nix
     ./scripts.nix
     ./ssh.nix
+    ./tea.nix
     ./tmux.nix
     ./zsh.nix
   ];

@@ -18,6 +18,7 @@ in
     gnupg
     gcc
     go_1_26
+    jujutsu
     jq
     just
     nodejs_22

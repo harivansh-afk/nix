@@ -8,6 +8,7 @@ import os
 import random
 import subprocess
 import sys
+import time
 import urllib.request
 from datetime import datetime
 from io import BytesIO
@@ -254,11 +255,19 @@ def lat_lon_to_tile(lat: float, lon: float, zoom: int) -> tuple[int, int]:
 
 def fetch_tile(z: int, x: int, y: int) -> Image.Image:
     url = TILE_URL.format(z=z, x=x, y=y)
-    req = urllib.request.Request(url, headers={"User-Agent": "wallpaper-gen/1.0"})
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        tile = Image.open(BytesIO(resp.read()))
-        tile.load()
-        return tile
+    for attempt in range(4):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "wallpaper-gen/1.0"})
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                tile = Image.open(BytesIO(resp.read()))
+                tile.load()
+                return tile
+        except (ConnectionResetError, urllib.error.URLError) as err:
+            if attempt == 3:
+                raise
+            delay = 0.5 * (2 ** attempt)
+            log(f"tile retry z={z} x={x} y={y} attempt={attempt + 1} delay={delay:.1f}s err={err!r}")
+            time.sleep(delay)
 
 
 def fetch_tile_task(task: TileTask) -> tuple[int, int, Image.Image]:

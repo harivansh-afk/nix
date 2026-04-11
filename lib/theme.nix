@@ -19,14 +19,16 @@ let
         close = 12;
         balanced = 11;
         wide = 10;
+        ultrawide = 9;
       };
       densityPresets = {
         sparse = 14;
         balanced = 20;
         dense = 28;
+        packed = 40;
       };
-      view = "balanced";
-      density = "balanced";
+      view = "wide";
+      density = "dense";
       candidatePool = {
         maxCached = 24;
         randomAttempts = 20;
@@ -55,7 +57,7 @@ let
         };
         label = label;
         view = {
-          tileConcurrency = 6;
+          tileConcurrency = 3;
           zoom = viewPresets.${view};
         };
       };

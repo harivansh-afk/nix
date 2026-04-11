@@ -37,7 +37,6 @@ in
     (with pkgs; [
       awscli2
       claudePackage
-      pkgs.codex
       coreutils-prefixed
       delta
       diff-so-fancy

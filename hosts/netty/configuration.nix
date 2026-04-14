@@ -17,6 +17,7 @@ in
     ./nginx.nix
     ./vaultwarden.nix
     ./forgejo.nix
+    ./diffkit.nix
     ./betternas.nix
     ./hermes-gateway.nix
     ./forgejo-runner.nix

@@ -11,7 +11,7 @@
           git
           just
           nixfmt-tree
-          nodePackages.prettier
+          prettier
           pre-commit
           selene
           shfmt

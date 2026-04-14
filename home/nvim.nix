@@ -51,9 +51,9 @@ in
       stylua
       tree-sitter
       vscode-langservers-extracted
-      nodePackages.bash-language-server
-      nodePackages.typescript
-      nodePackages.typescript-language-server
+      bash-language-server
+      typescript
+      typescript-language-server
     ];
   };
 

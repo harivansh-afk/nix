@@ -6,6 +6,7 @@ let
   forgejoDomain = "git.harivan.sh";
   vaultDomain = "vault.harivan.sh";
   betternasDomain = "api.betternas.com";
+  diffkitDomain = "diffs.harivan.sh";
 in
 {
   security.acme = {
@@ -41,6 +42,15 @@ in
       enableACME = true;
       forceSSL = true;
       locations."/".proxyPass = "http://127.0.0.1:8222";
+    };
+
+    virtualHosts.${diffkitDomain} = {
+      enableACME = true;
+      forceSSL = true;
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:3200";
+        proxyWebsockets = true;
+      };
     };
 
     virtualHosts.${betternasDomain} = {

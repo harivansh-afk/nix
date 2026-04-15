@@ -10,7 +10,7 @@
   ++ lib.optionals hostConfig.isDarwin [
     ./colima.nix
     ./helium.nix
-    ./rectangle.nix
+    ./aerospace.nix
     ./karabiner.nix
   ]
   ++ lib.optionals hostConfig.isLinux [

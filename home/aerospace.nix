@@ -23,12 +23,12 @@
 
       # Gaps between windows
       gaps = {
-        inner.horizontal = 20;
-        inner.vertical = 20;
-        outer.left = 20;
-        outer.right = 20;
-        outer.top = 20;
-        outer.bottom = 20;
+        inner.horizontal = 5;
+        inner.vertical = 5;
+        outer.left = 5;
+        outer.right = 5;
+        outer.top = 5;
+        outer.bottom = 5;
       };
 
       # Auto-assign apps to workspaces

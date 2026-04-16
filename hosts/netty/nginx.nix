@@ -7,6 +7,7 @@ let
   vaultDomain = "vault.harivan.sh";
   betternasDomain = "api.betternas.com";
   diffkitDomain = "diffs.harivan.sh";
+  deltaDomain = "delta.harivan.sh";
 in
 {
   security.acme = {
@@ -49,6 +50,15 @@ in
       forceSSL = true;
       locations."/" = {
         proxyPass = "http://127.0.0.1:3200";
+        proxyWebsockets = true;
+      };
+    };
+
+    virtualHosts.${deltaDomain} = {
+      enableACME = true;
+      forceSSL = true;
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:3300";
         proxyWebsockets = true;
       };
     };

@@ -38,10 +38,9 @@ return {
   {
     "barrettruth/forge.nvim",
     cmd = "Forge",
-    before = function() vim.g.forge = vim.g.forge or {} end,
     after = function() pcall(vim.cmd.packadd, "fzf-lua") end,
     keys = {
-      { "<c-t>", "<cmd>Forge<cr>", desc = "Forge picker" },
+      { "<c-t>", [[<cmd>lua require('forge').open()<cr>]], desc = "forge" },
     },
   },
   {

@@ -140,9 +140,10 @@
         alt-backtick = "workspace-back-and-forth";
 
         # Monitor focus/move
-        alt-period = "focus-monitor next";
-        alt-shift-period = "move-node-to-monitor next";
-        alt-shift-comma = "move-workspace-to-monitor next";
+        alt-period = "focus-monitor --wrap-around next";
+        alt-shift-period = "move-node-to-monitor --wrap-around --focus-follows-window next";
+        alt-shift-comma = "move-workspace-to-monitor --wrap-around next";
+        ctrl-alt-cmd-space = "move-node-to-monitor --wrap-around --focus-follows-window next";
 
         # Modes
         alt-shift-r = "mode resize";

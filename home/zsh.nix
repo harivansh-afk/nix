@@ -30,6 +30,8 @@
     shellAliases = {
       co = "codex --dangerously-bypass-approvals-and-sandbox";
       ca = "cursor-agent";
+      agent-claude = "cursor-agent --model=claude-opus-4-7-thinking-max --force";
+      agent-codex = "cursor-agent --model=gpt-5.4-xhigh-fast --force";
       cc = "claude";
       ch = "claude-handoff";
       cl = "clear";

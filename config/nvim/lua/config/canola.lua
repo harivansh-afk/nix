@@ -96,6 +96,9 @@ function M.setup_integrations()
     callback = function(args)
       local bufnr = args.buf
 
+      vim.keymap.set("n", "<C-f>", "<cmd>FzfLua files<cr>", { buffer = bufnr })
+      vim.keymap.set("n", "<C-s>", "<cmd>FzfLua live_grep<cr>", { buffer = bufnr })
+
       vim.keymap.set("n", "gC", function()
         show_all = not show_all
         require("canola").set_columns(show_all and detail_columns or base_columns)

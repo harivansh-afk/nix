@@ -9,7 +9,13 @@ return {
     local neocodeium = require "neocodeium"
     neocodeium.setup()
 
-    vim.keymap.set("i", "<Right>", neocodeium.accept)
+    vim.keymap.set("i", "<Right>", function()
+      if neocodeium.visible() then
+        neocodeium.accept()
+      else
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Right>", true, false, true), "n", false)
+      end
+    end)
     vim.keymap.set("i", "<A-w>", neocodeium.accept_word)
     vim.keymap.set("i", "<A-a>", neocodeium.accept_line)
     vim.keymap.set("i", "<A-e>", neocodeium.cycle_or_complete)

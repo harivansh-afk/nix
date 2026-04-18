@@ -38,6 +38,7 @@ return {
     local opts = {
       "default-title",
       winopts = {
+        fullscreen = true,
         border = "single",
         preview = {
           layout = "vertical",
@@ -46,6 +47,18 @@ return {
       },
       fzf_opts = {
         ["--layout"] = "reverse",
+      },
+      files = {
+        winopts = { preview = { hidden = true } },
+      },
+      git_files = {
+        winopts = { preview = { hidden = true } },
+      },
+      grep = {
+        _headers = {},
+      },
+      live_grep = {
+        _headers = {},
       },
     }
 
@@ -58,18 +71,8 @@ return {
     end
   end,
   keys = {
-    {
-      "<C-f>",
-      function()
-        local fzf = require "fzf-lua"
-        local git_dir = vim.fn.system("git rev-parse --git-dir 2>/dev/null"):gsub("\n", "")
-        if vim.v.shell_error == 0 and git_dir ~= "" then
-          fzf.git_files()
-        else
-          fzf.files()
-        end
-      end,
-    },
+    { "<C-f>", "<cmd>FzfLua files<cr>" },
+    { "<C-s>", "<cmd>FzfLua live_grep<cr>" },
     { "<leader>ff", "<cmd>FzfLua files<cr>" },
     { "<leader>fg", "<cmd>FzfLua live_grep<cr>" },
     { "<leader>fb", "<cmd>FzfLua buffers<cr>" },

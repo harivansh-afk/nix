@@ -33,7 +33,6 @@ The KVM has a declarative service bundle:
 - netty exposes 3 tcp ports (22:ssh, 80:http, 443:https)
 - services only listen on 127.0.0.1 (runs behind nginx with ACME)
 - Self hosts Forgejo mirroring to GitHub (git.harivan.sh)
-- Diff-kit (diffs.harivan.sh)
 - Self hosts VaultWarden
 - betterNAS control-plane and node agent (api.betternas.com)
 - Hermes agent (netty.harivan.sh)

@@ -17,7 +17,6 @@ in
     ./nginx.nix
     ./vaultwarden.nix
     ./forgejo.nix
-    ./diffkit.nix
     ./delta.nix
     ./betternas.nix
     ./hermes-gateway.nix

@@ -5,6 +5,7 @@
 }:
 
 let
+  # Cache root for tooling used inside CI jobs (npm, pip, cargo, ...).
   cacheRoot = "/var/cache/forgejo-runner";
 in
 {

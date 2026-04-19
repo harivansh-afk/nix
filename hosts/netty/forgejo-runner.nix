@@ -59,6 +59,8 @@ in
         gnused
         gawk
         jq
+        nix
+        nixos-rebuild
         nodejs_22
         pkg-config
         pnpm
@@ -67,6 +69,7 @@ in
         ripgrep
         rustup
         stdenv.cc
+        sudo
         unzip
         uv
         wget

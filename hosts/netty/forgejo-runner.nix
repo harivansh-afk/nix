@@ -9,8 +9,20 @@ let
 in
 {
   systemd.services.gitea-runner-netty.serviceConfig = {
+    DynamicUser = lib.mkForce false;
+    User = lib.mkForce "gitea-runner";
+    Group = lib.mkForce "gitea-runner";
     NoNewPrivileges = lib.mkForce false;
+    RestrictSUIDSGID = lib.mkForce false;
   };
+
+  users.users.gitea-runner = {
+    isSystemUser = true;
+    group = "gitea-runner";
+    home = "/var/lib/gitea-runner";
+    createHome = true;
+  };
+  users.groups.gitea-runner = { };
 
   security.sudo.extraRules = [
     {

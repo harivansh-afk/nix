@@ -8,6 +8,10 @@ let
   cacheRoot = "/var/cache/forgejo-runner";
 in
 {
+  systemd.services.gitea-runner-netty.serviceConfig = {
+    NoNewPrivileges = lib.mkForce false;
+  };
+
   security.sudo.extraRules = [
     {
       users = [ "gitea-runner" ];

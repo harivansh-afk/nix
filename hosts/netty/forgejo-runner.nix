@@ -9,14 +9,14 @@ let
 in
 {
   systemd.tmpfiles.rules = [
-    "d ${cacheRoot} 0750 forgejo-runner forgejo-runner -"
-    "d ${cacheRoot}/cargo 0750 forgejo-runner forgejo-runner -"
-    "d ${cacheRoot}/npm 0750 forgejo-runner forgejo-runner -"
-    "d ${cacheRoot}/pip 0750 forgejo-runner forgejo-runner -"
-    "d ${cacheRoot}/pre-commit 0750 forgejo-runner forgejo-runner -"
-    "d ${cacheRoot}/rustup 0750 forgejo-runner forgejo-runner -"
-    "d ${cacheRoot}/uv 0750 forgejo-runner forgejo-runner -"
-    "d ${cacheRoot}/actcache 0750 forgejo-runner forgejo-runner -"
+    "d ${cacheRoot} 0750 gitea-runner gitea-runner -"
+    "d ${cacheRoot}/cargo 0750 gitea-runner gitea-runner -"
+    "d ${cacheRoot}/npm 0750 gitea-runner gitea-runner -"
+    "d ${cacheRoot}/pip 0750 gitea-runner gitea-runner -"
+    "d ${cacheRoot}/pre-commit 0750 gitea-runner gitea-runner -"
+    "d ${cacheRoot}/rustup 0750 gitea-runner gitea-runner -"
+    "d ${cacheRoot}/uv 0750 gitea-runner gitea-runner -"
+    "d ${cacheRoot}/actcache 0750 gitea-runner gitea-runner -"
   ];
 
   services.gitea-actions-runner = {

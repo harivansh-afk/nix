@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   changes:
-    runs-on: [self-hosted, netty]
+    runs-on: native
     outputs:
       quality: ${{ steps.filter.outputs.quality }}
     steps:
@@ -32,7 +32,7 @@ jobs:
 
   flake-check:
     name: Flake Check
-    runs-on: [self-hosted, netty]
+    runs-on: native
     needs: changes
     if: ${{ needs.changes.outputs.quality == 'true' }}
     steps:
@@ -46,7 +46,7 @@ jobs:
 
   nix-format:
     name: Nix Format Check
-    runs-on: [self-hosted, netty]
+    runs-on: native
     needs: changes
     if: ${{ needs.changes.outputs.quality == 'true' }}
     steps:
@@ -60,39 +60,15 @@ jobs:
 
   deploy-netty:
     name: Deploy netty
-    runs-on: ubuntu-latest
+    runs-on: native
     needs: [changes, flake-check, nix-format]
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.changes.outputs.quality == 'true' }}
     concurrency:
       group: deploy-netty
     steps:
       - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/magic-nix-cache-action@main
-      - name: Configure SSH
-        shell: bash
-        env:
-          NETTY_SSH_PRIVATE_KEY: ${{ secrets.NETTY_SSH_PRIVATE_KEY }}
-          NETTY_SSH_KNOWN_HOSTS: ${{ secrets.NETTY_SSH_KNOWN_HOSTS }}
-        run: |
-          set -euo pipefail
-          test -n "$NETTY_SSH_PRIVATE_KEY"
-          test -n "$NETTY_SSH_KNOWN_HOSTS"
-          install -d -m 700 "$HOME/.ssh"
-          printf '%s\n' "$NETTY_SSH_PRIVATE_KEY" > "$HOME/.ssh/netty"
-          chmod 600 "$HOME/.ssh/netty"
-          printf '%s\n' "$NETTY_SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
-          chmod 600 "$HOME/.ssh/known_hosts"
-          cat > "$HOME/.ssh/config" <<'EOF'
-          Host netty
-            HostName 152.53.195.59
-            User root
-            IdentityFile ~/.ssh/netty
-            IdentitiesOnly yes
-          EOF
-          chmod 600 "$HOME/.ssh/config"
       - name: Deploy netty
         shell: bash
         run: |
           set -euo pipefail
-          nix shell nixpkgs#just --command just switch-netty
+          just switch-netty

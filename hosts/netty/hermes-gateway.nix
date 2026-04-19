@@ -63,7 +63,7 @@ in
       };
     };
 
-    mcpServers = {};
+    mcpServers = { };
 
     extraPackages = with pkgs; [
       nodejs_22

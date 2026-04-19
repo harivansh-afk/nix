@@ -38,9 +38,9 @@ in
     ln -sfn "$THEME_TMUX_TARGET" "${customScripts.theme.paths.tmuxCurrentFile}"
     ln -sfn "$THEME_LAZYGIT_TARGET" "${customScripts.theme.paths.lazygitCurrentFile}"
     ${lib.optionalString hostConfig.isDarwin ''
-    lg_darwin="${config.home.homeDirectory}/Library/Application Support/lazygit"
-    mkdir -p "$lg_darwin"
-    ln -sfn "$THEME_DARWIN_LAZYGIT_TARGET" "$lg_darwin/config.yml"
+      lg_darwin="${config.home.homeDirectory}/Library/Application Support/lazygit"
+      mkdir -p "$lg_darwin"
+      ln -sfn "$THEME_DARWIN_LAZYGIT_TARGET" "$lg_darwin/config.yml"
     ''}
 
     # seed wallpapers from static assets if no generated ones exist yet

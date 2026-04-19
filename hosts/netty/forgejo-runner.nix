@@ -8,6 +8,21 @@ let
   cacheRoot = "/var/cache/forgejo-runner";
 in
 {
+  security.sudo.extraRules = [
+    {
+      users = [ "gitea-runner" ];
+      commands = [
+        {
+          command = "/run/current-system/sw/bin/nixos-rebuild";
+          options = [
+            "NOPASSWD"
+            "SETENV"
+          ];
+        }
+      ];
+    }
+  ];
+
   systemd.tmpfiles.rules = [
     "d ${cacheRoot} 0750 gitea-runner gitea-runner -"
     "d ${cacheRoot}/cargo 0750 gitea-runner gitea-runner -"

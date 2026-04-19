@@ -37,11 +37,6 @@ jobs:
     if: ${{ needs.changes.outputs.quality == 'true' }}
     steps:
       - uses: actions/checkout@v4
-      - name: Prepare local flake input shims
-        run: |
-          set -euo pipefail
-          sudo mkdir -p /Users/rathi/Documents/GitHub/companion/agentcomputer/apps
-          sudo ln -sfn "$GITHUB_WORKSPACE/ci/agentcomputer-cli-stub" /Users/rathi/Documents/GitHub/companion/agentcomputer/apps/cli
       - run: nix flake check
 
   nix-format:
@@ -51,11 +46,6 @@ jobs:
     if: ${{ needs.changes.outputs.quality == 'true' }}
     steps:
       - uses: actions/checkout@v4
-      - name: Prepare local flake input shims
-        run: |
-          set -euo pipefail
-          sudo mkdir -p /Users/rathi/Documents/GitHub/companion/agentcomputer/apps
-          sudo ln -sfn "$GITHUB_WORKSPACE/ci/agentcomputer-cli-stub" /Users/rathi/Documents/GitHub/companion/agentcomputer/apps/cli
       - run: nix fmt -- --ci
 
   deploy-netty:
@@ -67,8 +57,8 @@ jobs:
       group: deploy-netty
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy netty
+      - name: Rebuild netty
         shell: bash
         run: |
           set -euo pipefail
-          just switch-netty
+          sudo nixos-rebuild switch --flake ".#netty"

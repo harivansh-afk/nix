@@ -4,7 +4,6 @@ vim.pack.add({
   "https://github.com/kylechui/nvim-surround",
   "https://github.com/kevinhwang91/nvim-ufo",
   "https://github.com/kevinhwang91/promise-async",
-  "https://github.com/barrettruth/pending.nvim",
   "https://github.com/barrettruth/preview.nvim",
 }, { load = function() end })
 
@@ -81,13 +80,6 @@ return {
         function() require("ufo").closeAllFolds() end,
         mode = "n",
       },
-    },
-  },
-  {
-    "barrettruth/pending.nvim",
-    cmd = "Pending",
-    keys = {
-      { "<leader>p", "<cmd>Pending<cr><cmd>only<cr>" },
     },
   },
   {

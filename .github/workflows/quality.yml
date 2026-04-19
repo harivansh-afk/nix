@@ -61,4 +61,4 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sudo nixos-rebuild switch --flake ".#netty"
+          /run/wrappers/bin/sudo /run/current-system/sw/bin/nixos-rebuild switch --flake ".#netty"

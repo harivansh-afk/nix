@@ -86,7 +86,6 @@ in
         ripgrep
         rustup
         stdenv.cc
-        sudo
         unzip
         uv
         wget

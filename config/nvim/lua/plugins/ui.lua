@@ -39,6 +39,39 @@ return {
         },
       }
 
+      local canola_extension = {
+        sections = {
+          lualine_a = { "mode" },
+          lualine_b = { "FugitiveHead", "diff" },
+          lualine_c = {
+            function()
+              local ok, canola = pcall(require, "canola")
+              if not ok then return "" end
+              local dir = canola.get_current_dir(0)
+              if not dir then return "canola" end
+              return vim.fn.fnamemodify(dir:gsub("/$", ""), ":~:.")
+            end,
+          },
+          lualine_z = { "progress" },
+        },
+        filetypes = { "canola" },
+      }
+
+      local fugitive_extension = {
+        sections = {
+          lualine_a = { "mode" },
+          lualine_b = { "FugitiveHead" },
+          lualine_c = {
+            function()
+              local ok, head = pcall(vim.fn.FugitiveHead)
+              return "git" .. (ok and head ~= "" and (": " .. head) or "")
+            end,
+          },
+          lualine_z = { "progress" },
+        },
+        filetypes = { "fugitive", "git", "gitcommit", "gitrebase" },
+      }
+
       require("lualine").setup {
         options = {
           icons_enabled = false,
@@ -49,11 +82,12 @@ return {
         sections = {
           lualine_a = { "mode" },
           lualine_b = { "FugitiveHead", "diff" },
-          lualine_c = { { "filename", path = 0 } },
+          lualine_c = { { "filename", path = 1 } },
           lualine_x = {},
           lualine_y = {},
           lualine_z = { "progress" },
         },
+        extensions = { "quickfix", "man", canola_extension, fugitive_extension },
       }
     end,
   },

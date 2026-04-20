@@ -57,6 +57,18 @@ for _, plugin in ipairs(disabled_plugins) do
   vim.g["loaded_" .. plugin] = 1
 end
 
+vim.api.nvim_create_autocmd("BufEnter", {
+  group = vim.api.nvim_create_augroup("auto_project_root", { clear = true }),
+  callback = function(args)
+    if vim.bo[args.buf].buftype ~= "" then return end
+    local name = vim.api.nvim_buf_get_name(args.buf)
+    if name == "" or name:find "://" then return end
+    if not vim.uv.fs_stat(name) then return end
+    local root = vim.fs.root(name, { ".git", "flake.nix", "package.json", "Cargo.toml", "pyproject.toml" })
+    if root and root ~= vim.fn.getcwd(-1, 0) then vim.cmd.lcd(root) end
+  end,
+})
+
 vim.g.lz_n = {
   load = function(name) vim.cmd.packadd(name:match "[^/]+$" or name) end,
 }

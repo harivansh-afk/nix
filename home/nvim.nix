@@ -14,8 +14,6 @@ let
       in
       baseName != ".git" && baseName != "lazy-lock.json" && baseName != "nvim-pack-lock.json";
   };
-  packLockSeed = ../config/nvim/nvim-pack-lock.json;
-  packLockPath = "${config.xdg.stateHome}/nvim/nvim-pack-lock.json";
   python = pkgs.writeShellScriptBin "python" ''
     exec ${pkgs.python3}/bin/python3 "$@"
   '';
@@ -65,17 +63,4 @@ in
     source = nvimConfig;
     recursive = true;
   };
-
-  xdg.configFile."nvim/nvim-pack-lock.json".source = config.lib.file.mkOutOfStoreSymlink packLockPath;
-
-  home.activation.seedNvimPackLock = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    state_dir="${config.xdg.stateHome}/nvim"
-    lockfile="${packLockPath}"
-
-    if [ ! -e "$lockfile" ] || ! cmp -s ${packLockSeed} "$lockfile"; then
-      mkdir -p "$state_dir"
-      cp ${packLockSeed} "$lockfile"
-      chmod u+w "$lockfile"
-    fi
-  '';
 }

@@ -58,53 +58,5 @@ hide_rate_limit_model_nudge = true
 [notice.model_migrations]
 "gpt-5.2" = "gpt-5.2-codex"
 
-[projects."/Users/rathi/Documents/GitHub/mixbridge/mixbridge-web"]
-trust_level = "trusted"
-
-[projects."/Users/rathi/Documents/GitHub/companion/companion-cloud"]
-trust_level = "trusted"
-
-[projects."/Users/rathi/Documents/GitHub/clank-artifacts"]
-trust_level = "trusted"
-
-[projects."/Users/rathi/Documents/GitHub/kubasync"]
-trust_level = "trusted"
-
-[projects."/Users/rathi/Documents/GitHub/codex"]
-trust_level = "trusted"
-
-[projects."/Users/rathi/Documents/GitHub/openclaw"]
-trust_level = "trusted"
-
-[projects."/Users/rathi/.config/tmux"]
-trust_level = "trusted"
-
-[projects."/Users/rathi/Documents/Coding/CSES"]
-trust_level = "trusted"
-
-[projects."/Users/rathi/Documents/GitHub/agentikube"]
-trust_level = "trusted"
-
-[projects."/Users/rathi/.humanlayer/riptide/artifacts/019cc50f-02a6-75fe-9279-3cdc300448a4"]
-trust_level = "trusted"
-
-[projects."/Users/rathi/Documents/GitHub/companion/nanoclaw"]
-trust_level = "trusted"
-
-[projects."/Users/rathi/Documents/GitHub/companion"]
-trust_level = "trusted"
-
-[projects."/Users/rathi/Documents/GitHub/symphony"]
-trust_level = "trusted"
-
-[projects."/Users/rathi/Documents/GitHub/nix"]
-trust_level = "trusted"
-
-[projects."/Users/rathi/Documents/GitHub/PersonalWebsite"]
-trust_level = "trusted"
-
-[projects."/Users/rathi"]
-trust_level = "trusted"
-
 [tui]
 status_line = ["model-name", "git-branch", "context-remaining"]

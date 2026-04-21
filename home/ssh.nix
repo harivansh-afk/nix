@@ -22,14 +22,11 @@
         identitiesOnly = true;
       };
 
-      "agentcomputer.ai" = {
-        hostname = "ssh.agentcomputer.ai";
-        port = 443;
-        user = "agentcomputer";
+      spark = {
+        hostname = "spark";
+        user = "rathi";
         identityFile = "~/.ssh/id_ed25519";
         identitiesOnly = true;
-        serverAliveInterval = 30;
-        serverAliveCountMax = 4;
       };
 
       "*" = {

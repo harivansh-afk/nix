@@ -4,7 +4,7 @@
     name = "darwin";
     kind = "darwin";
     system = "aarch64-darwin";
-    hostname = "hari-macbook-pro";
+    hostname = "macbook";
     homeDirectory = "/Users/${username}";
     isDarwin = true;
     isLinux = false;

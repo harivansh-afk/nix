@@ -23,7 +23,7 @@
       };
 
       spark = {
-        hostname = "spark";
+        hostname = "10.200.115.46";
         user = "rathi";
         identityFile = "~/.ssh/id_ed25519";
         identitiesOnly = true;

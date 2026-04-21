@@ -82,7 +82,7 @@ return {
         sections = {
           lualine_a = { "mode" },
           lualine_b = { "FugitiveHead", "diff" },
-          lualine_c = { { "filename", path = 1 } },
+          lualine_c = { { "filename", path = 1 }, "searchcount" },
           lualine_x = {},
           lualine_y = {},
           lualine_z = { "progress" },

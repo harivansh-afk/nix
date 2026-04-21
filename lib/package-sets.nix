@@ -12,6 +12,7 @@ in
 {
   core = with pkgs; [
     bitwarden-cli
+    btop
     curl
     fd
     fzf
@@ -24,6 +25,7 @@ in
     nodejs_24
     pnpm
     python3
+    ranger
     ripgrep
     rsync
     rustup

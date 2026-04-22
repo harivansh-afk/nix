@@ -3,56 +3,6 @@
 Single dependency graph that owns a macOs laptop and a Linux KVM. 
 Both collapse into the same reproducible interface. 
 
-## Layout
-
-```
-flake.nix            # inputs + flake-parts wiring
-packages.nix         # nixpkgs package sets (core, extras, fonts)
-
-flake/               # flake-parts wiring (touched when adding a host)
-  args.nix           # shared _module.args: username, hosts, mkHomeManagerModule
-  macbook.nix        # darwinConfigurations.macbook
-  netty.nix          # nixosConfigurations.netty
-  devshell.nix       # formatter + dev shell
-
-system/              # shared between NixOS and nix-darwin
-  common.nix         # nix daemon, shells, core env vars
-  packages.nix       # environment.systemPackages = extras + fonts
-
-hosts/
-  macbook/           # macOS machine
-    default.nix
-    macos.nix        # system.defaults, touchId, etc.
-    homebrew.nix     # brew (casks, taps)
-  netty/             # Linux KVM
-    configuration.nix
-    hardware-configuration.nix
-    disk-config.nix  # disko, Netcup-specific
-    services/        # one file per self-hosted service
-      nginx.nix
-      vaultwarden.nix
-      forgejo.nix    # forgejo + runner + mirror + heatmap
-      delta.nix
-      betternas.nix
-      hermes-gateway.nix
-
-home/                # home-manager (imported by both hosts)
-  default.nix        # single HM entrypoint
-  common.nix         # per-platform conditional imports
-  *.nix              # one file per tool / package
-
-lib/
-  hosts.nix          # per-host metadata + feature flags
-  theme.nix          # shared palette, renders ghostty/tmux/fzf/...
-
-dots/                # tracked dotfiles installed by home-manager
-scripts/             # shell scripts packaged via scripts/default.nix
-```
-
-Rule of thumb: **a file exists iff it has non-trivial config**. One-liner
-packages go in `packages.nix` or `home/tools.nix`, not their own file.
-
-
 The darwin host composes nix-darwin, home-manager, and nix-homebrew. 
 The netty host composes nixosSystem, disko, and home-manager. 
 

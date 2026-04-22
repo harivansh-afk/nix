@@ -37,3 +37,20 @@ The KVM has a declarative service bundle:
 - betterNAS control-plane and node agent (api.betternas.com)
 - Hermes agent (netty.harivan.sh)
 - Delta (delta.harivan.sh)
+
+## Structure
+
+```
+flake.nix           inputs, outputs, per-host system assembly
+justfile            switch, switch-netty, fmt, ci entry points
+packages.nix        shared package set consumed by hosts
+    flake/          per-host assembly (macbook, netty, devshell, args)
+    lib/            host metadata + central theme palette
+    hosts/          host roots (macbook/, netty/ with services/)
+    system/         shared system-level nix config and packages
+    home/           home-manager modules, one file per tool
+    dots/           repo-owned app configs (symlinked into XDG)
+    scripts/        runtime scripts wired via home/scripts.nix
+.forgejo/           CI workflows
+```
+

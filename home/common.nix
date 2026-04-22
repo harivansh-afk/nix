@@ -6,7 +6,6 @@
 {
   imports = [ ]
   ++ lib.optionals hostConfig.isDarwin [
-    ./colima.nix
     ./helium.nix
     ./aerospace.nix
     ./karabiner.nix

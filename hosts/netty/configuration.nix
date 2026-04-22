@@ -94,8 +94,8 @@ in
   security.sudo.wheelNeedsPassword = false;
 
   # Nix installation, daemon, nix.conf, and garbage collection are managed by
-  # Determinate Nix (see system/determinate.nix). trusted-users is already set
-  # there; determinate-nixd handles GC, min-free, and max-free automatically.
+  # Nix installation, daemon, nix.conf, and garbage collection are managed by
+  # Determinate Nix (see system/common.nix). trusted-users is already set
 
   services.journald.extraConfig = "MaxRetainedFileSec=1week";
 

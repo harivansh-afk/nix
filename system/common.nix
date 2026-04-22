@@ -9,8 +9,13 @@ let
   packageSets = import ../packages.nix { inherit inputs lib pkgs; };
 in
 {
-  nix.enable = true;
-
+  # Determinate Nix owns the Nix installation, the daemon, and
+  # /etc/nix/nix.conf. On NixOS the determinate module redirects
+  # /etc/nix/nix.conf to /etc/nix/nix.custom.conf, so anything we set via
+  # `nix.settings` here ends up in the custom config. On darwin the
+  # determinate nix-darwin module force-disables `nix.*` and expects
+  # equivalents via `determinateNix.customSettings` (set in flake/macbook.nix).
+  # Garbage collection is handled by determinate-nixd, so don't set nix.gc.
   nix.settings = {
     auto-optimise-store = true;
     experimental-features = [
@@ -18,32 +23,13 @@ in
       "flakes"
     ];
     trusted-users = [
-      "@admin"
+      "root"
       username
     ];
     use-xdg-base-directories = true;
     max-jobs = "auto";
     cores = 0;
   };
-
-  nix.gc = {
-    automatic = true;
-    options = lib.mkDefault "--delete-older-than 14d";
-  }
-  // (
-    if pkgs.stdenv.isDarwin then
-      {
-        interval = {
-          Weekday = 7;
-          Hour = 3;
-          Minute = 0;
-        };
-      }
-    else
-      {
-        dates = "weekly";
-      }
-  );
 
   nixpkgs.config.allowUnfree = true;
   nixpkgs.overlays = [ inputs.neovim-nightly.overlays.default ];

@@ -14,6 +14,7 @@ in
       system = host.system;
       specialArgs = mkSpecialArgs host;
       modules = [
+        inputs.determinate.nixosModules.default
         inputs.disko.nixosModules.disko
         inputs.hermes-agent.nixosModules.default
         ../hosts/netty/configuration.nix

@@ -1,56 +1,38 @@
 # Nix Leveraging
 
-Single dependency graph that owns a macOs laptop and a Linux KVM. 
-Both collapse into the same reproducible interface. 
+Single dependency graph that owns a macOS laptop and a Linux KVM, both collapsed into the same reproducible interface.
 
-The darwin host composes nix-darwin, home-manager, and nix-homebrew. 
-The netty host composes nixosSystem, disko, and home-manager. 
+- `macbook` — nix-darwin + home-manager + nix-homebrew
+- `netty` — nixosSystem + disko + home-manager
 
-Global username, per-host metadata and feature flags are encoded as data so leaf modules never need ad hoc platform checks.
+Username, per-host metadata, and feature flags are encoded as data so leaf modules never do ad hoc platform checks. `claude-code-nix`, `neovim-nightly`, `disko`, and `nix-homebrew` are pinned in the flake.
 
-The machine surface is split into core, extras, and fonts.
+Home Manager is the userland control plane: Rust, Go, Node, Python, AWS, and friends are routed into XDG paths; SSH and GPG perms are locked on every activation. A migration module handles the cutover from legacy symlinks.
 
-claude-code-nix, neovim-nightly, disko, and nix-homebrew are pinned in the flake
+[cozybox.nvim](https://github.com/harivansh-afk/cozybox.nvim) drives Ghostty, tmux, fzf, zsh syntax highlighting, bat, and delta, with a generated script to hot-swap light/dark. Tool configs are repo-owned (`dots/`) rather than scattered across `$HOME`. Global agent skills install declaratively and only resync when the manifest hash changes. Secrets live in Bitwarden and render at activation time.
 
-Home Manager is the userland control plane. 
-Rust, Go, Node, Python, AWS, and some other tools are routed into XDG-compliant paths. 
-SSH and GPG permissions are locked down on every activation. 
+Deploy with `just switch` (laptop) or `just switch-netty` (server). All PRs auto-merge.
 
-A migration module handles the cutover from legacy symlinks so nothing is left to clean up manually.
+The KVM is a declarative service bundle — only `22/80/443` exposed; everything else listens on `127.0.0.1` behind nginx + ACME:
 
-A single palette drives colors for Ghostty, tmux, fzf, zsh syntax highlighting, bat, and delta.
-A generated theme script hot-swaps light and dark across all of them. 
-
-Tool configs are repo-owned rather than scattered across $HOME.
-Global agent skills are installed declaratively using skills.sh and only resync when the manifest hash changes.
-
-Secrets live in Bitwarden and are rendered at activation time using cli
-Deployment is `just switch` for the laptop and `just switch-netty` for the server.
-
-All PRs auto-merge
-
-The KVM has a declarative service bundle: 
-- netty exposes 3 tcp ports (22:ssh, 80:http, 443:https)
-- services only listen on 127.0.0.1 (runs behind nginx with ACME)
-- Self hosts Forgejo mirroring to GitHub (git.harivan.sh)
-- Self hosts VaultWarden
-- betterNAS control-plane and node agent (api.betternas.com)
-- Hermes agent (netty.harivan.sh)
-- Delta (delta.harivan.sh)
+- Forgejo mirroring to GitHub — `git.harivan.sh`
+- Vaultwarden — `vault.harivan.sh`
+- betterNAS control plane + node agent — `api.betternas.com`
+- Hermes agent — `netty.harivan.sh`
+- Delta — `delta.harivan.sh`
 
 ## Structure
 
 ```
-flake.nix           inputs, outputs, per-host system assembly
-justfile            switch, switch-netty, fmt, ci entry points
-packages.nix        shared package set consumed by hosts
-    flake/          per-host assembly (macbook, netty, devshell, args)
-    lib/            host metadata + central theme palette
-    hosts/          host roots (macbook/, netty/ with services/)
-    system/         shared system-level nix config and packages
-    home/           home-manager modules, one file per tool
-    dots/           repo-owned app configs (symlinked into XDG)
-    scripts/        runtime scripts wired via home/scripts.nix
-.forgejo/           CI workflows
+flake.nix        inputs, outputs, per-host system assembly
+justfile         switch, switch-netty, fmt, ci entry points
+packages.nix     shared package set consumed by hosts
+flake/           per-host assembly (macbook, netty, devshell, args)
+lib/             host metadata + central theme palette
+hosts/           host roots (macbook/, netty/ with services/)
+system/          shared system-level nix config and packages
+home/            home-manager modules, one file per tool
+dots/            repo-owned app configs (symlinked into XDG)
+scripts/         runtime scripts wired via home/scripts.nix
+.forgejo/        CI workflows
 ```
-

@@ -50,7 +50,7 @@
       imports = [
         ./flake/args.nix
         ./flake/devshell.nix
-        ./flake/macbook.nix
+        ./flake/hosts.nix
       ];
     };
 }

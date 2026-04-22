@@ -8,7 +8,7 @@ let
   customScripts = import ../scripts { inherit config lib pkgs; };
 in
 {
-  home.packages = builtins.attrValues customScripts.nettyPackages;
+  home.packages = builtins.attrValues customScripts.linuxPackages;
 
   programs.zsh.initContent = lib.mkAfter ''
     wt() {

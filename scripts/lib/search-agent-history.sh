@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-remote="${AGENT_HISTORY_REMOTE:-netty}"
+remote="${AGENT_HISTORY_REMOTE:-spark}"
 initial_query="${1:-}"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 

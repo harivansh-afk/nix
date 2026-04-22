@@ -13,7 +13,6 @@
     ./gcloud.nix
     ./gh.nix
     ./git.nix
-    ./hermes.nix
     ./k9s.nix
     ./lazygit.nix
     ./migration.nix

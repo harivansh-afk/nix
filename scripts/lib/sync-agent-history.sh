@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-remote="${AGENT_HISTORY_REMOTE:-netty}"
+remote="${AGENT_HISTORY_REMOTE:-spark}"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 local_rsync="$(command -v rsync || true)"
 remote_rsync="$(ssh "$remote" 'command -v rsync || true')"
@@ -13,7 +13,7 @@ fi
 
 if [[ -z "$remote_rsync" ]]; then
   printf 'rsync is not available on %s.\n' "$remote" >&2
-  printf 'Deploy netty after adding rsync to the package set, then run this again.\n' >&2
+  printf 'Install rsync on %s, then run this again.\n' "$remote" >&2
   exit 1
 fi
 

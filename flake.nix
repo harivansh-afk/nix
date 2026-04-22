@@ -30,22 +30,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hermes-agent = {
-      url = "github:NousResearch/hermes-agent";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     openspec = {
       url = "github:Fission-AI/OpenSpec";
     };
 
     nix-homebrew = {
       url = "github:zhaofengli-wip/nix-homebrew";
-    };
-
-    disko = {
-      url = "github:nix-community/disko";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     neovim-nightly = {
@@ -61,7 +51,6 @@
         ./flake/args.nix
         ./flake/devshell.nix
         ./flake/macbook.nix
-        ./flake/netty.nix
       ];
     };
 }

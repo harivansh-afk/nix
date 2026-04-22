@@ -1,7 +1,7 @@
 {
   inputs,
-  lib,
   pkgs,
+  ...
 }:
 let
   gwsPackage = inputs.googleworkspace-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
@@ -64,14 +64,9 @@ in
       redis
       tailscale
       terraform
+      texliveFull
       yt-dlp
     ])
-    ++ lib.optionals pkgs.stdenv.isLinux [
-      pkgs.cadaver
-    ]
-    ++ lib.optionals pkgs.stdenv.isDarwin [
-      pkgs.texliveFull
-    ]
     ++ [
       openspecPackage
     ];

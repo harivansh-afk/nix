@@ -65,6 +65,6 @@ fzf --phony --ansi --disabled \
     sed -n "${start},${end}p" "$file"
   ' \
   --preview-window=right:70%:wrap \
-  --header 'Type to search netty default Claude and Codex state' \
+  --header 'Type to search remote default Claude and Codex state' \
   --bind "start:reload:$search_script {q} || true" \
   --bind "change:reload:sleep 0.1; $search_script {q} || true"

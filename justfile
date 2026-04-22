@@ -15,9 +15,6 @@ switch:
     sudo --set-home --preserve-env=PATH \
       nix run .#darwin-rebuild -- switch --flake .#macbook
 
-switch-netty:
-    ssh root@netty "nixos-rebuild switch --flake github:harivansh-afk/nix#netty --refresh"
-
 secrets-sync:
     ./scripts/lib/render-bw-shell-secrets.sh
     ./scripts/lib/restore-bw-files.sh

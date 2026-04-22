@@ -1,6 +1,5 @@
 {
   lib,
-  pkgs,
   hostConfig,
   theme,
   ...
@@ -17,7 +16,7 @@ let
     window-padding-color = extend
     mouse-scroll-multiplier = 1
     keybind = global:alt+space=toggle_visibility
-    keybind = shift+enter=text:\n
+
     mouse-hide-while-typing = true
     ${lib.optionalString hostConfig.isDarwin ''
       macos-titlebar-style = hidden
@@ -34,11 +33,11 @@ let
   '';
 in
 {
-  programs.ghostty = {
-    enable = true;
-    package = if hostConfig.isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
-    installBatSyntax = true;
-  };
+  # Ghostty-the-app is installed via Homebrew cask (hosts/macbook/homebrew.nix)
+  # because the nixpkgs ghostty-bin package is currently broken / unreliable on
+  # Determinate Nix. home-manager still owns the configuration files, which
+  # Ghostty reads from ~/.config/ghostty/config regardless of how it was
+  # installed.
 
   xdg.configFile."ghostty/config" = {
     text = ghosttyConfig;
@@ -48,8 +47,11 @@ in
   xdg.configFile."ghostty/themes/cozybox-dark".text = theme.renderGhostty "dark";
   xdg.configFile."ghostty/themes/cozybox-light".text = theme.renderGhostty "light";
 
+  # Ghostty also reads from macOS's Application Support directory. Mirror the
+  # config there so both locations stay in sync (the file name is `config`,
+  # not `config.ghostty`).
   home.file = lib.mkIf hostConfig.isDarwin {
-    "Library/Application Support/com.mitchellh.ghostty/config.ghostty" = {
+    "Library/Application Support/com.mitchellh.ghostty/config" = {
       text = ghosttyConfig;
       force = true;
     };

@@ -57,7 +57,7 @@
       export NODE_NO_WARNINGS=1
     ''
     + lib.optionalString hostConfig.isDarwin ''
-      export GHOSTTY_RESOURCES_DIR="${pkgs.ghostty-bin}/Applications/Ghostty.app/Contents/Resources/ghostty"
+      export GHOSTTY_RESOURCES_DIR="/Applications/Ghostty.app/Contents/Resources/ghostty"
     ''
     + ''
       export MANPAGER="nvim +Man!"

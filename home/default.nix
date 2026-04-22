@@ -12,7 +12,6 @@
     ./fzf.nix
     ./gcloud.nix
     ./gh.nix
-    ./ghostty.nix
     ./git.nix
     ./hermes.nix
     ./k9s.nix

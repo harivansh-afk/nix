@@ -17,6 +17,7 @@
 
     casks = [
       "cap"
+      "ghostty"
       "helium-browser"
       "karabiner-elements"
       "raycast"

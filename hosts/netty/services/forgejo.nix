@@ -9,6 +9,8 @@ let
   forgejoApiUrl = "http://127.0.0.1:19300";
   gitCredentialFile = "/var/lib/forgejo/.git-credentials";
   mirrorEnvFile = "/etc/forgejo-mirror.env";
+  # Cache root for tooling used inside CI jobs (npm, pip, cargo, ...).
+  runnerCacheRoot = "/var/cache/forgejo-runner";
 in
 {
   users.users.git = {
@@ -396,5 +398,112 @@ in
 
       echo "Reconciliation complete: $inserted new action records."
     '';
+  };
+
+  # --- Forgejo Actions runner ---
+  systemd.services.gitea-runner-netty.serviceConfig = {
+    DynamicUser = lib.mkForce false;
+    User = lib.mkForce "gitea-runner";
+    Group = lib.mkForce "gitea-runner";
+    NoNewPrivileges = lib.mkForce false;
+    RestrictSUIDSGID = lib.mkForce false;
+  };
+
+  users.users.gitea-runner = {
+    isSystemUser = true;
+    group = "gitea-runner";
+    home = "/var/lib/gitea-runner";
+    createHome = true;
+  };
+  users.groups.gitea-runner = { };
+
+  security.sudo.extraRules = [
+    {
+      users = [ "gitea-runner" ];
+      commands = [
+        {
+          command = "/run/current-system/sw/bin/nixos-rebuild";
+          options = [
+            "NOPASSWD"
+            "SETENV"
+          ];
+        }
+      ];
+    }
+  ];
+
+  systemd.tmpfiles.rules = [
+    "d ${runnerCacheRoot} 0750 gitea-runner gitea-runner -"
+    "d ${runnerCacheRoot}/cargo 0750 gitea-runner gitea-runner -"
+    "d ${runnerCacheRoot}/npm 0750 gitea-runner gitea-runner -"
+    "d ${runnerCacheRoot}/pip 0750 gitea-runner gitea-runner -"
+    "d ${runnerCacheRoot}/pre-commit 0750 gitea-runner gitea-runner -"
+    "d ${runnerCacheRoot}/rustup 0750 gitea-runner gitea-runner -"
+    "d ${runnerCacheRoot}/uv 0750 gitea-runner gitea-runner -"
+    "d ${runnerCacheRoot}/actcache 0750 gitea-runner gitea-runner -"
+  ];
+
+  services.gitea-actions-runner = {
+    package = pkgs.forgejo-runner;
+
+    instances.netty = {
+      enable = true;
+      name = "netty";
+      url = "https://git.harivan.sh";
+      tokenFile = "/etc/forgejo-runner/token";
+
+      labels = [
+        "native:host"
+        "ubuntu-latest:docker://node:20-bookworm"
+      ];
+
+      hostPackages = with pkgs; [
+        bash
+        coreutils
+        curl
+        fd
+        gh
+        git
+        gnumake
+        gnused
+        gawk
+        jq
+        nix
+        nixos-rebuild
+        nodejs_22
+        pkg-config
+        pnpm
+        python3
+        python3Packages.pip
+        ripgrep
+        rustup
+        stdenv.cc
+        unzip
+        uv
+        wget
+        xz
+        zip
+      ];
+
+      settings = {
+        log.level = "info";
+        runner = {
+          capacity = 2;
+          timeout = "3h";
+          envs = {
+            CARGO_HOME = "${runnerCacheRoot}/cargo";
+            PIP_CACHE_DIR = "${runnerCacheRoot}/pip";
+            PRE_COMMIT_HOME = "${runnerCacheRoot}/pre-commit";
+            RUSTUP_HOME = "${runnerCacheRoot}/rustup";
+            UV_CACHE_DIR = "${runnerCacheRoot}/uv";
+            npm_config_cache = "${runnerCacheRoot}/npm";
+          };
+        };
+        cache = {
+          enabled = true;
+          dir = "${runnerCacheRoot}/actcache";
+        };
+      };
+    };
   };
 }

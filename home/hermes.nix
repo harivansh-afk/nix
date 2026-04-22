@@ -1,8 +1,8 @@
 {
   inputs,
   pkgs,
-  hostConfig,
   lib,
+  hostConfig,
   ...
 }:
 lib.mkIf hostConfig.isLinux {

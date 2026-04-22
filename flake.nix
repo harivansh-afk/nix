@@ -53,10 +53,10 @@
     inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
-        ./modules/nixpkgs.nix
-        ./modules/devshells.nix
-        ./modules/hosts/darwin.nix
-        ./modules/hosts/netty.nix
+        ./flake/args.nix
+        ./flake/devshell.nix
+        ./flake/macbook.nix
+        ./flake/netty.nix
       ];
     };
 }

@@ -5,7 +5,7 @@
   ...
 }:
 let
-  baseConfig = builtins.readFile ../config/lazygit/config.yml;
+  baseConfig = builtins.readFile ../dots/lazygit/config.yml;
   mkFullConfig = mode: baseConfig + theme.renderLazygit mode;
 in
 {

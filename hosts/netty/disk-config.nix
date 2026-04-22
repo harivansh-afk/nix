@@ -1,3 +1,5 @@
+# Netcup KVM only: /dev/vda single-disk layout. Not portable to other hosts.
+# If adding a new host with different hardware, give it its own disk-config.nix.
 {
   disko.devices.disk.main = {
     type = "disk";

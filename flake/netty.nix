@@ -16,7 +16,7 @@ in
       modules = [
         inputs.disko.nixosModules.disko
         inputs.hermes-agent.nixosModules.default
-        ../../hosts/${host.name}/configuration.nix
+        ../hosts/netty/configuration.nix
         inputs.home-manager.nixosModules.home-manager
         (mkHomeManagerModule host)
       ];

@@ -6,7 +6,7 @@
 }:
 let
   nvimConfig = lib.cleanSourceWith {
-    src = ../config/nvim;
+    src = ../dots/nvim;
     filter =
       path: type:
       let

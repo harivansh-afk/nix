@@ -5,7 +5,7 @@
   ...
 }:
 let
-  sourceFile = ../config/devin/config.json;
+  sourceFile = ../dots/devin/config.json;
   targetDir = "${config.xdg.configHome}/devin";
   targetFile = "${targetDir}/config.json";
   coreutilsBin = "${pkgs.coreutils}/bin";

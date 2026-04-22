@@ -2,6 +2,6 @@ result
 .direnv
 .cache-home
 .bw-session
-config/karabiner/assets/
-config/karabiner/automatic_backups/
+dots/karabiner/assets/
+dots/karabiner/automatic_backups/
 tmp/

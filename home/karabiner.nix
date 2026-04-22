@@ -9,7 +9,7 @@
   # directory so changes are tracked in git and Karabiner can write freely.
   home.activation.karabinerConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     karabiner_link="${config.home.homeDirectory}/.config/karabiner"
-    karabiner_src="/Users/rathi/Documents/GitHub/nix/config/karabiner"
+    karabiner_src="${config.home.homeDirectory}/Documents/GitHub/nix/dots/karabiner"
 
     if [ -L "$karabiner_link" ]; then
       # Already a symlink - nothing to do

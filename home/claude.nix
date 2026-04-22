@@ -23,14 +23,14 @@ in
   # and are intentionally left user-managed because Claude mutates that file
   # directly.
   home.file.".local/bin/claude".source = "${claudePackage}/bin/claude";
-  home.file.".claude/CLAUDE.md".source = ../config/claude/CLAUDE.md;
+  home.file.".claude/CLAUDE.md".source = ../dots/claude/CLAUDE.md;
   home.file.".claude/commands" = {
-    source = ../config/claude/commands;
+    source = ../dots/claude/commands;
     recursive = true;
   };
   home.file.".claude/settings.json".source = claudeSettings;
   home.file.".claude/statusline.sh" = {
-    source = ../config/claude/statusline.sh;
+    source = ../dots/claude/statusline.sh;
     executable = true;
   };
 }

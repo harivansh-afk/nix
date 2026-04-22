@@ -45,7 +45,7 @@ lib/
   hosts.nix          # per-host metadata + feature flags
   theme.nix          # shared palette, renders ghostty/tmux/fzf/...
 
-config/              # tracked config files installed by home-manager
+dots/                # tracked dotfiles installed by home-manager
 scripts/             # shell scripts packaged via scripts/default.nix
 ```
 

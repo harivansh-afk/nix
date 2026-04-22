@@ -30,9 +30,9 @@ in
     };
 
     documents = {
-      "SOUL.md" = ../../../config/hermes/SOUL.md;
-      "TOOLS.md" = ../../../config/hermes/TOOLS.md;
-      "HEARTBEAT.md" = ../../../config/hermes/HEARTBEAT.md;
+      "SOUL.md" = ../../../dots/hermes/SOUL.md;
+      "TOOLS.md" = ../../../dots/hermes/TOOLS.md;
+      "HEARTBEAT.md" = ../../../dots/hermes/HEARTBEAT.md;
     };
 
     settings = {

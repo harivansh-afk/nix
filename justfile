@@ -19,11 +19,11 @@ switch-netty:
     ssh root@netty "nixos-rebuild switch --flake github:harivansh-afk/nix#netty --refresh"
 
 secrets-sync:
-    ./scripts/render-bw-shell-secrets.sh
-    ./scripts/restore-bw-files.sh
+    ./scripts/lib/render-bw-shell-secrets.sh
+    ./scripts/lib/restore-bw-files.sh
 
 sync-agent-history:
-    ./scripts/sync-agent-history.sh
+    ./scripts/lib/sync-agent-history.sh
 
 search-agent-history query='':
-    ./scripts/search-agent-history.sh "{{query}}"
+    ./scripts/lib/search-agent-history.sh "{{query}}"

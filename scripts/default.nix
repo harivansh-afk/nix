@@ -94,13 +94,13 @@ let
   commonPackages = {
     ga = mkScript {
       name = "ga";
-      file = ./ga.sh;
+      file = ./bin/ga.sh;
       runtimeInputs = with pkgs; [ git ];
     };
 
     ghpr = mkScript {
       name = "ghpr";
-      file = ./ghpr.sh;
+      file = ./bin/ghpr.sh;
       runtimeInputs = with pkgs; [
         gh
         git
@@ -110,20 +110,9 @@ let
       ];
     };
 
-    gpr = mkScript {
-      name = "gpr";
-      file = ./gpr.sh;
-      runtimeInputs = with pkgs; [
-        gh
-        fzf
-        gnugrep
-        coreutils
-      ];
-    };
-
     iosrun = mkScript {
       name = "iosrun";
-      file = ./iosrun.sh;
+      file = ./bin/iosrun.sh;
       runtimeInputs = with pkgs; [
         findutils
         gnugrep
@@ -131,30 +120,19 @@ let
       ];
     };
 
-    mdview = mkScript {
-      name = "mdview";
-      file = ./mdview.sh;
-    };
-
-    ni = mkScript {
-      name = "ni";
-      file = ./ni.sh;
-      runtimeInputs = with pkgs; [ nix ];
-    };
-
     wallpaper-gen = mkScript {
       name = "wallpaper-gen";
-      file = ./wallpaper-gen.sh;
+      file = ./bin/wallpaper-gen.sh;
       runtimeInputs = [ wallpaperPython ];
       replacements = {
-        "@WALLPAPER_GEN_PY@" = "${./wallpaper-gen.py}";
+        "@WALLPAPER_GEN_PY@" = "${./lib/wallpaper-gen.py}";
         "@WALLPAPER_GEN_CONFIG@" = "${wallpaperGenConfig}";
       };
     };
 
     theme = mkScript {
       name = "theme";
-      file = ./theme.sh;
+      file = ./bin/theme.sh;
       runtimeInputs = with pkgs; [
         coreutils
         findutils
@@ -185,27 +163,17 @@ let
     };
   };
 
-  darwinPackages = {
-    wtc = mkScript {
-      name = "wtc";
-      file = ./wtc.sh;
-    };
-  };
+  darwinPackages = { };
 
   nettyPackages = {
     wt = mkScript {
       name = "wt";
-      file = ./wt.sh;
+      file = ./bin/wt.sh;
       runtimeInputs = with pkgs; [
         coreutils
         git
         gnused
       ];
-    };
-
-    wt-create = mkScript {
-      name = "wt-create";
-      file = ./wt-create.sh;
     };
   };
 in

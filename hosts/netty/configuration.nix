@@ -8,20 +8,19 @@
   ...
 }:
 let
-  packageSets = import ../../lib/package-sets.nix { inherit inputs lib pkgs; };
+  packageSets = import ../../packages.nix { inherit inputs lib pkgs; };
 in
 {
   imports = [
     ./hardware-configuration.nix
     ./disk-config.nix
-    ./nginx.nix
-    ./vaultwarden.nix
-    ./forgejo.nix
-    ./delta.nix
-    ./betternas.nix
-    ./hermes-gateway.nix
-    ./forgejo-runner.nix
-    ../../modules/base.nix
+    ./services/nginx.nix
+    ./services/vaultwarden.nix
+    ./services/forgejo.nix
+    ./services/delta.nix
+    ./services/betternas.nix
+    ./services/hermes-gateway.nix
+    ../../system/common.nix
     (modulesPath + "/profiles/minimal.nix")
     (modulesPath + "/profiles/headless.nix")
   ];

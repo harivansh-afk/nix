@@ -6,7 +6,7 @@
   ...
 }:
 let
-  packageSets = import ../lib/package-sets.nix { inherit inputs lib pkgs; };
+  packageSets = import ../packages.nix { inherit inputs lib pkgs; };
 in
 {
   nix.enable = true;

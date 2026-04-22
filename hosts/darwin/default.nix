@@ -7,10 +7,10 @@
 }:
 {
   imports = [
-    ../../modules/base.nix
-    ../../modules/macos.nix
-    ../../modules/packages.nix
-    ../../modules/homebrew.nix
+    ../../system/common.nix
+    ../../system/packages.nix
+    ./macos.nix
+    ./homebrew.nix
   ];
 
   networking.hostName = hostname;

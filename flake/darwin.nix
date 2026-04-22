@@ -14,7 +14,7 @@ in
     system = host.system;
     specialArgs = mkSpecialArgs host;
     modules = [
-      ../../hosts/${host.name}
+      ../hosts/darwin
       inputs.home-manager.darwinModules.home-manager
       inputs.nix-homebrew.darwinModules.nix-homebrew
       {

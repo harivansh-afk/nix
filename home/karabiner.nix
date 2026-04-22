@@ -12,10 +12,12 @@
     karabiner_src="${config.home.homeDirectory}/Documents/GitHub/nix/dots/karabiner"
 
     if [ -L "$karabiner_link" ]; then
-      # Already a symlink - nothing to do
-      :
+      current_target="$(readlink "$karabiner_link")"
+      if [ "$current_target" != "$karabiner_src" ]; then
+        rm -f "$karabiner_link"
+        ln -s "$karabiner_src" "$karabiner_link"
+      fi
     elif [ -d "$karabiner_link" ]; then
-      # Real directory exists - remove it, replace with symlink
       rm -rf "$karabiner_link"
       ln -s "$karabiner_src" "$karabiner_link"
     else

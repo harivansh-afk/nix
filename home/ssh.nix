@@ -4,10 +4,6 @@
     enable = true;
     enableDefaultConfig = false;
 
-    includes = [
-      "/Users/rathi/.config/colima/ssh_config"
-    ];
-
     matchBlocks = {
       aurelius = {
         hostname = "100.71.160.102";

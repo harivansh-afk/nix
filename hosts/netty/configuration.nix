@@ -93,17 +93,9 @@ in
 
   security.sudo.wheelNeedsPassword = false;
 
-  nix.settings.trusted-users = lib.mkForce [
-    "root"
-    username
-  ];
-
-  nix.gc.options = lib.mkForce "--delete-older-than 3d";
-
-  nix.extraOptions = ''
-    min-free = ${toString (100 * 1024 * 1024)}
-    max-free = ${toString (1024 * 1024 * 1024)}
-  '';
+  # Nix installation, daemon, nix.conf, and garbage collection are managed by
+  # Nix installation, daemon, nix.conf, and garbage collection are managed by
+  # Determinate Nix (see system/common.nix). trusted-users is already set
 
   services.journald.extraConfig = "MaxRetainedFileSec=1week";
 

@@ -1,17 +1,30 @@
 # Nix Leveraging
 
-Single dependency graph that owns a macOS laptop and a Linux KVM, both collapsed into the same reproducible interface.
+Single dependency graph that owns my macOS computer and my linux workstation
 
-- `macbook` — nix-darwin + home-manager + nix-homebrew
-- `netty` — nixosSystem + disko + home-manager
+Using [determinate nix](https://docs.determinate.systems/determinate-nix/) for
+parallel builds and better ux
 
-Username, per-host metadata, and feature flags are encoded as data so leaf modules never do ad hoc platform checks. `claude-code-nix`, `neovim-nightly`, `disko`, and `nix-homebrew` are pinned in the flake.
+macbook — nix-darwin + home-manager + nix-homebrew
 
-Home Manager is the userland control plane: Rust, Go, Node, Python, AWS, and friends are routed into XDG paths; SSH and GPG perms are locked on every activation. A migration module handles the cutover from legacy symlinks.
+netty — nixosSystem + disko + home-manager
 
-[cozybox.nvim](https://github.com/harivansh-afk/cozybox.nvim) drives Ghostty, tmux, fzf, zsh syntax highlighting, bat, and delta, with a generated script to hot-swap light/dark. Tool configs are repo-owned (`dots/`) rather than scattered across `$HOME`. Global agent skills install declaratively and only resync when the manifest hash changes. Secrets live in Bitwarden and render at activation time.
+Home Manager is the userland control plane: 
+Rust, Go, Node, Python, AWS, and friends are routed into XDG paths; 
 
-Deploy with `just switch` (laptop) or `just switch-netty` (server). All PRs auto-merge.
+SSH and GPG perms are locked on every activation. 
+
+A migration module handles the cutover from legacy symlinks.
+
+[cozybox.nvim](https://github.com/harivansh-afk/cozybox.nvim) drives Ghostty, tmux, fzf, zsh syntax highlighting, bat, and delta, with a generated script to hot-swap light/dark. 
+
+configs are repo-owned (dots) rather than scattered across $HOME. 
+
+Global agent skills install declaratively.
+
+Secrets live in self-hosted Bitwarden and render at activation time.
+
+Deploy with `just switch` (laptop) or `just switch-netty` (server).
 
 The KVM is a declarative service bundle — only `22/80/443` exposed; everything else listens on `127.0.0.1` behind nginx + ACME:
 

@@ -11,7 +11,7 @@ packages.nix         # nixpkgs package sets (core, extras, fonts)
 
 flake/               # flake-parts wiring (touched when adding a host)
   args.nix           # shared _module.args: username, hosts, mkHomeManagerModule
-  darwin.nix         # darwinConfigurations.macbook
+  macbook.nix        # darwinConfigurations.macbook
   netty.nix          # nixosConfigurations.netty
   devshell.nix       # formatter + dev shell
 
@@ -20,7 +20,7 @@ system/              # shared between NixOS and nix-darwin
   packages.nix       # environment.systemPackages = extras + fonts
 
 hosts/
-  darwin/            # macOS machine
+  macbook/           # macOS machine
     default.nix
     macos.nix        # system.defaults, touchId, etc.
     homebrew.nix     # brew (casks, taps)

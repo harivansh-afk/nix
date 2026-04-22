@@ -1,7 +1,7 @@
 { username }:
 {
-  darwin = {
-    name = "darwin";
+  macbook = {
+    name = "macbook";
     kind = "darwin";
     system = "aarch64-darwin";
     hostname = "macbook";

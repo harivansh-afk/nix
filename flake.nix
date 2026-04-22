@@ -55,7 +55,7 @@
       imports = [
         ./flake/args.nix
         ./flake/devshell.nix
-        ./flake/darwin.nix
+        ./flake/macbook.nix
         ./flake/netty.nix
       ];
     };

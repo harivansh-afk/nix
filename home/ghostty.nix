@@ -16,7 +16,7 @@ let
     window-padding-color = extend
     mouse-scroll-multiplier = 1
     keybind = global:alt+space=toggle_visibility
-
+    keybind = shift+enter=text:\x0a
     mouse-hide-while-typing = true
     ${lib.optionalString hostConfig.isDarwin ''
       macos-titlebar-style = hidden

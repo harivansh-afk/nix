@@ -25,7 +25,7 @@ let
     home-manager.useGlobalPkgs = true;
     home-manager.useUserPackages = true;
     home-manager.extraSpecialArgs = mkSpecialArgs host;
-    home-manager.backupCommand = "bash ${../scripts/home-manager-backup.sh}";
+    home-manager.backupCommand = "bash ${../scripts/lib/home-manager-backup.sh}";
     home-manager.users.${username} = import ../home;
   };
 in

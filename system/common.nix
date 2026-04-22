@@ -3,6 +3,7 @@
   lib,
   pkgs,
   username,
+  hostConfig,
   ...
 }:
 let
@@ -32,7 +33,14 @@ in
   };
 
   nixpkgs.config.allowUnfree = true;
-  nixpkgs.overlays = [ inputs.neovim-nightly.overlays.default ];
+  # neovim-nightly's binary cache doesn't publish aarch64-linux, so on
+  # spark it would rebuild nightly HEAD on every flake bump. Skip the
+  # overlay there; `pkgs.neovim` from nixpkgs is fine. Gating on
+  # `hostConfig` (not `pkgs.stdenv.hostPlatform`) avoids the infinite
+  # recursion you get when reading pkgs to decide what pkgs should be.
+  nixpkgs.overlays = lib.optionals (hostConfig.system != "aarch64-linux") [
+    inputs.neovim-nightly.overlays.default
+  ];
 
   documentation.enable = false;
 

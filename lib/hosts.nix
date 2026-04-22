@@ -20,4 +20,24 @@
       tex = true;
     };
   };
+
+  spark = {
+    name = "spark";
+    kind = "nixos";
+    system = "aarch64-linux";
+    hostname = "spark";
+    homeDirectory = "/home/${username}";
+    isDarwin = false;
+    isLinux = true;
+    isNixOS = true;
+    features = {
+      rust = true;
+      go = true;
+      node = true;
+      python = true;
+      claude = true;
+      docker = true;
+      cuda = true;
+    };
+  };
 }

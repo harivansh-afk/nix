@@ -42,6 +42,26 @@
       url = "github:nix-community/neovim-nightly-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # NVIDIA DGX Spark hardware support (NixOS module, custom kernel,
+    # playbook devshells). Consumed by the `spark` NixOS host.
+    dgx-spark = {
+      url = "github:graham33/nixos-dgx-spark";
+      # Intentionally NOT setting inputs.nixpkgs.follows: the upstream
+      # pins nixpkgs to a revision the NVIDIA kernel is known to build
+      # against. Letting it drift with our nixpkgs tends to break the
+      # custom kernel build. The cost is one extra nixpkgs closure.
+    };
+
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nixos-anywhere = {
+      url = "github:nix-community/nixos-anywhere";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -51,6 +71,7 @@
         ./flake/args.nix
         ./flake/devshell.nix
         ./flake/hosts.nix
+        ./flake/nixos.nix
       ];
     };
 }

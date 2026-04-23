@@ -22,7 +22,7 @@ Global agent skills install declaratively.
 
 Secrets live in self-hosted Bitwarden and render at activation time.
 
-Deploy with `just switch` (macbook) or `just spark-switch` (spark).
+Deploy with `just switch` (macbook) or `just switch-spark` (spark).
 
 The workstation (`spark`, NVIDIA DGX Spark, aarch64 NixOS) is managed by this
 same flake. Hardware support — NVIDIA kernel, drivers, podman + CDI, fwupd,

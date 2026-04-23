@@ -22,7 +22,7 @@ switch:
 # Remote rebuild + switch on spark. Assumes `rathi` has NOPASSWD sudo
 # there (see hosts/spark/users.nix); drop `--sudo` and add
 # `--ask-sudo-password` if that assumption ever changes.
-spark-switch:
+switch-spark:
     nix run nixpkgs#nixos-rebuild -- switch \
       --flake .#spark \
       --target-host rathi@spark \

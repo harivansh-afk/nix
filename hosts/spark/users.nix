@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   username,
   ...
@@ -8,8 +9,18 @@ let
     # ~/.ssh/id_ed25519.pub on macbook (rathi@mac)
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM6tzq33IQcurWoQ7vhXOTLjv8YkdTGb7NoNsul3Sbfu rathi@mac"
   ];
+  passwordHashFile = config.sops.secrets."user-password-hash".path;
 in
 {
+  # Console/login password hash for rathi + root. `neededForUsers`
+  # deposits the file under /run/secrets-for-users/ before user
+  # activation runs, which is required when mutableUsers = false.
+  sops.secrets."user-password-hash" = {
+    sopsFile = ../../secrets/spark/user-password-hash;
+    format = "binary";
+    neededForUsers = true;
+  };
+
   users.mutableUsers = false;
 
   users.users.${username} = {
@@ -23,15 +34,13 @@ in
       "podman"
     ];
     openssh.authorizedKeys.keys = authorizedKeys;
-    # Bootstrap console password so first-boot Wi-Fi setup works before
-    # SSH is usable. Move to `hashedPasswordFile` via sops/agenix later.
-    hashedPassword = "$y$j9T$2XZ1aReSnMF0uPoosV2Kf1$1Wvr4FVMzRSVvOV6Dc1ho5eyc.CDfyl610rI9ieiEZ5";
+    hashedPasswordFile = passwordHashFile;
   };
 
   # Keep root reachable during bootstrap; tighten to `prohibit-password`
   # only (set below in services.openssh) so passwords still can't be used.
   users.users.root.openssh.authorizedKeys.keys = authorizedKeys;
-  users.users.root.hashedPassword = "$y$j9T$2XZ1aReSnMF0uPoosV2Kf1$1Wvr4FVMzRSVvOV6Dc1ho5eyc.CDfyl610rI9ieiEZ5";
+  users.users.root.hashedPasswordFile = passwordHashFile;
 
   services.openssh = {
     enable = true;

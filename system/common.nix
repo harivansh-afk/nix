@@ -47,7 +47,14 @@ in
   programs.zsh.enable = true;
   environment.shells = [ pkgs.zsh ];
 
-  environment.systemPackages = packageSets.core;
+  environment.systemPackages =
+    packageSets.core
+    ++ lib.optionals hostConfig.isLinux [
+      # Remote shells entered from Ghostty advertise TERM=xterm-ghostty.
+      # Install Ghostty's terminfo entry on Linux hosts so SSH sessions
+      # render and clear correctly.
+      pkgs.ghostty.terminfo
+    ];
 
   environment.variables = {
     EDITOR = "nvim";

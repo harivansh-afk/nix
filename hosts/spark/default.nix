@@ -11,6 +11,7 @@
     ../../modules/security/sops.nix
     ../../modules/services/caddy.nix
     ../../modules/services/cloudflared.nix
+    ../../modules/services/vaultwarden.nix
     ./bootstrap.nix
     ./hardware.nix
     ./networking.nix

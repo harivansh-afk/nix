@@ -11,7 +11,7 @@ keys:
   - &host_spark age1nz862qmyaa337s7pmw60pawgfu5z0und9y75vhwkk6txgfrqeujquf3xaj
 
 creation_rules:
-  - path_regex: secrets/spark/[^/]+\.(ya?ml|json|env)$
+  - path_regex: secrets/spark/[^/]+$
     key_groups:
       - age:
           - *admin_macbook

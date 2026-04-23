@@ -9,6 +9,7 @@
     ../../system/common.nix
     ../../system/packages.nix
     ../../modules/security/sops.nix
+    ../../modules/services/caddy.nix
     ../../modules/services/cloudflared.nix
     ./bootstrap.nix
     ./hardware.nix

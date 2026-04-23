@@ -25,8 +25,12 @@ in
     enable = true;
     tunnels.${tunnelId} = {
       credentialsFile = config.sops.secrets."cloudflared-credentials".path;
-      # Catch-all until Phase 3 per-service ingress rules are wired in.
-      default = "http_status:404";
+      # Cloudflared hands every tunnel request to Caddy on loopback.
+      # Caddy dispatches by `Host:` header to the right backend
+      # (see modules/services/caddy.nix and the per-service vhosts).
+      # Any host not matched by a Caddy vhost falls through to the
+      # default 404, which Caddy also handles.
+      default = "http://127.0.0.1:80";
       ingress = { };
     };
   };

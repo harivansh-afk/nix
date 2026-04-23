@@ -19,7 +19,8 @@
       };
 
       spark = {
-        hostname = "100.73.113.83";
+        # Resolved via Tailscale MagicDNS so it follows renames / IP changes.
+        hostname = "spark";
         user = "rathi";
         identityFile = "~/.ssh/id_ed25519";
         identitiesOnly = true;

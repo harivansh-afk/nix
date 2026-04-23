@@ -23,11 +23,15 @@ in
       "podman"
     ];
     openssh.authorizedKeys.keys = authorizedKeys;
+    # Bootstrap console password so first-boot Wi-Fi setup works before
+    # SSH is usable. Move to `hashedPasswordFile` via sops/agenix later.
+    hashedPassword = "$y$j9T$2XZ1aReSnMF0uPoosV2Kf1$1Wvr4FVMzRSVvOV6Dc1ho5eyc.CDfyl610rI9ieiEZ5";
   };
 
   # Keep root reachable during bootstrap; tighten to `prohibit-password`
   # only (set below in services.openssh) so passwords still can't be used.
   users.users.root.openssh.authorizedKeys.keys = authorizedKeys;
+  users.users.root.hashedPassword = "$y$j9T$2XZ1aReSnMF0uPoosV2Kf1$1Wvr4FVMzRSVvOV6Dc1ho5eyc.CDfyl610rI9ieiEZ5";
 
   services.openssh = {
     enable = true;

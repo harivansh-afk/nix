@@ -20,4 +20,4 @@ switch-spark:
       --flake .#spark \
       --target-host rathi@spark \
       --build-host rathi@spark \
-      --use-remote-sudo
+      --sudo

@@ -8,12 +8,16 @@ let
   tunnelId = "64bce32c-6613-459c-bb68-262d73e1b78f";
 in
 {
+  # The upstream `services.cloudflared` module runs the tunnel under a
+  # systemd DynamicUser, so there is no static `cloudflared` account to
+  # chown the secret to. We leave the file root:root and grant world-read
+  # (0444) so the ephemeral DynamicUser can still open it. Acceptable
+  # because the credentials are already scoped to a single tunnel in a
+  # personal Cloudflare account and the host is single-tenant.
   sops.secrets."cloudflared-credentials" = {
     sopsFile = ../../secrets/spark/cloudflared.json;
     format = "binary";
-    owner = "cloudflared";
-    group = "cloudflared";
-    mode = "0400";
+    mode = "0444";
     restartUnits = [ "cloudflared-tunnel-${tunnelId}.service" ];
   };
 

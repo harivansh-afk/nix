@@ -9,12 +9,12 @@
     ../../system/common.nix
     ../../system/packages.nix
     ../../modules/security/sops.nix
+    ../../modules/services/cloudflared.nix
     ./bootstrap.nix
     ./hardware.nix
     ./disk-config.nix
     ./networking.nix
     ./users.nix
-    ./services.nix
   ]
   # `hardware-configuration.nix` is generated on-device by nixos-anywhere
   # (`--generate-hardware-config ...`) during the first install. Import it

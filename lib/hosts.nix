@@ -21,11 +21,11 @@
     };
   };
 
-  netty = {
-    name = "netty";
+  spark = {
+    name = "spark";
     kind = "nixos";
-    system = "x86_64-linux";
-    hostname = "netty";
+    system = "aarch64-linux";
+    hostname = "spark";
     homeDirectory = "/home/${username}";
     isDarwin = false;
     isLinux = true;
@@ -35,10 +35,9 @@
       go = true;
       node = true;
       python = true;
-      aws = true;
       claude = true;
-      docker = false;
-      tex = false;
+      docker = true;
+      cuda = true;
     };
   };
 }

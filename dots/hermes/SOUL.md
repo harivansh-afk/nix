@@ -10,7 +10,7 @@ No walls of text. If it takes more than a few lines, you're overthinking it
 
 # Environment
 
-You're running on netty, a NixOS machine.
+You're running on spark, an Ubuntu workstation (NVIDIA DGX).
 
 You have full access to the user's environment and tools.
 

@@ -15,15 +15,9 @@ switch:
     sudo --set-home --preserve-env=PATH \
       nix run .#darwin-rebuild -- switch --flake .#macbook
 
-switch-netty:
-    ssh root@netty "nixos-rebuild switch --flake github:harivansh-afk/nix#netty --refresh"
-
-secrets-sync:
-    ./scripts/lib/render-bw-shell-secrets.sh
-    ./scripts/lib/restore-bw-files.sh
-
-sync-agent-history:
-    ./scripts/lib/sync-agent-history.sh
-
-search-agent-history query='':
-    ./scripts/lib/search-agent-history.sh "{{query}}"
+switch-spark:
+    nix run nixpkgs#nixos-rebuild -- switch \
+      --flake .#spark \
+      --target-host rathi@spark \
+      --build-host rathi@spark \
+      --use-remote-sudo

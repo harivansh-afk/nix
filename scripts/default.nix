@@ -165,7 +165,7 @@ let
 
   darwinPackages = { };
 
-  nettyPackages = {
+  linuxPackages = {
     wt = mkScript {
       name = "wt";
       file = ./bin/wt.sh;
@@ -181,7 +181,7 @@ in
   inherit
     commonPackages
     darwinPackages
-    nettyPackages
+    linuxPackages
     theme
     themeAssetsText
     tmuxConfigs

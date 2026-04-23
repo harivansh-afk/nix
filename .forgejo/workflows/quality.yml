@@ -47,18 +47,3 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: nix fmt -- --ci
-
-  deploy-netty:
-    name: Deploy netty
-    runs-on: native
-    needs: [changes, flake-check, nix-format]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.changes.outputs.quality == 'true' }}
-    concurrency:
-      group: deploy-netty
-    steps:
-      - uses: actions/checkout@v4
-      - name: Rebuild netty
-        shell: bash
-        run: |
-          set -euo pipefail
-          /run/wrappers/bin/sudo /run/current-system/sw/bin/nixos-rebuild switch --flake ".#netty"

@@ -1,12 +1,16 @@
 {
   inputs,
-  lib,
   pkgs,
+  ...
 }:
 let
-  gwsPackage = inputs.googleworkspace-cli.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  claudePackage = inputs.claudeCode.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  openspecPackage = inputs.openspec.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  system = pkgs.stdenv.hostPlatform.system;
+  # These flakes don't publish every system. Looking them up eagerly at
+  # the top level would make the whole package set fail to evaluate on
+  # e.g. aarch64-linux even if the consumer never touches `extras`.
+  gwsPackage = inputs.googleworkspace-cli.packages.${system}.default or null;
+  claudePackage = inputs.claudeCode.packages.${system}.default or null;
+  openspecPackage = inputs.openspec.packages.${system}.default or null;
 
 in
 {
@@ -38,7 +42,6 @@ in
   extras =
     (with pkgs; [
       awscli2
-      claudePackage
       coreutils-prefixed
       delta
       diff-so-fancy
@@ -48,7 +51,6 @@ in
       golangci-lint
       goose
       google-cloud-sdk
-      gwsPackage
       imagemagickBig
       kind
       kubectl
@@ -64,20 +66,19 @@ in
       redis
       tailscale
       terraform
+      texliveFull
       yt-dlp
     ])
-    ++ lib.optionals pkgs.stdenv.isLinux [
-      pkgs.cadaver
-    ]
-    ++ lib.optionals pkgs.stdenv.isDarwin [
-      pkgs.texliveFull
-    ]
-    ++ [
+    ++ (builtins.filter (p: p != null) [
+      claudePackage
+      gwsPackage
       openspecPackage
-    ];
+    ]);
 
+  # Berkeley Mono (the primary user-facing monospace font) is installed
+  # manually out-of-band; this flake only provides the nerd-fonts symbol
+  # glyphs used as icon/powerline fallback.
   fonts = with pkgs; [
-    jetbrains-mono
     nerd-fonts.symbols-only
   ];
 }

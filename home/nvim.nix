@@ -30,6 +30,10 @@ in
     vimdiffAlias = true;
     defaultEditor = true;
     withNodeJs = true;
+    # Explicitly opt out of the legacy Ruby / Python3 Neovim remote plugin
+    # hosts. Modern plugins don't need them and skipping cuts closure size.
+    withRuby = false;
+    withPython3 = false;
 
     extraPackages = with pkgs; [
       bat

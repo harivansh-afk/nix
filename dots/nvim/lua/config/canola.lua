@@ -26,17 +26,13 @@ local function apply_git_status(buf)
   local git_ok, git = pcall(require, "canola-git")
   if not git_ok then return end
 
-  local dir_cache = git._cache[dir]
-  if not dir_cache or not dir_cache.status then return end
-
   local lines = vim.api.nvim_buf_line_count(buf)
   for lnum = 0, lines - 1 do
     local entry = canola.get_entry_on_line(buf, lnum + 1)
     if entry then
-      local status = dir_cache.status[entry.name]
+      local status = git.get_status(dir, entry.name)
       if status then
-        local ch = status:sub(1, 1)
-        if ch == " " then ch = status:sub(2, 2) end
+        local ch = status.char
         local sym = symbols[ch]
         if sym then
           vim.api.nvim_buf_set_extmark(buf, ns, lnum, 0, {
@@ -56,6 +52,7 @@ function M.setup_globals()
 
   pcall(vim.cmd.packadd, "nvim-web-devicons")
   pcall(vim.cmd.packadd, "nonicons.nvim")
+  vim.g.canola_git = vim.g.canola_git or {}
 
   vim.g.canola = {
     columns = { "icon" },

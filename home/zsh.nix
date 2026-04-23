@@ -126,6 +126,15 @@
           typeset -g _CODEX_LAST_HIGHLIGHT_THEME="$mode"
         }
 
+        _codex_apply_bat_theme() {
+          local mode="$(_codex_read_theme_mode)"
+          if [[ "$mode" == light ]]; then
+            export BAT_THEME='${theme.batTheme "light"}'
+          else
+            export BAT_THEME='${theme.batTheme "dark"}'
+          fi
+        }
+
         unalias ga 2>/dev/null
 
         git() {
@@ -152,12 +161,14 @@
         precmd() {
           _codex_apply_prompt_theme
           _codex_apply_highlight_styles
+          _codex_apply_bat_theme
           _codex_cursor_beam
         }
         preexec() { _codex_cursor_beam; }
 
         _codex_apply_prompt_theme
         _codex_apply_highlight_styles
+        _codex_apply_bat_theme
 
       '')
 

@@ -42,8 +42,6 @@ in
     inputs.neovim-nightly.overlays.default
   ];
 
-  documentation.enable = false;
-
   programs.zsh.enable = true;
   environment.shells = [ pkgs.zsh ];
 

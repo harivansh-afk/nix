@@ -12,7 +12,6 @@
     ../../modules/services/cloudflared.nix
     ./bootstrap.nix
     ./hardware.nix
-    ./disk-config.nix
     ./networking.nix
     ./users.nix
   ]
@@ -20,8 +19,7 @@
   # (`--generate-hardware-config ...`) during the first install. Import it
   # only once it exists so eval works cleanly both before and after the
   # initial deploy.
-  ++ lib.optional (builtins.pathExists ./hardware-configuration.nix)
-    ./hardware-configuration.nix;
+  ++ lib.optional (builtins.pathExists ./hardware-configuration.nix) ./hardware-configuration.nix;
 
   networking.hostName = hostname;
 

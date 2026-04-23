@@ -90,15 +90,21 @@ in
   '';
 
   # ── Login items ─────────────────────────────────────────────────────
-  launchd.user.agents = builtins.listToAttrs (map (app: {
+  launchd.user.agents = builtins.listToAttrs (
+    map (app: {
       name = "open-${lib.strings.toLower (builtins.replaceStrings [ " " ] [ "-" ] app)}";
       value.serviceConfig = {
         Program = "/usr/bin/open";
-        ProgramArguments = [ "/usr/bin/open" "-a" app ];
+        ProgramArguments = [
+          "/usr/bin/open"
+          "-a"
+          app
+        ];
         RunAtLoad = true;
         KeepAlive = false;
       };
-    }) loginApps);
+    }) loginApps
+  );
 
   # ── Services ────────────────────────────────────────────────────────
   # Enables the Tailscale daemon (tailscaled). The Tailscale.app menu-bar

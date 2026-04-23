@@ -8,6 +8,7 @@
   imports = [
     ../../system/common.nix
     ../../system/packages.nix
+    ../../modules/security/sops.nix
     ./bootstrap.nix
     ./hardware.nix
     ./disk-config.nix

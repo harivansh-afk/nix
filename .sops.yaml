@@ -1,0 +1,18 @@
+# sops-nix recipient rules.
+#
+# Anchors are age public keys. Admin keys are derived from the user's
+# SSH pubkey (`ssh-to-age < ~/.ssh/id_ed25519.pub`); host keys are
+# derived from each NixOS host's `/etc/ssh/ssh_host_ed25519_key.pub`.
+# Any file matching a `path_regex` is encrypted for every listed
+# recipient, so adding a new host only needs a new anchor + rule.
+
+keys:
+  - &admin_macbook age1m0nf8gmkeptnqrl8qdjcvz8jkt2zxpn9jcqs6424say4c332p4qqv5yf3a
+  - &host_spark age1nz862qmyaa337s7pmw60pawgfu5z0und9y75vhwkk6txgfrqeujquf3xaj
+
+creation_rules:
+  - path_regex: secrets/spark/[^/]+\.(ya?ml|json|env)$
+    key_groups:
+      - age:
+          - *admin_macbook
+          - *host_spark

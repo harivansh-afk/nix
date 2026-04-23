@@ -15,9 +15,7 @@
       node = true;
       python = true;
       aws = true;
-      claude = true;
       docker = true;
-      tex = true;
     };
   };
 
@@ -35,9 +33,7 @@
       go = true;
       node = true;
       python = true;
-      claude = true;
       docker = true;
-      cuda = true;
     };
   };
 }

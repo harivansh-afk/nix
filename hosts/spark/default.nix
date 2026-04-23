@@ -12,6 +12,7 @@
     ../../modules/services/caddy.nix
     ../../modules/services/cloudflared.nix
     ../../modules/services/delta.nix
+    ../../modules/services/forgejo.nix
     ../../modules/services/vaultwarden.nix
     ./bootstrap.nix
     ./hardware.nix

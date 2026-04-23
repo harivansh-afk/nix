@@ -32,15 +32,21 @@ spark-build:
 # First-time install via nixos-anywhere. Target must already be booted
 # into a Linux with SSH + a sudoer / root. Generates hardware-configuration.nix
 # on-device the first time through. Pass TARGET=user@host or TARGET=root@ip.
-spark-install target='root@spark':
-    nix run github:nix-community/nixos-anywhere -- \
+# If tmp/spark-bootstrap exists, it's copied into / on the new install so
+# first-boot Wi-Fi and Tailscale bootstrap secrets can come up headlessly.
+spark-install target='root@spark' bootstrap_dir='tmp/spark-bootstrap':
+    #!/usr/bin/env bash
+    extra_args=()
+    if [ -d "{{bootstrap_dir}}" ]; then
+      extra_args+=(--extra-files "{{bootstrap_dir}}")
+    fi
+
+    nix run .#nixos-anywhere -- \
       --flake .#spark \
       --generate-hardware-config nixos-generate-config hosts/spark/hardware-configuration.nix \
       --build-on-remote \
-      {{target}}
-
-spark-vm-test:
-    nix run github:nix-community/nixos-anywhere -- --flake .#spark --vm-test
+      "${extra_args[@]}" \
+      "{{target}}"
 
 secrets-sync:
     ./scripts/lib/render-bw-shell-secrets.sh

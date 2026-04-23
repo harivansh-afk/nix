@@ -1,9 +1,9 @@
 # Nix Leveraging
 
-Single dependency graph for my macOS laptop.
+Single dependency graph for my macOS laptop and DGX Spark workstation.
 
 Using [determinate nix](https://docs.determinate.systems/determinate-nix/) for
-parallel builds and better ux.
+the Nix install / daemon / base `nix.conf`, parallel builds, and better ux.
 
 macbook — nix-darwin + home-manager + nix-homebrew
 

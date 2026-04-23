@@ -2,17 +2,16 @@
   config,
   pkgs,
   lib,
+  loopbackVhost,
   ...
 }:
 let
-  forgejoDomain = "git.harivan.sh";
-  forgejoApiUrl = "http://127.0.0.1:19300";
+  rootDomain = "harivan.sh";
+  forgejoDomain = "git.${rootDomain}";
   backendPort = 19300;
+  forgejoApiUrl = "http://127.0.0.1:${toString backendPort}";
   gitCredentialFile = "/var/lib/forgejo/.git-credentials";
   # sops deposits the plaintexts under /run/secrets/<name> at activation.
-  # These match the three files that lived as plaintext on netty:
-  # /etc/forgejo-smtp-password, /etc/forgejo-mirror.env,
-  # /etc/forgejo-runner/token.
   smtpPasswordFile = config.sops.secrets."forgejo-smtp-password".path;
   mirrorEnvFile = config.sops.secrets."forgejo-mirror.env".path;
   runnerTokenFile = config.sops.secrets."forgejo-runner-token".path;
@@ -20,6 +19,8 @@ let
   runnerCacheRoot = "/var/cache/forgejo-runner";
 in
 {
+  services.caddy.virtualHosts."http://${forgejoDomain}" = loopbackVhost backendPort;
+
   sops.secrets."forgejo-smtp-password" = {
     sopsFile = ../../secrets/spark/forgejo-smtp-password;
     format = "binary";
@@ -57,10 +58,10 @@ in
   };
   users.groups.git = { };
 
-  # Generate git credential store for GitHub mirror fetches.
-  # Appended after the module's own preStart (which handles app.ini and migrations).
-  # preStart runs as the forgejo user (git), and sources the mirror env
-  # from /run/secrets where sops-nix deposits it.
+  # Generate the git credential store used by mirror-sync fetches from
+  # GitHub. Runs as the `git` user after the module's own preStart
+  # (which handles app.ini + schema migrations). Sources the mirror env
+  # from /run/secrets/forgejo-mirror.env where sops-nix deposits it.
   systemd.services.forgejo.preStart = lib.mkAfter ''
     . ${mirrorEnvFile}
     printf 'https://oauth2:%s@github.com\n' "$GITHUB_TOKEN" > ${gitCredentialFile}
@@ -83,7 +84,7 @@ in
       server = {
         DOMAIN = forgejoDomain;
         ROOT_URL = "https://${forgejoDomain}/";
-        HTTP_PORT = 19300;
+        HTTP_PORT = backendPort;
         SSH_DOMAIN = forgejoDomain;
       };
       service = {
@@ -99,7 +100,7 @@ in
         SMTP_ADDR = "smtp.resend.com";
         SMTP_PORT = 465;
         USER = "resend";
-        FROM = "Forgejo <noreply@harivan.sh>";
+        FROM = "Forgejo <noreply@${rootDomain}>";
       };
       session.COOKIE_SECURE = true;
       mirror = {
@@ -486,7 +487,7 @@ in
     instances.netty = {
       enable = true;
       name = "netty";
-      url = "https://git.harivan.sh";
+      url = "https://${forgejoDomain}";
       tokenFile = runnerTokenFile;
 
       labels = [
@@ -544,11 +545,4 @@ in
     };
   };
 
-  # Host-based route: cloudflared tunnel -> Caddy on :80 -> forgejo.
-  services.caddy.virtualHosts."http://${forgejoDomain}" = {
-    listenAddresses = [ "127.0.0.1" ];
-    extraConfig = ''
-      reverse_proxy 127.0.0.1:${toString backendPort}
-    '';
-  };
 }

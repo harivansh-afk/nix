@@ -2,18 +2,20 @@
   config,
   pkgs,
   username,
+  loopbackVhost,
   ...
 }:
 let
   deltaDomain = "delta.harivan.sh";
-  deltaPort = "3300";
+  deltaPort = 3300;
   stateDir = "/var/lib/delta";
   repoDir = "/home/${username}/Documents/GitHub/delta";
   dbPath = "${stateDir}/data.db";
 in
 {
-  # INTEGRATION_ENCRYPTION_KEY etc. Same contents as netty's
-  # /var/lib/delta/delta.env, now encrypted in-repo.
+  services.caddy.virtualHosts."http://${deltaDomain}" = loopbackVhost deltaPort;
+
+  # Runtime env for Delta (INTEGRATION_ENCRYPTION_KEY, OAuth creds, …).
   sops.secrets."delta-env" = {
     sopsFile = ../../secrets/spark/delta.env;
     format = "binary";
@@ -36,7 +38,7 @@ in
     environment = {
       NODE_ENV = "production";
       HOSTNAME = "127.0.0.1";
-      PORT = deltaPort;
+      PORT = toString deltaPort;
       DATABASE_URL = dbPath;
       OAUTH_REDIRECT_BASE_URL = "https://${deltaDomain}";
       WEBAUTHN_ORIGIN = "https://${deltaDomain}";
@@ -50,18 +52,11 @@ in
       User = username;
       Group = "users";
       WorkingDirectory = repoDir;
-      ExecStart = "${repoDir}/node_modules/.bin/next start --port ${deltaPort} --hostname 127.0.0.1";
+      ExecStart = "${repoDir}/node_modules/.bin/next start --port ${toString deltaPort} --hostname 127.0.0.1";
       EnvironmentFile = config.sops.secrets."delta-env".path;
       Restart = "on-failure";
       RestartSec = 5;
     };
   };
 
-  # Host-based route through Caddy on loopback.
-  services.caddy.virtualHosts."http://${deltaDomain}" = {
-    listenAddresses = [ "127.0.0.1" ];
-    extraConfig = ''
-      reverse_proxy 127.0.0.1:${deltaPort}
-    '';
-  };
 }

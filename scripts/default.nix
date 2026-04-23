@@ -186,6 +186,4 @@ in
     themeAssetsText
     tmuxConfigs
     ;
-
-  packages = commonPackages;
 }

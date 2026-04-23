@@ -5,8 +5,7 @@
 }:
 {
   imports =
-    [ ]
-    ++ lib.optionals hostConfig.isDarwin [
+    lib.optionals hostConfig.isDarwin [
       ./helium.nix
       ./aerospace.nix
       ./ghostty.nix

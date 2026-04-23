@@ -34,7 +34,7 @@ services) live under `hosts/spark/`.
 First-time install (target booted into any Linux with SSH):
 
 ```
-just spark-install TARGET=root@<tailscale-ip>
+just spark-install root@<tailscale-ip>
 ```
 
 This runs `nixos-anywhere` with `--generate-hardware-config` and

@@ -25,10 +25,9 @@ jobs:
               - "flake.lock"
               - "flake.nix"
               - "justfile"
-              - "ci/**"
               - "dots/**"
               - "scripts/**"
-              - ".github/workflows/**"
+              - ".forgejo/workflows/**"
 
   flake-check:
     name: Flake Check

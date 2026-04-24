@@ -25,6 +25,7 @@ skill_env_var_dependency_prompt = true
 responses_websockets_v2 = true
 apps = false
 codex_git_commit = true
+commit_attribution = false
 prevent_idle_sleep = true
 exec_permission_approvals = true
 request_permissions_tool = true

@@ -492,7 +492,7 @@ in
 
       labels = [
         "native:host"
-        "ubuntu-latest:docker://node:20-bookworm"
+        "ubuntu-latest:docker://node:24-bookworm"
       ];
 
       hostPackages = with pkgs; [
@@ -508,7 +508,7 @@ in
         jq
         nix
         nixos-rebuild
-        nodejs_22
+        nodejs_24
         pkg-config
         pnpm
         python3

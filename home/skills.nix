@@ -39,7 +39,7 @@ let
   manifestHash = builtins.hashString "sha256" (builtins.toJSON globalSkills);
 
   installCommands = lib.concatMapStringsSep "\n" (skill: ''
-    "${pkgs.nodejs_22}/bin/npx" skills add ${lib.escapeShellArg skill.source} --skill ${lib.escapeShellArg skill.name} -g -y
+    "${pkgs.nodejs_24}/bin/npx" skills add ${lib.escapeShellArg skill.source} --skill ${lib.escapeShellArg skill.name} -g -y
   '') globalSkills;
 
   missingChecks = lib.concatMapStringsSep "\n" (skill: ''
@@ -66,7 +66,7 @@ in
     if [ "$needs_sync" -eq 1 ]; then
       export PATH="${
         lib.makeBinPath [
-          pkgs.nodejs_22
+          pkgs.nodejs_24
           pkgs.git
           pkgs.coreutils
           pkgs.findutils

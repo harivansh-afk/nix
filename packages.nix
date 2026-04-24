@@ -44,6 +44,8 @@ in
   extras =
     (with pkgs; [
       awscli2
+      bazel
+      buck2
       delta
       diff-so-fancy
       git-filter-repo

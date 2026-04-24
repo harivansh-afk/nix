@@ -2,6 +2,7 @@
   self,
   hostname,
   lib,
+  pkgs,
   ...
 }:
 {
@@ -31,4 +32,20 @@
   # Matches the upstream dgx-spark nixos-anywhere template. Don't bump
   # without reading the NixOS release notes for stateful-data migrations.
   system.stateVersion = "25.11";
+
+  # cursor-agent / claude / codex are all distributed as curl|bash'd,
+  # dynamically-linked glibc binaries expecting an FHS loader at
+  # /lib64/ld-linux-*.so.2. nix-ld installs a stub loader + a small set of
+  # common libraries at the standard paths so these just work on NixOS.
+  programs.nix-ld = {
+    enable = true;
+    libraries = with pkgs; [
+      stdenv.cc.cc.lib
+      zlib
+      openssl
+      curl
+      glib
+      libgcc
+    ];
+  };
 }

@@ -66,7 +66,6 @@ in
       tailscale
       terraform
       texliveFull
-      yt-dlp
     ])
     ++ (builtins.filter (p: p != null) [
       claudePackage
@@ -76,6 +75,7 @@ in
 
   darwinExtras = with pkgs; [
     coreutils-prefixed
+    yt-dlp
   ];
 
   # Berkeley Mono (the primary user-facing monospace font) is installed

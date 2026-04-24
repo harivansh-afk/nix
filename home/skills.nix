@@ -30,6 +30,10 @@ let
       name = "turborepo";
       source = "https://github.com/vercel/turborepo";
     }
+    {
+      name = "tmux";
+      source = "https://github.com/harivansh-afk/tmux-subagents";
+    }
   ];
 
   manifestHash = builtins.hashString "sha256" (builtins.toJSON globalSkills);

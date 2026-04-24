@@ -45,7 +45,7 @@ in
       WEBAUTHN_RP_ID = deltaDomain;
     };
 
-    path = [ pkgs.nodejs_22 ];
+    path = [ pkgs.nodejs_24 ];
 
     serviceConfig = {
       Type = "simple";

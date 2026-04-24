@@ -1,4 +1,24 @@
 { ... }:
+let
+  ixHostOptions = {
+    addKeysToAgent = "yes";
+    forwardAgent = true;
+    identitiesOnly = true;
+    port = 9999;
+    user = "rathi";
+  };
+
+  ixHosts = {
+    hil-compute-1 = "15.204.111.75";
+    hil-compute-2 = "15.204.105.165";
+    hil-stor-1 = "15.204.106.118";
+    vin-compute-1 = "40.160.30.136";
+    vin-compute-2 = "40.160.64.85";
+    vin-stor-1 = "15.204.241.32";
+  };
+
+  ixMatchBlocks = builtins.mapAttrs (_: hostname: ixHostOptions // { inherit hostname; }) ixHosts;
+in
 {
   programs.ssh = {
     enable = true;
@@ -19,6 +39,7 @@
         identitiesOnly = true;
       };
 
-    };
+    }
+    // ixMatchBlocks;
   };
 }

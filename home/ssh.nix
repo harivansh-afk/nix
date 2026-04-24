@@ -37,6 +37,15 @@ in
         user = "rathi";
         identityFile = "~/.ssh/id_ed25519";
         identitiesOnly = true;
+        # Multiplex connections: first session pays the ~350ms handshake,
+        # subsequent ssh / scp / rsync invocations reuse the socket and
+        # connect in a few ms. Matters a lot for just switch-spark,
+        # agent-history sync, and any tool that fires multiple sessions.
+        controlMaster = "auto";
+        controlPath = "~/.ssh/sockets/%r@%h:%p";
+        controlPersist = "10m";
+        serverAliveInterval = 60;
+        serverAliveCountMax = 3;
       };
 
     }

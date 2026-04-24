@@ -9,12 +9,11 @@ let
   packageSets = import ../packages.nix { inherit inputs lib pkgs; };
 in
 {
-  # `extras` is the kitchen-sink dev toolchain (awscli, gcloud, terraform,
-  # texliveFull, phpPackages.composer, llmfit, ...). Most of it is only
-  # wanted on the daily-driver laptop. Keep it off spark so rebuilds stay
-  # fast and we don't hit aarch64-linux build breakage for things we
-  # never actually use on the workstation.
-  environment.systemPackages = lib.optionals hostConfig.isDarwin packageSets.extras;
+  # Keep the shared dev toolchain aligned across both hosts. Only the
+  # Darwin-specific compatibility packages stay behind the platform gate.
+  environment.systemPackages =
+    packageSets.extras
+    ++ lib.optionals hostConfig.isDarwin packageSets.darwinExtras;
 
   fonts.packages = packageSets.fonts;
 }

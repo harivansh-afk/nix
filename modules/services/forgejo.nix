@@ -121,6 +121,8 @@ in
     requires = [ "forgejo.service" ];
     serviceConfig = {
       Type = "oneshot";
+      User = "git";
+      Group = "git";
       EnvironmentFile = mirrorEnvFile;
     };
     path = [

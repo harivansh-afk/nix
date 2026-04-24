@@ -42,7 +42,6 @@ in
   extras =
     (with pkgs; [
       awscli2
-      coreutils-prefixed
       delta
       diff-so-fancy
       git-filter-repo
@@ -74,6 +73,10 @@ in
       gwsPackage
       openspecPackage
     ]);
+
+  darwinExtras = with pkgs; [
+    coreutils-prefixed
+  ];
 
   # Berkeley Mono (the primary user-facing monospace font) is installed
   # manually out-of-band; this flake only provides the nerd-fonts symbol

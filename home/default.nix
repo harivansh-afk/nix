@@ -7,6 +7,7 @@
     ./bat.nix
     ./claude.nix
     ./codex.nix
+    ./cursor-agent.nix
     ./devin.nix
     ./eza.nix
     ./fzf.nix

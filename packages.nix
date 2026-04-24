@@ -28,10 +28,12 @@ in
     just
     nodejs_24
     pnpm
+    pkg-config
     python3
     ranger
     ripgrep
     rsync
+    rust-analyzer
     rustup
     tree
     uv

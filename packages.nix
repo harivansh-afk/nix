@@ -11,6 +11,7 @@ let
   gwsPackage = inputs.googleworkspace-cli.packages.${system}.default or null;
   claudePackage = inputs.claudeCode.packages.${system}.default or null;
   openspecPackage = inputs.openspec.packages.${system}.default or null;
+  pinnedBuck2 = pkgs.callPackage ./pkgs/buck2.nix { };
 
 in
 {
@@ -45,7 +46,6 @@ in
     (with pkgs; [
       awscli2
       bazel
-      buck2
       delta
       diff-so-fancy
       git-filter-repo
@@ -76,6 +76,7 @@ in
       claudePackage
       gwsPackage
       openspecPackage
+      pinnedBuck2
     ]);
 
   darwinExtras = with pkgs; [

@@ -61,6 +61,7 @@ in
       librsvg
       llmfit
       minikube
+      mgrep
       ngrok
       phpPackages.composer
       postgresql_17

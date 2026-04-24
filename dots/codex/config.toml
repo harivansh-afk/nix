@@ -49,6 +49,10 @@ max_rollout_age_days = 30
 max_rollouts_per_startup = 8
 min_rollout_idle_hours = 24
 
+[mcp_servers.mgrep]
+command = "mgrep"
+args = ["mcp"]
+
 [sandbox_workspace_write]
 network_access = true
 

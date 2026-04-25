@@ -27,6 +27,10 @@
 
   networking.hostName = hostname;
 
+  environment.systemPackages = with pkgs; [
+    clang
+  ];
+
   system.configurationRevision = self.rev or self.dirtyRev or null;
 
   # Matches the upstream dgx-spark nixos-anywhere template. Don't bump

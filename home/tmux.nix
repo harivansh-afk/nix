@@ -27,6 +27,14 @@
 
       set -g mouse on
 
+      # Mouse selection: keep copy-mode active so the viewport doesn't snap
+      # back to the live bottom on drag-release / double-click / triple-click.
+      bind -n DoubleClick1Pane select-pane \; copy-mode -M \; send-keys -X select-word \; run-shell -d 0.3 \; send-keys -X copy-selection \; send-keys -X clear-selection
+      bind -n TripleClick1Pane select-pane \; copy-mode -M \; send-keys -X select-line \; run-shell -d 0.3 \; send-keys -X copy-selection \; send-keys -X clear-selection
+      bind -T copy-mode DoubleClick1Pane select-pane \; send-keys -X select-word \; run-shell -d 0.3 \; send-keys -X copy-selection \; send-keys -X clear-selection
+      bind -T copy-mode TripleClick1Pane select-pane \; send-keys -X select-line \; run-shell -d 0.3 \; send-keys -X copy-selection \; send-keys -X clear-selection
+      bind -T copy-mode MouseDragEnd1Pane send-keys -X copy-selection \; send-keys -X clear-selection
+
       # Enable extended keys so Shift+Enter and other modified keys work
       set -g default-terminal "tmux-256color"
       set -s extended-keys on

@@ -43,7 +43,17 @@
       core = {
         pager = "diff-so-fancy | less --tabs=4 -RFX";
         editor = "nvim";
+        fsmonitor = true;
+        untrackedCache = true;
+        commitGraph = true;
       };
+
+      feature.manyFiles = true;
+      index.version = 4;
+      gc.writeCommitGraph = true;
+      fetch.writeCommitGraph = true;
+      protocol.version = 2;
+      status.aheadBehind = false;
 
       interactive.diffFilter = "diff-so-fancy --patch";
 

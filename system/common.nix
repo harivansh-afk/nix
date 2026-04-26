@@ -40,6 +40,16 @@ in
   # recursion you get when reading pkgs to decide what pkgs should be.
   nixpkgs.overlays = lib.optionals (hostConfig.system != "aarch64-linux") [
     inputs.neovim-nightly.overlays.default
+  ]
+  # On darwin, pull nushell from a newer nixpkgs that adds the
+  # `env_shlvl_in_(exec_)repl` test names to its darwin skip list.
+  # Old nixpkgs's package recipe doesn't skip them and the tests
+  # EPERM in the darwin sandbox. We don't bump our top-level nixpkgs
+  # for this because it would invalidate the spark NVIDIA kernel hash.
+  ++ lib.optionals hostConfig.isDarwin [
+    (_final: _prev: {
+      nushell = inputs.nixpkgs-nushell.legacyPackages.${hostConfig.system}.nushell;
+    })
   ];
 
   programs.zsh.enable = true;

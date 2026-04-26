@@ -3,6 +3,13 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+
+    # Scoped pin used ONLY to source `pkgs.nushell` on darwin (see
+    # system/common.nix). This rev's nushell/package.nix adds darwin
+    # skip flags for SHLVL repl tests that EPERM in the darwin sandbox.
+    # Kept separate from the top-level nixpkgs so bumping it never
+    # invalidates the spark NVIDIA kernel hash.
+    nixpkgs-nushell.url = "github:NixOS/nixpkgs/01fbdeef22b76df85ea168fbfe1bfd9e63681b30";
     flake-parts.url = "github:hercules-ci/flake-parts";
 
     # Determinate Nix owns /etc/nix/nix.conf, the daemon, and the installed

@@ -37,6 +37,10 @@ in
         user = "rathi";
         identityFile = "~/.ssh/id_ed25519";
         identitiesOnly = true;
+        # Forward the local agent so commands on spark (git push, ssh into
+        # other hosts, ix tooling) can reuse the Mac's keys without copying
+        # private material to the box.
+        forwardAgent = true;
         # Multiplex connections: first session pays the ~350ms handshake,
         # subsequent ssh / scp / rsync invocations reuse the socket and
         # connect in a few ms. Matters a lot for just switch-spark,

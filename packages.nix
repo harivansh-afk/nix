@@ -28,6 +28,7 @@ in
     jq
     just
     nodejs_24
+    nushell
     pnpm
     pkg-config
     python3

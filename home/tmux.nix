@@ -35,6 +35,16 @@
       bind -T copy-mode TripleClick1Pane select-pane \; send-keys -X select-line \; run-shell -d 0.3 \; send-keys -X copy-selection \; send-keys -X clear-selection
       bind -T copy-mode MouseDragEnd1Pane send-keys -X copy-selection \; send-keys -X clear-selection
 
+      # Auto-exit copy-mode once the viewport returns to the live tail (the
+      # status indicator shows 0/xyz). Wheel uses the built-in
+      # scroll-down-and-cancel (cancels iff oy == 0); cursor keys check
+      # scroll_position after moving and cancel if it is 0.
+      bind -T copy-mode    WheelDownPane send-keys -X scroll-down-and-cancel
+      bind -T copy-mode-vi WheelDownPane send-keys -X scroll-down-and-cancel
+      bind -T copy-mode    Down send-keys -X cursor-down \; if -F '#{==:#{scroll_position},0}' 'send-keys -X cancel'
+      bind -T copy-mode-vi Down send-keys -X cursor-down \; if -F '#{==:#{scroll_position},0}' 'send-keys -X cancel'
+      bind -T copy-mode-vi j    send-keys -X cursor-down \; if -F '#{==:#{scroll_position},0}' 'send-keys -X cancel'
+
       # Enable extended keys so Shift+Enter and other modified keys work
       set -g default-terminal "tmux-256color"
       set -s extended-keys on

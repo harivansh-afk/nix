@@ -77,6 +77,10 @@
           source ~/.secrets
         fi
 
+        if [[ -r /run/secrets/mgrep.env ]]; then
+          source /run/secrets/mgrep.env
+        fi
+
         [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
         export BUN_INSTALL="$HOME/.bun"

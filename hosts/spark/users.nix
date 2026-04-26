@@ -21,6 +21,13 @@ in
     neededForUsers = true;
   };
 
+  sops.secrets."mgrep.env" = {
+    sopsFile = ../../secrets/spark/mgrep.env;
+    format = "binary";
+    owner = username;
+    mode = "0400";
+  };
+
   users.mutableUsers = false;
 
   users.users.${username} = {

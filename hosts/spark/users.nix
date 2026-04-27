@@ -28,6 +28,13 @@ in
     mode = "0400";
   };
 
+  sops.secrets."linear-api-key" = {
+    sopsFile = ../../secrets/spark/linear-api-key;
+    format = "binary";
+    owner = username;
+    mode = "0400";
+  };
+
   users.mutableUsers = false;
 
   users.users.${username} = {

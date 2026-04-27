@@ -81,6 +81,10 @@
           source /run/secrets/mgrep.env
         fi
 
+        if [[ -r /run/secrets/linear.env ]]; then
+          set -a; source /run/secrets/linear.env; set +a
+        fi
+
         [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
         export BUN_INSTALL="$HOME/.bun"

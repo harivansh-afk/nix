@@ -28,8 +28,8 @@ in
     mode = "0400";
   };
 
-  sops.secrets."linear-api-key" = {
-    sopsFile = ../../secrets/spark/linear-api-key;
+  sops.secrets."linear.env" = {
+    sopsFile = ../../secrets/spark/linear.env;
     format = "binary";
     owner = username;
     mode = "0400";

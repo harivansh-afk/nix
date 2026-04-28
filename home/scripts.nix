@@ -43,7 +43,6 @@ in
       ln -sfn "$THEME_DARWIN_LAZYGIT_TARGET" "$lg_darwin/config.yml"
     ''}
 
-    # seed wallpapers from static assets if no generated ones exist yet
     if [[ ! -f "${customScripts.theme.wallpapers.dark}" ]]; then
       cp "${customScripts.theme.wallpapers.staticDark}" "${customScripts.theme.wallpapers.dark}"
     fi
@@ -51,7 +50,6 @@ in
       cp "${customScripts.theme.wallpapers.staticLight}" "${customScripts.theme.wallpapers.light}"
     fi
 
-    # ensure wallpaper symlink points to active mode
     ln -sfn "$THEME_WALLPAPER" "${customScripts.theme.wallpapers.current}"
   '';
 }

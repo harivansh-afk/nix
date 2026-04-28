@@ -314,7 +314,6 @@ let
   renderZshHighlights =
     mode:
     let
-      # Light mode uses gruvbox-light specific colors
       light = {
         arg0 = "#427b58";
         aqua = "#076678";
@@ -324,7 +323,6 @@ let
         comment = "#928374";
         error = "#ea6962";
       };
-      # Dark mode uses our theme palette
       dark = {
         arg0 = sharedPalette.green;
         aqua = sharedPalette.aqua;

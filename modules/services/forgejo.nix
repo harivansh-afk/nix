@@ -12,11 +12,9 @@ let
   backendPort = 19300;
   forgejoApiUrl = "http://127.0.0.1:${toString backendPort}";
   gitCredentialFile = "/var/lib/forgejo/.git-credentials";
-  # sops deposits the plaintexts under /run/secrets/<name> at activation.
   smtpPasswordFile = config.sops.secrets."forgejo-smtp-password".path;
   mirrorEnvFile = config.sops.secrets."forgejo-mirror.env".path;
   runnerTokenFile = config.sops.secrets."forgejo-runner-token".path;
-  # Cache root for tooling used inside CI jobs (npm, pip, cargo, ...).
   runnerCacheRoot = "/var/cache/forgejo-runner";
 in
 {
@@ -53,10 +51,6 @@ in
   };
   users.groups.git = { };
 
-  # Generate the git credential store used by mirror-sync fetches from
-  # GitHub. Runs as the `git` user after the module's own preStart
-  # (which handles app.ini + schema migrations). Sources the mirror env
-  # from /run/secrets/forgejo-mirror.env where sops-nix deposits it.
   systemd.services.forgejo.preStart = lib.mkAfter ''
     . ${mirrorEnvFile}
     printf 'https://oauth2:%s@github.com\n' "$GITHUB_TOKEN" > ${gitCredentialFile}
@@ -109,7 +103,6 @@ in
     };
   };
 
-  # --- Forgejo mirror sync (hourly) ---
   systemd.services.forgejo-mirror-sync = {
     description = "Sync GitHub mirrors to Forgejo";
     after = [ "forgejo.service" ];
@@ -144,9 +137,6 @@ in
         printf '%s' "$body"
       }
 
-      # Ensure the bare repo git config has the token for fetching,
-      # but keep the DB remote_address clean (no token) so the UI
-      # never exposes it.
       fix_mirror_creds() {
         local forgejo_owner="$1" repo_name="$2" wait_for_create="''${3:-false}"
         local repo_dir="/var/lib/forgejo/repositories/$forgejo_owner/$repo_name.git"
@@ -283,15 +273,6 @@ in
     };
   };
 
-  # --- Forgejo heatmap reconciliation ---
-  # Runs after every mirror sync. Scans each repo for commits authored by the
-  # Forgejo user and inserts ActionCommitRepo (op_type=5) records into the
-  # action table so they appear in the contribution heatmap.
-  #
-  # Uses the action table itself as the cursor: for each repo it queries the
-  # most recent recorded timestamp, then fetches only newer commits via the
-  # Forgejo API "since" parameter. First run = full backfill, subsequent
-  # runs = incremental. Idempotent and safe to re-run.
   systemd.services.forgejo-heatmap-reconcile = {
     description = "Reconcile Forgejo heatmap with mirrored commit history";
     after = [
@@ -318,13 +299,12 @@ in
 
       DB="/var/lib/forgejo/data/forgejo.db"
       API="${forgejoApiUrl}/api/v1"
-      OP_TYPE=5  # ActionCommitRepo
+      OP_TYPE=5
 
       api() {
         curl -sS -H "Authorization: token $FORGEJO_TOKEN" "$@"
       }
 
-      # --- resolve identity ---
       me=$(api "$API/user")
       user_id=$(printf '%s' "$me" | jq -r '.id')
       login=$(printf '%s' "$me" | jq -r '.login')
@@ -335,7 +315,6 @@ in
 
       echo "Reconciling heatmap for $login (id=$user_id)"
 
-      # --- collect every repo the user can see (personal + orgs) ---
       repo_list=$(mktemp)
       trap 'rm -f "$repo_list"' EXIT
 
@@ -352,10 +331,8 @@ in
         done
       }
 
-      # personal repos
       fetch_repos "$API/user/repos"
 
-      # org repos
       orgs=$(api "$API/user/orgs" | jq -r '.[].username')
       for org in $orgs; do
         fetch_repos "$API/orgs/$org/repos"
@@ -369,15 +346,12 @@ in
         name=$(printf '%s' "$repo" | jq -r '.name')
         branch=$(printf '%s' "$repo" | jq -r '.default_branch')
 
-        # find the latest commit we already recorded for this repo
         latest=$(sqlite3 "$DB" \
           ".timeout 5000" \
           "SELECT COALESCE(MAX(created_unix),0) FROM action WHERE repo_id=$repo_id AND act_user_id=$user_id AND op_type=$OP_TYPE;")
 
-        # convert to ISO 8601 "since" param (skip if no prior records -> fetch all)
         since_param=""
         if [ "$latest" -gt 0 ]; then
-          # add 1 second to avoid re-processing the boundary commit
           since_iso=$(date -u -d "@$((latest + 1))" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo "")
           [ -n "$since_iso" ] && since_param="&since=$since_iso"
         fi
@@ -396,7 +370,6 @@ in
             author_email=$(printf '%s' "$commit" | jq -r '.commit.author.email // empty')
             [ -z "$author_email" ] && continue
 
-            # match against our emails
             matched=0
             while IFS= read -r e; do
               [ "$author_email" = "$e" ] && matched=1 && break
@@ -410,7 +383,6 @@ in
             sha=$(printf '%s' "$commit" | jq -r '.sha')
             content="$branch\n$sha"
 
-            # deduplicate on repo + user + timestamp
             exists=$(sqlite3 "$DB" \
               ".timeout 5000" \
               "SELECT COUNT(*) FROM action WHERE user_id=$user_id AND repo_id=$repo_id AND op_type=$OP_TYPE AND created_unix=$created_unix;")
@@ -435,7 +407,6 @@ in
     '';
   };
 
-  # --- Forgejo Actions runner ---
   systemd.services.gitea-runner-netty.serviceConfig = {
     DynamicUser = lib.mkForce false;
     User = lib.mkForce "gitea-runner";

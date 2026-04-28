@@ -20,9 +20,6 @@ let
   };
 in
 {
-  # Global UI settings changed through /config still live in ~/.claude.json
-  # and are intentionally left user-managed because Claude mutates that file
-  # directly.
   home.file.".local/bin/claude".source = "${claudePackage}/bin/claude";
   home.file.".claude/CLAUDE.md".source = ../dots/claude/CLAUDE.md;
   home.file.".claude/commands" = {

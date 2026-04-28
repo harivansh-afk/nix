@@ -5,6 +5,5 @@
   xdg.enable = true;
 
   home.packages = with pkgs; [
-    # add your packages here
   ];
 }

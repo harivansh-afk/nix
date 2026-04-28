@@ -28,10 +28,6 @@ in
           autoMigrate = true;
         };
 
-        # The determinate nix-darwin module force-disables `nix.*` and
-        # writes its own settings to /etc/nix/nix.custom.conf. Mirror the
-        # baseline from system/common.nix here. GC, daemon, and the nix
-        # package itself are all managed by determinate-nixd.
         determinateNix = {
           enable = true;
           customSettings = {

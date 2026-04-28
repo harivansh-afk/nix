@@ -63,7 +63,7 @@
     authKeyFile = config.sops.secrets."tailscale-authkey".path;
     useRoutingFeatures = "server";
     openFirewall = true;
-    extraSetFlags = [
+    extraUpFlags = [
       "--advertise-tags=tag:shared"
       "--ssh"
     ];

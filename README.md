@@ -1,58 +1,33 @@
-# Nix Leveraging
+# nix
 
-Single dependency graph for my macOS laptop and DGX Spark workstation.
+- **macbook** - MacBook (aarch64-darwin) running nix-darwin + home-manager + nix-homebrew
+- **spark** - NVIDIA DGX Spark (aarch64-linux) running NixOS
 
-Using [determinate nix](https://docs.determinate.systems/determinate-nix/) for
-the Nix install / daemon / base `nix.conf`, parallel builds, and better ux.
+Both are declared in one flake using [flake-parts](https://github.com/hercules-ci/flake-parts) and managed with [Determinate Nix](https://docs.determinate.systems/determinate-nix/)
 
-macbook — nix-darwin + home-manager + nix-homebrew
+configs live in `dots/` and get symlinked into XDG paths
 
-Home Manager is the userland control plane:
-Rust, Go, Node, Python, AWS, and friends are routed into XDG paths;
+Spark is a shared NixOS workstation. 
+Friends who want access get a user definition in `users/` and per-user home-manager config under `hosts/spark/<name>/`.
 
-SSH and GPG perms are locked on every activation.
+NVIDIA kernel, drivers, and container support come from the upstream [nixos-dgx-spark](https://github.com/graham33/nixos-dgx-spark) module
 
-A migration module handles the cutover from legacy symlinks.
+Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix).
 
-[cozybox.nvim](https://github.com/harivansh-afk/cozybox.nvim) drives Ghostty, tmux, fzf, zsh syntax highlighting, bat, and delta, with a generated script to hot-swap light/dark.
-
-configs are repo-owned (dots) rather than scattered across $HOME.
-
-Global agent skills install declaratively.
-
-Secrets live in self-hosted Bitwarden and render at activation time.
-
-Deploy with `just switch` (macbook) or `just switch-spark` (spark).
-
-The workstation (`spark`, NVIDIA DGX Spark, aarch64 NixOS) is managed by this
-same flake. Hardware support — NVIDIA kernel, drivers, podman + CDI, fwupd,
-Flox CUDA cache — comes from the upstream
-[`graham33/nixos-dgx-spark`](https://github.com/graham33/nixos-dgx-spark)
-module consumed as a flake input. Host-specific bits (users, tailscale,
-services) live under `hosts/spark/`.
-
-First-time install (target booted into any Linux with SSH):
-
-```
-just spark-install root@<tailscale-ip>
-```
-
-This runs `nixos-anywhere` with `--generate-hardware-config` and
-`--build-on-remote` so the closure (including the NVIDIA kernel) is built
-on spark itself.
+[cozybox.nvim](https://github.com/harivansh-afk/cozybox.nvim) provides the unified theme across everything.
 
 ## Structure
 
 ```
-flake.nix        inputs, outputs, per-host system assembly
-justfile         switch, fmt, ci entry points
-packages.nix     shared package set consumed by hosts
-flake/           per-host assembly (args, devshell, hosts=darwin, nixos=spark)
-lib/             host metadata + central theme palette
-hosts/           host roots (macbook/, spark/)
-system/          shared system-level nix config and packages
-home/            home-manager modules, one file per tool
-dots/            repo-owned app configs (symlinked into XDG)
-scripts/         runtime scripts wired via home/scripts.nix
-.forgejo/        CI workflows
+flake.nix          entrypoint - inputs and outputs
+flake/             host assembly, devshell, args
+lib/               host metadata, theme palette
+hosts/             per-host config (macbook/, spark/)
+users/             multi-user definitions for spark
+home/              home-manager modules, one file per tool
+dots/              app configs symlinked into XDG
+modules/           reusable NixOS modules (services, security)
+system/            shared system-level config and packages
+scripts/           runtime scripts wired via home/scripts.nix
+secrets/           sops-encrypted secrets per host
 ```

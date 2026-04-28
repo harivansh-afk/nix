@@ -67,8 +67,8 @@ let
     dark = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper-dark.png";
     light = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper-light.png";
     current = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper.png";
-    staticDark = ../assets/wallpapers/topography-dark.png;
-    staticLight = ../assets/wallpapers/topography-light.png;
+    staticDark = ./wallpapers/topography-dark.png;
+    staticLight = ./wallpapers/topography-light.png;
     generation = wallpaperGeneration;
   };
   paths = {

@@ -35,6 +35,8 @@
 
   # Matches the upstream dgx-spark nixos-anywhere template. Don't bump
   # without reading the NixOS release notes for stateful-data migrations.
+  boot.specialFileSystems."/proc".options = [ "hidepid=invisible" ];
+
   system.stateVersion = "25.11";
 
   # cursor-agent / claude / codex are all distributed as curl|bash'd,

@@ -37,6 +37,12 @@
   # without reading the NixOS release notes for stateful-data migrations.
   boot.specialFileSystems."/proc".options = [ "hidepid=invisible" ];
 
+  boot.kernel.sysctl = {
+    "kernel.yama.ptrace_scope" = 2;
+    "kernel.dmesg_restrict" = 1;
+    "kernel.kptr_restrict" = 2;
+  };
+
   system.stateVersion = "25.11";
 
   # cursor-agent / claude / codex are all distributed as curl|bash'd,

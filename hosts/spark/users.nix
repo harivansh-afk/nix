@@ -44,6 +44,7 @@ in
         shell = shellPackages.${user.shell};
         extraGroups = user.extraGroups;
         openssh.authorizedKeys.keys = user.sshKeys;
+        homeMode = "0700";
       }
       // lib.optionalAttrs (name == username) {
         description = username;

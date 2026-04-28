@@ -23,12 +23,12 @@
 
       # Gaps between windows
       gaps = {
-        inner.horizontal = 5;
-        inner.vertical = 5;
-        outer.left = 5;
-        outer.right = 5;
-        outer.top = 5;
-        outer.bottom = 5;
+        inner.horizontal = 0;
+        inner.vertical = 0;
+        outer.left = 0;
+        outer.right = 0;
+        outer.top = 0;
+        outer.bottom = 0;
       };
 
       # Auto-assign apps to workspaces
@@ -146,7 +146,7 @@
         ctrl-alt-cmd-space = "move-node-to-monitor --wrap-around --focus-follows-window next";
 
         # Modes
-        alt-shift-r = "mode resize";
+        alt-r = "mode resize";
         alt-shift-semicolon = "mode service";
 
         # Screenshot to clipboard

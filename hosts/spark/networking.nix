@@ -61,11 +61,12 @@
   services.tailscale = {
     enable = true;
     authKeyFile = config.sops.secrets."tailscale-authkey".path;
-    # "server" lets this host act as a subnet router / exit node later
-    # without needing another rebuild. No routes are advertised until
-    # `tailscale up --advertise-routes=...` is run imperatively.
     useRoutingFeatures = "server";
     openFirewall = true;
+    extraSetFlags = [
+      "--advertise-tags=tag:shared"
+      "--ssh"
+    ];
   };
 
   networking.firewall = {

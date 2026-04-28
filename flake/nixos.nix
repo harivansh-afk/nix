@@ -1,9 +1,7 @@
 {
   hosts,
   inputs,
-  username,
   mkSpecialArgs,
-  mkHomeManagerModule,
   ...
 }:
 let
@@ -19,9 +17,11 @@ in
       inputs.home-manager.nixosModules.home-manager
       ../hosts/spark
       {
-        users.users.${username}.home = host.homeDirectory;
+        home-manager.useGlobalPkgs = true;
+        home-manager.useUserPackages = true;
+        home-manager.extraSpecialArgs = mkSpecialArgs host;
+        home-manager.backupCommand = "bash ${../scripts/lib/home-manager-backup.sh}";
       }
-      (mkHomeManagerModule host)
     ];
   };
 }

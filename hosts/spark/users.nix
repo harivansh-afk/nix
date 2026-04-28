@@ -7,17 +7,16 @@
   ...
 }:
 let
-  authorizedKeys = [
-    # ~/.ssh/id_ed25519.pub on macbook (rathi@mac)
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM6tzq33IQcurWoQ7vhXOTLjv8YkdTGb7NoNsul3Sbfu rathi@mac"
-  ];
+  allUsers = import ../../users;
+  enabledUsers = builtins.attrNames allUsers;
   passwordHashFile = config.sops.secrets."user-password-hash".path;
-  friends = [ "barrett" ];
+
+  shellPackages = {
+    zsh = pkgs.zsh;
+    bash = pkgs.bash;
+  };
 in
 {
-  # Console/login password hash for rathi + root. `neededForUsers`
-  # deposits the file under /run/secrets-for-users/ before user
-  # activation runs, which is required when mutableUsers = false.
   sops.secrets."user-password-hash" = mkSparkSecret "user-password-hash" {
     neededForUsers = true;
   };
@@ -34,32 +33,31 @@ in
 
   users.mutableUsers = false;
 
-  users.users = {
-    ${username} = {
-      isNormalUser = true;
-      description = "rathi";
-      shell = pkgs.zsh;
-      extraGroups = [
-        "wheel"
-        "networkmanager"
-        "video"
-        "podman"
-      ];
-      openssh.authorizedKeys.keys = authorizedKeys;
-      hashedPasswordFile = passwordHashFile;
+  users.users =
+    lib.genAttrs enabledUsers (
+      name:
+      let
+        user = allUsers.${name};
+      in
+      {
+        isNormalUser = true;
+        shell = shellPackages.${user.shell};
+        extraGroups = user.extraGroups;
+        openssh.authorizedKeys.keys = user.sshKeys;
+      }
+      // lib.optionalAttrs (name == username) {
+        description = username;
+        hashedPasswordFile = passwordHashFile;
+      }
+    )
+    // {
+      root = {
+        openssh.authorizedKeys.keys = allUsers.${username}.sshKeys;
+        hashedPasswordFile = passwordHashFile;
+      };
     };
 
-    # Keep root reachable during bootstrap; tighten to `prohibit-password`
-    # only (set below in services.openssh) so passwords still can't be used.
-    root = {
-      openssh.authorizedKeys.keys = authorizedKeys;
-      hashedPasswordFile = passwordHashFile;
-    };
-  } // lib.genAttrs friends (name: {
-    isNormalUser = true;
-    shell = pkgs.zsh;
-    extraGroups = [];
-  });
+  home-manager.users = lib.genAttrs enabledUsers (name: import ./${name});
 
   services.openssh = {
     enable = true;
@@ -70,7 +68,5 @@ in
     };
   };
 
-  # wheel members can sudo without a password — fine for a single-user
-  # box where login is already gated by SSH keys.
   security.sudo.wheelNeedsPassword = false;
 }

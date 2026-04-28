@@ -22,6 +22,16 @@ switch-spark:
       --build-host rathi@spark \
       --sudo
 
+# --- tailscale ACL ---
+
+acl-push:
+    @test -n "$TS_API_KEY" || { echo "Set TS_API_KEY (from https://login.tailscale.com/admin/settings/keys)"; exit 1; }
+    curl -sS -X POST "https://api.tailscale.com/api/v2/tailnet/-/acl" \
+      -u "$$TS_API_KEY:" \
+      -H "Content-Type: application/hujson" \
+      --data-binary @tailscale/policy.hujson
+    @echo "\nACL policy pushed."
+
 # --- secrets ---
 
 sops-edit FILE:

@@ -1,0 +1,49 @@
+{
+  // --- Groups ---------------------------------------------------------------
+  // Add friends' Tailscale login emails here.
+  "groups": {
+    "group:friends": [],
+  },
+
+  // --- Tag ownership --------------------------------------------------------
+  // Only the tailnet owner can apply tag:shared to a node.
+  "tagOwners": {
+    "tag:shared": ["autogroup:owner"],
+  },
+
+  // --- Network ACLs ---------------------------------------------------------
+  "acls": [
+    // Owner: unrestricted access to all devices and ports
+    {"action": "accept", "src": ["autogroup:owner"], "dst": ["*:*"]},
+
+    // Friends: SSH only on shared machines
+    {"action": "accept", "src": ["group:friends"], "dst": ["tag:shared:22"]},
+  ],
+
+  // --- SSH rules ------------------------------------------------------------
+  "ssh": [
+    // Owner: full SSH access (any user, any machine)
+    {
+      "action": "accept",
+      "src":    ["autogroup:owner"],
+      "dst":    ["autogroup:self"],
+      "users":  ["autogroup:nonroot", "root"],
+    },
+    // Friends: SSH as non-root users on shared machines
+    {
+      "action": "accept",
+      "src":    ["group:friends"],
+      "dst":    ["tag:shared"],
+      "users":  ["autogroup:nonroot"],
+    },
+  ],
+
+  // --- Policy tests ---------------------------------------------------------
+  "tests": [
+    {
+      "src":    "group:friends",
+      "accept": ["tag:shared:22"],
+      "deny":   ["tag:shared:80", "tag:shared:443"],
+    },
+  ],
+}

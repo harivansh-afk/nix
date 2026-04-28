@@ -16,7 +16,6 @@ in
 {
   services.caddy.virtualHosts."http://${deltaDomain}" = loopbackVhost deltaPort;
 
-  # Runtime env for Delta (INTEGRATION_ENCRYPTION_KEY, OAuth creds, …).
   sops.secrets."delta-env" = mkSparkSecret "delta.env" {
     owner = username;
     group = "users";

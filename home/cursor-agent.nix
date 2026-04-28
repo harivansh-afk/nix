@@ -16,10 +16,6 @@ let
   ];
 in
 {
-  # The upstream installer is an impure curl|bash. Keep it best-effort so a
-  # transient network blip during activation doesn't break `nixos-rebuild
-  # switch` / `darwin-rebuild switch`; cursor-agent will just retry on the
-  # next switch.
   home.activation.installCursorAgent = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     export HOME=${lib.escapeShellArg config.home.homeDirectory}
     export PATH="${installPath}:$PATH"

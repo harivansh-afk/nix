@@ -57,10 +57,6 @@
           unset MATCH MBEGIN MEND
         fi
 
-        # Pure's upstream user/host segment stores a deferred color reference,
-        # which collapses hex colors to black for this segment over SSH. Resolve
-        # the current prompt colors here and rebuild the segment after each
-        # prompt_pure_set_colors call so the rendered prompt keeps the theme hex.
         hostname="%F{$prompt_pure_colors[host]}@%m%f"
         [[ -n $ssh_connection ]] && username="%F{$prompt_pure_colors[user]}%n%f""$hostname"
         [[ -z "''${CODESPACES}" ]] && prompt_pure_is_inside_container && username="%F{$prompt_pure_colors[user]}%n%f""$hostname"
@@ -84,7 +80,6 @@
         typeset -g prompt_pure_git_branch_color=$prompt_pure_colors[git:branch]
         [[ -n ''${prompt_pure_git_last_dirty_check_timestamp+x} ]] && prompt_pure_git_branch_color=$prompt_pure_colors[git:branch:cached]
 
-        # Branch, arrows, and prompt symbol turn yellow when dirty
         if [[ -n $prompt_pure_git_dirty ]]; then
           prompt_pure_git_branch_color=$prompt_pure_colors[git:dirty]
           prompt_pure_colors[git:arrow]=$prompt_pure_colors[git:dirty]

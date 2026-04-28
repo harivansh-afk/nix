@@ -11,8 +11,6 @@ in
 {
   services.caddy.virtualHosts."http://${vaultDomain}" = loopbackVhost backendPort;
 
-  # Admin token, SMTP creds, etc. — sourced as a binary-encoded
-  # KEY=value blob from secrets/spark/vaultwarden.env.
   sops.secrets."vaultwarden-env" = mkSparkSecret "vaultwarden.env" {
     owner = "vaultwarden";
     group = "vaultwarden";

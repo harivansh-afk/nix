@@ -1,5 +1,6 @@
 {
   config,
+  mkSparkSecret,
   pkgs,
   username,
   ...
@@ -15,22 +16,16 @@ in
   # Console/login password hash for rathi + root. `neededForUsers`
   # deposits the file under /run/secrets-for-users/ before user
   # activation runs, which is required when mutableUsers = false.
-  sops.secrets."user-password-hash" = {
-    sopsFile = ../../secrets/spark/user-password-hash;
-    format = "binary";
+  sops.secrets."user-password-hash" = mkSparkSecret "user-password-hash" {
     neededForUsers = true;
   };
 
-  sops.secrets."mgrep.env" = {
-    sopsFile = ../../secrets/spark/mgrep.env;
-    format = "binary";
+  sops.secrets."mgrep.env" = mkSparkSecret "mgrep.env" {
     owner = username;
     mode = "0400";
   };
 
-  sops.secrets."linear.env" = {
-    sopsFile = ../../secrets/spark/linear.env;
-    format = "binary";
+  sops.secrets."linear.env" = mkSparkSecret "linear.env" {
     owner = username;
     mode = "0400";
   };

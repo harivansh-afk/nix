@@ -1,4 +1,8 @@
-{ config, ... }:
+{
+  config,
+  mkSparkSecret,
+  ...
+}:
 {
   # --- Wi-Fi (declarative via NetworkManager ensureProfiles) ---------------
   #
@@ -9,9 +13,7 @@
   # the managed profile. Rotating the PSK is `just sops-edit
   # secrets/spark/wifi.env` + a rebuild — no --extra-files dance.
 
-  sops.secrets."wifi.env" = {
-    sopsFile = ../../secrets/spark/wifi.env;
-    format = "binary";
+  sops.secrets."wifi.env" = mkSparkSecret "wifi.env" {
     restartUnits = [ "NetworkManager-ensure-profiles.service" ];
   };
 
@@ -51,9 +53,7 @@
   # key at https://login.tailscale.com/admin/settings/keys and rotate
   # via `just sops-edit secrets/spark/tailscale-authkey`.
 
-  sops.secrets."tailscale-authkey" = {
-    sopsFile = ../../secrets/spark/tailscale-authkey;
-    format = "binary";
+  sops.secrets."tailscale-authkey" = mkSparkSecret "tailscale-authkey" {
     owner = "root";
     mode = "0400";
   };

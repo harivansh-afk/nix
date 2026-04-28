@@ -1,4 +1,9 @@
-{ config, loopbackVhost, ... }:
+{
+  config,
+  loopbackVhost,
+  mkSparkSecret,
+  ...
+}:
 let
   vaultDomain = "vault.harivan.sh";
   backendPort = 8222;
@@ -8,9 +13,7 @@ in
 
   # Admin token, SMTP creds, etc. — sourced as a binary-encoded
   # KEY=value blob from secrets/spark/vaultwarden.env.
-  sops.secrets."vaultwarden-env" = {
-    sopsFile = ../../secrets/spark/vaultwarden.env;
-    format = "binary";
+  sops.secrets."vaultwarden-env" = mkSparkSecret "vaultwarden.env" {
     owner = "vaultwarden";
     group = "vaultwarden";
     mode = "0400";

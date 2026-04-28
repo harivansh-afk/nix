@@ -1,8 +1,9 @@
 {
   config,
-  pkgs,
   lib,
   loopbackVhost,
+  mkSparkSecret,
+  pkgs,
   ...
 }:
 let
@@ -21,17 +22,13 @@ in
 {
   services.caddy.virtualHosts."http://${forgejoDomain}" = loopbackVhost backendPort;
 
-  sops.secrets."forgejo-smtp-password" = {
-    sopsFile = ../../secrets/spark/forgejo-smtp-password;
-    format = "binary";
+  sops.secrets."forgejo-smtp-password" = mkSparkSecret "forgejo-smtp-password" {
     owner = "git";
     group = "git";
     mode = "0400";
     restartUnits = [ "forgejo.service" ];
   };
-  sops.secrets."forgejo-mirror.env" = {
-    sopsFile = ../../secrets/spark/forgejo-mirror.env;
-    format = "binary";
+  sops.secrets."forgejo-mirror.env" = mkSparkSecret "forgejo-mirror.env" {
     owner = "git";
     group = "git";
     mode = "0400";
@@ -41,9 +38,7 @@ in
       "forgejo-heatmap-reconcile.service"
     ];
   };
-  sops.secrets."forgejo-runner-token" = {
-    sopsFile = ../../secrets/spark/forgejo-runner-token;
-    format = "binary";
+  sops.secrets."forgejo-runner-token" = mkSparkSecret "forgejo-runner-token" {
     owner = "gitea-runner";
     group = "gitea-runner";
     mode = "0400";

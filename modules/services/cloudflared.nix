@@ -1,4 +1,8 @@
-{ config, ... }:
+{
+  config,
+  mkSparkSecret,
+  ...
+}:
 let
   # Tunnel UUID returned by the one-time `POST /cfd_tunnel` call that
   # provisioned this tunnel in the Rathiharivansh@gmail.com CF account.
@@ -14,9 +18,7 @@ in
   # (0444) so the ephemeral DynamicUser can still open it. Acceptable
   # because the credentials are already scoped to a single tunnel in a
   # personal Cloudflare account and the host is single-tenant.
-  sops.secrets."cloudflared-credentials" = {
-    sopsFile = ../../secrets/spark/cloudflared.json;
-    format = "binary";
+  sops.secrets."cloudflared-credentials" = mkSparkSecret "cloudflared.json" {
     mode = "0444";
     restartUnits = [ "cloudflared-tunnel-${tunnelId}.service" ];
   };

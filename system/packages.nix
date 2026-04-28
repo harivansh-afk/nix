@@ -12,8 +12,7 @@ in
   # Keep the shared dev toolchain aligned across both hosts. Only the
   # Darwin-specific compatibility packages stay behind the platform gate.
   environment.systemPackages =
-    packageSets.extras
-    ++ lib.optionals hostConfig.isDarwin packageSets.darwinExtras;
+    packageSets.extras ++ lib.optionals hostConfig.isDarwin packageSets.darwinExtras;
 
   fonts.packages = packageSets.fonts;
 }

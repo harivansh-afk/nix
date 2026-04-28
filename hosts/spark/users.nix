@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   mkSparkSecret,
   pkgs,
   username,
@@ -11,6 +12,7 @@ let
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM6tzq33IQcurWoQ7vhXOTLjv8YkdTGb7NoNsul3Sbfu rathi@mac"
   ];
   passwordHashFile = config.sops.secrets."user-password-hash".path;
+  friends = [ "barrett" ];
 in
 {
   # Console/login password hash for rathi + root. `neededForUsers`
@@ -45,6 +47,12 @@ in
     openssh.authorizedKeys.keys = authorizedKeys;
     hashedPasswordFile = passwordHashFile;
   };
+
+  users.users = lib.genAttrs friends (name: {
+    isNormalUser = true;
+    shell = pkgs.zsh;
+    extraGroups = [];
+  });
 
   # Keep root reachable during bootstrap; tighten to `prohibit-password`
   # only (set below in services.openssh) so passwords still can't be used.

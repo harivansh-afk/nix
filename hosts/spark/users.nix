@@ -34,30 +34,32 @@ in
 
   users.mutableUsers = false;
 
-  users.users.${username} = {
-    isNormalUser = true;
-    description = "rathi";
-    shell = pkgs.zsh;
-    extraGroups = [
-      "wheel"
-      "networkmanager"
-      "video"
-      "podman"
-    ];
-    openssh.authorizedKeys.keys = authorizedKeys;
-    hashedPasswordFile = passwordHashFile;
-  };
+  users.users = {
+    ${username} = {
+      isNormalUser = true;
+      description = "rathi";
+      shell = pkgs.zsh;
+      extraGroups = [
+        "wheel"
+        "networkmanager"
+        "video"
+        "podman"
+      ];
+      openssh.authorizedKeys.keys = authorizedKeys;
+      hashedPasswordFile = passwordHashFile;
+    };
 
-  users.users = lib.genAttrs friends (name: {
+    # Keep root reachable during bootstrap; tighten to `prohibit-password`
+    # only (set below in services.openssh) so passwords still can't be used.
+    root = {
+      openssh.authorizedKeys.keys = authorizedKeys;
+      hashedPasswordFile = passwordHashFile;
+    };
+  } // lib.genAttrs friends (name: {
     isNormalUser = true;
     shell = pkgs.zsh;
     extraGroups = [];
   });
-
-  # Keep root reachable during bootstrap; tighten to `prohibit-password`
-  # only (set below in services.openssh) so passwords still can't be used.
-  users.users.root.openssh.authorizedKeys.keys = authorizedKeys;
-  users.users.root.hashedPasswordFile = passwordHashFile;
 
   services.openssh = {
     enable = true;

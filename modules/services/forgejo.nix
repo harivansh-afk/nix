@@ -33,7 +33,6 @@ in
     restartUnits = [
       "forgejo.service"
       "forgejo-mirror-sync.service"
-      "forgejo-heatmap-reconcile.service"
     ];
   };
   sops.secrets."forgejo-runner-token" = mkSparkSecret "forgejo-runner-token" {

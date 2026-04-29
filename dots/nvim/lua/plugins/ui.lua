@@ -7,10 +7,7 @@ vim.pack.add({
 return {
   {
     "harivansh-afk/cozybox.nvim",
-    after = function()
-      require("theme").setup()
-      require("statusline").setup()
-    end,
+    after = function() require("theme").setup() end,
   },
   {
     "nvim-tree/nvim-web-devicons",

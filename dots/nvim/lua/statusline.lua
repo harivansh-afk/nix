@@ -43,9 +43,9 @@ local function segment(value)
   return " " .. value .. " "
 end
 
-local function highlighted_segment(group, value)
+local function diff_segment(group, value)
   if value == nil or value == "" then return "" end
-  return (" %%#%s#%s%%#StatusLine# "):format(group, value)
+  return ("%%#%s#%s%%#StatusLine#"):format(group, value)
 end
 
 local function mode() return mode_labels[vim.api.nvim_get_mode().mode] or "NORMAL" end
@@ -79,17 +79,15 @@ local function git_diff()
   if not status then return "" end
 
   local parts = {}
-  if status.added and status.added > 0 then
-    table.insert(parts, highlighted_segment("GitSignsAdd", "+" .. status.added))
-  end
+  if status.added and status.added > 0 then table.insert(parts, diff_segment("GitSignsAdd", "+" .. status.added)) end
   if status.changed and status.changed > 0 then
-    table.insert(parts, highlighted_segment("GitSignsChange", "~" .. status.changed))
+    table.insert(parts, diff_segment("GitSignsChange", "!" .. status.changed))
   end
   if status.removed and status.removed > 0 then
-    table.insert(parts, highlighted_segment("GitSignsDelete", "-" .. status.removed))
+    table.insert(parts, diff_segment("GitSignsDelete", "-" .. status.removed))
   end
 
-  return table.concat(parts, "")
+  return table.concat(parts, " ")
 end
 
 local function search_count()
@@ -139,7 +137,7 @@ function M.render()
   local left = {
     segment(mode()),
     segment(git_branch()),
-    git_diff(),
+    segment(git_diff()),
     segment(buffer_label),
     segment(flags()),
   }

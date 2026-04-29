@@ -8,6 +8,7 @@ let
   domain = "harivan.sh";
   port = 8880;
   repoDir = "/home/${username}/Documents/GitHub/website";
+  serveDir = "${repoDir}/dist";
 in
 {
   services.caddy.virtualHosts."http://${domain}" = loopbackVhost port;
@@ -22,8 +23,8 @@ in
       Type = "simple";
       User = username;
       Group = "users";
-      WorkingDirectory = repoDir;
-      ExecStart = "${pkgs.python3}/bin/python -m http.server ${toString port} --bind 127.0.0.1";
+      WorkingDirectory = serveDir;
+      ExecStart = "${pkgs.python3}/bin/python -m http.server ${toString port} --bind 127.0.0.1 --directory ${serveDir}";
       Restart = "on-failure";
       RestartSec = 5;
     };

@@ -1,8 +1,6 @@
 local function register_query_directive_compat()
   local query = require "vim.treesitter.query"
 
-  -- Neovim nightly now passes capture lists to custom query directives.
-  -- nvim-treesitter still assumes a single TSNode for these handlers.
   local function capture_node(match, capture_id)
     local capture = match[capture_id]
     if type(capture) == "table" then return capture[1] end

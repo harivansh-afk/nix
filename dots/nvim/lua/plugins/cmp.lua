@@ -1,11 +1,13 @@
 vim.pack.add({
+  "https://github.com/saghen/blink.lib",
   "https://github.com/saghen/blink.cmp",
 }, { load = function() end })
 
 return {
   "saghen/blink.cmp",
-  event = { "InsertEnter", "LspAttach" },
+  event = "InsertEnter",
   keys = { { "<c-n>", mode = "i" } },
+  before = function() vim.cmd.packadd "blink.lib" end,
   after = function()
     require("blink.cmp").setup {
       keymap = {

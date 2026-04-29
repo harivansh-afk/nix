@@ -11,19 +11,19 @@ o.breakindent = true
 
 o.ignorecase = true
 o.smartcase = true
-o.hlsearch = false
+o.hlsearch = true
 o.incsearch = true
 
 o.termguicolors = true
 o.scrolloff = 8
-o.signcolumn = 'yes'
+o.signcolumn = "yes"
 o.wrap = false
 o.showmode = false
 o.laststatus = 3
 o.cmdheight = 0
 
-opt.fillchars = { vert = '|', fold = '-', foldsep = '|', diff = '-' }
-opt.shortmess:append('S')
+opt.fillchars = { vert = "|", fold = "-", foldsep = "|", diff = "-" }
+opt.shortmess:append "S"
 
 o.splitbelow = true
 o.splitright = true
@@ -31,14 +31,14 @@ o.splitright = true
 o.swapfile = false
 o.backup = false
 o.undofile = true
-o.undodir = vim.fn.stdpath('data') .. '/undo'
+o.undodir = vim.fn.stdpath "data" .. "/undo"
 
 o.foldlevel = 99
 o.foldlevelstart = 99
 o.foldenable = true
 
 o.updatetime = 250
-o.mouse = 'a'
-o.clipboard = 'unnamedplus'
+o.mouse = "a"
+o.clipboard = "unnamedplus"
 
-o.hlsearch = true
+require("statusline").setup()

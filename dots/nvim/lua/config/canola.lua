@@ -3,7 +3,7 @@ local M = {}
 local globals_configured = false
 local integrations_configured = false
 
-local ns = vim.api.nvim_create_namespace("canola_git_trailing")
+local ns = vim.api.nvim_create_namespace "canola_git_trailing"
 local symbols = {
   M = { "M", "DiagnosticWarn" },
   A = { "A", "DiagnosticOk" },
@@ -80,7 +80,7 @@ function M.setup_integrations()
   if integrations_configured then return end
   integrations_configured = true
 
-  vim.cmd.packadd("canola-collection")
+  vim.cmd.packadd "canola-collection"
 
   local augroup = vim.api.nvim_create_augroup("UserCanolaConfig", { clear = true })
   local detail_columns = { "git_status", "permissions", "owner", "size", "mtime" }
@@ -105,7 +105,7 @@ function M.setup_integrations()
       })
 
       vim.keymap.set("n", "gX", function()
-        local canola = require("canola")
+        local canola = require "canola"
         local entry = canola.get_cursor_entry()
         local dir = canola.get_current_dir()
         if not entry or not dir then return end

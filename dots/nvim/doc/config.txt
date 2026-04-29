@@ -12,8 +12,8 @@ CONTENTS                                                    *config-contents*
 ==============================================================================
 1. OVERVIEW                                                 *config-overview*
 
-Neovim config built on lazy.nvim. All plugins load at startup (no
-lazy-loading). Gruvbox hard contrast with transparent background.
+Neovim config built on vim.pack and lz.n. Cozybox provides the colorscheme,
+and a small native Lua statusline handles the editor state.
 
 Global helpers defined in init.lua:
 >lua
@@ -40,7 +40,7 @@ Options: >
 3. STRUCTURE                                                *config-structure*
 
 >
-    init.lua                    Leader, helpers, lazy bootstrap
+    init.lua                    Leader, helpers, vim.pack/lz.n bootstrap
     plugin/
       options.lua               Vim options
       keymaps.lua               Global keymaps
@@ -54,14 +54,15 @@ Options: >
         rust_analyzer.lua
         ts_ls.lua
       plugins/
-        editor.lua              Autopairs, flash, surround, ufo
+        editor.lua              Autopairs, surround, ufo, preview
         cmp.lua                 Blink.cmp completion
         fzf.lua                 Fzf-lua fuzzy finder
         git.lua                 Fugitive, gitsigns, diffs.nvim
         lsp.lua                 nvim-lspconfig
-        oil.lua                 Oil file explorer + oil-git
+        canola.lua              Canola file explorer
         treesitter.lua          Treesitter + textobjects
-        ui.lua                  Gruvbox, lualine, nonicons
+        ui.lua                  Cozybox, statusline, nonicons
+      statusline.lua            Native statusline renderer
     after/
       plugin/
         lsp.lua                 LSP server enable loop
@@ -77,17 +78,16 @@ Options: >
 ==============================================================================
 4. PLUGINS                                                  *config-plugins*
 
-All plugins load at startup via `defaults = { lazy = false }`.
+Plugins are declared with vim.pack and loaded through lz.n.
 
     Plugin                          Purpose ~
-    ellisonleao/gruvbox.nvim        Colorscheme (hard, transparent)
-    nvim-lualine/lualine.nvim       Statusline
+    harivansh-afk/cozybox.nvim      Colorscheme
     barrettruth/nonicons.nvim       File icons
     nvim-tree/nvim-web-devicons     Icon provider
 
     ibhagwan/fzf-lua                Fuzzy finder
-    stevearc/oil.nvim               File explorer
-    malewicz1337/oil-git.nvim       Git status in oil
+    barrettruth/canola.nvim         File explorer
+    barrettruth/canola-collection   Canola extensions
 
     neovim/nvim-lspconfig           LSP configuration
     nvim-treesitter/nvim-treesitter Syntax highlighting
@@ -99,8 +99,8 @@ All plugins load at startup via `defaults = { lazy = false }`.
 
     windwp/nvim-autopairs           Auto-close brackets
     kylechui/nvim-surround          Surround operations
-    folke/flash.nvim                Jump/search motions
     kevinhwang91/nvim-ufo           Code folding
+    saghen/blink.lib                Blink.cmp runtime library
     saghen/blink.cmp                Autocompletion (LSP, path, buffer, snippets)
 
 ==============================================================================
@@ -136,7 +136,6 @@ GIT ~
     <leader>gd          Vertical diff split
     <leader>gr          Git checkout file
     <leader>gw          Git add file
-    <leader>go          Open in GitHub
     <leader>ghs         Stage hunk
     <leader>ghr         Reset hunk
     <leader>ghp         Preview hunk
@@ -164,15 +163,9 @@ FZF ~
     <leader>Gp          GitHub PRs
     <leader>Gi          GitHub issues
 
-OIL ~
-    -                   Open oil
-    <leader>e           Open oil
-
-FLASH ~
-    s                   Flash jump
-    S                   Flash treesitter
-    r  (operator)       Remote flash
-    R  (operator/vis)   Treesitter search
+CANOLA ~
+    -                   Open Canola
+    <leader>e           Open Canola
 
 FOLDS ~
     zR                  Open all folds

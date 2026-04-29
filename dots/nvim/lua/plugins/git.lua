@@ -10,6 +10,7 @@ return {
     event = "BufReadPre",
     after = function()
       require("gitsigns").setup {
+        base = "HEAD",
         signs = {
           add = { text = "██" },
           change = { text = "██" },

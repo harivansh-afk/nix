@@ -17,7 +17,6 @@ in
     btop
     curl
     fd
-    fzf
     gnupg
     gcc
     go_1_26

@@ -1,32 +1,26 @@
 {
-  pkgs,
   username,
-  loopbackVhost,
   ...
 }:
 let
   domain = "harivan.sh";
-  port = 8880;
   repoDir = "/home/${username}/Documents/GitHub/website";
-  serveDir = "${repoDir}/dist";
+  mountDir = "/srv/harivan.sh";
+  serveDir = "${mountDir}/dist";
 in
 {
-  services.caddy.virtualHosts."http://${domain}" = loopbackVhost port;
-
-  systemd.services.website = {
-    description = "Personal website";
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    wantedBy = [ "multi-user.target" ];
-
-    serviceConfig = {
-      Type = "simple";
-      User = username;
-      Group = "users";
-      WorkingDirectory = serveDir;
-      ExecStart = "${pkgs.python3}/bin/python -m http.server ${toString port} --bind 127.0.0.1 --directory ${serveDir}";
-      Restart = "on-failure";
-      RestartSec = 5;
-    };
+  services.caddy.virtualHosts."http://${domain}" = {
+    listenAddresses = [ "127.0.0.1" ];
+    extraConfig = ''
+      root * ${serveDir}
+      file_server
+      handle_errors {
+        @notFound expression {err.status_code} == 404
+        rewrite @notFound /404.html
+        file_server
+      }
+    '';
   };
+
+  systemd.services.caddy.serviceConfig.BindReadOnlyPaths = [ "${repoDir}:${mountDir}" ];
 }

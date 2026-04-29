@@ -1,20 +1,22 @@
 # nix
 
-- **macbook** - MacBook (aarch64-darwin) running nix-darwin + home-manager + nix-homebrew
-- **spark** - NVIDIA DGX Spark (aarch64-linux) running NixOS
+**macbook** - MacBook (aarch64-darwin) running nix-darwin + home-manager + nix-homebrew
+
+**spark** - NVIDIA DGX Spark (aarch64-linux) running NixOS
 
 Both are declared in one flake using [flake-parts](https://github.com/hercules-ci/flake-parts) and managed with [Determinate Nix](https://docs.determinate.systems/determinate-nix/)
 
 configs live in `dots/` and get symlinked into XDG paths
 
-Spark is a shared NixOS workstation. 
-Friends who want access get a user definition in `users/` and per-user home-manager config under `hosts/spark/<name>/`.
+Spark is a shared NixOS workstation
+
+Friends who want access get a user definition in `users` and per-user home-manager config under `hosts/spark/<name>`
 
 NVIDIA kernel, drivers, and container support come from the upstream [nixos-dgx-spark](https://github.com/graham33/nixos-dgx-spark) module
 
-Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix).
+Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix)
 
-[cozybox.nvim](https://github.com/harivansh-afk/cozybox.nvim) provides the unified theme across everything.
+[cozybox.nvim](https://github.com/harivansh-afk/cozybox.nvim) provides the unified theme across everything
 
 ## Structure
 

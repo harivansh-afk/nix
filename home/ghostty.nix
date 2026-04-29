@@ -20,6 +20,7 @@ let
     mouse-hide-while-typing = true
     ${lib.optionalString hostConfig.isDarwin ''
       macos-titlebar-style = hidden
+      window-decoration = none
       macos-option-as-alt = true
     ''}
     confirm-close-surface = true

@@ -185,7 +185,7 @@ let
       set-option -g status-style bg=${theme.background},fg=${theme.text}
       set-option -g window-status-format " #I#[fg=${theme.purple}]:#[fg=default]#W "
       set-option -g window-status-current-format " #[fg=${theme.purple}]*#[fg=default]#I#[fg=${theme.purple}]:#[fg=default]#W "
-      set-option -g window-status-separator ""
+      set-option -g window-status-separator "#[fg=${theme.mutedText}]|#[fg=default]"
       set-option -g pane-border-style fg=${theme.border}
       set-option -g pane-active-border-style fg=${theme.border}
     '';

@@ -94,9 +94,9 @@ local function search_count()
   if vim.v.hlsearch == 0 then return "" end
 
   local ok, count = pcall(vim.fn.searchcount, { recompute = true, maxcount = 999 })
-  if not ok or count.total == 0 then return "" end
+  if not ok or type(count) ~= "table" or (count.total or 0) == 0 then return "" end
 
-  return ("%d/%d"):format(count.current, count.total)
+  return ("%d/%d"):format(count.current or 0, count.total)
 end
 
 local function canola_path()

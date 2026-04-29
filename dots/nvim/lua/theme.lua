@@ -51,16 +51,6 @@ local function colorscheme_for_mode(mode)
   return "cozybox"
 end
 
-function M.statusline_label()
-  local mode = vim.g.cozybox_theme_mode or read_mode()
-  local scheme = vim.g.colors_name or colorscheme_for_mode(mode)
-  local expected_scheme = colorscheme_for_mode(mode)
-
-  if scheme == expected_scheme then return "theme:" .. mode end
-
-  return ("theme:%s/%s"):format(mode, scheme)
-end
-
 function M.apply(mode)
   local next_mode = mode or read_mode()
   local next_scheme = colorscheme_for_mode(next_mode)
@@ -73,11 +63,7 @@ function M.apply(mode)
   apply_cozybox_overrides()
   local ok_reload, fzf_reload = pcall(require, "config.fzf_reload")
   if ok_reload then pcall(fzf_reload.reload) end
-  vim.schedule(function()
-    local ok, lualine = pcall(require, "lualine")
-    if ok then pcall(lualine.refresh, { place = { "statusline" } }) end
-    pcall(vim.cmd, "redraw!")
-  end)
+  vim.schedule(function() pcall(vim.cmd, "redrawstatus!") end)
 end
 
 function M.setup()

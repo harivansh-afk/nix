@@ -2,19 +2,13 @@ local api = vim.api
 local augroup = api.nvim_create_augroup("UserAutocmds", { clear = true })
 
 local function ensure_canola_loaded()
-  local canola_config = require("config.canola")
+  local canola_config = require "config.canola"
   canola_config.setup_globals()
 
   local ok_lz, lz = pcall(require, "lz.n")
-  if ok_lz then
-    -- Loading the raw package skips the lz.n hooks that apply the user's
-    -- canola config and packadd canola-collection.
-    pcall(lz.trigger_load, "barrettruth/canola.nvim")
-  end
+  if ok_lz then pcall(lz.trigger_load, "barrettruth/canola.nvim") end
 
-  if vim.fn.exists(":Canola") ~= 2 then
-    pcall(vim.cmd.packadd, "canola.nvim")
-  end
+  if vim.fn.exists ":Canola" ~= 2 then pcall(vim.cmd.packadd, "canola.nvim") end
 
   canola_config.setup_integrations()
 end

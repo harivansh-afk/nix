@@ -1,19 +1,4 @@
 local M = {}
-local cached_capabilities
-
-local function load_blink()
-  pcall(vim.cmd.packadd, "blink.cmp")
-
-  local ok_blink, blink = pcall(require, "blink.cmp")
-  if ok_blink then return blink end
-
-  local ok_lz, lz = pcall(require, "lz.n")
-  if ok_lz then
-    pcall(lz.trigger_load, "saghen/blink.cmp")
-    ok_blink, blink = pcall(require, "blink.cmp")
-    if ok_blink then return blink end
-  end
-end
 
 function M.on_attach(_, bufnr)
   local function buf(mode, lhs, rhs) bmap(mode, lhs, rhs, { buffer = bufnr }) end
@@ -30,16 +15,22 @@ function M.on_attach(_, bufnr)
 end
 
 function M.capabilities()
-  if cached_capabilities then return vim.deepcopy(cached_capabilities) end
-
   local capabilities = vim.lsp.protocol.make_client_capabilities()
-  local blink = load_blink()
-  if blink and blink.get_lsp_capabilities then
+
+  local ok_lz, lz = pcall(require, "lz.n")
+  if ok_lz then
+    pcall(lz.trigger_load, "saghen/blink.cmp")
+  else
+    pcall(vim.cmd.packadd, "blink.lib")
+    pcall(vim.cmd.packadd, "blink.cmp")
+  end
+
+  local ok, blink = pcall(require, "blink.cmp")
+  if ok and blink.get_lsp_capabilities then
     capabilities = vim.tbl_deep_extend("force", capabilities, blink.get_lsp_capabilities({}, false))
   end
 
-  cached_capabilities = capabilities
-  return vim.deepcopy(cached_capabilities)
+  return capabilities
 end
 
 return M

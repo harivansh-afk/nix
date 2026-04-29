@@ -1,14 +1,11 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = ","
 
--- Silence the "defaults.lua: Did not detect DSR response from terminal"
 vim.opt.background = "dark"
 do
   local orig_notify = vim.notify
   vim.notify = function(msg, level, opts)
-    if type(msg) == "string" and msg:find("Did not detect DSR response", 1, true) then
-      return
-    end
+    if type(msg) == "string" and msg:find("Did not detect DSR response", 1, true) then return end
     return orig_notify(msg, level, opts)
   end
 end

@@ -1,6 +1,5 @@
 vim.pack.add({
   "https://github.com/windwp/nvim-autopairs",
-  "https://github.com/folke/flash.nvim",
   "https://github.com/kylechui/nvim-surround",
   "https://github.com/kevinhwang91/nvim-ufo",
   "https://github.com/kevinhwang91/promise-async",
@@ -12,41 +11,6 @@ return {
     "windwp/nvim-autopairs",
     event = "InsertEnter",
     after = function() require("nvim-autopairs").setup() end,
-  },
-  {
-    "folke/flash.nvim",
-    after = function()
-      require("flash").setup {
-        modes = { search = { enabled = true } },
-      }
-    end,
-    keys = {
-      {
-        "s",
-        function() require("flash").jump() end,
-        mode = { "n", "x", "o" },
-      },
-      {
-        "S",
-        function() require("flash").treesitter() end,
-        mode = { "n", "x", "o" },
-      },
-      {
-        "r",
-        function() require("flash").remote() end,
-        mode = "o",
-      },
-      {
-        "R",
-        function() require("flash").treesitter_search() end,
-        mode = { "o", "x" },
-      },
-      {
-        "<c-s>",
-        function() require("flash").toggle() end,
-        mode = "c",
-      },
-    },
   },
   {
     "kylechui/nvim-surround",

@@ -126,7 +126,7 @@ local function progress()
   if line <= 1 then return "top" end
   if line >= total then return "bot" end
 
-  return ("%d%%"):format(math.floor(line / total * 100))
+  return ("%d%%%%"):format(math.floor(line / total * 100))
 end
 
 function M.render()

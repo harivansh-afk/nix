@@ -70,6 +70,7 @@ in
       terraform
       texliveFull
       typst
+      watchman
     ])
     ++ (builtins.filter (p: p != null) [
       claudePackage

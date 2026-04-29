@@ -15,6 +15,7 @@
     ../../modules/services/delta.nix
     ../../modules/services/forgejo.nix
     ../../modules/services/vaultwarden.nix
+    ../../modules/services/website.nix
     ./hardware.nix
     ./networking.nix
     ./users.nix

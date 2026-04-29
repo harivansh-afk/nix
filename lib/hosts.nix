@@ -33,6 +33,7 @@
       go = true;
       node = true;
       python = true;
+      aws = true;
       docker = true;
     };
   };

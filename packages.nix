@@ -69,6 +69,7 @@ in
       tailscale
       terraform
       texliveFull
+      typst
     ])
     ++ (builtins.filter (p: p != null) [
       claudePackage

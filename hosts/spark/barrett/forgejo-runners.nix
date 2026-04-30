@@ -11,10 +11,40 @@ let
   stateHome = config.xdg.stateHome;
   runnerEnvFile = "/run/secrets/barrett-forgejo-runner-token";
   runnerUrl = "https://git.barrettruth.com";
+  runnerPackages = with pkgs; [
+    bash
+    coreutils
+    curl
+    fd
+    findutils
+    gh
+    git
+    gnugrep
+    gnumake
+    gnused
+    gawk
+    jq
+    nix
+    nixos-rebuild
+    nodejs_24
+    pkg-config
+    pnpm
+    python3
+    python3Packages.pip
+    ripgrep
+    rustup
+    stdenv.cc
+    unzip
+    uv
+    wget
+    xz
+    zip
+  ];
+  runnerPath = lib.makeBinPath runnerPackages;
   runnerLabels = [
-    "nix:docker://node:24-bookworm"
-    "spark:docker://node:24-bookworm"
-    "ubuntu-latest:docker://node:24-bookworm"
+    "nix:host"
+    "spark:host"
+    "ubuntu-latest:host"
   ];
   yamlFormat = pkgs.formats.yaml { };
   runnerNames = [
@@ -152,20 +182,13 @@ in
       lib.nameValuePair "forgejo-runner-${runner.name}" {
         Unit = {
           Description = "Forgejo Runner (${runner.name})";
-          Wants = [
-            "network-online.target"
-            "podman.socket"
-          ];
-          After = [
-            "network-online.target"
-            "podman.socket"
-          ];
+          Wants = [ "network-online.target" ];
+          After = [ "network-online.target" ];
         };
         Service = {
           Type = "simple";
           Environment = [
-            "DOCKER_HOST=unix://%t/podman/podman.sock"
-            "PATH=/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin"
+            "PATH=${runnerPath}:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin"
           ];
           WorkingDirectory = runner.stateDir;
           ExecStartPre = runner.registerPath;

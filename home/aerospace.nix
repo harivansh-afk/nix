@@ -84,10 +84,20 @@
         alt-up = "focus up";
         alt-right = "focus right";
 
+        alt-h = "focus left";
+        alt-j = "focus down";
+        alt-k = "focus up";
+        alt-l = "focus right";
+
         alt-shift-left = "move left";
         alt-shift-down = "move down";
         alt-shift-up = "move up";
         alt-shift-right = "move right";
+
+        alt-shift-h = "move left";
+        alt-shift-j = "move down";
+        alt-shift-k = "move up";
+        alt-shift-l = "move right";
 
         alt-1 = "workspace 1";
         alt-2 = "workspace 2";

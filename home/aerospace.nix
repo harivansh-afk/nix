@@ -79,11 +79,6 @@
       ];
 
       mode.main.binding = {
-        alt-left = "focus left";
-        alt-down = "focus down";
-        alt-up = "focus up";
-        alt-right = "focus right";
-
         alt-h = "focus left";
         alt-j = "focus down";
         alt-k = "focus up";

@@ -10,7 +10,6 @@ let
   configHome = config.xdg.configHome;
   stateHome = config.xdg.stateHome;
   runnerEnvFile = "/run/secrets/barrett-forgejo-runner-token";
-  runnerLegacyEnvFile = "/etc/forgejo-runner.env";
   runnerUrl = "https://git.barrettruth.com";
   runnerLabels = [
     "nix:docker://node:24-bookworm"
@@ -59,18 +58,13 @@ let
       };
       registerScript = pkgs.writeShellScript "forgejo-runner-${name}-register" ''
         set -eu
-        if [ -r "${runnerEnvFile}" ]; then
-          set -a
-          . "${runnerEnvFile}"
-          set +a
-        elif [ -r "${runnerLegacyEnvFile}" ]; then
-          set -a
-          . "${runnerLegacyEnvFile}"
-          set +a
-        else
-          printf 'missing runner token env file: %s or %s\n' "${runnerEnvFile}" "${runnerLegacyEnvFile}" >&2
+        if [ ! -r "${runnerEnvFile}" ]; then
+          printf 'missing runner token env file: %s\n' "${runnerEnvFile}" >&2
           exit 1
         fi
+        set -a
+        . "${runnerEnvFile}"
+        set +a
         : "''${TOKEN:?missing TOKEN in runner env file}"
         INSTANCE_DIR="${stateDir}"
         CONFIG_FILE="${configPath}"

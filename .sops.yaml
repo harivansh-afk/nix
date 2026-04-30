@@ -8,9 +8,16 @@
 
 keys:
   - &admin_macbook age1m0nf8gmkeptnqrl8qdjcvz8jkt2zxpn9jcqs6424say4c332p4qqv5yf3a
+  - &admin_laptop_barrett age1avg36skretl5rqx553kktq3w2m28lnzc4054t3rjsujhlw90l9cs4l4nuq
   - &host_spark age1nz862qmyaa337s7pmw60pawgfu5z0und9y75vhwkk6txgfrqeujquf3xaj
 
 creation_rules:
+  - path_regex: secrets/spark/barrett-[^/]+$
+    key_groups:
+      - age:
+          - *admin_macbook
+          - *admin_laptop_barrett
+          - *host_spark
   - path_regex: secrets/spark/[^/]+$
     key_groups:
       - age:

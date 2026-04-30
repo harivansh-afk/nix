@@ -4,4 +4,5 @@
   ];
   shell = "zsh";
   extraGroups = [ ];
+  linger = true;
 }

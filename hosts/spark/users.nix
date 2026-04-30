@@ -46,6 +46,9 @@ in
         openssh.authorizedKeys.keys = user.sshKeys;
         homeMode = "0700";
       }
+      // lib.optionalAttrs (user ? linger) {
+        inherit (user) linger;
+      }
       // lib.optionalAttrs (name == username) {
         description = username;
         hashedPasswordFile = passwordHashFile;

@@ -18,6 +18,7 @@
     ../../modules/services/website.nix
     ./hardware.nix
     ./networking.nix
+    ./barrett/system.nix
     ./users.nix
   ]
   ++ lib.optional (builtins.pathExists ./hardware-configuration.nix) ./hardware-configuration.nix;

@@ -54,7 +54,7 @@ let
             UV_CACHE_DIR = "${cacheRoot}/uv";
             npm_config_cache = "${cacheRoot}/npm";
           };
-          timeout = "3h";
+          timeout = "30m";
         };
       };
       registerScript = pkgs.writeShellScript "forgejo-runner-${name}-register" ''

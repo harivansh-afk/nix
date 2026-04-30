@@ -51,6 +51,7 @@ in
       golangci-lint
       goose
       google-cloud-sdk
+      graphite-cli
       imagemagickBig
       kind
       kubectl

@@ -40,7 +40,7 @@
       set -s extended-keys on
       set -s extended-keys-format csi-u
       set -as terminal-features 'xterm*:extkeys'
-      set -as terminal-features 'xterm-ghostty:RGB:overline'
+      set -as terminal-features 'xterm-ghostty:RGB'
 
       bind h select-pane -L
       bind j select-pane -D

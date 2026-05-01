@@ -178,11 +178,14 @@ let
     mode:
     let
       theme = themes.${mode};
+      dashes = builtins.concatStringsSep "" (builtins.genList (_: "─") 400);
     in
     ''
       set-option -g @cozybox-mode '${mode}'
       set-option -g @cozybox-accent '${theme.purple}'
-      set-option -g status-style bg=${theme.background},fg=${theme.text},overline
+      set-option -g status 2
+      set-option -g status-format[1] "#[fg=${theme.border},bg=${theme.background},nooverline]${dashes}"
+      set-option -g status-style bg=${theme.background},fg=${theme.text}
       set-option -g window-status-format " #I#[fg=${theme.purple}]:#[fg=default]#W "
       set-option -g window-status-current-format " #[fg=${theme.purple}]*#[fg=default]#I#[fg=${theme.purple}]:#[fg=default]#W "
       set-option -g window-status-separator "#[fg=${theme.mutedText}]|#[fg=default]"

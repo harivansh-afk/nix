@@ -385,8 +385,7 @@ let
   '';
 
   mkForgejoAuthMail =
-    args:
-    pkgs.replaceVars ./forgejo-mail-auth.tmpl.in ({ domain = forgejoDomain; } // args);
+    args: pkgs.replaceVars ./forgejo-mail-auth.tmpl.in ({ domain = forgejoDomain; } // args);
 
   forgejoMailActivateTmpl = mkForgejoAuthMail {
     title = "Welcome to ${forgejoDomain}";

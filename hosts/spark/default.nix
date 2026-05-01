@@ -14,6 +14,7 @@
     ../../modules/services/cloudflared.nix
     ../../modules/services/delta.nix
     ../../modules/services/forgejo.nix
+    ../../modules/services/gitea-mirror.nix
     ../../modules/services/vaultwarden.nix
     ../../modules/services/website.nix
     ./hardware.nix

@@ -9,32 +9,42 @@ sandbox_mode = "danger-full-access"
 commit_attribution = ""
 
 [features]
-undo = true
 shell_tool = true
 unified_exec = true
 shell_snapshot = true
 apply_patch_freeform = true
+apply_patch_streaming_events = true
 code_mode = true
+code_mode_only = true
 personality = true
 memories = true
-js_repl = true
 runtime_metrics = true
 child_agents_md = true
 enable_request_compression = true
 skill_mcp_dependency_install = true
 skill_env_var_dependency_prompt = true
-responses_websockets_v2 = true
 apps = false
 codex_git_commit = false
 prevent_idle_sleep = true
 exec_permission_approvals = true
 request_permissions_tool = true
 enable_fanout = true
-codex_hooks = true
+hooks = true
+plugin_hooks = true
 guardian_approval = true
+goals = true
+external_migration = true
+artifact = true
+default_mode_request_user_input = true
+chronicle = true
+realtime_conversation = true
+remote_control = true
+
+[features.multi_agent_v2]
+enabled = true
+max_concurrent_threads_per_session = 8
 
 [agents]
-max_threads = 8
 max_depth = 3
 job_max_runtime_seconds = 1800
 

@@ -12,6 +12,7 @@ let
     env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
     model = "opus[1m]";
     permissions.defaultMode = "bypassPermissions";
+    includeCoAuthoredBy = false;
     statusLine = {
       type = "command";
       command = "${config.home.homeDirectory}/.claude/statusline.sh";

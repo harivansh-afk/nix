@@ -194,9 +194,14 @@ let
     .page-footer { display: none !important; }
     #navbar-logo img { display: none !important; }
     #navbar-logo::before {
-      content: "Home";
+      content: "Home" !important;
+      display: inline-block !important;
+      position: static !important;
+      background: none !important;
+      width: auto !important;
+      height: auto !important;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 1rem;
       color: var(--color-text);
     }
   '';
@@ -362,9 +367,14 @@ let
     .page-footer { display: none !important; }
     #navbar-logo img { display: none !important; }
     #navbar-logo::before {
-      content: "Home";
+      content: "Home" !important;
+      display: inline-block !important;
+      position: static !important;
+      background: none !important;
+      width: auto !important;
+      height: auto !important;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 1rem;
       color: var(--color-text);
     }
   '';

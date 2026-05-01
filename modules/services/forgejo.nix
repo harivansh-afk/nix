@@ -432,8 +432,8 @@ in
       };
       session.COOKIE_SECURE = true;
       mirror = {
-        DEFAULT_INTERVAL = "1h";
-        MIN_INTERVAL = "10m";
+        DEFAULT_INTERVAL = "15m";
+        MIN_INTERVAL = "5m";
       };
       actions = {
         ENABLED = true;
@@ -606,7 +606,13 @@ in
                 private: true,
                 mirror: true,
                 auth_token: $token,
-                service: "github"
+                service: "github",
+                issues: true,
+                pull_requests: true,
+                labels: true,
+                milestones: true,
+                releases: true,
+                wiki: true
               }')" \
             > /dev/null
           fix_mirror_creds "$forgejo_owner" "$repo_name" true
@@ -631,9 +637,9 @@ in
   systemd.timers.forgejo-mirror-sync = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
-      OnCalendar = "hourly";
+      OnCalendar = "*:0/15";
       Persistent = true;
-      RandomizedDelaySec = "5m";
+      RandomizedDelaySec = "1m";
     };
   };
 

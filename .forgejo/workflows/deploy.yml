@@ -18,4 +18,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: nixos-rebuild switch
-        run: sudo /run/current-system/sw/bin/nixos-rebuild switch --flake .#spark
+        run: /run/wrappers/bin/sudo /run/current-system/sw/bin/nixos-rebuild switch --flake .#spark

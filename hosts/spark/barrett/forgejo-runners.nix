@@ -43,9 +43,17 @@ let
   runnerPath = lib.makeBinPath runnerPackages;
   runnerLabels = [
     "nix:host"
-    "spark:host"
-    "ubuntu-latest:host"
   ];
+  actCacheRoot = "${homeDir}/.cache/act";
+  actCacheCleanupScript = pkgs.writeShellScript "forgejo-runner-act-cache-cleanup" ''
+    set -eu
+    if [ ! -d ${lib.escapeShellArg actCacheRoot} ]; then
+      exit 0
+    fi
+    ${pkgs.findutils}/bin/find ${lib.escapeShellArg actCacheRoot} \
+      -mindepth 1 -maxdepth 1 -type d -mtime +7 \
+      -exec ${pkgs.coreutils}/bin/rm -rf {} +
+  '';
   yamlFormat = pkgs.formats.yaml { };
   runnerNames = [
     "spark-nix-1"
@@ -176,28 +184,47 @@ in
     )
   );
 
-  systemd.user.services = lib.listToAttrs (
-    map (
-      runner:
-      lib.nameValuePair "forgejo-runner-${runner.name}" {
-        Unit = {
-          Description = "Forgejo Runner (${runner.name})";
-          Wants = [ "network-online.target" ];
-          After = [ "network-online.target" ];
-        };
+  systemd.user.services =
+    lib.listToAttrs (
+      map (
+        runner:
+        lib.nameValuePair "forgejo-runner-${runner.name}" {
+          Unit = {
+            Description = "Forgejo Runner (${runner.name})";
+            Wants = [ "network-online.target" ];
+            After = [ "network-online.target" ];
+          };
+          Service = {
+            Type = "simple";
+            Environment = [
+              "PATH=${runnerPath}:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin"
+            ];
+            WorkingDirectory = runner.stateDir;
+            ExecStartPre = runner.registerPath;
+            ExecStart = runner.daemonPath;
+            Restart = "on-failure";
+            RestartSec = 2;
+          };
+          Install.WantedBy = [ "default.target" ];
+        }
+      ) runners
+    )
+    // {
+      forgejo-runner-act-cache-cleanup = {
+        Unit.Description = "Prune Forgejo runner act per-job cache entries older than 7 days";
         Service = {
-          Type = "simple";
-          Environment = [
-            "PATH=${runnerPath}:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin"
-          ];
-          WorkingDirectory = runner.stateDir;
-          ExecStartPre = runner.registerPath;
-          ExecStart = runner.daemonPath;
-          Restart = "on-failure";
-          RestartSec = 2;
+          Type = "oneshot";
+          ExecStart = "${actCacheCleanupScript}";
         };
-        Install.WantedBy = [ "default.target" ];
-      }
-    ) runners
-  );
+      };
+    };
+
+  systemd.user.timers.forgejo-runner-act-cache-cleanup = {
+    Unit.Description = "Daily prune of Forgejo runner act per-job cache entries older than 7 days";
+    Timer = {
+      OnCalendar = "daily";
+      Persistent = true;
+    };
+    Install.WantedBy = [ "timers.target" ];
+  };
 }

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>@title@</title>
+</head>
+<body style="margin:0;padding:0;background:#e7e7e7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#282828;">
+  {{$action_url := @urlExpr@}}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#e7e7e7;">
+    <tr>
+      <td align="center" style="padding:48px 16px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+
+          <tr>
+            <td style="padding:0 8px 24px 8px;">
+              <a href="{{AppUrl}}" style="display:inline-block;text-decoration:none;color:#282828;">
+                <img src="{{AppUrl}}assets/img/logo.png" width="32" height="32" alt="" style="display:inline-block;vertical-align:middle;border:0;outline:none;">
+                <span style="display:inline-block;vertical-align:middle;padding-left:10px;font-size:15px;font-weight:600;color:#282828;letter-spacing:-0.01em;">@domain@</span>
+              </a>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#ffffff;border:1px solid #d0d0d0;padding:40px 40px 32px 40px;">
+              <h1 style="margin:0 0 16px 0;font-size:24px;line-height:1.3;font-weight:600;color:#181818;letter-spacing:-0.02em;">@heading@</h1>
+
+              <p style="margin:0 0 28px 0;font-size:15px;line-height:1.6;color:#282828;">
+                Hi <strong style="color:#181818;">{{.DisplayName}}</strong>,
+              </p>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px 0;">
+                <tr>
+                  <td bgcolor="#4261a5">
+                    <a href="{{$action_url}}" style="display:inline-block;padding:12px 22px;font-size:15px;font-weight:600;color:#ffffff;background:#4261a5;text-decoration:none;letter-spacing:-0.01em;">@buttonLabel@</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 8px 0;font-size:13px;line-height:1.5;color:#7c7f82;">Or paste this link into your browser:</p>
+              <p style="margin:0 0 24px 0;font-size:13px;line-height:1.5;word-break:break-all;">
+                <a href="{{$action_url}}" style="color:#4261a5;text-decoration:none;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,'Cascadia Mono','Liberation Mono',Consolas,monospace;font-size:12.5px;">{{$action_url}}</a>
+              </p>
+
+              <hr style="border:0;border-top:1px solid #ececec;margin:0 0 16px 0;">
+
+              <p style="margin:0;font-size:12.5px;line-height:1.5;color:#7c7f82;">
+                This link expires in <strong style="color:#504945;">{{@codeLivesVar@}}</strong>. If you didn't request this, you can safely ignore this email.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:24px 8px 0 8px;">
+              <p style="margin:0;font-size:12px;line-height:1.5;color:#7c7f82;">
+                <a href="{{AppUrl}}" style="color:#7c7f82;text-decoration:none;">@domain@</a>
+                &nbsp;&middot;&nbsp;
+                Personal code, experiments, and project history.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

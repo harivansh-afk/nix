@@ -359,6 +359,34 @@ let
     @import url("/assets/css/theme-cozybox-light.css");
     @import url("/assets/css/theme-cozybox-dark.css") (prefers-color-scheme: dark);
   '';
+
+  mkForgejoAuthMail =
+    args:
+    pkgs.replaceVars ./forgejo-mail-auth.tmpl.in ({ domain = forgejoDomain; } // args);
+
+  forgejoMailActivateTmpl = mkForgejoAuthMail {
+    title = "Welcome to ${forgejoDomain}";
+    heading = "Welcome to ${forgejoDomain}";
+    urlExpr = ''printf "%suser/activate?code=%s" AppUrl (QueryEscape .Code)'';
+    buttonLabel = "Confirm your account";
+    codeLivesVar = ".ActiveCodeLives";
+  };
+
+  forgejoMailResetPasswdTmpl = mkForgejoAuthMail {
+    title = "Reset your password";
+    heading = "Reset your password";
+    urlExpr = ''printf "%suser/recover_account?code=%s" AppUrl (QueryEscape .Code)'';
+    buttonLabel = "Reset password";
+    codeLivesVar = ".ResetPwdCodeLives";
+  };
+
+  forgejoMailActivateEmailTmpl = mkForgejoAuthMail {
+    title = "Confirm your new email";
+    heading = "Confirm your new email";
+    urlExpr = ''printf "%suser/activate_email?code=%s&email=%s" AppUrl (QueryEscape .Code) (QueryEscape .Email)'';
+    buttonLabel = "Confirm email";
+    codeLivesVar = ".ActiveCodeLives";
+  };
 in
 {
   services.caddy.virtualHosts."http://${forgejoDomain}" = loopbackVhost backendPort;
@@ -435,7 +463,7 @@ in
         SMTP_ADDR = "smtp.resend.com";
         SMTP_PORT = 465;
         USER = "resend";
-        FROM = "Forgejo <noreply@${rootDomain}>";
+        FROM = "Forgejo <git@${rootDomain}>";
       };
       session.COOKIE_SECURE = true;
       mirror = {
@@ -888,6 +916,13 @@ in
     "L+ /var/lib/forgejo/custom/public/assets/img/logo.png - - - - ${forgejoBrandingAssets}/logo.png"
     "L+ /var/lib/forgejo/custom/public/assets/img/apple-touch-icon.png - - - - ${forgejoBrandingAssets}/apple-touch-icon.png"
     "L+ /var/lib/forgejo/custom/public/assets/img/avatar_default.png - - - - ${forgejoBrandingAssets}/avatar_default.png"
+
+    "d /var/lib/forgejo/custom/templates 0750 git git -"
+    "d /var/lib/forgejo/custom/templates/mail 0750 git git -"
+    "d /var/lib/forgejo/custom/templates/mail/auth 0750 git git -"
+    "L+ /var/lib/forgejo/custom/templates/mail/auth/activate.tmpl - - - - ${forgejoMailActivateTmpl}"
+    "L+ /var/lib/forgejo/custom/templates/mail/auth/reset_passwd.tmpl - - - - ${forgejoMailResetPasswdTmpl}"
+    "L+ /var/lib/forgejo/custom/templates/mail/auth/activate_email.tmpl - - - - ${forgejoMailActivateEmailTmpl}"
   ];
 
   services.gitea-actions-runner = {

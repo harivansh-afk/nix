@@ -31,6 +31,11 @@ in
     mode = "0400";
   };
 
+  sops.secrets."forgejo-token.env" = mkSparkSecret "forgejo-token.env" {
+    owner = username;
+    mode = "0400";
+  };
+
   users.mutableUsers = false;
 
   users.users =

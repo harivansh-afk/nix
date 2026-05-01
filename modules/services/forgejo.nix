@@ -59,21 +59,21 @@ let
       --steel-150: #e1d5a8;
       --steel-100: #ebdbb2;
 
-      /* surface / structure */
-      --color-body:               #282828;
-      --color-box-body:           #1d2021;
-      --color-box-body-highlight: #32302f;
-      --color-box-header:         #32302f;
+      /* surface / structure (cozybox.nvim Normal #181818, CursorLine #1e1e1e) */
+      --color-body:               #181818;
+      --color-box-body:           #181818;
+      --color-box-body-highlight: #1e1e1e;
+      --color-box-header:         #1d2021;
       --color-header-wrapper:     #1d2021;
       --color-footer:             #1d2021;
       --color-nav-bg:             #1d2021;
       --color-nav-hover-bg:       #3c3836;
-      --color-secondary-nav-bg:   #282828;
-      --color-card:               #32302f;
-      --color-menu:               #32302f;
+      --color-secondary-nav-bg:   #1d2021;
+      --color-card:               #1e1e1e;
+      --color-menu:               #1d2021;
       --color-button:             #504945;
-      --color-hover:              #45403c;
-      --color-active:             #3c3836;
+      --color-hover:              #3c3836;
+      --color-active:             #45403c;
       --color-timeline:           #504945;
 
       /* text */
@@ -180,14 +180,15 @@ let
       --color-markup-code-block:       #1d2021;
       --color-markup-code-inline:      #232425;
       --color-markup-table-row:        #ffffff06;
-      --color-diff-removed-row-bg:     #4a2a28;
-      --color-diff-removed-word-bg:    #6e3a36;
-      --color-diff-added-row-bg:       #3a4128;
-      --color-diff-added-word-bg:      #535e36;
-      --color-diff-moved-row-bg:       #2c3e5e;
+      /* diff bgs from cozybox.nvim DiffAdd/Change/Delete */
+      --color-diff-removed-row-bg:     #2a1818;
+      --color-diff-removed-word-bg:    #3d2222;
+      --color-diff-added-row-bg:       #1e2718;
+      --color-diff-added-word-bg:      #2d3d22;
+      --color-diff-moved-row-bg:       #1e1e18;
       --color-diff-added-row-border:   #a9b665;
       --color-diff-removed-row-border: #ea6962;
-      --color-diff-moved-row-border:   #5b84de;
+      --color-diff-moved-row-border:   #d8a657;
     }
     #navbar-logo { display: none !important; }
   '';
@@ -199,132 +200,156 @@ let
       --is-dark-theme: false;
       color-scheme: light;
 
-      /* zinc ladder remapped to cozybox light bg->fg shades */
-      --zinc-50:  #f9f5d7;
-      --zinc-100: #fbf1c7;
-      --zinc-150: #f2e5bc;
-      --zinc-200: #ebdbb2;
-      --zinc-250: #e1d3a6;
-      --zinc-300: #d5c4a1;
-      --zinc-350: #c8b599;
-      --zinc-400: #bdae93;
-      --zinc-450: #b0a08b;
-      --zinc-500: #a89984;
-      --zinc-550: #9e8e7c;
-      --zinc-600: #928374;
-      --zinc-650: #7c6f64;
-      --zinc-700: #665c54;
-      --zinc-750: #504945;
-      --zinc-800: #3c3836;
-      --zinc-850: #282828;
-      --zinc-900: #1d2021;
+      /* zinc ladder: cool grays from cozybox.nvim light (no gruvbox cream) */
+      --zinc-50:  #f3f3f3;
+      --zinc-100: #ececec;
+      --zinc-150: #e7e7e7;
+      --zinc-200: #e1e1e1;
+      --zinc-250: #d8d8d8;
+      --zinc-300: #d0d0d0;
+      --zinc-350: #c8c8c8;
+      --zinc-400: #c3c7c9;
+      --zinc-450: #b8bcbe;
+      --zinc-500: #a8acae;
+      --zinc-550: #9a9da0;
+      --zinc-600: #7c7f82;
+      --zinc-650: #62656a;
+      --zinc-700: #504945;
+      --zinc-750: #3c3836;
+      --zinc-800: #2e2c2a;
+      --zinc-850: #232120;
+      --zinc-900: #181818;
 
-      /* surface / structure */
-      --color-body:               #fbf1c7;
-      --color-box-body:           #f9f5d7;
-      --color-box-body-highlight: #f2e5bc;
-      --color-box-header:         #f2e5bc;
-      --color-header-wrapper:     #f9f5d7;
-      --color-footer:             #f9f5d7;
-      --color-nav-bg:             #f2e5bc;
-      --color-nav-hover-bg:       #ebdbb2;
-      --color-secondary-nav-bg:   #fbf1c7;
-      --color-card:               #f2e5bc;
-      --color-menu:               #f2e5bc;
-      --color-button:             #ebdbb2;
-      --color-hover:              #ebdbb2;
-      --color-active:             #d5c4a1;
-      --color-timeline:           #d5c4a1;
+      /* surface / structure (Normal #e7e7e7, surface #e1e1e1, selection #c3c7c9) */
+      --color-body:               #e7e7e7;
+      --color-box-body:           #e7e7e7;
+      --color-box-body-highlight: #e1e1e1;
+      --color-box-header:         #dcdcdc;
+      --color-header-wrapper:     #dcdcdc;
+      --color-footer:             #dcdcdc;
+      --color-nav-bg:             #dcdcdc;
+      --color-nav-hover-bg:       #c3c7c9;
+      --color-secondary-nav-bg:   #e1e1e1;
+      --color-card:               #e1e1e1;
+      --color-menu:               #e1e1e1;
+      --color-button:             #d3d3d3;
+      --color-hover:              #d3d3d3;
+      --color-active:             #c3c7c9;
+      --color-timeline:           #b8bcbe;
 
-      /* text */
+      /* text (dark grays on light) */
       --color-text:             #282828;
-      --color-text-dark:        #1d2021;
+      --color-text-dark:        #181818;
       --color-text-light:       #3c3836;
       --color-text-light-1:     #504945;
-      --color-text-light-2:     #665c54;
-      --color-text-light-3:     #7c6f64;
-      --color-placeholder-text: #928374;
+      --color-text-light-2:     #62656a;
+      --color-text-light-3:     #7c7f82;
+      --color-placeholder-text: #9a9da0;
 
       /* secondary */
-      --color-secondary:           #d5c4a1;
-      --color-secondary-bg:        #ebdbb2;
-      --color-secondary-dark-1:    #c8b599;
-      --color-secondary-dark-2:    #bdae93;
-      --color-secondary-light-1:   #e1d3a6;
-      --color-secondary-light-2:   #ebdbb2;
-      --color-secondary-light-3:   #f2e5bc;
-      --color-secondary-light-4:   #f9f5d7;
-      --color-secondary-alpha-60:  #d5c4a199;
+      --color-secondary:           #c3c7c9;
+      --color-secondary-bg:        #d3d3d3;
+      --color-secondary-dark-1:    #b8bcbe;
+      --color-secondary-dark-2:    #a8acae;
+      --color-secondary-light-1:   #d8d8d8;
+      --color-secondary-light-2:   #e1e1e1;
+      --color-secondary-light-3:   #e7e7e7;
+      --color-secondary-light-4:   #ececec;
+      --color-secondary-alpha-10:  #c3c7c91a;
+      --color-secondary-alpha-20:  #c3c7c933;
+      --color-secondary-alpha-30:  #c3c7c94d;
+      --color-secondary-alpha-40:  #c3c7c966;
+      --color-secondary-alpha-50:  #c3c7c980;
+      --color-secondary-alpha-60:  #c3c7c999;
+      --color-secondary-alpha-70:  #c3c7c9b3;
+      --color-secondary-alpha-80:  #c3c7c9cc;
+      --color-secondary-alpha-90:  #c3c7c9e6;
 
       /* inputs */
-      --color-input-background:   #f9f5d7;
+      --color-input-background:   #e1e1e1;
       --color-input-text:         #282828;
-      --color-input-border:       #d5c4a1;
-      --color-input-border-hover: #bdae93;
+      --color-input-border:       #b8bcbe;
+      --color-input-border-hover: #9a9da0;
+      --color-input-toggle-background: #d8d8d8;
 
-      /* links */
-      --color-link:       #458588;
-      --color-link-hover: #3c7376;
+      /* links -> cozybox-light faded_blue */
+      --color-link:       #4261a5;
+      --color-link-hover: #324f8d;
 
-      /* primary -> gruvbox neutral_blue (#458588) */
-      --color-primary:          #458588;
+      /* primary -> cozybox-light faded_blue (#4261a5) */
+      --color-primary:          #4261a5;
       --color-primary-contrast: #ffffff;
-      --color-primary-dark-1:   #569ba0;
-      --color-primary-dark-2:   #6cb1b6;
-      --color-primary-dark-3:   #82c6cb;
-      --color-primary-dark-4:   #99dadf;
-      --color-primary-dark-5:   #b0eef2;
-      --color-primary-dark-6:   #c5f4f7;
-      --color-primary-dark-7:   #dcfafc;
-      --color-primary-light-1:  #3c7376;
-      --color-primary-light-2:  #335d60;
-      --color-primary-light-3:  #2a484a;
-      --color-primary-light-4:  #213234;
-      --color-primary-light-5:  #181d1e;
-      --color-primary-light-6:  #0e0f0f;
-      --color-primary-light-7:  #050505;
-      --color-primary-alpha-10: #4585881a;
-      --color-primary-alpha-20: #45858833;
-      --color-primary-alpha-30: #4585884d;
-      --color-primary-alpha-40: #45858866;
-      --color-primary-alpha-50: #45858880;
-      --color-primary-alpha-60: #45858899;
-      --color-primary-alpha-70: #458588b3;
-      --color-primary-alpha-80: #458588cc;
-      --color-primary-alpha-90: #458588e6;
+      --color-primary-dark-1:   #5675b3;
+      --color-primary-dark-2:   #6889c0;
+      --color-primary-dark-3:   #7b9dcd;
+      --color-primary-dark-4:   #8eb0d9;
+      --color-primary-dark-5:   #a1c4e6;
+      --color-primary-dark-6:   #b5d8f3;
+      --color-primary-dark-7:   #c8ecff;
+      --color-primary-light-1:  #385693;
+      --color-primary-light-2:  #2f4b80;
+      --color-primary-light-3:  #26406d;
+      --color-primary-light-4:  #1d345b;
+      --color-primary-light-5:  #142948;
+      --color-primary-light-6:  #0b1d36;
+      --color-primary-light-7:  #031223;
+      --color-primary-alpha-10: #4261a51a;
+      --color-primary-alpha-20: #4261a533;
+      --color-primary-alpha-30: #4261a54d;
+      --color-primary-alpha-40: #4261a566;
+      --color-primary-alpha-50: #4261a580;
+      --color-primary-alpha-60: #4261a599;
+      --color-primary-alpha-70: #4261a5b3;
+      --color-primary-alpha-80: #4261a5cc;
+      --color-primary-alpha-90: #4261a5e6;
       --color-primary-hover:    var(--color-primary-light-1);
       --color-primary-active:   var(--color-primary-light-2);
-      --color-accent:           #458588;
+      --color-accent:           #4261a5;
 
-      /* cozybox light accents (gruvbox neutrals) */
-      --color-red:    #cc241d;
-      --color-orange: #d65d0e;
-      --color-yellow: #d79921;
-      --color-olive:  #98971a;
-      --color-green:  #98971a;
-      --color-teal:   #689d6a;
-      --color-blue:   #458588;
-      --color-violet: #b16286;
-      --color-purple: #b16286;
-      --color-pink:   #cc241d;
+      /* cozybox-light accents (faded variants from cozybox.nvim) */
+      --color-red:    #c5524a;
+      --color-orange: #af3a03;
+      --color-yellow: #b57614;
+      --color-olive:  #427b58;
+      --color-green:  #427b58;
+      --color-teal:   #3c7678;
+      --color-blue:   #4261a5;
+      --color-violet: #8f3f71;
+      --color-purple: #8f3f71;
+      --color-pink:   #c5524a;
 
-      --color-success: #98971a;
-      --color-info:    #458588;
-      --color-warning: #d79921;
-      --color-error:   #cc241d;
-      --color-danger:  #cc241d;
+      --color-red-light:    #d57972;
+      --color-orange-light: #c95a2a;
+      --color-yellow-light: #c98e36;
+      --color-green-light:  #5a957a;
+      --color-blue-light:   #6b85c0;
+      --color-violet-light: #a85d8b;
 
-      --color-code-bg:                 #f2e5bc;
-      --color-markup-code-block:       #f2e5bc;
-      --color-markup-code-inline:      #ebdbb2;
-      --color-diff-removed-row-bg:     #f2cfc6;
-      --color-diff-removed-word-bg:    #e2a1b2;
-      --color-diff-added-row-bg:       #d5e3b8;
-      --color-diff-added-word-bg:      #a5c5ab;
-      --color-diff-moved-row-bg:       #c0d0e8;
-      --color-diff-added-row-border:   #98971a;
-      --color-diff-removed-row-border: #cc241d;
-      --color-diff-moved-row-border:   #458588;
+      --color-red-dark-1:    #a8453e;
+      --color-orange-dark-1: #8e2f02;
+      --color-yellow-dark-1: #946011;
+      --color-green-dark-1:  #356348;
+      --color-blue-dark-1:   #355088;
+
+      --color-success: #427b58;
+      --color-info:    #4261a5;
+      --color-warning: #b57614;
+      --color-error:   #c5524a;
+      --color-danger:  #c5524a;
+
+      --color-code-bg:                 #dcdcdc;
+      --color-markup-code-block:       #dcdcdc;
+      --color-markup-code-inline:      #d3d3d3;
+      --color-markup-table-row:        #00000006;
+      /* diff bgs from cozybox.nvim light DiffAdd/Change/Delete */
+      --color-diff-removed-row-bg:     #ffc7c7;
+      --color-diff-removed-word-bg:    #f5a5a5;
+      --color-diff-added-row-bg:       #d9e8d2;
+      --color-diff-added-word-bg:      #b8d4ad;
+      --color-diff-moved-row-bg:       #eee4c7;
+      --color-diff-added-row-border:   #427b58;
+      --color-diff-removed-row-border: #c5524a;
+      --color-diff-moved-row-border:   #b57614;
     }
     #navbar-logo { display: none !important; }
   '';

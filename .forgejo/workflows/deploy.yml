@@ -1,0 +1,21 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-spark
+  cancel-in-progress: false
+
+jobs:
+  switch-spark:
+    name: Switch Spark
+    runs-on: native
+    steps:
+      - uses: actions/checkout@v4
+      - name: nixos-rebuild switch
+        run: sudo /run/current-system/sw/bin/nixos-rebuild switch --flake .#spark

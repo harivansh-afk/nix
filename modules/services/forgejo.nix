@@ -410,13 +410,6 @@ in
     group = "git";
     secrets.mailer.PASSWD = smtpPasswordFile;
     settings = {
-      "git.config" = {
-        "credential.helper" = "store --file ${gitCredentialFile}";
-      };
-      repository = {
-        DEFAULT_PRIVATE = "private";
-        DEFAULT_PUSH_CREATE_PRIVATE = true;
-      };
       server = {
         DOMAIN = forgejoDomain;
         ROOT_URL = "https://${forgejoDomain}/";
@@ -429,6 +422,10 @@ in
         DEFAULT_USER_IS_RESTRICTED = false;
         REGISTER_EMAIL_CONFIRM = true;
         SEND_NOTIFICATION_EMAIL_ON_NEW_USER = true;
+      };
+      repository = {
+        DEFAULT_PRIVATE = "private";
+        DEFAULT_PUSH_CREATE_PRIVATE = true;
       };
       mailer = {
         ENABLED = true;
@@ -447,9 +444,17 @@ in
         ENABLED = true;
         DEFAULT_ACTIONS_URL = "https://github.com";
       };
+      "git.config" = {
+        "credential.helper" = "store --file ${gitCredentialFile}";
+      };
       ui = {
         DEFAULT_THEME = "cozybox-auto";
         THEMES = "cozybox-auto,cozybox-light,cozybox-dark,forgejo-auto,forgejo-dark,forgejo-light";
+      };
+      "ui.meta" = {
+        AUTHOR = "Harivansh Rathi";
+        DESCRIPTION = "Personal code, experiments, and project history.";
+        KEYWORDS = "git,code,harivansh,rathi,nix";
       };
     };
   };
@@ -564,6 +569,10 @@ in
       while IFS=$'\t' read -r full_name clone_url; do
         repo_owner="''${full_name%%/*}"
         repo_name="''${full_name#*/}"
+
+        case "$full_name" in
+          harivansh-afk/nix) continue ;;
+        esac
 
         if [ "$repo_owner" = "$gh_user" ]; then
           forgejo_owner="$FORGEJO_OWNER"

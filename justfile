@@ -20,7 +20,8 @@ switch-spark:
       --flake .#spark \
       --target-host rathi@spark \
       --build-host rathi@spark \
-      --sudo
+      --sudo \
+      --no-reexec
 
 # --- tailscale ACL ---
 

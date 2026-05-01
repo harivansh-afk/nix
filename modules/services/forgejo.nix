@@ -190,6 +190,7 @@ let
       --color-diff-removed-row-border: #ea6962;
       --color-diff-moved-row-border:   #d8a657;
     }
+    .page-footer { display: none !important; }
   '';
 
   forgejoCozyboxLightCss = pkgs.writeText "theme-cozybox-light.css" ''
@@ -350,6 +351,7 @@ let
       --color-diff-removed-row-border: #c5524a;
       --color-diff-moved-row-border:   #b57614;
     }
+    .page-footer { display: none !important; }
   '';
 
   forgejoCozyboxAutoCss = pkgs.writeText "theme-cozybox-auto.css" ''
@@ -453,6 +455,10 @@ in
         SHOW_FOOTER_VERSION = false;
         SHOW_FOOTER_TEMPLATE_LOAD_TIME = false;
         SHOW_FOOTER_LICENSES_API = false;
+        SHOW_FOOTER_POWERED_BY = false;
+      };
+      api = {
+        ENABLE_SWAGGER = false;
       };
     };
   };

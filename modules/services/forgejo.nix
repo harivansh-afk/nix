@@ -146,12 +146,12 @@ let
       --color-primary-active:   var(--color-primary-light-2);
       --color-accent:           #5b84de;
 
-      /* cozybox dark accents */
+      /* cozybox dark accents (aligned to terminal palette in lib/theme.nix) */
       --color-red:    #ea6962;
       --color-orange: #fe8019;
-      --color-yellow: #d8a657;
+      --color-yellow: #d79921;
       --color-olive:  #b8bb26;
-      --color-green:  #a9b665;
+      --color-green:  #8ec97c;
       --color-teal:   #8ec07c;
       --color-blue:   #5b84de;
       --color-violet: #d3869b;
@@ -160,20 +160,20 @@ let
 
       --color-red-light:    #f08680;
       --color-orange-light: #fe9540;
-      --color-yellow-light: #e8c074;
-      --color-green-light:  #b9c578;
+      --color-yellow-light: #fabd2f;
+      --color-green-light:  #a8da9c;
       --color-blue-light:   #7596e8;
       --color-violet-light: #dba0b0;
 
       --color-red-dark-1:    #c75d57;
       --color-orange-dark-1: #d96b15;
-      --color-yellow-dark-1: #b8893f;
-      --color-green-dark-1:  #8e9a55;
+      --color-yellow-dark-1: #b08015;
+      --color-green-dark-1:  #6fa363;
       --color-blue-dark-1:   #4d70bb;
 
-      --color-success: #a9b665;
+      --color-success: #8ec97c;
       --color-info:    #5b84de;
-      --color-warning: #d8a657;
+      --color-warning: #d79921;
       --color-error:   #ea6962;
       --color-danger:  #ea6962;
 
@@ -187,11 +187,18 @@ let
       --color-diff-added-row-bg:       #1e2718;
       --color-diff-added-word-bg:      #2d3d22;
       --color-diff-moved-row-bg:       #1e1e18;
-      --color-diff-added-row-border:   #a9b665;
+      --color-diff-added-row-border:   #8ec97c;
       --color-diff-removed-row-border: #ea6962;
-      --color-diff-moved-row-border:   #d8a657;
+      --color-diff-moved-row-border:   #d79921;
     }
     .page-footer { display: none !important; }
+    #navbar-logo img { display: none !important; }
+    #navbar-logo::before {
+      content: "Home";
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--color-text);
+    }
   '';
 
   forgejoCozyboxLightCss = pkgs.writeText "theme-cozybox-light.css" ''
@@ -353,6 +360,13 @@ let
       --color-diff-moved-row-border:   #b57614;
     }
     .page-footer { display: none !important; }
+    #navbar-logo img { display: none !important; }
+    #navbar-logo::before {
+      content: "Home";
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--color-text);
+    }
   '';
 
   forgejoCozyboxAutoCss = pkgs.writeText "theme-cozybox-auto.css" ''

@@ -14,6 +14,7 @@ let
   gitCredentialFile = "/var/lib/forgejo/.git-credentials";
   smtpPasswordFile = config.sops.secrets."forgejo-smtp-password".path;
   mirrorEnvFile = config.sops.secrets."forgejo-mirror.env".path;
+  googleOauthEnvFile = config.sops.secrets."forgejo-google-oauth.env".path;
   runnerTokenFile = config.sops.secrets."forgejo-runner-token".path;
   runnerCacheRoot = "/var/cache/forgejo-runner";
 
@@ -377,6 +378,12 @@ in
       "forgejo-mirror-sync.service"
     ];
   };
+  sops.secrets."forgejo-google-oauth.env" = mkSparkSecret "forgejo-google-oauth.env" {
+    owner = "git";
+    group = "git";
+    mode = "0400";
+    restartUnits = [ "forgejo-oauth-config.service" ];
+  };
   sops.secrets."forgejo-runner-token" = mkSparkSecret "forgejo-runner-token" {
     owner = "gitea-runner";
     group = "gitea-runner";
@@ -641,6 +648,55 @@ in
       Persistent = true;
       RandomizedDelaySec = "1m";
     };
+  };
+
+  systemd.services.forgejo-oauth-config = {
+    description = "Reconcile Forgejo OAuth2 login sources";
+    after = [ "forgejo.service" ];
+    requires = [ "forgejo.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      User = "git";
+      Group = "git";
+      EnvironmentFile = googleOauthEnvFile;
+      WorkingDirectory = "/var/lib/forgejo";
+    };
+    environment = {
+      FORGEJO_WORK_DIR = "/var/lib/forgejo";
+      FORGEJO_CUSTOM = "/var/lib/forgejo/custom";
+    };
+    path = [
+      config.services.forgejo.package
+      pkgs.coreutils
+      pkgs.gnugrep
+      pkgs.gawk
+    ];
+    script = ''
+      set -euo pipefail
+
+      CONFIG=/var/lib/forgejo/custom/conf/app.ini
+
+      existing_id=$(forgejo -c "$CONFIG" admin auth list \
+        | awk -F '\t' 'NR>1 && $2=="google" {print $1; exit}')
+
+      if [ -z "$existing_id" ]; then
+        forgejo -c "$CONFIG" admin auth add-oauth \
+          --provider gplus \
+          --name google \
+          --key "$GOOGLE_OAUTH_CLIENT_ID" \
+          --secret "$GOOGLE_OAUTH_CLIENT_SECRET"
+        echo "Added Google OAuth source"
+      else
+        forgejo -c "$CONFIG" admin auth update-oauth \
+          --provider gplus \
+          --id "$existing_id" \
+          --name google \
+          --key "$GOOGLE_OAUTH_CLIENT_ID" \
+          --secret "$GOOGLE_OAUTH_CLIENT_SECRET"
+        echo "Updated Google OAuth source (id=$existing_id)"
+      fi
+    '';
   };
 
   systemd.services.forgejo-heatmap-reconcile = {

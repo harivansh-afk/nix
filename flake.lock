@@ -545,16 +545,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1774317936,
-        "narHash": "sha256-E0XP1UYPyKhW0kKJTRdg8NwvJRDJMSfnfyWxKVtarw4=",
+        "lastModified": 1773839211,
+        "narHash": "sha256-g39jh23qI8DVNin0d5UNUayiKLZ9M+TK0uHmoHBysnI=",
         "owner": "RayLabsHQ",
         "repo": "gitea-mirror",
-        "rev": "32eb27c8a62e5464fa3df4adb08009e523103793",
+        "rev": "5d2462e5a0522232a4f8fa80581815fb46026f6d",
         "type": "github"
       },
       "original": {
         "owner": "RayLabsHQ",
-        "ref": "v3.14.1",
+        "ref": "v3.13.4",
         "repo": "gitea-mirror",
         "type": "github"
       }

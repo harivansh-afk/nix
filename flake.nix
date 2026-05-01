@@ -69,7 +69,7 @@
     };
 
     gitea-mirror = {
-      url = "github:RayLabsHQ/gitea-mirror/v3.14.1";
+      url = "github:RayLabsHQ/gitea-mirror/v3.13.4";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

@@ -190,7 +190,6 @@ let
       --color-diff-removed-row-border: #ea6962;
       --color-diff-moved-row-border:   #d8a657;
     }
-    #navbar-logo { display: none !important; }
   '';
 
   forgejoCozyboxLightCss = pkgs.writeText "theme-cozybox-light.css" ''
@@ -351,7 +350,6 @@ let
       --color-diff-removed-row-border: #c5524a;
       --color-diff-moved-row-border:   #b57614;
     }
-    #navbar-logo { display: none !important; }
   '';
 
   forgejoCozyboxAutoCss = pkgs.writeText "theme-cozybox-auto.css" ''
@@ -360,13 +358,7 @@ let
   '';
 in
 {
-  services.caddy.virtualHosts."http://${forgejoDomain}" = (loopbackVhost backendPort) // {
-    extraConfig = ''
-      @root path /
-      redir @root /harivansh-afk 302
-      reverse_proxy 127.0.0.1:${toString backendPort}
-    '';
-  };
+  services.caddy.virtualHosts."http://${forgejoDomain}" = loopbackVhost backendPort;
 
   sops.secrets."forgejo-smtp-password" = mkSparkSecret "forgejo-smtp-password" {
     owner = "git";
@@ -415,6 +407,7 @@ in
         ROOT_URL = "https://${forgejoDomain}/";
         HTTP_PORT = backendPort;
         SSH_DOMAIN = forgejoDomain;
+        LANDING_PAGE = "/harivansh-afk";
       };
       service = {
         DISABLE_REGISTRATION = false;
@@ -455,6 +448,11 @@ in
         AUTHOR = "Harivansh Rathi";
         DESCRIPTION = "Personal code, experiments, and project history.";
         KEYWORDS = "git,code,harivansh,rathi,nix";
+      };
+      other = {
+        SHOW_FOOTER_VERSION = false;
+        SHOW_FOOTER_TEMPLATE_LOAD_TIME = false;
+        SHOW_FOOTER_LICENSES_API = false;
       };
     };
   };

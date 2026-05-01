@@ -360,7 +360,13 @@ let
   '';
 in
 {
-  services.caddy.virtualHosts."http://${forgejoDomain}" = loopbackVhost backendPort;
+  services.caddy.virtualHosts."http://${forgejoDomain}" = (loopbackVhost backendPort) // {
+    extraConfig = ''
+      @root path /
+      redir @root /harivansh-afk 302
+      reverse_proxy 127.0.0.1:${toString backendPort}
+    '';
+  };
 
   sops.secrets."forgejo-smtp-password" = mkSparkSecret "forgejo-smtp-password" {
     owner = "git";

@@ -98,7 +98,7 @@ let
       blue = sharedPalette.blue;
       green = sharedPalette.green;
       purple = sharedPalette.purple;
-      border = "#181818";
+      border = "#3c3836";
       palette = [
         "#1d2021"
         sharedPalette.red
@@ -132,7 +132,7 @@ let
       blue = sharedPalette.blue;
       green = "#427b58";
       purple = sharedPalette.purple;
-      border = "#e7e7e7";
+      border = "#000000";
       palette = [
         "#f9f5d7"
         "#c5524a"
@@ -182,7 +182,7 @@ let
     ''
       set-option -g @cozybox-mode '${mode}'
       set-option -g @cozybox-accent '${theme.purple}'
-      set-option -g status-style bg=${theme.background},fg=${theme.text}
+      set-option -g status-style bg=${theme.background},fg=${theme.text},overline
       set-option -g window-status-format " #I#[fg=${theme.purple}]:#[fg=default]#W "
       set-option -g window-status-current-format " #[fg=${theme.purple}]*#[fg=default]#I#[fg=${theme.purple}]:#[fg=default]#W "
       set-option -g window-status-separator "#[fg=${theme.mutedText}]|#[fg=default]"

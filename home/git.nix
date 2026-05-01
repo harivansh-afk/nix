@@ -1,4 +1,12 @@
-{ theme, ... }:
+{ pkgs, theme, ... }:
+let
+  forgejoCredentialHelper = pkgs.writeShellScript "git-credential-forgejo" ''
+    if [ "$1" = "get" ] && [ -r /run/secrets/forgejo-token.env ]; then
+      echo "username=harivansh-afk"
+      echo "password=$(cat /run/secrets/forgejo-token.env)"
+    fi
+  '';
+in
 {
   programs.git = {
     enable = true;
@@ -79,6 +87,11 @@
       };
 
       push.autoSetupRemote = true;
+
+      "credential \"https://git.harivan.sh\"" = {
+        helper = "!${forgejoCredentialHelper}";
+        username = "harivansh-afk";
+      };
 
       "diff-so-fancy" = {
         markEmptyLines = true;

@@ -365,6 +365,21 @@ let
       --color-error:   #c5524a;
       --color-danger:  #c5524a;
 
+      /* console palette (actions runner / job log box) - dark terminal even in light theme */
+      --color-console-fg:          #ebdbb2;
+      --color-console-fg-subtle:   #928374;
+      --color-console-bg:          #141414;
+      --color-console-border:      #3c3836;
+      --color-console-hover-bg:    #ffffff0d;
+      --color-console-active-bg:   #504945;
+      --color-console-menu-bg:     #1e1e1e;
+      --color-console-menu-border: #504945;
+
+      /* info banner backdrop - neutralize the upstream blue */
+      --color-info-border: #b8bcbe;
+      --color-info-bg:     #d8d8d8;
+      --color-info-text:   #282828;
+
       --color-code-bg:                 #dcdcdc;
       --color-markup-code-block:       #dcdcdc;
       --color-markup-code-inline:      #d3d3d3;

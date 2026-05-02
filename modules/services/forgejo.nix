@@ -64,17 +64,17 @@ let
       --color-body:               #181818;
       --color-box-body:           #181818;
       --color-box-body-highlight: #1e1e1e;
-      --color-box-header:         #1d2021;
-      --color-header-wrapper:     #1d2021;
-      --color-footer:             #1d2021;
-      --color-nav-bg:             #1d2021;
-      --color-nav-hover-bg:       #3c3836;
-      --color-secondary-nav-bg:   #1d2021;
+      --color-box-header:         #141414;
+      --color-header-wrapper:     #141414;
+      --color-footer:             #141414;
+      --color-nav-bg:             #141414;
+      --color-nav-hover-bg:       #2a2a2a;
+      --color-secondary-nav-bg:   #141414;
       --color-card:               #1e1e1e;
-      --color-menu:               #1d2021;
+      --color-menu:               #141414;
       --color-button:             #504945;
-      --color-hover:              #3c3836;
-      --color-active:             #45403c;
+      --color-hover:              #2a2a2a;
+      --color-active:             #353535;
       --color-timeline:           #504945;
 
       /* text */
@@ -176,6 +176,21 @@ let
       --color-warning: #d79921;
       --color-error:   #ea6962;
       --color-danger:  #ea6962;
+
+      /* console palette (actions runner / job log box) - neutral, no blue */
+      --color-console-fg:          #ebdbb2;
+      --color-console-fg-subtle:   #928374;
+      --color-console-bg:          #141414;
+      --color-console-border:      #3c3836;
+      --color-console-hover-bg:    #ffffff0d;
+      --color-console-active-bg:   #504945;
+      --color-console-menu-bg:     #1e1e1e;
+      --color-console-menu-border: #504945;
+
+      /* info banner backdrop - neutralize the upstream blue */
+      --color-info-border: #504945;
+      --color-info-bg:     #232425;
+      --color-info-text:   #ebdbb2;
 
       --color-code-bg:                 #1d2021;
       --color-markup-code-block:       #1d2021;

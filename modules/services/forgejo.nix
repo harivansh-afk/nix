@@ -365,6 +365,21 @@ let
       --color-error:   #c5524a;
       --color-danger:  #c5524a;
 
+      /* console palette (actions runner / job log box) - dark terminal even in light theme */
+      --color-console-fg:          #ebdbb2;
+      --color-console-fg-subtle:   #928374;
+      --color-console-bg:          #141414;
+      --color-console-border:      #3c3836;
+      --color-console-hover-bg:    #ffffff0d;
+      --color-console-active-bg:   #504945;
+      --color-console-menu-bg:     #1e1e1e;
+      --color-console-menu-border: #504945;
+
+      /* info banner backdrop - neutralize the upstream blue */
+      --color-info-border: #b8bcbe;
+      --color-info-bg:     #d8d8d8;
+      --color-info-text:   #282828;
+
       --color-code-bg:                 #dcdcdc;
       --color-markup-code-block:       #dcdcdc;
       --color-markup-code-inline:      #d3d3d3;
@@ -439,10 +454,7 @@ in
     owner = "git";
     group = "git";
     mode = "0400";
-    restartUnits = [
-      "forgejo.service"
-      "forgejo-mirror-sync.service"
-    ];
+    restartUnits = [ "forgejo.service" ];
   };
   sops.secrets."forgejo-google-oauth.env" = mkSparkSecret "forgejo-google-oauth.env" {
     owner = "git";
@@ -536,186 +548,6 @@ in
     };
   };
 
-  systemd.services.forgejo-mirror-sync = {
-    description = "Sync GitHub mirrors to Forgejo";
-    after = [ "forgejo.service" ];
-    requires = [ "forgejo.service" ];
-    serviceConfig = {
-      Type = "oneshot";
-      User = "git";
-      Group = "git";
-      EnvironmentFile = mirrorEnvFile;
-    };
-    path = [
-      pkgs.curl
-      pkgs.jq
-      pkgs.coreutils
-      pkgs.gnused
-      pkgs.git
-      pkgs.sqlite
-    ];
-    script = ''
-      set -euo pipefail
-
-      api_call() {
-        local response http_code body
-        response=$(curl -sS -w "\n%{http_code}" "$@")
-        http_code=$(printf '%s\n' "$response" | tail -n1)
-        body=$(printf '%s\n' "$response" | sed '$d')
-        if [ "$http_code" -ge 400 ]; then
-          printf '[forgejo-mirror-sync] HTTP %s\n' "$http_code" >&2
-          printf '%s\n' "$body" >&2
-          return 1
-        fi
-        printf '%s' "$body"
-      }
-
-      fix_mirror_creds() {
-        local forgejo_owner="$1" repo_name="$2" wait_for_create="''${3:-false}"
-        local repo_dir="/var/lib/forgejo/repositories/$forgejo_owner/$repo_name.git"
-        if [ "$wait_for_create" = "true" ]; then
-          local tries=0
-          while [ ! -d "$repo_dir" ] && [ "$tries" -lt 10 ]; do
-            sleep 2
-            tries=$((tries + 1))
-          done
-        fi
-        if [ -d "$repo_dir" ]; then
-          local current_url
-          current_url=$(git --git-dir="$repo_dir" config --get remote.origin.url 2>/dev/null || true)
-          if [ -n "$current_url" ] && ! echo "$current_url" | grep -q "$GITHUB_TOKEN"; then
-            local new_url
-            new_url=$(printf '%s' "$current_url" | sed "s|https://oauth2@github.com/|https://oauth2:$GITHUB_TOKEN@github.com/|; s|https://github.com/|https://oauth2:$GITHUB_TOKEN@github.com/|")
-            git --git-dir="$repo_dir" remote set-url origin "$new_url" 2>/dev/null || true
-          fi
-        fi
-      }
-
-      clean_db_url() {
-        local forgejo_owner="$1" repo_name="$2" clone_url="$3"
-        local clean_url
-        clean_url=$(printf '%s' "$clone_url" | sed 's|https://oauth2:[^@]*@github.com/|https://github.com/|')
-        local repo_id
-        repo_id=$(sqlite3 /var/lib/forgejo/data/forgejo.db \
-          ".timeout 5000" \
-          "SELECT r.id FROM repository r JOIN \"user\" u ON r.owner_id=u.id WHERE u.lower_name=LOWER('$forgejo_owner') AND r.lower_name=LOWER('$repo_name');")
-        if [ -n "$repo_id" ]; then
-          sqlite3 /var/lib/forgejo/data/forgejo.db \
-            ".timeout 5000" \
-            "UPDATE mirror SET remote_address='$clean_url' WHERE repo_id=$repo_id AND remote_address LIKE '%ghp_%';"
-        fi
-      }
-
-      ensure_org() {
-        local org_name="$1"
-        local status
-        status=$(curl -sS -o /dev/null -w '%{http_code}' \
-          -H "Authorization: token $FORGEJO_TOKEN" \
-          "${forgejoApiUrl}/api/v1/orgs/$org_name" || true)
-        if [ "$status" = "404" ]; then
-          api_call -X POST \
-            -H "Authorization: token $FORGEJO_TOKEN" \
-            -H "Content-Type: application/json" \
-            "${forgejoApiUrl}/api/v1/orgs" \
-            -d "$(jq -n --arg name "$org_name" '{
-              username: $name,
-              visibility: "private"
-            }')" > /dev/null
-          echo "Created org: $org_name"
-        fi
-      }
-
-      gh_user=$(api_call -H "Authorization: token $GITHUB_TOKEN" \
-        "https://api.github.com/user" | jq -r '.login')
-
-      repos_file=$(mktemp)
-      trap 'rm -f "$repos_file"' EXIT
-
-      page=1
-      while true; do
-        batch=$(api_call -H "Authorization: token $GITHUB_TOKEN" \
-          "https://api.github.com/user/repos?per_page=100&page=$page&visibility=all&affiliation=owner,organization_member")
-        count=$(printf '%s' "$batch" | jq length)
-        [ "$count" -eq 0 ] && break
-        printf '%s' "$batch" | jq -r '.[] | [.full_name, .clone_url] | @tsv' >> "$repos_file"
-        page=$((page + 1))
-      done
-
-      sort -u "$repos_file" -o "$repos_file"
-
-      while IFS=$'\t' read -r full_name clone_url; do
-        repo_owner="''${full_name%%/*}"
-        repo_name="''${full_name#*/}"
-
-        case "$full_name" in
-          harivansh-afk/nix) continue ;;
-        esac
-
-        if [ "$repo_owner" = "$gh_user" ]; then
-          forgejo_owner="$FORGEJO_OWNER"
-        else
-          forgejo_owner="$repo_owner"
-          ensure_org "$repo_owner"
-        fi
-
-        status=$(curl -sS -o /dev/null -w '%{http_code}' \
-          -H "Authorization: token $FORGEJO_TOKEN" \
-          "${forgejoApiUrl}/api/v1/repos/$forgejo_owner/$repo_name" || true)
-
-        if [ "$status" = "404" ]; then
-          api_call -X POST \
-            -H "Authorization: token $FORGEJO_TOKEN" \
-            -H "Content-Type: application/json" \
-            "${forgejoApiUrl}/api/v1/repos/migrate" \
-            -d "$(jq -n \
-              --arg addr "$clone_url" \
-              --arg name "$repo_name" \
-              --arg owner "$forgejo_owner" \
-              --arg token "$GITHUB_TOKEN" \
-              '{
-                clone_addr: $addr,
-                repo_name: $name,
-                repo_owner: $owner,
-                private: true,
-                mirror: true,
-                auth_token: $token,
-                service: "github",
-                issues: true,
-                pull_requests: true,
-                labels: true,
-                milestones: true,
-                releases: true,
-                wiki: true
-              }')" \
-            > /dev/null
-          fix_mirror_creds "$forgejo_owner" "$repo_name" true
-          clean_db_url "$forgejo_owner" "$repo_name" "$clone_url"
-          echo "Created mirror: $full_name -> $forgejo_owner/$repo_name"
-        else
-          fix_mirror_creds "$forgejo_owner" "$repo_name"
-          clean_db_url "$forgejo_owner" "$repo_name" "$clone_url"
-          if ! api_call -X POST \
-            -H "Authorization: token $FORGEJO_TOKEN" \
-            "${forgejoApiUrl}/api/v1/repos/$forgejo_owner/$repo_name/mirror-sync" \
-            > /dev/null; then
-            echo "Failed mirror sync: $full_name -> $forgejo_owner/$repo_name" >&2
-            continue
-          fi
-          echo "Synced mirror: $full_name -> $forgejo_owner/$repo_name"
-        fi
-      done < "$repos_file"
-    '';
-  };
-
-  systemd.timers.forgejo-mirror-sync = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "*:0/15";
-      Persistent = true;
-      RandomizedDelaySec = "1m";
-    };
-  };
-
   systemd.services.forgejo-oauth-config = {
     description = "Reconcile Forgejo OAuth2 login sources";
     after = [ "forgejo.service" ];
@@ -767,12 +599,8 @@ in
 
   systemd.services.forgejo-heatmap-reconcile = {
     description = "Reconcile Forgejo heatmap with mirrored commit history";
-    after = [
-      "forgejo.service"
-      "forgejo-mirror-sync.service"
-    ];
+    after = [ "forgejo.service" ];
     requires = [ "forgejo.service" ];
-    wantedBy = [ "forgejo-mirror-sync.service" ];
     serviceConfig = {
       Type = "oneshot";
       EnvironmentFile = mirrorEnvFile;
@@ -897,6 +725,15 @@ in
 
       echo "Reconciliation complete: $inserted new action records."
     '';
+  };
+
+  systemd.timers.forgejo-heatmap-reconcile = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "*:0/15";
+      Persistent = true;
+      RandomizedDelaySec = "1m";
+    };
   };
 
   systemd.services.gitea-runner-netty.serviceConfig = {

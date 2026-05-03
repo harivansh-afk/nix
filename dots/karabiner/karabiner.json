@@ -160,6 +160,32 @@
             ]
           },
           {
+            "description": "F4 = Ctrl + Scroll Up (macOS zoom in at cursor)",
+            "manipulators": [
+              {
+                "from": {
+                  "key_code": "f4",
+                  "modifiers": {
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "to": [
+                  {
+                    "mouse_key": {
+                      "vertical_wheel": -80
+                    },
+                    "modifiers": [
+                      "left_control"
+                    ]
+                  }
+                ],
+                "type": "basic"
+              }
+            ]
+          },
+          {
             "description": "Right Command = Ctrl+B (tmux prefix)",
             "manipulators": [
               {

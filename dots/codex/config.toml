@@ -7,6 +7,7 @@ plan_mode_reasoning_effort = "xhigh"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
 commit_attribution = ""
+service_tier = "fast"
 
 [features]
 shell_tool = true
@@ -33,7 +34,8 @@ hooks = true
 plugin_hooks = true
 guardian_approval = true
 goals = true
-external_migration = true
+external_migration = false
+fast_mode = true
 artifact = true
 default_mode_request_user_input = true
 chronicle = true

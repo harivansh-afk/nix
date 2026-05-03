@@ -6,3 +6,4 @@ dots/karabiner/assets/
 dots/karabiner/automatic_backups/
 tmp/
 .spark-backup/
+.worktrees/

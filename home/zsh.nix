@@ -32,7 +32,8 @@
       ca = "cursor-agent";
       agent-claude = "cursor-agent --model=claude-opus-4-7 --force";
       agent-codex = "cursor-agent --model=gpt-5.4-xhigh-fast --force";
-      cc = "claude --model claude-opus-4-7 --settings '{\"fastMode\":true}'";
+      cc = "claude --model 'claude-opus-4-7[1m]'";
+      ccf = "claude --model 'claude-opus-4-6[1m]' --settings '{\"fastMode\":true}'";
       ch = "claude-handoff";
       cl = "clear";
       gc = "git commit";

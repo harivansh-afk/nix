@@ -11,9 +11,9 @@ let
 in
 {
   flake.darwinConfigurations.${host.name} = inputs.nix-darwin.lib.darwinSystem {
-    system = host.system;
     specialArgs = mkSpecialArgs host;
     modules = [
+      { nixpkgs.hostPlatform = host.system; }
       inputs.determinate.darwinModules.default
       ../hosts/macbook
       inputs.home-manager.darwinModules.home-manager

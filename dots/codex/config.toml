@@ -77,3 +77,20 @@ hide_rate_limit_model_nudge = true
 
 [tui]
 status_line = ["model-name", "git-branch", "context-remaining"]
+
+[[hooks.SessionStart]]
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "$HOME/.claude/hooks/session-start.sh"
+
+[[hooks.SessionStart]]
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "$HOME/.claude/hooks/session-id.sh"
+timeout = 5
+
+[[hooks.PreToolUse]]
+matcher = "^Bash$"
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "$HOME/.claude/hooks/enforce-modern-tools.sh"

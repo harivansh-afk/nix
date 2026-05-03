@@ -5,6 +5,7 @@
   imports = [
     ./common.nix
     ./bat.nix
+    ./btop.nix
     ./claude.nix
     ./codex.nix
     ./cursor-agent.nix

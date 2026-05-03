@@ -14,7 +14,6 @@ in
 {
   core = with pkgs; [
     bitwarden-cli
-    btop
     curl
     fd
     gnupg

@@ -15,10 +15,32 @@ let
     set -eu
     DB=${dbPath}
     [ -f "$DB" ] || exit 0
-    ${pkgs.sqlite}/bin/sqlite3 "$DB" \
+    SQLITE=${pkgs.sqlite}/bin/sqlite3
+
+    "$SQLITE" "$DB" \
       "UPDATE repositories SET status='ignored' WHERE owner='harivansh-afk' AND name='nix';"
-    ${pkgs.sqlite}/bin/sqlite3 "$DB" \
+    "$SQLITE" "$DB" \
       "UPDATE configs SET exclude='[\"harivansh-afk/nix\"]' WHERE exclude='[]' OR exclude IS NULL;"
+
+    "$SQLITE" "$DB" "
+      UPDATE configs SET
+        github_config = json_set(
+          github_config,
+          '$.includeStarred',     json('false'),
+          '$.autoMirrorStarred',  json('false'),
+          '$.includePublic',      json('true'),
+          '$.includePrivate',     json('true')
+        ),
+        gitea_config = json_set(
+          gitea_config,
+          '$.preserveVisibility', json('true'),
+          '$.visibility',         'default'
+        )
+      WHERE github_config IS NOT NULL AND gitea_config IS NOT NULL;
+    "
+
+    "$SQLITE" "$DB" \
+      "UPDATE repositories SET status='ignored' WHERE is_starred = 1 AND owner != 'harivansh-afk';"
   '';
 in
 {

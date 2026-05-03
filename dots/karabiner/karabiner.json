@@ -186,6 +186,54 @@
             ]
           },
           {
+            "description": "F3 = Ctrl + many Scroll Downs (fully zoom out macOS scroll-zoom)",
+            "manipulators": [
+              {
+                "from": {
+                  "key_code": "f3",
+                  "modifiers": {
+                    "optional": [
+                      "any"
+                    ]
+                  }
+                },
+                "to": [
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] },
+                  { "mouse_key": { "vertical_wheel": 200 }, "modifiers": ["left_control"] }
+                ],
+                "type": "basic"
+              }
+            ]
+          },
+          {
             "description": "Right Command = Ctrl+B (tmux prefix)",
             "manipulators": [
               {

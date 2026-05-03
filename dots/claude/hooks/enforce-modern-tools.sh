@@ -15,10 +15,10 @@ deny() {
   exit 0
 }
 
-if [[ "$cmd" =~ ^grep([^a-zA-Z0-9_-]|$) ]]; then
+if [[ "$cmd" =~ ^grep([^a-zA-Z0-9_-]|$) ]] && command -v rg >/dev/null 2>&1; then
   deny 'Use rg (ripgrep) instead of grep.'
 fi
-if [[ "$cmd" =~ (^|[^a-zA-Z0-9_/-])find([^a-zA-Z0-9_-]|$) ]]; then
+if [[ "$cmd" =~ (^|[^a-zA-Z0-9_/-])find([^a-zA-Z0-9_-]|$) ]] && command -v fd >/dev/null 2>&1; then
   deny 'Use fd instead of find.'
 fi
 exit 0

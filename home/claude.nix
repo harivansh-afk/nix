@@ -13,6 +13,7 @@ let
     model = "opus[1m]";
     permissions.defaultMode = "bypassPermissions";
     includeCoAuthoredBy = false;
+    autoCompactEnabled = true;
     statusLine = {
       type = "command";
       command = "${config.home.homeDirectory}/.claude/statusline.sh";

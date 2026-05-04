@@ -47,10 +47,10 @@
       bind k select-pane -U
       bind l select-pane -R
 
-      bind H switch-client -p
-      bind J switch-client -n
-      bind K switch-client -p
-      bind L switch-client -n
+      bind H switch-client -p \; refresh-client -S
+      bind J switch-client -n \; refresh-client -S
+      bind K switch-client -p \; refresh-client -S
+      bind L switch-client -n \; refresh-client -S
 
       bind f display-popup -w 80% -h 80% -E "\
         tmux list-panes -a -F '#{session_name}:#{window_index}.#{pane_index} #{session_name}/#{window_name} [#{pane_current_command}] #{pane_current_path}' \

@@ -29,6 +29,7 @@
 
     shellAliases = {
       co = "codex --dangerously-bypass-approvals-and-sandbox";
+      col = "codex --model gpt-5.5 -c model_reasoning_effort=low --dangerously-bypass-approvals-and-sandbox";
       ca = "cursor-agent";
       agent-claude = "cursor-agent --model=claude-opus-4-7 --force";
       agent-codex = "cursor-agent --model=gpt-5.4-xhigh-fast --force";

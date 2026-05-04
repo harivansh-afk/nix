@@ -16,6 +16,9 @@ in
       key = "~/.ssh/id_ed25519.pub";
       signByDefault = true;
     };
+    includes = [
+      { path = theme.paths.gitThemeCurrentFile; }
+    ];
 
     ignores = [
       "*.swp"
@@ -81,14 +84,9 @@ in
         };
       };
 
-      delta = {
-        "syntax-theme" = theme.deltaTheme theme.defaultMode;
-        "hunk-header-style" = "omit";
-        "minus-style" = ''syntax "#3c1f1e"'';
-        "minus-emph-style" = ''syntax "#72261d"'';
-        "plus-style" = ''syntax "#1d2c1d"'';
-        "plus-emph-style" = ''syntax "#2b4a2b"'';
-      };
+      "delta \"cozybox-dark\"" = theme.deltaTheme "dark";
+
+      "delta \"cozybox-light\"" = theme.deltaTheme "light";
 
       push.autoSetupRemote = true;
 

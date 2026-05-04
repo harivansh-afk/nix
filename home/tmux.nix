@@ -82,6 +82,9 @@
       set-option -s escape-time 0
 
       set-option -g prompt-cursor-colour default
+      set-option -g pane-border-lines single
+      set-option -g pane-border-status bottom
+      set-option -g pane-border-format ""
       set-option -g status-position bottom
       set-option -g status-justify left
       set-option -g status-left ""

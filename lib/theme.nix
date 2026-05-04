@@ -82,6 +82,8 @@ let
     tmuxCurrentFile = "${config.xdg.configHome}/tmux/theme/current.conf";
     lazygitDir = "${config.xdg.configHome}/lazygit";
     lazygitCurrentFile = "${config.xdg.configHome}/lazygit/config.yml";
+    gitDir = "${config.xdg.configHome}/git";
+    gitThemeCurrentFile = "${config.xdg.configHome}/git/theme.inc";
   };
 
   themes = {
@@ -307,9 +309,60 @@ let
             - "${c.defaultFg}"
     '';
 
-  batTheme = mode: if mode == "light" then "gruvbox-light" else "gruvbox-dark";
+  renderGitThemeInclude = mode: ''
+    [delta]
+      features = cozybox-${mode}
+  '';
 
-  deltaTheme = mode: if mode == "light" then "gruvbox-light" else "gruvbox-dark";
+  deltaTheme =
+    mode:
+    let
+      c =
+        if mode == "light" then
+          {
+            modeFlag = true;
+            file = "#4261a5";
+            hunk = "#8f3f71";
+            minus = "#fff0ed";
+            minusEmph = "#ffd7d1";
+            plus = "#edf6ed";
+            plusEmph = "#d8ead8";
+            lineMinus = "#c5524a";
+            linePlus = "#427b58";
+            zero = "#3c3836";
+          }
+        else
+          {
+            modeFlag = true;
+            file = sharedPalette.blue;
+            hunk = sharedPalette.purple;
+            minus = "#3c1f1e";
+            minusEmph = "#72261d";
+            plus = "#1d2c1d";
+            plusEmph = "#2b4a2b";
+            lineMinus = sharedPalette.red;
+            linePlus = sharedPalette.green;
+            zero = "#d4be98";
+          };
+      modeKey = if mode == "light" then "light" else "dark";
+    in
+    {
+      "${modeKey}" = c.modeFlag;
+      "syntax-theme" = "none";
+      "hunk-header-style" = "omit";
+      "file-style" = c.file;
+      "hunk-header-decoration-style" = c.hunk;
+      "minus-style" = ''normal "${c.minus}"'';
+      "minus-emph-style" = ''normal "${c.minusEmph}"'';
+      "plus-style" = ''normal "${c.plus}"'';
+      "plus-emph-style" = ''normal "${c.plusEmph}"'';
+      "zero-style" = c.zero;
+      "line-numbers-minus-style" = c.lineMinus;
+      "line-numbers-plus-style" = c.linePlus;
+      "line-numbers-zero-style" = sharedPalette.gray;
+    };
+
+  batTheme = mode: if mode == "light" then "gruvbox-light" else "gruvbox-dark";
 
   renderZshHighlights =
     mode:
@@ -376,6 +429,7 @@ in
     deltaTheme
     paths
     renderFzf
+    renderGitThemeInclude
     renderGhostty
     renderLazygit
     renderPurePrompt

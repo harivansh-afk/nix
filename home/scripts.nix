@@ -21,6 +21,7 @@ in
              "${customScripts.theme.paths.ghosttyDir}" \
              "${customScripts.theme.paths.tmuxDir}" \
              "${customScripts.theme.paths.lazygitDir}" \
+             "${customScripts.theme.paths.gitDir}" \
              "${customScripts.theme.wallpapers.dir}"
 
     if [[ -f "${customScripts.theme.paths.stateFile}" ]]; then
@@ -37,6 +38,7 @@ in
     ln -sfn "$THEME_GHOSTTY_TARGET" "${customScripts.theme.paths.ghosttyCurrentFile}"
     ln -sfn "$THEME_TMUX_TARGET" "${customScripts.theme.paths.tmuxCurrentFile}"
     ln -sfn "$THEME_LAZYGIT_TARGET" "${customScripts.theme.paths.lazygitCurrentFile}"
+    ln -sfn "$THEME_GIT_THEME_TARGET" "${customScripts.theme.paths.gitThemeCurrentFile}"
     ${lib.optionalString hostConfig.isDarwin ''
       lg_darwin="${config.home.homeDirectory}/Library/Application Support/lazygit"
       mkdir -p "$lg_darwin"

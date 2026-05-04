@@ -11,6 +11,11 @@ let
     light = pkgs.writeText "tmux-theme-light.conf" (theme.renderTmux "light");
   };
 
+  gitThemeIncludes = {
+    dark = pkgs.writeText "git-theme-dark.inc" (theme.renderGitThemeInclude "dark");
+    light = pkgs.writeText "git-theme-light.inc" (theme.renderGitThemeInclude "light");
+  };
+
   wallpaperGenConfig = pkgs.writeText "wallpaper-gen-config.json" (
     builtins.toJSON theme.wallpapers.generation.resolved
   );
@@ -25,6 +30,7 @@ let
       ghostty = "${theme.paths.ghosttyDir}/cozybox-dark";
       tmux = "${tmuxConfigs.dark}";
       lazygit = "${theme.paths.lazygitDir}/config-dark.yml";
+      gitTheme = "${gitThemeIncludes.dark}";
       darwinLazygit = "${lazygitDarwinDir}/config-dark.yml";
       wallpaper = theme.wallpapers.dark;
       appleDarkMode = "true";
@@ -34,6 +40,7 @@ let
       ghostty = "${theme.paths.ghosttyDir}/cozybox-light";
       tmux = "${tmuxConfigs.light}";
       lazygit = "${theme.paths.lazygitDir}/config-light.yml";
+      gitTheme = "${gitThemeIncludes.light}";
       darwinLazygit = "${lazygitDarwinDir}/config-light.yml";
       wallpaper = theme.wallpapers.light;
       appleDarkMode = "false";
@@ -59,6 +66,7 @@ let
           THEME_GHOSTTY_TARGET='${modeAssets.light.ghostty}'
           THEME_TMUX_TARGET='${modeAssets.light.tmux}'
           THEME_LAZYGIT_TARGET='${modeAssets.light.lazygit}'
+          THEME_GIT_THEME_TARGET='${modeAssets.light.gitTheme}'
           THEME_DARWIN_LAZYGIT_TARGET='${modeAssets.light.darwinLazygit}'
           THEME_WALLPAPER='${modeAssets.light.wallpaper}'
           THEME_APPLE_DARK_MODE=${modeAssets.light.appleDarkMode}
@@ -69,6 +77,7 @@ let
           THEME_GHOSTTY_TARGET='${modeAssets.dark.ghostty}'
           THEME_TMUX_TARGET='${modeAssets.dark.tmux}'
           THEME_LAZYGIT_TARGET='${modeAssets.dark.lazygit}'
+          THEME_GIT_THEME_TARGET='${modeAssets.dark.gitTheme}'
           THEME_DARWIN_LAZYGIT_TARGET='${modeAssets.dark.darwinLazygit}'
           THEME_WALLPAPER='${modeAssets.dark.wallpaper}'
           THEME_APPLE_DARK_MODE=${modeAssets.dark.appleDarkMode}
@@ -152,6 +161,8 @@ let
         "@TMUX_CONFIG@" = "${config.xdg.configHome}/tmux/tmux.conf";
         "@LAZYGIT_DIR@" = theme.paths.lazygitDir;
         "@LAZYGIT_CURRENT_FILE@" = theme.paths.lazygitCurrentFile;
+        "@GIT_THEME_DIR@" = theme.paths.gitDir;
+        "@GIT_THEME_CURRENT_FILE@" = theme.paths.gitThemeCurrentFile;
         "@LAZYGIT_DARWIN_DIR@" = lazygitDarwinDir;
         "@LAZYGIT_DARWIN_FILE@" = "${lazygitDarwinDir}/config.yml";
         "@WALLPAPER_DIR@" = theme.wallpapers.dir;

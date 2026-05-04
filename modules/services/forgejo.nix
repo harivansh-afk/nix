@@ -574,19 +574,47 @@ in
       set -euo pipefail
 
       CONFIG=/var/lib/forgejo/custom/conf/app.ini
+      TMPDIR="$(mktemp -d)"
+      trap 'rm -rf "$TMPDIR"' EXIT
 
-      existing_id=$(forgejo -c "$CONFIG" admin auth list \
+      forgejo_retry() {
+        tries=12
+        delay=5
+        out="$TMPDIR/forgejo-command.out"
+
+        while [ "$tries" -gt 0 ]; do
+          if forgejo -c "$CONFIG" "$@" >"$out" 2>&1; then
+            cat "$out"
+            return 0
+          fi
+
+          if ! grep -q "database is locked" "$out"; then
+            cat "$out" >&2
+            return 1
+          fi
+
+          tries=$((tries - 1))
+          if [ "$tries" -eq 0 ]; then
+            cat "$out" >&2
+            return 1
+          fi
+
+          sleep "$delay"
+        done
+      }
+
+      existing_id=$(forgejo_retry admin auth list \
         | awk -F '\t' 'NR>1 && $2=="google" {print $1; exit}')
 
       if [ -z "$existing_id" ]; then
-        forgejo -c "$CONFIG" admin auth add-oauth \
+        forgejo_retry admin auth add-oauth \
           --provider gplus \
           --name google \
           --key "$GOOGLE_OAUTH_CLIENT_ID" \
           --secret "$GOOGLE_OAUTH_CLIENT_SECRET"
         echo "Added Google OAuth source"
       else
-        forgejo -c "$CONFIG" admin auth update-oauth \
+        forgejo_retry admin auth update-oauth \
           --provider gplus \
           --id "$existing_id" \
           --name google \

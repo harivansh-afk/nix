@@ -55,6 +55,7 @@ function M.setup_globals()
   vim.g.canola_git = vim.g.canola_git or {}
 
   vim.g.canola = {
+    buf = { buflisted = false, bufhidden = "wipe" },
     columns = { "icon" },
     hidden = { enabled = false },
     highlights = { filename = {}, columns = true },
@@ -92,6 +93,29 @@ function M.setup_integrations()
     pattern = "canola",
     callback = function(args)
       local bufnr = args.buf
+      local name = vim.api.nvim_buf_get_name(bufnr)
+      if name:find("^fugitive://") then
+        vim.schedule(function()
+          if vim.api.nvim_buf_is_valid(bufnr) then
+            vim.bo[bufnr].syntax = "fugitive"
+            vim.bo[bufnr].filetype = "fugitive"
+          end
+        end)
+        return
+      end
+
+      vim.api.nvim_create_autocmd("BufLeave", {
+        group = augroup,
+        buffer = bufnr,
+        once = true,
+        callback = function()
+          vim.schedule(function()
+            if vim.api.nvim_buf_is_valid(bufnr) and not vim.b[bufnr].canola_ready then
+              vim.api.nvim_buf_delete(bufnr, { force = true })
+            end
+          end)
+        end,
+      })
 
       vim.keymap.set("n", "<C-f>", "<cmd>FzfLua files<cr>", { buffer = bufnr })
       vim.keymap.set("n", "<C-s>", "<cmd>FzfLua live_grep<cr>", { buffer = bufnr })

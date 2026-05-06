@@ -1,9 +1,9 @@
 {
   "providers": {
-    "ollama": {
-      "name": "Ollama",
-      "baseUrl": "http://127.0.0.1:11434/v1",
-      "apiKey": "ollama",
+    "local": {
+      "name": "llama.cpp",
+      "baseUrl": "http://127.0.0.1:8080/v1",
+      "apiKey": "none",
       "api": "openai-completions",
       "authHeader": false,
       "compat": {
@@ -15,8 +15,8 @@
       },
       "models": [
         {
-          "id": "qwen2.5-coder:14b-instruct-q4_K_M",
-          "name": "Qwen2.5 Coder 14B Q4 (Ollama)",
+          "id": "qwen3.6-27b",
+          "name": "Qwen3.6 27B Q6 (llama.cpp)",
           "reasoning": false,
           "input": ["text"],
           "cost": {
@@ -25,8 +25,8 @@
             "cacheRead": 0,
             "cacheWrite": 0
           },
-          "contextWindow": 32768,
-          "maxTokens": 8192
+          "contextWindow": 131072,
+          "maxTokens": 32768
         }
       ]
     }

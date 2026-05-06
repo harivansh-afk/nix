@@ -14,7 +14,7 @@ let
   downloadModel = pkgs.writeShellScript "download-qwen3-6-27b-gguf" ''
     set -euo pipefail
     if [ ! -s "${modelPath}" ]; then
-      ${huggingfaceCli}/bin/huggingface-cli download unsloth/Qwen3.6-27B-GGUF --include "${modelFile}" --local-dir "${modelDir}"
+      ${huggingfaceCli}/bin/hf download unsloth/Qwen3.6-27B-GGUF --include "${modelFile}" --local-dir "${modelDir}"
     fi
   '';
 in

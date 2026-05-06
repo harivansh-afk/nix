@@ -1,5 +1,18 @@
 { ... }:
 let
+  sparkHostOptions = {
+    user = "rathi";
+    identityFile = "~/.ssh/id_ed25519";
+    identitiesOnly = true;
+    forwardAgent = true;
+    proxyCommand = "cloudflared access ssh --hostname %h";
+    controlMaster = "auto";
+    controlPath = "~/.ssh/sockets/%r@%h:%p";
+    controlPersist = "10m";
+    serverAliveInterval = 60;
+    serverAliveCountMax = 3;
+  };
+
   ixHostOptions = {
     addKeysToAgent = "yes";
     forwardAgent = true;
@@ -31,20 +44,11 @@ in
         identityFile = "~/.ssh/id_ed25519";
       };
 
-      spark = {
+      spark = sparkHostOptions // {
         hostname = "spark.harivan.sh";
-        user = "rathi";
-        identityFile = "~/.ssh/id_ed25519";
-        identitiesOnly = true;
-        forwardAgent = true;
-        proxyCommand = "cloudflared access ssh --hostname %h";
-        controlMaster = "auto";
-        controlPath = "~/.ssh/sockets/%r@%h:%p";
-        controlPersist = "10m";
-        serverAliveInterval = 60;
-        serverAliveCountMax = 3;
       };
 
+      "spark.harivan.sh" = sparkHostOptions;
     }
     // ixMatchBlocks;
   };

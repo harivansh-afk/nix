@@ -44,6 +44,11 @@
       url = "github:graham33/nixos-dgx-spark";
     };
 
+    pi-mono = {
+      url = "github:lukasl-dev/pi-mono.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -15,10 +15,12 @@
     ../../modules/services/delta.nix
     ../../modules/services/forgejo.nix
     ../../modules/services/gitea-mirror.nix
+    ../../modules/services/inference.nix
     ../../modules/services/vaultwarden.nix
     ../../modules/services/website.nix
     ./hardware.nix
     ./networking.nix
+    ./pi.nix
     ./barrett/system.nix
     ./users.nix
   ]

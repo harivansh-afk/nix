@@ -28,8 +28,6 @@
     };
 
     shellAliases = {
-      co = "codex --model gpt-5.5 -c model_reasoning_effort=low --dangerously-bypass-approvals-and-sandbox";
-      coh = "codex --model gpt-5.5 -c model_reasoning_effort=xhigh --dangerously-bypass-approvals-and-sandbox";
       ca = "cursor-agent";
       agent-claude = "cursor-agent --model=claude-opus-4-7 --force";
       agent-codex = "cursor-agent --model=gpt-5.4-xhigh-fast --force";
@@ -143,6 +141,29 @@
           else
             export BAT_THEME='${theme.batTheme "dark"}'
           fi
+        }
+
+        _codex_trust_target() {
+          local target
+          local common_dir
+          common_dir="$(command git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" && target="$(dirname "$common_dir")" || target="$PWD"
+          builtin cd -q "$target" 2>/dev/null && pwd -P || printf '%s\n' "$target"
+        }
+
+        _codex_trusted() {
+          local effort="$1"
+          shift
+          local target
+          target="$(_codex_trust_target)"
+          codex --model gpt-5.5 -c "model_reasoning_effort=$effort" -c "projects={\"$target\"={trust_level=\"trusted\"}}" --dangerously-bypass-approvals-and-sandbox "$@"
+        }
+
+        co() {
+          _codex_trusted low "$@"
+        }
+
+        coh() {
+          _codex_trusted xhigh "$@"
         }
 
         unalias ga 2>/dev/null

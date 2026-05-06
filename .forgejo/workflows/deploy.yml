@@ -15,7 +15,7 @@ concurrency:
 jobs:
   switch-spark:
     name: Switch Spark
-    runs-on: spark
+    runs-on: native
     steps:
       - uses: actions/checkout@v4
       - name: nixos-rebuild switch

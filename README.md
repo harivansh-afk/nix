@@ -18,6 +18,18 @@ Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix)
 
 [cozybox.nvim](https://github.com/harivansh-afk/cozybox.nvim) provides the unified theme across everything
 
+## Cloudflare SSH
+
+Spark exposes SSH through the existing Cloudflare tunnel at `ssh.harivan.sh`. The tunnel forwards `ssh.harivan.sh` to `sshd` on `127.0.0.1:22`; Caddy is not in this path.
+
+The macbook `spark` SSH host uses `cloudflared access ssh` as its `ProxyCommand`, so the command stays:
+
+```sh
+ssh spark
+```
+
+Cloudflare still needs the external Access app and DNS route for `ssh.harivan.sh`. Allow Hari and Barrett in the Access policy if Barrett should use the tunnel too. OpenSSH remains the machine identity layer, so Barrett continues to log in as `barrett` with the key from `users/barrett.nix`.
+
 ## Structure
 
 ```

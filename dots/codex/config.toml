@@ -79,7 +79,7 @@ hide_rate_limit_model_nudge = true
 status_line = ["model-name", "git-branch", "context-remaining"]
 
 [tui.model_availability_nux]
-shown_count = { "gpt-5.5" = 4 }
+"gpt-5.5" = 4
 
 [[hooks.SessionStart]]
 [[hooks.SessionStart.hooks]]

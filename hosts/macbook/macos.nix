@@ -1,5 +1,12 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
+  ixAuthKeyPath = "/Users/${config.system.primaryUser}/.config/tailscale-ix/authkey";
+  ixStateDir = "/Users/${config.system.primaryUser}/.local/state/tailscale-ix";
   loginApps = [
     "Raycast"
     "PastePal"
@@ -77,21 +84,72 @@ in
     sudo -u ${config.system.primaryUser} /bin/mkdir -p /Users/${config.system.primaryUser}/Desktop/screenshots
   '';
 
-  launchd.user.agents = builtins.listToAttrs (
-    map (app: {
-      name = "open-${lib.strings.toLower (builtins.replaceStrings [ " " ] [ "-" ] app)}";
-      value.serviceConfig = {
-        Program = "/usr/bin/open";
-        ProgramArguments = [
-          "/usr/bin/open"
-          "-a"
-          app
-        ];
-        RunAtLoad = true;
-        KeepAlive = false;
+  system.activationScripts.tailscaleIxDirs.text = ''
+    sudo -u ${config.system.primaryUser} /bin/mkdir -p /Users/${config.system.primaryUser}/.config/tailscale-ix ${ixStateDir}
+  '';
+
+  launchd.user.agents =
+    builtins.listToAttrs (
+      map (app: {
+        name = "open-${lib.strings.toLower (builtins.replaceStrings [ " " ] [ "-" ] app)}";
+        value.serviceConfig = {
+          Program = "/usr/bin/open";
+          ProgramArguments = [
+            "/usr/bin/open"
+            "-a"
+            app
+          ];
+          RunAtLoad = true;
+          KeepAlive = false;
+        };
+      }) loginApps
+    )
+    // {
+      tailscaled-ix = {
+        serviceConfig = {
+          ProgramArguments = [
+            "${pkgs.tailscale}/bin/tailscaled"
+            "--tun=userspace-networking"
+            "--socket=${ixStateDir}/tailscaled.sock"
+            "--state=${ixStateDir}/tailscaled.state"
+            "--port=41642"
+            "--socks5-server=127.0.0.1:1055"
+            "--outbound-http-proxy-listen=127.0.0.1:1056"
+          ];
+          RunAtLoad = true;
+          KeepAlive = true;
+          StandardOutPath = "${ixStateDir}/tailscaled.log";
+          StandardErrorPath = "${ixStateDir}/tailscaled.log";
+        };
       };
-    }) loginApps
-  );
+
+      tailscaled-ix-autoconnect = {
+        serviceConfig = {
+          ProgramArguments = [
+            "/bin/sh"
+            "-lc"
+            ''
+              if [ ! -r ${lib.escapeShellArg ixAuthKeyPath} ]; then
+                exit 0
+              fi
+              state="$(${pkgs.tailscale}/bin/tailscale --socket=${lib.escapeShellArg "${ixStateDir}/tailscaled.sock"} status --json --peers=false | ${pkgs.jq}/bin/jq -r '.BackendState')" || exit 0
+              case "$state" in
+                Running)
+                  exit 0
+                  ;;
+                NeedsLogin|NeedsMachineAuth|Stopped)
+                  ${pkgs.tailscale}/bin/tailscale --socket=${lib.escapeShellArg "${ixStateDir}/tailscaled.sock"} up --auth-key "$(cat ${lib.escapeShellArg ixAuthKeyPath})" --hostname macbook-ix --accept-dns=false --ssh=false
+                  ;;
+              esac
+            ''
+          ];
+          RunAtLoad = true;
+          StartInterval = 60;
+          StandardOutPath = "${ixStateDir}/autoconnect.log";
+          StandardErrorPath = "${ixStateDir}/autoconnect.log";
+        };
+      };
+    };
 
   services.tailscale.enable = true;
 }

@@ -12,7 +12,7 @@
       "--provider"
       "ollama"
       "--model"
-      "qwen3-coder-next"
+      "qwen2.5-coder:14b-instruct-q4_K_M"
     ];
   };
 }

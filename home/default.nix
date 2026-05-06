@@ -10,6 +10,7 @@
     ./codex.nix
     ./cursor-agent.nix
     ./devin.nix
+    ./direnv.nix
     ./eza.nix
     ./fzf.nix
     ./gcloud.nix

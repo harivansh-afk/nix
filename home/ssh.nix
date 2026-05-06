@@ -32,11 +32,12 @@ in
       };
 
       spark = {
-        hostname = "spark";
+        hostname = "ssh.harivan.sh";
         user = "rathi";
         identityFile = "~/.ssh/id_ed25519";
         identitiesOnly = true;
         forwardAgent = true;
+        proxyCommand = "cloudflared access ssh --hostname %h";
         controlMaster = "auto";
         controlPath = "~/.ssh/sockets/%r@%h:%p";
         controlPersist = "10m";

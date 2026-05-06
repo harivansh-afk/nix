@@ -43,6 +43,7 @@ in
     (with pkgs; [
       awscli2
       bazel
+      cloudflared
       delta
       diff-so-fancy
       git-filter-repo

@@ -30,7 +30,12 @@ let
   };
 in
 {
-  systems = lib.unique (map (host: host.system) (builtins.attrValues hosts));
+  systems = lib.unique (
+    [
+      "x86_64-linux"
+    ]
+    ++ map (host: host.system) (builtins.attrValues hosts)
+  );
 
   _module.args = {
     inherit

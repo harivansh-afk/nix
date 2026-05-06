@@ -45,4 +45,4 @@ jobs:
     if: ${{ needs.changes.outputs.quality == 'true' }}
     steps:
       - uses: actions/checkout@v4
-      - run: nix fmt -- --ci
+      - run: nix fmt -- --ci --tree-root "$PWD" --walk git

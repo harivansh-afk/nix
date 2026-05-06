@@ -6,4 +6,6 @@
     port = 11434;
     package = pkgs.ollama-cuda;
   };
+
+  systemd.services.ollama.environment.OLLAMA_CONTEXT_LENGTH = "8192";
 }

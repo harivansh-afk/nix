@@ -19,7 +19,9 @@
           autoconnect = true;
         };
         wifi = {
+          bssid = "58:FB:96:A1:58:41";
           mode = "infrastructure";
+          powersave = 2;
           ssid = "$WIFI_SSID";
         };
         wifi-security = {

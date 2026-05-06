@@ -10,9 +10,9 @@
     models = ../../dots/pi/models.json;
     extraFlags = [
       "--provider"
-      "spark-vllm"
+      "ollama"
       "--model"
-      "Qwen/Qwen3-32B"
+      "qwen3-coder-next"
     ];
   };
 }

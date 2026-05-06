@@ -28,7 +28,9 @@ The macbook `spark` SSH host uses `cloudflared access ssh` as its `ProxyCommand`
 ssh spark
 ```
 
-Cloudflare still needs the external Access app and DNS route for `ssh.harivan.sh`. Allow Hari and Barrett in the Access policy if Barrett should use the tunnel too. OpenSSH remains the machine identity layer, so Barrett continues to log in as `barrett` with the key from `users/barrett.nix`.
+Cloudflare still needs the external Access app and DNS route for `ssh.harivan.sh`. Allow Hari and Barrett in the Access policy. OpenSSH remains the machine identity layer, so Barrett continues to log in as `barrett` with the key from `users/barrett.nix`.
+
+Spark no longer joins the personal Tailscale tailnet for SSH access. The remaining Tailscale config is the isolated ix tailnet as `spark-ix`; personal SSH access goes through Cloudflare SSH.
 
 ## Structure
 

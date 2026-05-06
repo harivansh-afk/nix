@@ -35,6 +35,8 @@ Cloudflare still needs the external Access app and DNS route for `spark.harivan.
 
 Spark no longer joins the personal Tailscale tailnet for SSH access. The remaining Tailscale config is the isolated ix tailnet as `spark-ix`; personal SSH access goes through Cloudflare SSH.
 
+Spark local inference runs Pi against `llama.cpp` on `127.0.0.1:8080` using `qwen3.6-27b`.
+
 ## Structure
 
 ```

@@ -28,6 +28,8 @@
 
   networking.hostName = hostname;
 
+  nixpkgs.config.cudaCapabilities = [ "12.1" ];
+
   environment.systemPackages = with pkgs; [
     clang
   ];

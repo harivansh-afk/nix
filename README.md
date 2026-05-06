@@ -22,11 +22,14 @@ Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix)
 
 Spark exposes SSH through the existing Cloudflare tunnel at `spark.harivan.sh`. The tunnel forwards `spark.harivan.sh` to `sshd` on `127.0.0.1:22`; Caddy is not in this path.
 
-The macbook `spark` SSH host uses `cloudflared access ssh` as its `ProxyCommand`, so the command stays:
+The macbook SSH config uses `cloudflared access ssh` as its `ProxyCommand`, so both commands work after `just switch`:
 
 ```sh
 ssh spark
+ssh spark.harivan.sh
 ```
+
+Unmanaged clients need `cloudflared` and an SSH config `ProxyCommand` for `spark.harivan.sh`; raw OpenSSH alone is not expected to pass through Cloudflare Access.
 
 Cloudflare still needs the external Access app and DNS route for `spark.harivan.sh`. Allow Hari and Barrett in the Access policy. OpenSSH remains the machine identity layer, so Barrett continues to log in as `barrett` with the key from `users/barrett.nix`.
 

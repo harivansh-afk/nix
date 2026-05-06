@@ -10,9 +10,9 @@
     models = ../../dots/pi/models.json;
     extraFlags = [
       "--provider"
-      "ollama"
+      "local"
       "--model"
-      "qwen2.5-coder:14b-instruct-q4_K_M"
+      "qwen3.6-27b"
     ];
   };
 }

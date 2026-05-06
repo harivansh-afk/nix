@@ -17,7 +17,7 @@ in
     tunnels.${tunnelId} = {
       credentialsFile = config.sops.secrets."cloudflared-credentials".path;
       default = "http://127.0.0.1:80";
-      ingress."ssh.harivan.sh" = "ssh://127.0.0.1:22";
+      ingress."spark.harivan.sh" = "ssh://127.0.0.1:22";
     };
   };
 }

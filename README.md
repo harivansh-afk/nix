@@ -20,7 +20,7 @@ Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix)
 
 ## Cloudflare SSH
 
-Spark exposes SSH through the existing Cloudflare tunnel at `ssh.harivan.sh`. The tunnel forwards `ssh.harivan.sh` to `sshd` on `127.0.0.1:22`; Caddy is not in this path.
+Spark exposes SSH through the existing Cloudflare tunnel at `spark.harivan.sh`. The tunnel forwards `spark.harivan.sh` to `sshd` on `127.0.0.1:22`; Caddy is not in this path.
 
 The macbook `spark` SSH host uses `cloudflared access ssh` as its `ProxyCommand`, so the command stays:
 
@@ -28,7 +28,7 @@ The macbook `spark` SSH host uses `cloudflared access ssh` as its `ProxyCommand`
 ssh spark
 ```
 
-Cloudflare still needs the external Access app and DNS route for `ssh.harivan.sh`. Allow Hari and Barrett in the Access policy. OpenSSH remains the machine identity layer, so Barrett continues to log in as `barrett` with the key from `users/barrett.nix`.
+Cloudflare still needs the external Access app and DNS route for `spark.harivan.sh`. Allow Hari and Barrett in the Access policy. OpenSSH remains the machine identity layer, so Barrett continues to log in as `barrett` with the key from `users/barrett.nix`.
 
 Spark no longer joins the personal Tailscale tailnet for SSH access. The remaining Tailscale config is the isolated ix tailnet as `spark-ix`; personal SSH access goes through Cloudflare SSH.
 

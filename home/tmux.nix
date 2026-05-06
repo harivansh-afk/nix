@@ -75,6 +75,9 @@
       bind c new-window -c "#{pane_current_path}"
       bind - split-window -c "#{pane_current_path}"
       bind "'" split-window -h -c "#{pane_current_path}"
+      bind M command-prompt -p "move pane to window:" "join-pane -t '%%'"
+      bind < join-pane -t :-
+      bind > join-pane -t :+
 
       set-option -s focus-events on
       set-option -s extended-keys on

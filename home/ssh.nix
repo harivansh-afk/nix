@@ -32,7 +32,7 @@ in
       };
 
       spark = {
-        hostname = "ssh.harivan.sh";
+        hostname = "spark.harivan.sh";
         user = "rathi";
         identityFile = "~/.ssh/id_ed25519";
         identitiesOnly = true;

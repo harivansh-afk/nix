@@ -5,7 +5,7 @@
   ...
 }:
 let
-  ixAuthKeyPath = "/Users/${config.system.primaryUser}/.config/tailscale-ix/authkey";
+  ixAuthKeyPath = config.sops.secrets."tailscale-ix-authkey".path;
   ixStateDir = "/Users/${config.system.primaryUser}/.local/state/tailscale-ix";
   loginApps = [
     "Raycast"
@@ -85,8 +85,15 @@ in
   '';
 
   system.activationScripts.tailscaleIxDirs.text = ''
-    sudo -u ${config.system.primaryUser} /bin/mkdir -p /Users/${config.system.primaryUser}/.config/tailscale-ix ${ixStateDir}
+    sudo -u ${config.system.primaryUser} /bin/mkdir -p ${ixStateDir}
   '';
+
+  sops.secrets."tailscale-ix-authkey" = {
+    sopsFile = ../../secrets/spark/tailscale-ix-authkey;
+    format = "binary";
+    owner = config.system.primaryUser;
+    mode = "0400";
+  };
 
   launchd.user.agents =
     builtins.listToAttrs (

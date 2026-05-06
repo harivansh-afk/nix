@@ -13,6 +13,7 @@ let
 in
 {
   core = with pkgs; [
+    ast-grep
     bitwarden-cli
     curl
     fd

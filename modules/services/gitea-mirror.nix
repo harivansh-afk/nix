@@ -130,16 +130,39 @@ let
           '$.includePublic',      json('true'),
           '$.includePrivate',     json('true')
         ),
-        gitea_config = json_set(
-          gitea_config,
-          '$.preserveVisibility', json('true'),
-          '$.visibility',         'default'
+        gitea_config = json_remove(
+          json_set(
+            gitea_config,
+            '$.preserveVisibility', json('true'),
+            '$.visibility',         'default'
+          ),
+          '$.mirrorInterval'
         )
       WHERE github_config IS NOT NULL AND gitea_config IS NOT NULL;
     "
 
+    "$SQLITE" "$DB" "
+      UPDATE configs SET
+        schedule_config = json_set(
+          schedule_config,
+          '$.enabled',              json('true'),
+          '$.autoImport',           json('false'),
+          '$.autoMirror',           json('false'),
+          '$.interval',             '3600',
+          '$.batchSize',            1,
+          '$.pauseBetweenBatches',  60000,
+          '$.onlyMirrorUpdated',    json('true'),
+          '$.skipRecentlyMirrored', json('true'),
+          '$.updateInterval',       86400000,
+          '$.recentThreshold',      86400000
+        )
+      WHERE schedule_config IS NOT NULL;
+    "
+
     "$SQLITE" "$DB" \
       "UPDATE repositories SET status='ignored' WHERE is_starred = 1 AND owner != 'harivansh-afk';"
+    "$SQLITE" "$DB" \
+      "UPDATE repositories SET status='ignored' WHERE status='failed' AND (error_message LIKE '%timed out%' OR error_message LIKE '%context deadline exceeded%' OR error_message LIKE '%context canceled%');"
   '';
 in
 {
@@ -162,6 +185,20 @@ in
     betterAuthTrustedOrigins = "https://${mirrorDomain}";
     environmentFile = config.sops.secrets."gitea-mirror.env".path;
     openFirewall = false;
+  };
+
+  systemd.services.gitea-mirror.environment = {
+    AUTO_IMPORT_REPOS = "false";
+    AUTO_MIRROR_REPOS = "false";
+    SCHEDULE_AUTO_IMPORT = "false";
+    SCHEDULE_AUTO_MIRROR = "false";
+    SCHEDULE_BATCH_SIZE = "1";
+    SCHEDULE_INTERVAL = "1h";
+    SCHEDULE_ONLY_MIRROR_UPDATED = "true";
+    SCHEDULE_PAUSE_BETWEEN_BATCHES = "60000";
+    SCHEDULE_RECENT_THRESHOLD = "86400000";
+    SCHEDULE_SKIP_RECENTLY_MIRRORED = "true";
+    SCHEDULE_UPDATE_INTERVAL = "86400000";
   };
 
   systemd.services.gitea-mirror.serviceConfig.ExecStartPre = [

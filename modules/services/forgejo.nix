@@ -13,9 +13,44 @@ let
   gitCredentialFile = "/var/lib/forgejo/.git-credentials";
   smtpPasswordFile = config.sops.secrets."forgejo-smtp-password".path;
   mirrorEnvFile = config.sops.secrets."forgejo-mirror.env".path;
-  googleOauthEnvFile = config.sops.secrets."forgejo-google-oauth.env".path;
   runnerTokenFile = config.sops.secrets."forgejo-runner-token".path;
   runnerCacheRoot = "/var/cache/forgejo-runner";
+  forgejoOauthSources = {
+    google = {
+      provider = "gplus";
+      secretName = "forgejo-google-oauth.env";
+      clientIdVariable = "GOOGLE_OAUTH_CLIENT_ID";
+      clientSecretVariable = "GOOGLE_OAUTH_CLIENT_SECRET";
+    };
+  };
+  forgejoOauthSourceList = lib.mapAttrsToList (
+    name: source: source // { inherit name; }
+  ) forgejoOauthSources;
+  forgejoOauthCredentials = lib.listToAttrs (
+    map (source: {
+      name = "oauth-${source.name}";
+      value = config.sops.secrets.${source.secretName}.path;
+    }) forgejoOauthSourceList
+  );
+  forgejoOauthSecrets = lib.mapAttrs' (
+    _: source:
+    lib.nameValuePair source.secretName (
+      mkSparkSecret source.secretName {
+        owner = "git";
+        group = "git";
+        mode = "0400";
+        restartUnits = [ "forgejo-oauth-config.service" ];
+      }
+    )
+  ) forgejoOauthSources;
+  forgejoOauthSyncCases = lib.concatMapStringsSep "\n" (source: ''
+    sync_oauth_source \
+      ${lib.escapeShellArg source.name} \
+      ${lib.escapeShellArg source.provider} \
+      ${lib.escapeShellArg "oauth-${source.name}"} \
+      ${lib.escapeShellArg source.clientIdVariable} \
+      ${lib.escapeShellArg source.clientSecretVariable}
+  '') forgejoOauthSourceList;
 
   forgejoIconSvg = ./forgejo-icon.svg;
   forgejoBrandingAssets =
@@ -443,29 +478,25 @@ in
 {
   services.caddy.virtualHosts."http://${forgejoDomain}" = loopbackVhost backendPort;
 
-  sops.secrets."forgejo-smtp-password" = mkSparkSecret "forgejo-smtp-password" {
-    owner = "git";
-    group = "git";
-    mode = "0400";
-    restartUnits = [ "forgejo.service" ];
-  };
-  sops.secrets."forgejo-mirror.env" = mkSparkSecret "forgejo-mirror.env" {
-    owner = "git";
-    group = "git";
-    mode = "0400";
-    restartUnits = [ "forgejo.service" ];
-  };
-  sops.secrets."forgejo-google-oauth.env" = mkSparkSecret "forgejo-google-oauth.env" {
-    owner = "git";
-    group = "git";
-    mode = "0400";
-    restartUnits = [ "forgejo-oauth-config.service" ];
-  };
-  sops.secrets."forgejo-runner-token" = mkSparkSecret "forgejo-runner-token" {
-    owner = "gitea-runner";
-    group = "gitea-runner";
-    mode = "0400";
-    restartUnits = [ "gitea-runner-netty.service" ];
+  sops.secrets = forgejoOauthSecrets // {
+    "forgejo-smtp-password" = mkSparkSecret "forgejo-smtp-password" {
+      owner = "git";
+      group = "git";
+      mode = "0400";
+      restartUnits = [ "forgejo.service" ];
+    };
+    "forgejo-mirror.env" = mkSparkSecret "forgejo-mirror.env" {
+      owner = "git";
+      group = "git";
+      mode = "0400";
+      restartUnits = [ "forgejo.service" ];
+    };
+    "forgejo-runner-token" = mkSparkSecret "forgejo-runner-token" {
+      owner = "gitea-runner";
+      group = "gitea-runner";
+      mode = "0400";
+      restartUnits = [ "gitea-runner-netty.service" ];
+    };
   };
 
   users.users.git = {
@@ -556,7 +587,7 @@ in
       Type = "oneshot";
       User = "git";
       Group = "git";
-      EnvironmentFile = googleOauthEnvFile;
+      LoadCredential = lib.mapAttrsToList (name: path: "${name}:${path}") forgejoOauthCredentials;
       WorkingDirectory = "/var/lib/forgejo";
     };
     environment = {
@@ -602,25 +633,51 @@ in
         done
       }
 
-      existing_id=$(forgejo_retry admin auth list \
-        | awk -F '\t' 'NR>1 && $2=="google" {print $1; exit}')
+      credential_value() {
+        credential_name="$1"
+        variable_name="$2"
+        set -a
+        . "$CREDENTIALS_DIRECTORY/$credential_name"
+        set +a
+        printenv "$variable_name"
+      }
 
-      if [ -z "$existing_id" ]; then
-        forgejo_retry admin auth add-oauth \
-          --provider gplus \
-          --name google \
-          --key "$GOOGLE_OAUTH_CLIENT_ID" \
-          --secret "$GOOGLE_OAUTH_CLIENT_SECRET"
-        echo "Added Google OAuth source"
-      else
-        forgejo_retry admin auth update-oauth \
-          --provider gplus \
-          --id "$existing_id" \
-          --name google \
-          --key "$GOOGLE_OAUTH_CLIENT_ID" \
-          --secret "$GOOGLE_OAUTH_CLIENT_SECRET"
-        echo "Updated Google OAuth source (id=$existing_id)"
-      fi
+      sync_oauth_source() {
+        name="$1"
+        provider="$2"
+        credential_name="$3"
+        client_id_variable="$4"
+        client_secret_variable="$5"
+        client_id="$(credential_value "$credential_name" "$client_id_variable")"
+        client_secret="$(credential_value "$credential_name" "$client_secret_variable")"
+
+        if [ -z "$client_id" ] || [ -z "$client_secret" ]; then
+          echo "Missing OAuth credentials for $name" >&2
+          return 1
+        fi
+
+        existing_id=$(forgejo_retry admin auth list \
+          | awk -F '\t' -v name="$name" 'NR>1 && $2==name {print $1; exit}')
+
+        if [ -z "$existing_id" ]; then
+          forgejo_retry admin auth add-oauth \
+            --provider "$provider" \
+            --name "$name" \
+            --key "$client_id" \
+            --secret "$client_secret"
+          echo "Added OAuth source $name"
+        else
+          forgejo_retry admin auth update-oauth \
+            --provider "$provider" \
+            --id "$existing_id" \
+            --name "$name" \
+            --key "$client_id" \
+            --secret "$client_secret"
+          echo "Updated OAuth source $name (id=$existing_id)"
+        fi
+      }
+
+      ${forgejoOauthSyncCases}
     '';
   };
 

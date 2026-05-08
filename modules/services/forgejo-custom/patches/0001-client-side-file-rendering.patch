@@ -1,0 +1,39 @@
+diff -ruN a/routers/web/repo/view.go b/routers/web/repo/view.go
+--- a/routers/web/repo/view.go
++++ b/routers/web/repo/view.go
+@@ -38,7 +38,6 @@
+ 	"forgejo.org/modules/charset"
+ 	"forgejo.org/modules/git"
+ 	"forgejo.org/modules/gitrepo"
+-	"forgejo.org/modules/highlight"
+ 	code_indexer "forgejo.org/modules/indexer/code"
+ 	"forgejo.org/modules/lfs"
+ 	"forgejo.org/modules/log"
+@@ -587,21 +586,12 @@
+ 				log.Error("Unable to get file language for %-v:%s. Error: %v", ctx.Repo.Repository, ctx.Repo.TreePath, err)
+ 			}
+ 
+-			fileContent, lexerName, err := highlight.File(blob.Name(), language, buf)
+-			ctx.Data["LexerName"] = lexerName
+-			if err != nil {
+-				log.Error("highlight.File failed, fallback to plain text: %v", err)
+-				fileContent = highlight.PlainText(buf)
+-			}
+-			status := &charset.EscapeStatus{}
+-			statuses := make([]*charset.EscapeStatus, len(fileContent))
+-			for i, line := range fileContent {
+-				statuses[i], fileContent[i] = charset.EscapeControlHTML(line, ctx.Locale, charset.FileviewContext)
+-				status = status.Or(statuses[i])
+-			}
+-			ctx.Data["EscapeStatus"] = status
+-			ctx.Data["FileContent"] = fileContent
+-			ctx.Data["LineEscapeStatus"] = statuses
++			ctx.Data["UseClientSideFileRendering"] = true
++			ctx.Data["LexerName"] = language
++			ctx.Data["HighlightClass"] = language
++			ctx.Data["EscapeStatus"] = &charset.EscapeStatus{}
++			ctx.Data["FileContent"] = []string{}
++			ctx.Data["LineEscapeStatus"] = []*charset.EscapeStatus{}
+ 		}
+ 		if !fInfo.isLFSFile {
+ 			if ctx.Repo.CanEnableEditor(ctx, ctx.Doer) {

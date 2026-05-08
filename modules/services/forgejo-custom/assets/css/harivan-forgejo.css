@@ -6,6 +6,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Nonicons";
+  src: url("/assets/fonts/nonicons.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
 :root {
   --fonts-monospace: "Berkeley Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace, var(--fonts-emoji);
   --harivan-pierre-code-bg: var(--color-code-bg);
@@ -43,6 +51,27 @@
   --diffs-selection-color-override: var(--color-blue);
   --diffs-bg-selection-override: var(--color-active);
   --diffs-bg-selection-number-override: var(--color-active);
+}
+
+.harivan-nonicon {
+  display: inline-flex;
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  color: var(--color-text-light-2);
+  font-family: "Nonicons";
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+  vertical-align: -0.125em;
+}
+
+.harivan-nonicon-folder {
+  color: var(--color-primary);
 }
 
 body,

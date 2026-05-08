@@ -11,7 +11,7 @@
     enable = true;
     dotDir = config.home.homeDirectory;
     enableCompletion = false;
-    defaultKeymap = "emacs";
+    defaultKeymap = "viins";
 
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;

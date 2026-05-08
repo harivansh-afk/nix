@@ -11,7 +11,7 @@ let
     installPhase = ''
       runHook preInstall
       mkdir -p $out/js
-      cp dist/harivan-forgejo.js $out/js/
+      cp -R dist/. $out/js/
       runHook postInstall
     '';
   };

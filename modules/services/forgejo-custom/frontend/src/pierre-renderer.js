@@ -96,70 +96,54 @@ function repoPrefix(parts = pathParts()) {
   return `/${encodeURIComponent(parts[0])}/${encodeURIComponent(parts[1])}`;
 }
 
-function sourcePathFromLocation() {
-  const parts = pathParts();
-  const srcIndex = parts.indexOf('src');
-  if (srcIndex < 0 || parts.length <= srcIndex + 2) return null;
-  const refKind = parts[srcIndex + 1];
-  const ref = parts[srcIndex + 2];
-  const filePath = parts.slice(srcIndex + 3).join('/');
-  const prefix = repoPrefix(parts);
-  if (!prefix || !filePath) return null;
-  return {
-    rawUrl: `${prefix}/raw/${encodeURIComponent(refKind)}/${encodeURIComponent(ref)}/${filePath.split('/').map(encodeURIComponent).join('/')}`,
-    cacheKey: `${refKind}:${ref}:${filePath}`,
-    filePath,
-  };
-}
-
 function setLineHash(range) {
   if (!range) return;
   const {start, end} = range;
   window.history.replaceState(null, '', start === end ? `#L${start}` : `#L${start}-L${end}`);
 }
 
-function renderFileView() {
-  const target = document.querySelector('.repository.file .file-view.code-view');
+async function renderFileView() {
+  const target = document.querySelector('.harivan-file-render-target');
   if (!target || target.dataset.harivanPierre === '1') return;
-  const source = sourcePathFromLocation();
-  if (!source) return;
-
   target.dataset.harivanPierre = '1';
-  const fallback = target.cloneNode(true);
-  fallback.classList.add('harivan-pierre-fallback');
-  fallback.hidden = true;
+
+  const rawUrl = target.dataset.rawUrl;
+  const filePath = target.dataset.filePath || target.dataset.filename || 'file';
+  const cacheKey = target.dataset.cacheKey || filePath;
+  if (!rawUrl) return;
 
   const mount = document.createElement('div');
   mount.className = 'harivan-pierre-file';
-  target.replaceChildren(mount, fallback);
+  target.replaceChildren(mount);
 
-  fetch(source.rawUrl, {credentials: 'same-origin'})
-    .then((response) => {
-      if (!response.ok) throw new Error(response.statusText);
-      return response.text();
-    })
-    .then((contents) => {
-      const file = new File({
-        disableFileHeader: true,
-        enableLineSelection: true,
-        overflow: 'scroll',
-        theme: pierreTheme,
-        onLineSelectionEnd: setLineHash,
-      });
-      file.render({
-        file: {
-          name: source.filePath,
-          contents,
-          cacheKey: source.cacheKey,
-        },
-        containerWrapper: mount,
-      });
-    })
-    .catch((error) => {
-      console.warn('Pierre file rendering failed', error);
-      mount.remove();
-      fallback.hidden = false;
+  try {
+    const response = await fetch(rawUrl, {credentials: 'same-origin'});
+    if (!response.ok) throw new Error(response.statusText);
+    const contents = await response.text();
+    const file = new File({
+      disableFileHeader: true,
+      enableLineSelection: true,
+      overflow: 'scroll',
+      theme: pierreTheme,
+      onLineSelectionEnd: setLineHash,
     });
+    file.render({
+      file: {
+        name: filePath,
+        contents,
+        cacheKey,
+      },
+      containerWrapper: mount,
+    });
+  } catch (error) {
+    console.warn('Pierre file rendering failed', error);
+    mount.remove();
+    const link = document.createElement('a');
+    link.href = rawUrl;
+    link.rel = 'nofollow';
+    link.textContent = 'View raw file';
+    target.append(link);
+  }
 }
 
 function diffUrlFromLocation() {
@@ -229,34 +213,33 @@ function renderDiffFile(box, fileDiff, cacheKey) {
   }
 }
 
-function renderDiffView() {
+async function renderDiffView() {
   const boxes = Array.from(document.querySelectorAll('#diff-file-boxes .diff-file-box[id^="diff-"]'));
   if (boxes.length === 0) return;
   const url = diffUrlFromLocation();
   if (!url) return;
 
-  fetch(url, {credentials: 'same-origin'})
-    .then((response) => {
-      if (!response.ok) throw new Error(response.statusText);
-      return response.text();
-    })
-    .then((patch) => {
-      const parsed = parsePatchFiles(patch, `harivan:${url}`);
-      const byName = indexPatchFiles(parsed);
-      for (const box of boxes) {
-        const fileName = fileNameForBox(box);
-        const fileDiff = byName.get(fileName);
-        if (fileDiff) renderDiffFile(box, fileDiff, url);
-      }
-    })
-    .catch((error) => {
-      console.warn('Pierre diff rendering failed', error);
-    });
+  try {
+    const response = await fetch(url, {credentials: 'same-origin'});
+    if (!response.ok) throw new Error(response.statusText);
+    const patch = await response.text();
+    const parsed = parsePatchFiles(patch, `harivan:${url}`);
+    const byName = indexPatchFiles(parsed);
+    for (const box of boxes) {
+      const fileName = fileNameForBox(box);
+      const fileDiff = byName.get(fileName);
+      if (fileDiff) renderDiffFile(box, fileDiff, url);
+    }
+  } catch (error) {
+    console.warn('Pierre diff rendering failed', error);
+  }
 }
 
-function init() {
-  renderFileView();
-  renderDiffView();
+async function init() {
+  await Promise.allSettled([
+    renderFileView(),
+    renderDiffView(),
+  ]);
 }
 
 if (document.readyState === 'loading') {

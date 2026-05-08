@@ -34,10 +34,10 @@
   --diffs-deletion-color-override: var(--color-red);
   --diffs-addition-color-override: var(--color-green);
   --diffs-modified-color-override: var(--color-blue);
-  --diffs-bg-deletion-override: color-mix(in srgb, var(--color-red) 22%, var(--harivan-pierre-code-bg));
+  --diffs-bg-deletion-override: color-mix(in srgb, var(--color-red) 28%, var(--harivan-pierre-code-bg));
   --diffs-bg-deletion-number-override: color-mix(in srgb, var(--color-red) 30%, var(--harivan-pierre-code-bg));
   --diffs-bg-deletion-emphasis-override: color-mix(in srgb, var(--color-red) 42%, var(--harivan-pierre-code-bg));
-  --diffs-bg-addition-override: color-mix(in srgb, var(--color-green) 22%, var(--harivan-pierre-code-bg));
+  --diffs-bg-addition-override: color-mix(in srgb, var(--color-green) 28%, var(--harivan-pierre-code-bg));
   --diffs-bg-addition-number-override: color-mix(in srgb, var(--color-green) 30%, var(--harivan-pierre-code-bg));
   --diffs-bg-addition-emphasis-override: color-mix(in srgb, var(--color-green) 42%, var(--harivan-pierre-code-bg));
   --diffs-selection-color-override: var(--color-blue);

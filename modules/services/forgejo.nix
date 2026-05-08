@@ -106,9 +106,9 @@ let
       --color-secondary-nav-bg:   #141414;
       --color-card:               #1e1e1e;
       --color-menu:               #141414;
-      --color-button:             #504945;
-      --color-hover:              #2a2a2a;
-      --color-active:             #353535;
+      --color-button:             #141414;
+      --color-hover:              #1e1e1e;
+      --color-active:             #2a2a2a;
       --color-timeline:           #504945;
 
       /* text */
@@ -122,11 +122,11 @@ let
 
       /* secondary */
       --color-secondary:           #504945;
-      --color-secondary-bg:        #3c3836;
-      --color-secondary-dark-1:    #5a544f;
+      --color-secondary-bg:        #1e1e1e;
+      --color-secondary-dark-1:    #504945;
       --color-secondary-dark-2:    #665c54;
-      --color-secondary-light-1:   #45403c;
-      --color-secondary-light-2:   #3c3836;
+      --color-secondary-light-1:   #2a2a2a;
+      --color-secondary-light-2:   #232425;
       --color-secondary-light-3:   #32302f;
       --color-secondary-light-4:   #282828;
       --color-secondary-alpha-10:  #5049451a;
@@ -140,7 +140,7 @@ let
       --color-secondary-alpha-90:  #504945e6;
 
       /* inputs */
-      --color-input-background:   #1d2021;
+      --color-input-background:   #141414;
       --color-input-text:         #ebdbb2;
       --color-input-border:       #504945;
       --color-input-border-hover: #665c54;

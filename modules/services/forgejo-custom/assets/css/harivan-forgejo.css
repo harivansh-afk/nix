@@ -8,7 +8,9 @@
 
 :root {
   --fonts-monospace: "Berkeley Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace, var(--fonts-emoji);
+  --harivan-pierre-code-bg: var(--color-code-bg);
   --diffs-font-family: "Berkeley Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --diffs-header-font-family: "Berkeley Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   --diffs-font-size: 13px;
   --diffs-line-height: 1.6;
   --diffs-tab-size: 2;
@@ -16,6 +18,31 @@
   --diffs-min-number-column-width: 3ch;
   --diffs-gap-inline: 0;
   --diffs-gap-block: 0;
+  --diffs-light-bg: var(--harivan-pierre-code-bg);
+  --diffs-dark-bg: var(--harivan-pierre-code-bg);
+  --diffs-light: var(--color-text);
+  --diffs-dark: var(--color-text);
+  --diffs-bg-buffer-override: var(--color-box-body);
+  --diffs-bg-hover-override: var(--color-hover);
+  --diffs-bg-context-override: var(--harivan-pierre-code-bg);
+  --diffs-bg-context-gutter-override: var(--color-box-body);
+  --diffs-bg-separator-override: var(--color-box-header);
+  --diffs-fg-number-override: var(--color-text-light-2);
+  --diffs-fg-number-addition-override: var(--color-green);
+  --diffs-fg-number-deletion-override: var(--color-red);
+  --diffs-fg-conflict-marker-override: var(--color-yellow);
+  --diffs-deletion-color-override: var(--color-red);
+  --diffs-addition-color-override: var(--color-green);
+  --diffs-modified-color-override: var(--color-blue);
+  --diffs-bg-deletion-override: color-mix(in srgb, var(--color-red) 22%, var(--harivan-pierre-code-bg));
+  --diffs-bg-deletion-number-override: color-mix(in srgb, var(--color-red) 30%, var(--harivan-pierre-code-bg));
+  --diffs-bg-deletion-emphasis-override: color-mix(in srgb, var(--color-red) 42%, var(--harivan-pierre-code-bg));
+  --diffs-bg-addition-override: color-mix(in srgb, var(--color-green) 22%, var(--harivan-pierre-code-bg));
+  --diffs-bg-addition-number-override: color-mix(in srgb, var(--color-green) 30%, var(--harivan-pierre-code-bg));
+  --diffs-bg-addition-emphasis-override: color-mix(in srgb, var(--color-green) 42%, var(--harivan-pierre-code-bg));
+  --diffs-selection-color-override: var(--color-blue);
+  --diffs-bg-selection-override: var(--color-active);
+  --diffs-bg-selection-number-override: var(--color-active);
 }
 
 body,
@@ -38,7 +65,26 @@ samp,
 
 .harivan-pierre-file,
 .harivan-pierre-diff {
-  background: var(--color-code-bg);
+  background: var(--harivan-pierre-code-bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  .harivan-pierre-file,
+  .harivan-pierre-diff {
+    --harivan-pierre-code-bg: #141414;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .harivan-pierre-file,
+  .harivan-pierre-diff {
+    --diffs-bg-deletion-override: color-mix(in srgb, var(--color-red) 54%, var(--harivan-pierre-code-bg));
+    --diffs-bg-deletion-number-override: color-mix(in srgb, var(--color-red) 54%, var(--harivan-pierre-code-bg));
+    --diffs-bg-deletion-emphasis-override: color-mix(in srgb, var(--color-red) 54%, var(--harivan-pierre-code-bg));
+    --diffs-bg-addition-override: color-mix(in srgb, var(--color-green) 54%, var(--harivan-pierre-code-bg));
+    --diffs-bg-addition-number-override: color-mix(in srgb, var(--color-green) 54%, var(--harivan-pierre-code-bg));
+    --diffs-bg-addition-emphasis-override: color-mix(in srgb, var(--color-green) 54%, var(--harivan-pierre-code-bg));
+  }
 }
 
 .harivan-pierre-file {

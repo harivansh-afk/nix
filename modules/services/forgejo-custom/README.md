@@ -65,10 +65,12 @@ continues to use its normal templates and Cozybox theme.
 - Berkeley Mono `@font-face`.
 - Font-family rules that make Forgejo use Berkeley Mono.
 - Pierre container/layout rules.
+- Pierre CSS variable mappings to the active Forgejo theme.
 
 Do not put color palette variables or `data-theme` selectors here. Color work
 belongs in the existing Cozybox theme CSS in `modules/services/forgejo.nix`, so
-Forgejo keeps one theme source of truth.
+Forgejo keeps one theme source of truth. Pierre should consume those variables
+instead of defining a competing Forgejo theme.
 
 ## Frontend
 
@@ -84,6 +86,11 @@ It currently handles:
 The script fetches Forgejo's raw file or `.diff` endpoint, renders Pierre into a
 new mount element, and keeps Forgejo's original markup hidden as a fallback. If
 Pierre throws or a fetch fails, the original Forgejo view is shown again.
+
+The bundle registers `cozybox-dark` and `cozybox-light` Shiki themes and passes
+them to Pierre as `{ dark: "cozybox-dark", light: "cozybox-light" }`. This is
+what controls syntax highlighting inside Pierre's shadow DOM. The surrounding
+diff row colors come from the CSS variable bridge above.
 
 ## Changing It
 

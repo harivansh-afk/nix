@@ -474,6 +474,7 @@ let
     buttonLabel = "Confirm email";
     codeLivesVar = ".ActiveCodeLives";
   };
+  forgejoCustom = import ./forgejo-custom { inherit pkgs; };
 in
 {
   services.caddy.virtualHosts."http://${forgejoDomain}" = loopbackVhost backendPort;
@@ -726,10 +727,15 @@ in
     "d /var/lib/forgejo/custom/public 0750 git git -"
     "d /var/lib/forgejo/custom/public/assets 0750 git git -"
     "d /var/lib/forgejo/custom/public/assets/css 0750 git git -"
+    "d /var/lib/forgejo/custom/public/assets/fonts 0750 git git -"
     "d /var/lib/forgejo/custom/public/assets/img 0750 git git -"
+    "d /var/lib/forgejo/custom/public/assets/js 0750 git git -"
+    "L+ /var/lib/forgejo/custom/public/assets/css/harivan-forgejo.css - - - - ${forgejoCustom.assets}/css/harivan-forgejo.css"
     "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-auto.css - - - - ${forgejoCozyboxAutoCss}"
     "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-light.css - - - - ${forgejoCozyboxLightCss}"
     "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-dark.css - - - - ${forgejoCozyboxDarkCss}"
+    "L+ /var/lib/forgejo/custom/public/assets/fonts/BerkeleyMono-Regular.otf - - - - /srv/harivan.sh/dist/fonts/BerkeleyMono-Regular.otf"
+    "L+ /var/lib/forgejo/custom/public/assets/js/harivan-forgejo.js - - - - ${forgejoCustom.frontend}/js/harivan-forgejo.js"
     "L+ /var/lib/forgejo/custom/public/assets/img/favicon.svg - - - - ${forgejoBrandingAssets}/favicon.svg"
     "L+ /var/lib/forgejo/custom/public/assets/img/favicon.png - - - - ${forgejoBrandingAssets}/favicon.png"
     "L+ /var/lib/forgejo/custom/public/assets/img/logo.svg - - - - ${forgejoBrandingAssets}/logo.svg"
@@ -738,8 +744,11 @@ in
     "L+ /var/lib/forgejo/custom/public/assets/img/avatar_default.png - - - - ${forgejoBrandingAssets}/avatar_default.png"
 
     "d /var/lib/forgejo/custom/templates 0750 git git -"
+    "d /var/lib/forgejo/custom/templates/custom 0750 git git -"
     "d /var/lib/forgejo/custom/templates/mail 0750 git git -"
     "d /var/lib/forgejo/custom/templates/mail/auth 0750 git git -"
+    "L+ /var/lib/forgejo/custom/templates/custom/header.tmpl - - - - ${forgejoCustom.templates}/custom/header.tmpl"
+    "L+ /var/lib/forgejo/custom/templates/custom/footer.tmpl - - - - ${forgejoCustom.templates}/custom/footer.tmpl"
     "L+ /var/lib/forgejo/custom/templates/mail/auth/activate.tmpl - - - - ${forgejoMailActivateTmpl}"
     "L+ /var/lib/forgejo/custom/templates/mail/auth/reset_passwd.tmpl - - - - ${forgejoMailResetPasswdTmpl}"
     "L+ /var/lib/forgejo/custom/templates/mail/auth/activate_email.tmpl - - - - ${forgejoMailActivateEmailTmpl}"

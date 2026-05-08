@@ -1,0 +1,15 @@
+{
+  "name": "harivan-forgejo-custom",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/harivan-forgejo.js --bundle --format=esm --target=es2022 --outfile=dist/harivan-forgejo.js --minify"
+  },
+  "dependencies": {
+    "@pierre/diffs": "1.1.21"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12"
+  }
+}

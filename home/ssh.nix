@@ -5,12 +5,15 @@ let
     identityFile = "~/.ssh/id_ed25519";
     identitiesOnly = true;
     forwardAgent = true;
-    proxyCommand = "cloudflared access ssh --hostname %h";
     controlMaster = "auto";
     controlPath = "~/.ssh/sockets/%r@%h:%p";
     controlPersist = "10m";
     serverAliveInterval = 60;
     serverAliveCountMax = 3;
+  };
+
+  sparkCloudflareHostOptions = sparkHostOptions // {
+    proxyCommand = "cloudflared access ssh --hostname %h";
   };
 
   ixHostOptions = {
@@ -45,10 +48,15 @@ in
       };
 
       spark = sparkHostOptions // {
+        hostname = "192.168.0.6";
+        extraOptions.HostKeyAlias = "spark";
+      };
+
+      spark-cloudflare = sparkCloudflareHostOptions // {
         hostname = "spark.harivan.sh";
       };
 
-      "spark.harivan.sh" = sparkHostOptions;
+      "spark.harivan.sh" = sparkCloudflareHostOptions;
     }
     // ixMatchBlocks;
   };

@@ -80,20 +80,3 @@ status_line = ["model-name", "git-branch", "context-remaining"]
 
 [tui.model_availability_nux]
 "gpt-5.5" = 4
-
-[[hooks.SessionStart]]
-[[hooks.SessionStart.hooks]]
-type = "command"
-command = "$HOME/.claude/hooks/session-start.sh"
-
-[[hooks.SessionStart]]
-[[hooks.SessionStart.hooks]]
-type = "command"
-command = "$HOME/.claude/hooks/session-id.sh"
-timeout = 5
-
-[[hooks.PreToolUse]]
-matcher = "^Bash$"
-[[hooks.PreToolUse.hooks]]
-type = "command"
-command = "$HOME/.claude/hooks/enforce-modern-tools.sh"

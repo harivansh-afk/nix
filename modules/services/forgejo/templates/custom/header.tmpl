@@ -1,0 +1,30 @@
+<link rel="stylesheet" href="{{AssetUrlPrefix}}/css/harivan-forgejo.css?v=cozybox-pr-colors-2">
+<script>
+  (() => {
+    const parts = window.location.pathname.split("/").filter(Boolean);
+    if (parts.length < 2) return;
+    const prefix = "/" + parts[0] + "/" + parts[1];
+    const commitIndex = parts.indexOf("commit");
+    const compareIndex = parts.indexOf("compare");
+    const srcIndex = parts.indexOf("src");
+    const blameIndex = parts.indexOf("blame");
+    const isCommitDiff = commitIndex >= 0 && parts[commitIndex + 1];
+    const isCompareDiff = compareIndex >= 0 && parts[compareIndex + 1];
+    const shouldPreloadPierre = isCommitDiff || isCompareDiff || srcIndex >= 0 || blameIndex >= 0;
+    if (shouldPreloadPierre) {
+      import("{{AssetUrlPrefix}}/js/pierre-preload.js?v=cozybox").catch(() => {});
+    }
+    if (!isCommitDiff && !isCompareDiff) return;
+    const url = isCommitDiff
+      ? prefix + "/commit/" + parts[commitIndex + 1] + ".diff"
+      : prefix + "/compare/" + parts.slice(compareIndex + 1).join("/") + ".diff";
+    window.__harivanForgejoDiffPreload = {
+      url,
+      textPromise: fetch(url, { credentials: "same-origin" }).then((response) => {
+        if (!response.ok) throw new Error(response.statusText);
+        return response.text();
+      }),
+    };
+  })();
+</script>
+<script type="module" src="{{AssetUrlPrefix}}/js/harivan-forgejo.js?v=cozybox"></script>

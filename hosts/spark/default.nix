@@ -13,7 +13,7 @@
     ../../modules/services/caddy.nix
     ../../modules/services/cloudflared.nix
     ../../modules/services/delta.nix
-    ../../modules/services/forgejo.nix
+    ../../modules/services/forgejo
     ../../modules/services/gitea-mirror.nix
     ../../modules/services/inference.nix
     ../../modules/services/vaultwarden.nix

@@ -1,0 +1,253 @@
+@font-face {
+  font-family: "Berkeley Mono";
+  src: url("/assets/fonts/BerkeleyMono-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Nonicons";
+  src: url("/assets/fonts/nonicons.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  --fonts-monospace: "Berkeley Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace, var(--fonts-emoji);
+  --harivan-pierre-code-bg: var(--color-code-bg);
+  --diffs-font-family: "Berkeley Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --diffs-header-font-family: "Berkeley Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --diffs-font-size: 13px;
+  --diffs-line-height: 1.6;
+  --diffs-tab-size: 2;
+  --diffs-font-features: normal;
+  --diffs-min-number-column-width: 3ch;
+  --diffs-gap-inline: 0;
+  --diffs-gap-block: 0;
+  --diffs-light-bg: var(--harivan-pierre-code-bg);
+  --diffs-dark-bg: var(--harivan-pierre-code-bg);
+  --diffs-light: var(--color-text);
+  --diffs-dark: var(--color-text);
+  --diffs-bg-buffer-override: var(--color-box-body);
+  --diffs-bg-hover-override: var(--color-hover);
+  --diffs-bg-context-override: var(--harivan-pierre-code-bg);
+  --diffs-bg-context-gutter-override: var(--color-box-body);
+  --diffs-bg-separator-override: var(--color-box-header);
+  --diffs-fg-number-override: var(--color-text-light-2);
+  --diffs-fg-number-addition-override: var(--color-green);
+  --diffs-fg-number-deletion-override: var(--color-red);
+  --diffs-fg-conflict-marker-override: var(--color-yellow);
+  --diffs-deletion-color-override: var(--color-red);
+  --diffs-addition-color-override: var(--color-green);
+  --diffs-modified-color-override: var(--color-blue);
+  --diffs-bg-deletion-override: color-mix(in srgb, var(--color-red) 28%, var(--harivan-pierre-code-bg));
+  --diffs-bg-deletion-number-override: color-mix(in srgb, var(--color-red) 30%, var(--harivan-pierre-code-bg));
+  --diffs-bg-deletion-emphasis-override: color-mix(in srgb, var(--color-red) 42%, var(--harivan-pierre-code-bg));
+  --diffs-bg-addition-override: color-mix(in srgb, var(--color-green) 28%, var(--harivan-pierre-code-bg));
+  --diffs-bg-addition-number-override: color-mix(in srgb, var(--color-green) 30%, var(--harivan-pierre-code-bg));
+  --diffs-bg-addition-emphasis-override: color-mix(in srgb, var(--color-green) 42%, var(--harivan-pierre-code-bg));
+  --diffs-selection-color-override: var(--color-blue);
+  --diffs-bg-selection-override: var(--color-active);
+  --diffs-bg-selection-number-override: var(--color-active);
+}
+
+.harivan-nonicon {
+  display: inline-flex;
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  color: var(--color-text-light-2);
+  font-family: "Nonicons";
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+  vertical-align: -0.125em;
+}
+
+.harivan-nonicon-folder {
+  color: var(--color-primary);
+}
+
+body,
+input,
+textarea,
+button,
+.ui,
+.menu,
+.repository,
+.markdown,
+pre,
+code,
+kbd,
+samp,
+.repository .code-view,
+.repository .code-diff,
+.repository .file-view {
+  font-family: var(--fonts-monospace);
+}
+
+.harivan-pierre-file,
+.harivan-pierre-diff {
+  background: var(--harivan-pierre-code-bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  .harivan-pierre-file,
+  .harivan-pierre-diff,
+  .repository.pull.diff .harivan-pr-diff {
+    --harivan-pierre-code-bg: #141414;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .harivan-pierre-file,
+  .harivan-pierre-diff,
+  .repository.pull.diff .harivan-pr-diff {
+    --diffs-bg-deletion-override: color-mix(in srgb, var(--color-red) 54%, var(--harivan-pierre-code-bg));
+    --diffs-bg-deletion-number-override: color-mix(in srgb, var(--color-red) 54%, var(--harivan-pierre-code-bg));
+    --diffs-bg-deletion-emphasis-override: color-mix(in srgb, var(--color-red) 54%, var(--harivan-pierre-code-bg));
+    --diffs-bg-addition-override: color-mix(in srgb, var(--color-green) 54%, var(--harivan-pierre-code-bg));
+    --diffs-bg-addition-number-override: color-mix(in srgb, var(--color-green) 54%, var(--harivan-pierre-code-bg));
+    --diffs-bg-addition-emphasis-override: color-mix(in srgb, var(--color-green) 54%, var(--harivan-pierre-code-bg));
+  }
+}
+
+.harivan-pierre-file {
+  overflow-x: auto;
+}
+
+.harivan-pierre-file diffs-container,
+.harivan-pierre-diff diffs-container {
+  display: block;
+}
+
+.harivan-pierre-diff-target {
+  min-height: 1px;
+}
+
+.diff-file-box[data-harivan-pierre-state="pending"] .harivan-pierre-diff-target,
+.diff-file-box[data-harivan-pierre-state="rendering"] .harivan-pierre-diff-target {
+  min-height: 4rem;
+}
+
+.harivan-pierre-diff-fallback {
+  color: var(--color-text-light);
+  padding: 0.75rem 1rem;
+}
+
+.repository.pull.diff .harivan-pr-diff {
+  --harivan-pr-bg: var(--harivan-pierre-code-bg);
+  --harivan-pr-deletion-bg: color-mix(in lab, var(--harivan-pr-bg) 88%, var(--diffs-bg-deletion-override));
+  --harivan-pr-deletion-number-bg: color-mix(in lab, var(--harivan-pr-bg) 91%, var(--diffs-bg-deletion-number-override));
+  --harivan-pr-addition-bg: color-mix(in lab, var(--harivan-pr-bg) 88%, var(--diffs-bg-addition-override));
+  --harivan-pr-addition-number-bg: color-mix(in lab, var(--harivan-pr-bg) 91%, var(--diffs-bg-addition-number-override));
+  background: var(--diffs-bg-context-override);
+  color: var(--color-text);
+  font-size: var(--diffs-font-size);
+  line-height: var(--diffs-line-height);
+}
+
+@media (prefers-color-scheme: dark) {
+  .repository.pull.diff .harivan-pr-diff {
+    --harivan-pr-deletion-bg: color-mix(in lab, var(--harivan-pr-bg) 80%, var(--diffs-bg-deletion-override));
+    --harivan-pr-deletion-number-bg: color-mix(in lab, var(--harivan-pr-bg) 85%, var(--diffs-bg-deletion-number-override));
+    --harivan-pr-addition-bg: color-mix(in lab, var(--harivan-pr-bg) 80%, var(--diffs-bg-addition-override));
+    --harivan-pr-addition-number-bg: color-mix(in lab, var(--harivan-pr-bg) 85%, var(--diffs-bg-addition-number-override));
+  }
+}
+
+.repository.pull.diff .harivan-pr-diff table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.repository.pull.diff .harivan-pr-diff .lines-code,
+.repository.pull.diff .harivan-pr-diff .lines-code code.code-inner {
+  color: var(--color-text);
+  background: transparent;
+  line-height: var(--diffs-line-height);
+  tab-size: var(--diffs-tab-size);
+}
+
+.repository.pull.diff .harivan-pr-diff .lines-num,
+.repository.pull.diff .harivan-pr-diff .lines-escape,
+.repository.pull.diff .harivan-pr-diff .lines-type-marker {
+  color: var(--diffs-fg-number-override);
+  background: var(--harivan-pr-bg);
+  user-select: none;
+}
+
+.repository.pull.diff .harivan-pr-diff tr.same-code,
+.repository.pull.diff .harivan-pr-diff tr.same-code td,
+.repository.pull.diff .harivan-pr-diff .lines-code {
+  background: var(--diffs-bg-context-override);
+}
+
+.repository.pull.diff .harivan-pr-diff tr.tag-code,
+.repository.pull.diff .harivan-pr-diff tr.tag-code td {
+  color: var(--color-text-light);
+  background: var(--diffs-bg-separator-override);
+}
+
+.repository.pull.diff .harivan-pr-diff tr.del-code,
+.repository.pull.diff .harivan-pr-diff tr.del-code td {
+  background: var(--harivan-pr-deletion-bg);
+}
+
+.repository.pull.diff .harivan-pr-diff tr.add-code,
+.repository.pull.diff .harivan-pr-diff tr.add-code td {
+  background: var(--harivan-pr-addition-bg);
+}
+
+.repository.pull.diff .harivan-pr-diff tr.del-code .lines-num,
+.repository.pull.diff .harivan-pr-diff tr.del-code .lines-escape,
+.repository.pull.diff .harivan-pr-diff tr.del-code .lines-type-marker {
+  background: var(--harivan-pr-deletion-number-bg);
+}
+
+.repository.pull.diff .harivan-pr-diff tr.add-code .lines-num,
+.repository.pull.diff .harivan-pr-diff tr.add-code .lines-escape,
+.repository.pull.diff .harivan-pr-diff tr.add-code .lines-type-marker {
+  background: var(--harivan-pr-addition-number-bg);
+}
+
+.repository.pull.diff .harivan-pr-diff .del-code .lines-num,
+.repository.pull.diff .harivan-pr-diff .del-code .lines-type-marker,
+.repository.pull.diff .harivan-pr-diff .del-code.lines-num,
+.repository.pull.diff .harivan-pr-diff .del-code.lines-type-marker {
+  color: var(--diffs-fg-number-deletion-override);
+}
+
+.repository.pull.diff .harivan-pr-diff .add-code .lines-num,
+.repository.pull.diff .harivan-pr-diff .add-code .lines-type-marker,
+.repository.pull.diff .harivan-pr-diff .add-code.lines-num,
+.repository.pull.diff .harivan-pr-diff .add-code.lines-type-marker {
+  color: var(--diffs-fg-number-addition-override);
+}
+
+.repository.pull.diff .harivan-pr-diff .removed-code {
+  color: inherit;
+  background: var(--diffs-bg-deletion-emphasis-override);
+  border-radius: 0;
+}
+
+.repository.pull.diff .harivan-pr-diff .added-code {
+  color: inherit;
+  background: var(--diffs-bg-addition-emphasis-override);
+  border-radius: 0;
+}
+
+.repository.pull.diff .harivan-pr-diff .add-code-comment {
+  margin-right: 0.375rem;
+}
+
+.repository.pull.diff .harivan-pr-diff tr.add-comment td {
+  background: var(--diffs-bg-context-override);
+}

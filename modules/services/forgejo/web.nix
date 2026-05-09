@@ -10,10 +10,10 @@ let
     hash = "sha256-2eTjf7tl85YJkJY99Pb3a5PBhfPRUHIXXvAwfTPgnwc=";
   };
   frontend = pkgs.buildNpmPackage {
-    pname = "harivan-forgejo-custom-frontend";
+    pname = "harivan-forgejo-web-frontend";
     version = "0.0.0";
     src = ./frontend;
-    npmDepsHash = "sha256-OOjrTyt8AjZWGkVuqDTSw79xJBjcMrVLnj0cYfl968c=";
+    npmDepsHash = "sha256-StwGQh7wbwhF8hC/Pqb7ROKyCGK3Rc6fXQYQ6JmOlZM=";
     installPhase = ''
       runHook preInstall
       mkdir -p $out/js
@@ -24,7 +24,7 @@ let
 in
 {
   inherit frontend;
-  assets = pkgs.runCommand "harivan-forgejo-custom-assets" { } ''
+  assets = pkgs.runCommand "harivan-forgejo-web-assets" { } ''
     mkdir -p $out
     cp -R ${./assets}/. $out/
     mkdir -p $out/fonts

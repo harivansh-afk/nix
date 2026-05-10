@@ -19,6 +19,10 @@
     <git>
         <rule>Never sign your name on commits</rule>
         <rule>Do not add Co-authored-by, Signed-off-by, or any other personal or assistant attribution to commit messages</rule>
+        <rule>Always create task worktrees under the repo-local .worktrees/&lt;topic&gt; directory, for example /home/rathi/Documents/GitHub/nix/.worktrees/&lt;topic&gt;</rule>
+        <rule>Do not create sibling worktree directories like /home/rathi/Documents/GitHub/nix-&lt;topic&gt; or global worktree directories like ~/wt/&lt;repo&gt;/&lt;topic&gt;</rule>
+        <rule>Create worktrees with plain Git from the main checkout: git worktree add .worktrees/&lt;topic&gt; -b &lt;branch&gt; main</rule>
+        <rule>Keep the main checkout on main unless the user explicitly asks otherwise</rule>
     </git>
 
     <epistemology>

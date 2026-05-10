@@ -101,7 +101,13 @@ samp,
   .harivan-pierre-file,
   .harivan-pierre-diff,
   .repository.pull.diff .harivan-pr-diff {
-    --harivan-pierre-code-bg: #141414;
+    --harivan-pierre-code-bg: var(--color-code-bg);
+    --diffs-bg-deletion-override: var(--color-diff-removed-row-bg);
+    --diffs-bg-deletion-number-override: var(--color-diff-removed-row-bg);
+    --diffs-bg-deletion-emphasis-override: var(--color-diff-removed-word-bg);
+    --diffs-bg-addition-override: var(--color-diff-added-row-bg);
+    --diffs-bg-addition-number-override: var(--color-diff-added-row-bg);
+    --diffs-bg-addition-emphasis-override: var(--color-diff-added-word-bg);
   }
 }
 
@@ -155,10 +161,10 @@ samp,
 
 @media (prefers-color-scheme: dark) {
   .repository.pull.diff .harivan-pr-diff {
-    --harivan-pr-deletion-bg: var(--diffs-bg-deletion-override);
-    --harivan-pr-deletion-number-bg: var(--diffs-bg-deletion-number-override);
-    --harivan-pr-addition-bg: var(--diffs-bg-addition-override);
-    --harivan-pr-addition-number-bg: var(--diffs-bg-addition-number-override);
+    --harivan-pr-deletion-bg: var(--color-diff-removed-row-bg);
+    --harivan-pr-deletion-number-bg: var(--color-diff-removed-row-bg);
+    --harivan-pr-addition-bg: var(--color-diff-added-row-bg);
+    --harivan-pr-addition-number-bg: var(--color-diff-added-row-bg);
   }
 }
 

@@ -226,8 +226,8 @@ let
       --color-info-bg:     #232425;
       --color-info-text:   #ebdbb2;
 
-      --color-code-bg:                 #1d2021;
-      --color-markup-code-block:       #1d2021;
+      --color-code-bg:                 #141414;
+      --color-markup-code-block:       #141414;
       --color-markup-code-inline:      #232425;
       --color-markup-table-row:        #ffffff06;
       /* diff bgs from cozybox.nvim DiffAdd/Change/Delete */

@@ -239,6 +239,7 @@ let
       --color-diff-added-row-border:   #8ec97c;
       --color-diff-removed-row-border: #ea6962;
       --color-diff-moved-row-border:   #d79921;
+      --color-expand-button:           #141414;
     }
     .page-footer { display: none !important; }
     #navbar-logo img { display: none !important; }

@@ -1,12 +1,12 @@
 vim.pack.add({
-  "https://github.com/harivansh-afk/cozybox.nvim",
+  "https://git.harivan.sh/harivansh-afk/cozybox.nvim",
   "https://github.com/barrettruth/nonicons.nvim",
   "https://github.com/nvim-tree/nvim-web-devicons",
 }, { load = function() end })
 
 return {
   {
-    "harivansh-afk/cozybox.nvim",
+    "https://git.harivan.sh/harivansh-afk/cozybox.nvim",
     after = function() require("theme").setup() end,
   },
   {

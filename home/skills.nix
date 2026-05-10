@@ -32,7 +32,7 @@ let
     }
     {
       name = "tmux";
-      source = "https://github.com/harivansh-afk/tmux-subagents";
+      source = "https://git.harivan.sh/harivansh-afk/tmux-subagents";
     }
   ];
 

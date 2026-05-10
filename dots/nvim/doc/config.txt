@@ -25,10 +25,10 @@ Global helpers defined in init.lua:
 2. INSTALLATION                                             *config-install*
 
 Default (no LSP, no completion): >bash
-    curl -fsSL https://raw.githubusercontent.com/harivansh-afk/nvim/main/install.sh | bash
+    curl -fsSL https://git.harivan.sh/harivansh-afk/nvim/raw/branch/main/install.sh | bash
 <
 Full install (LSP + completion): >bash
-    curl -fsSL https://raw.githubusercontent.com/harivansh-afk/nvim/main/install.sh | bash -s -- --bells-and-whistles
+    curl -fsSL https://git.harivan.sh/harivansh-afk/nvim/raw/branch/main/install.sh | bash -s -- --bells-and-whistles
 <
 Options: >
     --skip-nvim           Config only, skip nvim install
@@ -81,7 +81,7 @@ Options: >
 Plugins are declared with vim.pack and loaded through lz.n.
 
     Plugin                          Purpose ~
-    harivansh-afk/cozybox.nvim      Colorscheme
+    https://git.harivan.sh/harivansh-afk/cozybox.nvim      Colorscheme
     barrettruth/nonicons.nvim       File icons
     nvim-tree/nvim-web-devicons     Icon provider
 

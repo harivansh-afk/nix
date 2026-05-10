@@ -34,7 +34,7 @@
   --diffs-bg-hover-override: var(--color-hover);
   --diffs-bg-context-override: var(--harivan-pierre-code-bg);
   --diffs-bg-context-gutter-override: var(--color-box-body);
-  --diffs-bg-separator-override: var(--color-box-header);
+  --diffs-bg-separator-override: var(--color-body);
   --diffs-fg-number-override: var(--color-text-light-2);
   --diffs-fg-number-addition-override: var(--color-green);
   --diffs-fg-number-deletion-override: var(--color-red);

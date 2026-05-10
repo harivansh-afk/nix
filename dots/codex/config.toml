@@ -40,7 +40,7 @@ artifact = true
 default_mode_request_user_input = true
 chronicle = true
 realtime_conversation = true
-remote_control = true
+remote_control = false
 
 [features.multi_agent_v2]
 enabled = true
@@ -59,7 +59,7 @@ description = "Review-focused role that prioritizes bugs, regressions, and missi
 [memories]
 max_raw_memories_for_consolidation = 512
 max_rollout_age_days = 30
-max_rollouts_per_startup = 8
+max_rollouts_per_startup = 2
 min_rollout_idle_hours = 24
 
 [mcp_servers.mgrep]

@@ -54,8 +54,8 @@ To add a Barrett-owned secret: drop the file at `secrets/spark/barrett-<name>`; 
 
 ## Worktrees
 
-- Always create task worktrees under the repo-local `.worktrees/<topic>` directory. For this repo, that means paths like `/home/rathi/Documents/GitHub/nix/.worktrees/<topic>`.
-- Do not create sibling worktree directories such as `/home/rathi/Documents/GitHub/nix-<topic>` or global worktree directories such as `~/wt/<repo>/<topic>`.
+- Always create task worktrees under the repo-local `.worktrees/<topic>` directory. For this repo, that means paths like `/home/rathi/Documents/Git/nix/.worktrees/<topic>`.
+- Do not create sibling worktree directories such as `/home/rathi/Documents/Git/nix-<topic>` or global worktree directories such as `~/wt/<repo>/<topic>`.
 - Create worktrees with plain Git from the main checkout: `git worktree add .worktrees/<topic> -b <branch> main`.
 - Keep the main checkout on `main` unless the user explicitly asks otherwise.
 

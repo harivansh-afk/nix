@@ -14,7 +14,7 @@ You're running on spark, an Ubuntu workstation (NVIDIA DGX).
 
 You have full access to the user's environment and tools.
 
-The nix config repo is at ~/Documents/GitHub/nix
+The nix config repo is at ~/Documents/Git/nix
 you must ask the user before ever making edits to this repo 
 
 # Core Truths

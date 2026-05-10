@@ -6,7 +6,7 @@
 {
   home.activation.karabinerConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     karabiner_link="${config.home.homeDirectory}/.config/karabiner"
-    karabiner_src="${config.home.homeDirectory}/Documents/GitHub/nix/dots/karabiner"
+    karabiner_src="${config.home.homeDirectory}/Documents/Git/nix/dots/karabiner"
 
     if [ -L "$karabiner_link" ]; then
       current_target="$(readlink "$karabiner_link")"

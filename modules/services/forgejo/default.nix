@@ -204,6 +204,7 @@ let
       --color-yellow-dark-1: #b08015;
       --color-green-dark-1:  #6fa363;
       --color-blue-dark-1:   #4d70bb;
+      --color-violet-dark-1: #dba0b0;
 
       --color-success: #8ec97c;
       --color-info:    #5b84de;

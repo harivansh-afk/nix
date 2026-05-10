@@ -242,6 +242,7 @@ let
       --color-diff-moved-row-border:   #d79921;
       --color-expand-button:           #141414;
     }
+    .code-expander-button { border: 1px solid var(--color-text-light-2); }
     .page-footer { display: none !important; }
     #navbar-logo img { display: none !important; }
     #navbar-logo::before {
@@ -430,6 +431,7 @@ let
       --color-diff-removed-row-border: #c5524a;
       --color-diff-moved-row-border:   #b57614;
     }
+    .code-expander-button { border: 1px solid var(--color-text-light-2); }
     .page-footer { display: none !important; }
     #navbar-logo img { display: none !important; }
     #navbar-logo::before {

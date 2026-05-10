@@ -16,7 +16,7 @@ NVIDIA kernel, drivers, and container support come from the upstream [nixos-dgx-
 
 Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix)
 
-[cozybox.nvim](https://github.com/harivansh-afk/cozybox.nvim) provides the unified theme across everything
+[cozybox.nvim](https://git.harivan.sh/harivansh-afk/cozybox.nvim) provides the unified theme across everything
 
 ## Cloudflare SSH
 

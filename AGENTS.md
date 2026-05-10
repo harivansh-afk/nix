@@ -44,6 +44,7 @@ To add a Barrett-owned secret: drop the file at `secrets/spark/barrett-<name>`; 
 - No comments in `.nix` files. The code is the documentation. Agent guidance lives here.
 - Use `just switch` for macbook rebuilds, `just switch-spark` for spark rebuilds.
 - `just fmt` runs `nix fmt` (nixfmt-tree).
+- For GitHub PR bodies with multiple lines, use `gh pr create/edit --body-file -` or a real temporary body file. Do not pass escaped `\\n` text through `--body`; it renders as literal backslash-n text. After creating or editing a PR, verify the rendered body with `gh pr view --json body` or the PR page before calling it done.
 - Install spark from scratch with `just spark-install user@host`.
 - The `tmp/` directory contains archived/reference configs - do not modify.
 - Berkeley Mono is installed out-of-band. The flake only provides nerd-fonts symbol glyphs.

@@ -52,6 +52,13 @@ To add a Barrett-owned secret: drop the file at `secrets/spark/barrett-<name>`; 
 - Cursor-agent, Claude, and Codex are curl-installed binaries. On NixOS they need nix-ld.
 - Devin config is seeded as a mutable copy since Devin rewrites it.
 
+## Worktrees
+
+- Always create task worktrees under the repo-local `.worktrees/<topic>` directory. For this repo, that means paths like `/home/rathi/Documents/GitHub/nix/.worktrees/<topic>`.
+- Do not create sibling worktree directories such as `/home/rathi/Documents/GitHub/nix-<topic>` or global worktree directories such as `~/wt/<repo>/<topic>`.
+- Create worktrees with plain Git from the main checkout: `git worktree add .worktrees/<topic> -b <branch> main`.
+- Keep the main checkout on `main` unless the user explicitly asks otherwise.
+
 ## Module layout
 
 ```
@@ -70,7 +77,7 @@ system/
   buck2.nix            Pinned buck2 binary derivation
 home/
   default.nix          Import hub for all home-manager modules
-  common.nix           Platform-conditional imports (darwin: ghostty/aerospace/karabiner/helium; linux: worktree)
+  common.nix           Platform-conditional imports (darwin: ghostty/aerospace/karabiner/helium)
   zsh.nix              Shell config, aliases, PATH, theme hooks
   prompt.nix           Pure prompt with dynamic dark/light theming
   git.nix              Git config with diff-so-fancy
@@ -100,7 +107,7 @@ modules/
     forgejo.nix        Forgejo + GitHub mirror sync + heatmap reconciliation + Actions runner
     vaultwarden.nix    Vaultwarden password manager
 scripts/
-  default.nix          Script builder (theme, ga, ghpr, iosrun, wallpaper-gen, wt)
+  default.nix          Script builder (theme, ga, ghpr, iosrun, wallpaper-gen)
 users/
   default.nix          User registry
   rathi.nix            SSH keys + groups for rathi

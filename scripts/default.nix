@@ -176,17 +176,7 @@ let
 
   darwinPackages = { };
 
-  linuxPackages = {
-    wt = mkScript {
-      name = "wt";
-      file = ./bin/wt.sh;
-      runtimeInputs = with pkgs; [
-        coreutils
-        git
-        gnused
-      ];
-    };
-  };
+  linuxPackages = { };
 in
 {
   inherit

@@ -4,7 +4,7 @@
 }:
 let
   domain = "harivan.sh";
-  repoDir = "/home/${username}/Documents/GitHub/website";
+  repoDir = "/home/${username}/Documents/Git/website";
   mountDir = "/srv/harivan.sh";
   serveDir = "${mountDir}/dist";
 in

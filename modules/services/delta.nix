@@ -10,7 +10,7 @@ let
   deltaDomain = "delta.harivan.sh";
   deltaPort = 3300;
   stateDir = "/var/lib/delta";
-  repoDir = "/home/${username}/Documents/GitHub/delta";
+  repoDir = "/home/${username}/Documents/Git/delta";
   dbPath = "${stateDir}/data.db";
 in
 {

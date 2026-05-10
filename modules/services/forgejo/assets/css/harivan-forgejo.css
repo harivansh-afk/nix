@@ -155,10 +155,10 @@ samp,
 
 @media (prefers-color-scheme: dark) {
   .repository.pull.diff .harivan-pr-diff {
-    --harivan-pr-deletion-bg: color-mix(in lab, var(--harivan-pr-bg) 80%, var(--diffs-bg-deletion-override));
-    --harivan-pr-deletion-number-bg: color-mix(in lab, var(--harivan-pr-bg) 85%, var(--diffs-bg-deletion-number-override));
-    --harivan-pr-addition-bg: color-mix(in lab, var(--harivan-pr-bg) 80%, var(--diffs-bg-addition-override));
-    --harivan-pr-addition-number-bg: color-mix(in lab, var(--harivan-pr-bg) 85%, var(--diffs-bg-addition-number-override));
+    --harivan-pr-deletion-bg: var(--diffs-bg-deletion-override);
+    --harivan-pr-deletion-number-bg: var(--diffs-bg-deletion-number-override);
+    --harivan-pr-addition-bg: var(--diffs-bg-addition-override);
+    --harivan-pr-addition-number-bg: var(--diffs-bg-addition-number-override);
   }
 }
 

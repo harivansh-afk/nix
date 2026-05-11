@@ -16,6 +16,7 @@
     ../../modules/services/forgejo
     ../../modules/services/gitea-mirror.nix
     ../../modules/services/inference.nix
+    ../../modules/services/symphony.nix
     ../../modules/services/vaultwarden.nix
     ../../modules/services/website.nix
     ./hardware.nix

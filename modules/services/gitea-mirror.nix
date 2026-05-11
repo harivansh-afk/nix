@@ -134,9 +134,15 @@ let
           json_set(
             gitea_config,
             '$.preserveVisibility', json('true'),
-            '$.visibility',         'default'
+            '$.visibility',         'default',
+            '$.mirrorInterval',     '24h',
+            '$.mirrorIssues',       json('false'),
+            '$.mirrorPullRequests', json('false'),
+            '$.mirrorLabels',       json('false'),
+            '$.mirrorMilestones',   json('false')
           ),
-          '$.mirrorInterval'
+          '$.issueConcurrency',
+          '$.pullRequestConcurrency'
         )
       WHERE github_config IS NOT NULL AND gitea_config IS NOT NULL;
     "
@@ -154,7 +160,9 @@ let
           '$.onlyMirrorUpdated',    json('true'),
           '$.skipRecentlyMirrored', json('true'),
           '$.updateInterval',       86400000,
-          '$.recentThreshold',      86400000
+          '$.recentThreshold',      86400000,
+          '$.lastRun',              strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+          '$.nextRun',              strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '+24 hours')
         )
       WHERE schedule_config IS NOT NULL;
     "
@@ -165,6 +173,32 @@ let
       "UPDATE repositories SET status='ignored' WHERE status='failed' AND (error_message LIKE '%timed out%' OR error_message LIKE '%context deadline exceeded%' OR error_message LIKE '%context canceled%');"
     "$SQLITE" "$DB" \
       "UPDATE repositories SET status='failed', error_message='Reset after Forgejo SQLite saturation; retry on next 24h mirror cycle' WHERE status IN ('syncing', 'mirroring');"
+  '';
+  giteaMirrorStart = pkgs.writeShellScript "gitea-mirror-start" ''
+    set -eu
+    set -a
+    . ${config.sops.secrets."gitea-mirror.env".path}
+    set +a
+    export AUTO_IMPORT_REPOS=false
+    export AUTO_MIRROR_REPOS=false
+    export SCHEDULE_ENABLED=true
+    export SCHEDULE_AUTO_IMPORT=false
+    export SCHEDULE_AUTO_MIRROR=false
+    export SCHEDULE_INTERVAL=24h
+    export SCHEDULE_BATCH_SIZE=1
+    export SCHEDULE_ONLY_MIRROR_UPDATED=true
+    export SCHEDULE_PAUSE_BETWEEN_BATCHES=60000
+    export SCHEDULE_RECENT_THRESHOLD=86400000
+    export SCHEDULE_SKIP_RECENTLY_MIRRORED=true
+    export SCHEDULE_UPDATE_INTERVAL=86400000
+    export GITEA_MIRROR_INTERVAL=24h
+    export MIRROR_ISSUES=false
+    export MIRROR_PULL_REQUESTS=false
+    export MIRROR_LABELS=false
+    export MIRROR_MILESTONES=false
+    export MIRROR_ISSUE_CONCURRENCY=1
+    export MIRROR_PULL_REQUEST_CONCURRENCY=1
+    exec ${inputs.gitea-mirror.packages.${pkgs.system}.default}/bin/gitea-mirror
   '';
 in
 {
@@ -202,9 +236,15 @@ in
     SCHEDULE_RECENT_THRESHOLD = "86400000";
     SCHEDULE_SKIP_RECENTLY_MIRRORED = "true";
     SCHEDULE_UPDATE_INTERVAL = "86400000";
+    GITEA_MIRROR_INTERVAL = "24h";
+    MIRROR_ISSUES = "false";
+    MIRROR_PULL_REQUESTS = "false";
+    MIRROR_LABELS = "false";
+    MIRROR_MILESTONES = "false";
   };
 
-  systemd.services.gitea-mirror.serviceConfig.ExecStartPre = [
-    protectCanonicalRepositories.outPath
-  ];
+  systemd.services.gitea-mirror.serviceConfig = {
+    ExecStart = lib.mkForce [ giteaMirrorStart.outPath ];
+    ExecStartPre = [ protectCanonicalRepositories.outPath ];
+  };
 }

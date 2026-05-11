@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="{{AssetUrlPrefix}}/css/harivan-forgejo.css?v=cozybox-pr-colors-4">
+<link rel="stylesheet" href="{{AssetUrlPrefix}}/css/harivan-forgejo.css?v=__HARIVAN_FORGEJO_CSS_VERSION__">
 <script>
   (() => {
     const parts = window.location.pathname.split("/").filter(Boolean);
@@ -12,7 +12,7 @@
     const isCompareDiff = compareIndex >= 0 && parts[compareIndex + 1];
     const shouldPreloadPierre = isCommitDiff || isCompareDiff || srcIndex >= 0 || blameIndex >= 0;
     if (shouldPreloadPierre) {
-      import("{{AssetUrlPrefix}}/js/pierre-preload.js?v=cozybox").catch(() => {});
+      import("{{AssetUrlPrefix}}/js/pierre-preload.js?v=__HARIVAN_FORGEJO_PIERRE_PRELOAD_VERSION__").catch(() => {});
     }
     if (!isCommitDiff && !isCompareDiff) return;
     const url = isCommitDiff
@@ -27,4 +27,3 @@
     };
   })();
 </script>
-<script type="module" src="{{AssetUrlPrefix}}/js/harivan-forgejo.js?v=cozybox"></script>

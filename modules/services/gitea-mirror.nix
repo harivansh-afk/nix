@@ -148,7 +148,7 @@ let
           '$.enabled',              json('true'),
           '$.autoImport',           json('false'),
           '$.autoMirror',           json('false'),
-          '$.interval',             '3600',
+          '$.interval',             '86400',
           '$.batchSize',            1,
           '$.pauseBetweenBatches',  60000,
           '$.onlyMirrorUpdated',    json('true'),
@@ -163,6 +163,8 @@ let
       "UPDATE repositories SET status='ignored' WHERE is_starred = 1 AND owner != 'harivansh-afk';"
     "$SQLITE" "$DB" \
       "UPDATE repositories SET status='ignored' WHERE status='failed' AND (error_message LIKE '%timed out%' OR error_message LIKE '%context deadline exceeded%' OR error_message LIKE '%context canceled%');"
+    "$SQLITE" "$DB" \
+      "UPDATE repositories SET status='failed', error_message='Reset after Forgejo SQLite saturation; retry on next 24h mirror cycle' WHERE status IN ('syncing', 'mirroring');"
   '';
 in
 {
@@ -193,7 +195,8 @@ in
     SCHEDULE_AUTO_IMPORT = "false";
     SCHEDULE_AUTO_MIRROR = "false";
     SCHEDULE_BATCH_SIZE = "1";
-    SCHEDULE_INTERVAL = "1h";
+    SCHEDULE_ENABLED = "true";
+    SCHEDULE_INTERVAL = "24h";
     SCHEDULE_ONLY_MIRROR_UPDATED = "true";
     SCHEDULE_PAUSE_BETWEEN_BATCHES = "60000";
     SCHEDULE_RECENT_THRESHOLD = "86400000";

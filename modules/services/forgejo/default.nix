@@ -51,6 +51,22 @@ let
       ${lib.escapeShellArg source.clientIdVariable} \
       ${lib.escapeShellArg source.clientSecretVariable}
   '') forgejoOauthSourceList;
+  throttleForgejoMirrors = pkgs.writeShellScript "forgejo-throttle-mirrors" ''
+    set -eu
+    DB=/var/lib/forgejo/data/forgejo.db
+    [ -f "$DB" ] || exit 0
+    SQLITE=${pkgs.sqlite}/bin/sqlite3
+    "$SQLITE" "$DB" "
+      PRAGMA journal_mode=WAL;
+      PRAGMA busy_timeout=10000;
+      UPDATE mirror
+      SET interval = 86400000000000,
+          next_update_unix = CAST(strftime('%s','now') AS INTEGER) + 86400 + (repo_id % 3600)
+      WHERE interval < 86400000000000
+         OR next_update_unix < CAST(strftime('%s','now') AS INTEGER) + 3600;
+      PRAGMA optimize;
+    "
+  '';
 
   forgejoIconSvg = ./icon.svg;
   forgejoBrandingAssets =
@@ -561,9 +577,13 @@ in
         FROM = "Forgejo <git@${rootDomain}>";
       };
       session.COOKIE_SECURE = true;
+      database = {
+        SQLITE_JOURNAL_MODE = "WAL";
+        SQLITE_TIMEOUT = 10000;
+      };
       mirror = {
-        DEFAULT_INTERVAL = "15m";
-        MIN_INTERVAL = "5m";
+        DEFAULT_INTERVAL = "24h";
+        MIN_INTERVAL = "1h";
       };
       actions = {
         ENABLED = true;
@@ -592,6 +612,10 @@ in
       };
     };
   };
+
+  systemd.services.forgejo.serviceConfig.ExecStartPre = lib.mkBefore [
+    throttleForgejoMirrors.outPath
+  ];
 
   systemd.services.forgejo-oauth-config = {
     description = "Reconcile Forgejo OAuth2 login sources";

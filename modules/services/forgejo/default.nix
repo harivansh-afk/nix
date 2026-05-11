@@ -39,7 +39,7 @@ let
         owner = "git";
         group = "git";
         mode = "0400";
-        restartUnits = [ "forgejo-oauth-config.service" ];
+        restartUnits = [ "forgejo.service" ];
       }
     )
   ) forgejoOauthSources;
@@ -506,7 +506,24 @@ let
   });
 in
 {
-  services.caddy.virtualHosts."http://${forgejoDomain}" = loopbackVhost backendPort;
+  services.caddy.virtualHosts."http://${forgejoDomain}" =
+    lib.recursiveUpdate (loopbackVhost backendPort)
+      {
+        extraConfig = ''
+          encode zstd gzip
+
+          @forgejoAssets path /assets/* /manifest.json /favicon.svg /favicon.png /apple-touch-icon.png
+          header @forgejoAssets Cache-Control "public, max-age=21600"
+
+          @forgejoFonts path /assets/fonts/*
+          header @forgejoFonts Cache-Control "public, max-age=31536000, immutable"
+
+          @forgejoAvatars path /avatars/*
+          header @forgejoAvatars Cache-Control "public, max-age=31536000, immutable"
+
+          reverse_proxy 127.0.0.1:${toString backendPort}
+        '';
+      };
 
   sops.secrets = forgejoOauthSecrets // {
     "forgejo-smtp-password" = mkSparkSecret "forgejo-smtp-password" {
@@ -541,6 +558,56 @@ in
     . ${mirrorEnvFile}
     printf 'https://oauth2:%s@github.com\n' "$GITHUB_TOKEN" > ${gitCredentialFile}
     chmod 600 ${gitCredentialFile}
+
+    export FORGEJO_WORK_DIR=/var/lib/forgejo
+    export FORGEJO_CUSTOM=/var/lib/forgejo/custom
+    CONFIG=/var/lib/forgejo/custom/conf/app.ini
+
+    credential_value() {
+      credential_name="$1"
+      variable_name="$2"
+      set -a
+      . "$CREDENTIALS_DIRECTORY/$credential_name"
+      set +a
+      printenv "$variable_name"
+    }
+
+    sync_oauth_source() {
+      name="$1"
+      provider="$2"
+      credential_name="$3"
+      client_id_variable="$4"
+      client_secret_variable="$5"
+      client_id="$(credential_value "$credential_name" "$client_id_variable")"
+      client_secret="$(credential_value "$credential_name" "$client_secret_variable")"
+
+      if [ -z "$client_id" ] || [ -z "$client_secret" ]; then
+        echo "Missing OAuth credentials for $name" >&2
+        return 1
+      fi
+
+      existing_id="$(${config.services.forgejo.package}/bin/forgejo -c "$CONFIG" admin auth list \
+        | ${pkgs.gawk}/bin/awk -F '\t' -v name="$name" 'NR>1 && $2==name {print $1; exit}')"
+
+      if [ -z "$existing_id" ]; then
+        ${config.services.forgejo.package}/bin/forgejo -c "$CONFIG" admin auth add-oauth \
+          --provider "$provider" \
+          --name "$name" \
+          --key "$client_id" \
+          --secret "$client_secret"
+        echo "Added OAuth source $name"
+      else
+        ${config.services.forgejo.package}/bin/forgejo -c "$CONFIG" admin auth update-oauth \
+          --provider "$provider" \
+          --id "$existing_id" \
+          --name "$name" \
+          --key "$client_id" \
+          --secret "$client_secret"
+        echo "Updated OAuth source $name (id=$existing_id)"
+      fi
+    }
+
+    ${forgejoOauthSyncCases}
   '';
 
   services.forgejo = {
@@ -616,109 +683,9 @@ in
   systemd.services.forgejo.serviceConfig.ExecStartPre = lib.mkBefore [
     throttleForgejoMirrors.outPath
   ];
-
-  systemd.services.forgejo-oauth-config = {
-    description = "Reconcile Forgejo OAuth2 login sources";
-    after = [ "forgejo.service" ];
-    requires = [ "forgejo.service" ];
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      User = "git";
-      Group = "git";
-      LoadCredential = lib.mapAttrsToList (name: path: "${name}:${path}") forgejoOauthCredentials;
-      WorkingDirectory = "/var/lib/forgejo";
-    };
-    environment = {
-      FORGEJO_WORK_DIR = "/var/lib/forgejo";
-      FORGEJO_CUSTOM = "/var/lib/forgejo/custom";
-    };
-    path = [
-      config.services.forgejo.package
-      pkgs.coreutils
-      pkgs.gnugrep
-      pkgs.gawk
-    ];
-    script = ''
-      set -euo pipefail
-
-      CONFIG=/var/lib/forgejo/custom/conf/app.ini
-      TMPDIR="$(mktemp -d)"
-      trap 'rm -rf "$TMPDIR"' EXIT
-
-      forgejo_retry() {
-        tries=12
-        delay=5
-        out="$TMPDIR/forgejo-command.out"
-
-        while [ "$tries" -gt 0 ]; do
-          if forgejo -c "$CONFIG" "$@" >"$out" 2>&1; then
-            cat "$out"
-            return 0
-          fi
-
-          if ! grep -q "database is locked" "$out"; then
-            cat "$out" >&2
-            return 1
-          fi
-
-          tries=$((tries - 1))
-          if [ "$tries" -eq 0 ]; then
-            cat "$out" >&2
-            return 1
-          fi
-
-          sleep "$delay"
-        done
-      }
-
-      credential_value() {
-        credential_name="$1"
-        variable_name="$2"
-        set -a
-        . "$CREDENTIALS_DIRECTORY/$credential_name"
-        set +a
-        printenv "$variable_name"
-      }
-
-      sync_oauth_source() {
-        name="$1"
-        provider="$2"
-        credential_name="$3"
-        client_id_variable="$4"
-        client_secret_variable="$5"
-        client_id="$(credential_value "$credential_name" "$client_id_variable")"
-        client_secret="$(credential_value "$credential_name" "$client_secret_variable")"
-
-        if [ -z "$client_id" ] || [ -z "$client_secret" ]; then
-          echo "Missing OAuth credentials for $name" >&2
-          return 1
-        fi
-
-        existing_id=$(forgejo_retry admin auth list \
-          | awk -F '\t' -v name="$name" 'NR>1 && $2==name {print $1; exit}')
-
-        if [ -z "$existing_id" ]; then
-          forgejo_retry admin auth add-oauth \
-            --provider "$provider" \
-            --name "$name" \
-            --key "$client_id" \
-            --secret "$client_secret"
-          echo "Added OAuth source $name"
-        else
-          forgejo_retry admin auth update-oauth \
-            --provider "$provider" \
-            --id "$existing_id" \
-            --name "$name" \
-            --key "$client_id" \
-            --secret "$client_secret"
-          echo "Updated OAuth source $name (id=$existing_id)"
-        fi
-      }
-
-      ${forgejoOauthSyncCases}
-    '';
-  };
+  systemd.services.forgejo.serviceConfig.LoadCredential = lib.mkAfter (
+    lib.mapAttrsToList (name: path: "${name}:${path}") forgejoOauthCredentials
+  );
 
   systemd.services.gitea-runner-netty.serviceConfig = {
     DynamicUser = lib.mkForce false;

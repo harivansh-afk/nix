@@ -246,5 +246,9 @@ in
   systemd.services.gitea-mirror.serviceConfig = {
     ExecStart = lib.mkForce [ giteaMirrorStart.outPath ];
     ExecStartPre = [ protectCanonicalRepositories.outPath ];
+    CPUWeight = 10;
+    IOWeight = 10;
+    IOSchedulingClass = "idle";
+    Nice = 10;
   };
 }

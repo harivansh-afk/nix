@@ -1,11 +1,9 @@
 {
   config,
-  inputs,
   pkgs,
   ...
 }:
 let
-  claudePackage = inputs.claudeCode.packages.${pkgs.stdenv.hostPlatform.system}.default;
   jsonFormat = pkgs.formats.json { };
   hookCommand = name: "${config.home.homeDirectory}/.claude/hooks/${name}";
   claudeSettings = jsonFormat.generate "claude-settings.json" {
@@ -55,7 +53,6 @@ let
   };
 in
 {
-  home.file.".local/bin/claude".source = "${claudePackage}/bin/claude";
   home.file.".claude/CLAUDE.md".source = ../dots/claude/CLAUDE.md;
   home.file.".claude/commands" = {
     source = ../dots/claude/commands;

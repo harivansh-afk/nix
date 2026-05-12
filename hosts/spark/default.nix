@@ -11,6 +11,7 @@
     ../../system/packages.nix
     ../../modules/security/sops.nix
     ../../modules/services/caddy.nix
+    ../../modules/services/claude-demo.nix
     ../../modules/services/cloudflared.nix
     ../../modules/services/delta.nix
     ../../modules/services/forgejo

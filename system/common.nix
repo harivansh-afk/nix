@@ -8,6 +8,7 @@
 }:
 let
   packageSets = import ../packages.nix { inherit inputs lib pkgs; };
+  homeDirectory = if hostConfig.isDarwin then "/Users/${username}" else "/home/${username}";
 in
 {
   nix.settings = {
@@ -52,7 +53,7 @@ in
 
   environment.etc."codex/requirements.toml".text = ''
     [hooks]
-    managed_dir = "/home/${username}/.claude/hooks"
+    managed_dir = "${homeDirectory}/.claude/hooks"
 
     [[hooks.SessionStart]]
     [[hooks.SessionStart.hooks]]

@@ -15,7 +15,7 @@ in
       "--provider"
       "local"
       "--model"
-      "qwen3.6-27b"
+      "step-3.5-flash-reap-121b"
     ];
   };
 

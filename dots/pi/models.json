@@ -15,8 +15,8 @@
       },
       "models": [
         {
-          "id": "qwen3.6-27b",
-          "name": "Qwen3.6 27B Q6 (llama.cpp)",
+          "id": "step-3.5-flash-reap-121b",
+          "name": "Step 3.5 Flash REAP 121B A11B Q4_K_M (llama.cpp)",
           "reasoning": false,
           "input": ["text"],
           "cost": {

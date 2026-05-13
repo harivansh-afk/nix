@@ -8,13 +8,13 @@ let
     pythonPackages.huggingface-hub
     pythonPackages.hf-transfer
   ]);
-  modelDir = "/var/lib/llama-cpp/models/qwen3.6-27b";
-  modelFile = "Qwen3.6-27B-UD-Q6_K_XL.gguf";
+  modelDir = "/var/lib/llama-cpp/models/step-3.5-flash-reap-121b";
+  modelFile = "Step-3.5-Flash-REAP-121B-A11B.Q4_K_M.gguf";
   modelPath = "${modelDir}/${modelFile}";
-  downloadModel = pkgs.writeShellScript "download-qwen3-6-27b-gguf" ''
+  downloadModel = pkgs.writeShellScript "download-step-3-5-flash-reap-121b-gguf" ''
     set -euo pipefail
     if [ ! -s "${modelPath}" ]; then
-      ${huggingfaceCli}/bin/hf download unsloth/Qwen3.6-27B-GGUF --include "${modelFile}" --local-dir "${modelDir}"
+      ${huggingfaceCli}/bin/hf download mradermacher/Step-3.5-Flash-REAP-121B-A11B-GGUF --include "${modelFile}" --local-dir "${modelDir}"
     fi
   '';
 in
@@ -30,7 +30,7 @@ in
       "-m"
       modelPath
       "--alias"
-      "qwen3.6-27b"
+      "step-3.5-flash-reap-121b"
       "-c"
       "131072"
       "-ngl"
@@ -43,8 +43,6 @@ in
       "20"
       "--presence-penalty"
       "1.5"
-      "--chat-template-kwargs"
-      ''{"enable_thinking":false}''
     ];
   };
 
@@ -55,7 +53,7 @@ in
     "d /var/lib/llama-cpp/huggingface 0755 root root -"
   ];
 
-  systemd.services.llama-cpp-qwen36-download = {
+  systemd.services.llama-cpp-step-reap-download = {
     before = [ "llama-cpp.service" ];
     environment = {
       HF_HOME = "/var/lib/llama-cpp/huggingface";
@@ -68,7 +66,7 @@ in
   };
 
   systemd.services.llama-cpp = {
-    after = [ "llama-cpp-qwen36-download.service" ];
-    requires = [ "llama-cpp-qwen36-download.service" ];
+    after = [ "llama-cpp-step-reap-download.service" ];
+    requires = [ "llama-cpp-step-reap-download.service" ];
   };
 }

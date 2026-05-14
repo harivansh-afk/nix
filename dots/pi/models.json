@@ -1,7 +1,7 @@
 {
   "providers": {
     "local": {
-      "name": "llama.cpp",
+      "name": "llama.cpp Step",
       "baseUrl": "http://127.0.0.1:8080/v1",
       "apiKey": "none",
       "api": "openai-completions",
@@ -17,6 +17,36 @@
         {
           "id": "step-3.5-flash-reap-121b",
           "name": "Step 3.5 Flash REAP 121B A11B Q4_K_M (llama.cpp)",
+          "reasoning": false,
+          "input": ["text"],
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          },
+          "contextWindow": 131072,
+          "maxTokens": 32768
+        }
+      ]
+    },
+    "qwen-hermes": {
+      "name": "llama.cpp Qwen Hermes",
+      "baseUrl": "http://127.0.0.1:8081/v1",
+      "apiKey": "none",
+      "api": "openai-completions",
+      "authHeader": false,
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false,
+        "supportsStrictMode": false,
+        "maxTokensField": "max_tokens"
+      },
+      "models": [
+        {
+          "id": "qwen3.6-27b-hermes",
+          "name": "Qwen3.6 27B Hermes UD Q4_K_XL (llama.cpp)",
           "reasoning": false,
           "input": ["text"],
           "cost": {

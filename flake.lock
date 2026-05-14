@@ -1062,11 +1062,11 @@
         "systems": "systems_5"
       },
       "locked": {
-        "lastModified": 1778050034,
-        "narHash": "sha256-Dq/d37m5s9xF7Vzh/g+zmddHMcFpxDkOXSGU3zqR8Ns=",
+        "lastModified": 1778743423,
+        "narHash": "sha256-VBpqQ1HJmU1vkupm6IPhF/4dD84FzAcyESS4MoQKgic=",
         "owner": "lukasl-dev",
         "repo": "pi-mono.nix",
-        "rev": "316986fc75714dc0174307844806306bc5904fdc",
+        "rev": "3e089b26e821ad916454d9224200f0103ab78d1a",
         "type": "github"
       },
       "original": {

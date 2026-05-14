@@ -10,6 +10,7 @@ let
     "$schema" = "https://json.schemastore.org/claude-code-settings.json";
     env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
     model = "opus[1m]";
+    effortLevel = "medium";
     permissions.defaultMode = "bypassPermissions";
     includeCoAuthoredBy = false;
     autoCompactEnabled = true;

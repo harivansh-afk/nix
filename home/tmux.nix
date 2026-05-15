@@ -24,11 +24,18 @@
 
       set -g mouse on
 
-      bind -n DoubleClick1Pane select-pane \; copy-mode -M \; send-keys -X select-word \; run-shell -d 0.3 \; send-keys -X copy-selection \; send-keys -X clear-selection
-      bind -n TripleClick1Pane select-pane \; copy-mode -M \; send-keys -X select-line \; run-shell -d 0.3 \; send-keys -X copy-selection \; send-keys -X clear-selection
-      bind -T copy-mode DoubleClick1Pane select-pane \; send-keys -X select-word \; run-shell -d 0.3 \; send-keys -X copy-selection \; send-keys -X clear-selection
-      bind -T copy-mode TripleClick1Pane select-pane \; send-keys -X select-line \; run-shell -d 0.3 \; send-keys -X copy-selection \; send-keys -X clear-selection
-      bind -T copy-mode MouseDragEnd1Pane send-keys -X copy-selection \; send-keys -X clear-selection
+      # Selection bindings run tmux-clip-relay after copy-selection. tmux's
+      # set-clipboard=on re-emits OSC 52 only when an inner pane app originates
+      # the sequence; it does not re-emit when tmux's own copy-selection fills
+      # a buffer. Without this explicit relay, mouse drag / double-click /
+      # triple-click would fill the tmux buffer but never reach the local
+      # system clipboard. The helper reads the top buffer and writes
+      # `\e]52;c;<base64>\a` straight to the connected client's TTY.
+      bind -n DoubleClick1Pane select-pane \; copy-mode -M \; send-keys -X select-word \; run-shell -d 0.3 \; send-keys -X copy-selection \; run-shell "$HOME/.local/bin/tmux-clip-relay" \; send-keys -X clear-selection
+      bind -n TripleClick1Pane select-pane \; copy-mode -M \; send-keys -X select-line \; run-shell -d 0.3 \; send-keys -X copy-selection \; run-shell "$HOME/.local/bin/tmux-clip-relay" \; send-keys -X clear-selection
+      bind -T copy-mode DoubleClick1Pane select-pane \; send-keys -X select-word \; run-shell -d 0.3 \; send-keys -X copy-selection \; run-shell "$HOME/.local/bin/tmux-clip-relay" \; send-keys -X clear-selection
+      bind -T copy-mode TripleClick1Pane select-pane \; send-keys -X select-line \; run-shell -d 0.3 \; send-keys -X copy-selection \; run-shell "$HOME/.local/bin/tmux-clip-relay" \; send-keys -X clear-selection
+      bind -T copy-mode MouseDragEnd1Pane send-keys -X copy-selection \; run-shell "$HOME/.local/bin/tmux-clip-relay" \; send-keys -X clear-selection
 
       bind -T copy-mode    WheelDownPane send-keys -X scroll-down-and-cancel
       bind -T copy-mode-vi WheelDownPane send-keys -X scroll-down-and-cancel
@@ -129,6 +136,23 @@
           printf ' %s ' "$s"
         fi
       done
+    '';
+  };
+
+  # OSC 52 relay invoked by the copy-mode bindings above. Reads the current
+  # tmux paste buffer and writes `\e]52;c;<base64>\a` directly to the
+  # connected client's TTY. This is the path that makes mouse-drag and
+  # double/triple-click selections land on the local system clipboard when
+  # connected over mosh.
+  home.file.".local/bin/tmux-clip-relay" = {
+    executable = true;
+    text = ''
+      #!/usr/bin/env bash
+      set -euo pipefail
+      client_tty="$(tmux display-message -p '#{client_tty}')"
+      [ -n "$client_tty" ] || exit 0
+      data="$(tmux save-buffer - | base64 -w0)"
+      printf '\033]52;c;%s\a' "$data" > "$client_tty"
     '';
   };
 }

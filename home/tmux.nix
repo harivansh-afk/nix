@@ -40,7 +40,12 @@
       set -s extended-keys on
       set -s extended-keys-format csi-u
       set -as terminal-features 'xterm*:extkeys'
-      set -as terminal-features 'xterm-ghostty:RGB'
+      set -as terminal-features 'xterm*:RGB'
+      # Mosh rewrites TERM to xterm-256color (sometimes screen) because the
+      # mosh-server build does not know Ghostty's terminfo. The xterm* glob
+      # above covers the mosh case; this line covers the screen fallback so
+      # true-color theme accents do not get quantised to the 256-palette.
+      set -as terminal-features 'screen*:RGB'
 
       bind h select-pane -L
       bind j select-pane -D

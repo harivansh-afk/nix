@@ -47,6 +47,19 @@
       # true-color theme accents do not get quantised to the 256-palette.
       set -as terminal-features 'screen*:RGB'
 
+      # OSC 52 clipboard through mosh. mosh-server 1.4 only accepts the
+      # `c` (CLIPBOARD) selector; every other selector (PRIMARY, s0, empty)
+      # is silently dropped by mosh-server. Force tmux's Ms capability to
+      # always emit `\e]52;c;<base64>\a` so copy-mode and inner-app OSC 52
+      # both survive the stack (local terminal -> mosh -> tmux -> shell).
+      # set-clipboard on makes tmux relay via Ms instead of only buffering.
+      # Refs:
+      #   tmux/tmux#3423 (tmux interferes with OSC 52 when running in mosh)
+      #   mobile-shell/mosh#1054 (broaden accepted OSC 52 forms)
+      #   mobile-shell/mosh#1104 (additional clipboard selectors)
+      set -g set-clipboard on
+      set -ag terminal-overrides ',*:Ms=\E]52;c;%p2%s\7'
+
       bind h select-pane -L
       bind j select-pane -D
       bind k select-pane -U

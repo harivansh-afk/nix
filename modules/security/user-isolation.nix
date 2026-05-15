@@ -9,13 +9,15 @@
   #
   # rathi (UID 1000) is the host owner and is intentionally uncapped.
 
-  systemd.slices."user-1001".sliceConfig = {  # barrett
+  systemd.slices."user-1001".sliceConfig = {
+    # barrett
     MemoryHigh = "24G";
     MemoryMax = "32G";
     CPUQuota = "800%";
   };
 
-  systemd.slices."user-1002".sliceConfig = {  # advait
+  systemd.slices."user-1002".sliceConfig = {
+    # advait
     MemoryHigh = "24G";
     MemoryMax = "32G";
     CPUQuota = "800%";

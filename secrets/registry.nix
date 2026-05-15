@@ -27,11 +27,19 @@
     "linear.env" = { };
     "graphite.env" = { };
     "mgrep.env" = { };
-    "forgejo-token.env" = { };
     "gws.env" = { };
   };
 
   hosts.spark = {
+    # Raw token (not KEY=value). Consumed verbatim by home/tea.nix
+    # (tokenFile) and home/git.nix (cat in credential helper). Kept out
+    # of the `user` bucket so macOS does not try to `source` it.
+    "forgejo-token.env" = {
+      owner = username;
+      group = "users";
+      mode = "0400";
+    };
+
     "user-password-hash" = {
       neededForUsers = true;
     };

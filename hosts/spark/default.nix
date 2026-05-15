@@ -9,7 +9,9 @@
   imports = [
     ../../system/common.nix
     ../../system/packages.nix
+    ../../modules/security/gpu-access.nix
     ../../modules/security/sops.nix
+    ../../modules/security/user-isolation.nix
     ../../modules/services/caddy.nix
     ../../modules/services/claude-demo.nix
     ../../modules/services/cloudflared.nix

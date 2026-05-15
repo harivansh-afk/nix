@@ -1,13 +1,8 @@
 {
   config,
-  mkSparkSecret,
   ...
 }:
 {
-  sops.secrets."wifi.env" = mkSparkSecret "wifi.env" {
-    restartUnits = [ "NetworkManager-ensure-profiles.service" ];
-  };
-
   networking.networkmanager = {
     enable = true;
     ensureProfiles = {
@@ -36,12 +31,6 @@
         };
       };
     };
-  };
-
-  sops.secrets."tailscale-ix-authkey" = mkSparkSecret "tailscale-ix-authkey" {
-    owner = "root";
-    mode = "0400";
-    restartUnits = [ "tailscaled-autoconnect.service" ];
   };
 
   services.tailscale = {

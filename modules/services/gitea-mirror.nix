@@ -3,7 +3,6 @@
   inputs,
   lib,
   loopbackVhost,
-  mkSparkSecret,
   pkgs,
   ...
 }:
@@ -205,13 +204,6 @@ in
   imports = [ inputs.gitea-mirror.nixosModules.default ];
 
   services.caddy.virtualHosts."http://${mirrorDomain}" = loopbackVhost backendPort;
-
-  sops.secrets."gitea-mirror.env" = mkSparkSecret "gitea-mirror.env" {
-    owner = "gitea-mirror";
-    group = "gitea-mirror";
-    mode = "0400";
-    restartUnits = [ "gitea-mirror.service" ];
-  };
 
   services.gitea-mirror = {
     enable = true;

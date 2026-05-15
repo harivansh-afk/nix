@@ -2,7 +2,6 @@
   config,
   lib,
   loopbackVhost,
-  mkSparkSecret,
   pkgs,
   ...
 }:
@@ -32,17 +31,6 @@ let
       value = config.sops.secrets.${source.secretName}.path;
     }) forgejoOauthSourceList
   );
-  forgejoOauthSecrets = lib.mapAttrs' (
-    _: source:
-    lib.nameValuePair source.secretName (
-      mkSparkSecret source.secretName {
-        owner = "git";
-        group = "git";
-        mode = "0400";
-        restartUnits = [ "forgejo.service" ];
-      }
-    )
-  ) forgejoOauthSources;
   forgejoOauthSyncCases = lib.concatMapStringsSep "\n" (source: ''
     sync_oauth_source \
       ${lib.escapeShellArg source.name} \
@@ -524,27 +512,6 @@ in
           reverse_proxy 127.0.0.1:${toString backendPort}
         '';
       };
-
-  sops.secrets = forgejoOauthSecrets // {
-    "forgejo-smtp-password" = mkSparkSecret "forgejo-smtp-password" {
-      owner = "git";
-      group = "git";
-      mode = "0400";
-      restartUnits = [ "forgejo.service" ];
-    };
-    "forgejo-mirror.env" = mkSparkSecret "forgejo-mirror.env" {
-      owner = "git";
-      group = "git";
-      mode = "0400";
-      restartUnits = [ "forgejo.service" ];
-    };
-    "forgejo-runner-token" = mkSparkSecret "forgejo-runner-token" {
-      owner = "gitea-runner";
-      group = "gitea-runner";
-      mode = "0400";
-      restartUnits = [ "gitea-runner-netty.service" ];
-    };
-  };
 
   users.users.git = {
     isSystemUser = true;

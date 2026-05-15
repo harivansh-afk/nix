@@ -4,7 +4,15 @@
 # SSH pubkey (`ssh-to-age < ~/.ssh/id_ed25519.pub`); host keys are
 # derived from each NixOS host's `/etc/ssh/ssh_host_ed25519_key.pub`.
 # Any file matching a `path_regex` is encrypted for every listed
-# recipient, so adding a new host only needs a new anchor + rule.
+# recipient. Adding a new host = new anchor + new rule.
+#
+# Directory layout:
+#   secrets/user/<name>            - per-admin-user (decrypts on every host
+#                                    the admin can SSH-as).
+#   secrets/hosts/<host>/<name>    - host-bound (decrypts only on that host).
+#                                    Per-user variants on a host use
+#                                    `<user>-<name>` so the regex picks up
+#                                    the right recipient set.
 
 keys:
   - &admin_macbook age1m0nf8gmkeptnqrl8qdjcvz8jkt2zxpn9jcqs6424say4c332p4qqv5yf3a
@@ -12,13 +20,18 @@ keys:
   - &host_spark age1nz862qmyaa337s7pmw60pawgfu5z0und9y75vhwkk6txgfrqeujquf3xaj
 
 creation_rules:
-  - path_regex: secrets/spark/barrett-[^/]+$
+  - path_regex: secrets/user/[^/]+$
+    key_groups:
+      - age:
+          - *admin_macbook
+          - *host_spark
+  - path_regex: secrets/hosts/spark/barrett-[^/]+$
     key_groups:
       - age:
           - *admin_macbook
           - *admin_laptop_barrett
           - *host_spark
-  - path_regex: secrets/spark/[^/]+$
+  - path_regex: secrets/hosts/spark/[^/]+$
     key_groups:
       - age:
           - *admin_macbook

@@ -1,6 +1,5 @@
 {
   config,
-  mkSparkSecret,
   pkgs,
   username,
   loopbackVhost,
@@ -15,13 +14,6 @@ let
 in
 {
   services.caddy.virtualHosts."http://${deltaDomain}" = loopbackVhost deltaPort;
-
-  sops.secrets."delta-env" = mkSparkSecret "delta.env" {
-    owner = username;
-    group = "users";
-    mode = "0400";
-    restartUnits = [ "delta.service" ];
-  };
 
   systemd.tmpfiles.rules = [
     "d ${stateDir} 0750 ${username} users -"
@@ -51,7 +43,7 @@ in
       Group = "users";
       WorkingDirectory = repoDir;
       ExecStart = "${repoDir}/node_modules/.bin/next start --port ${toString deltaPort} --hostname 127.0.0.1";
-      EnvironmentFile = config.sops.secrets."delta-env".path;
+      EnvironmentFile = config.sops.secrets."delta.env".path;
       Restart = "on-failure";
       RestartSec = 5;
     };

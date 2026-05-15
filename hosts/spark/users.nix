@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  mkSparkSecret,
   pkgs,
   username,
   ...
@@ -17,30 +16,6 @@ let
   };
 in
 {
-  sops.secrets."user-password-hash" = mkSparkSecret "user-password-hash" {
-    neededForUsers = true;
-  };
-
-  sops.secrets."mgrep.env" = mkSparkSecret "mgrep.env" {
-    owner = username;
-    mode = "0400";
-  };
-
-  sops.secrets."linear.env" = mkSparkSecret "linear.env" {
-    owner = username;
-    mode = "0400";
-  };
-
-  sops.secrets."graphite.env" = mkSparkSecret "graphite.env" {
-    owner = username;
-    mode = "0400";
-  };
-
-  sops.secrets."forgejo-token.env" = mkSparkSecret "forgejo-token.env" {
-    owner = username;
-    mode = "0400";
-  };
-
   users.mutableUsers = false;
 
   users.users =

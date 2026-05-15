@@ -1,4 +1,5 @@
 {
+  inputs,
   self,
   hostname,
   lib,
@@ -9,6 +10,7 @@
   imports = [
     ../../system/common.nix
     ../../system/packages.nix
+    inputs.sops-nix.nixosModules.sops
     ../../modules/security/sops.nix
     ../../modules/security/user-isolation.nix
     ../../modules/services/caddy.nix

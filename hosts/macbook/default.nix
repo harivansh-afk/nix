@@ -11,13 +11,9 @@
     ../../system/common.nix
     ../../system/packages.nix
     inputs.sops-nix.darwinModules.sops
+    ../../modules/security/sops.nix
     ./macos.nix
   ];
-
-  sops.age = {
-    sshKeyPaths = [ "/Users/${username}/.ssh/id_ed25519" ];
-    generateKey = false;
-  };
 
   networking.hostName = hostname;
 

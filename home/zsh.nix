@@ -4,8 +4,18 @@
   pkgs,
   hostConfig,
   theme,
+  username,
   ...
 }:
+let
+  userSecretRegistry = (import ../secrets/registry.nix { inherit username; }).user;
+  userSecretNames = builtins.attrNames userSecretRegistry;
+  loadUserSecrets = lib.concatMapStringsSep "\n" (name: ''
+    if [[ -r /run/secrets/${name} ]]; then
+      set -a; source /run/secrets/${name}; set +a
+    fi
+  '') userSecretNames;
+in
 {
   programs.zsh = {
     enable = true;
@@ -78,13 +88,7 @@
           source ~/.secrets
         fi
 
-        if [[ -r /run/secrets/mgrep.env ]]; then
-          source /run/secrets/mgrep.env
-        fi
-
-        if [[ -r /run/secrets/linear.env ]]; then
-          set -a; source /run/secrets/linear.env; set +a
-        fi
+        ${loadUserSecrets}
 
         [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 

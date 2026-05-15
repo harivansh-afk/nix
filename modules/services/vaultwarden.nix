@@ -1,7 +1,6 @@
 {
   config,
   loopbackVhost,
-  mkSparkSecret,
   ...
 }:
 let
@@ -11,17 +10,10 @@ in
 {
   services.caddy.virtualHosts."http://${vaultDomain}" = loopbackVhost backendPort;
 
-  sops.secrets."vaultwarden-env" = mkSparkSecret "vaultwarden.env" {
-    owner = "vaultwarden";
-    group = "vaultwarden";
-    mode = "0400";
-    restartUnits = [ "vaultwarden.service" ];
-  };
-
   services.vaultwarden = {
     enable = true;
     backupDir = "/var/backup/vaultwarden";
-    environmentFile = config.sops.secrets."vaultwarden-env".path;
+    environmentFile = config.sops.secrets."vaultwarden.env".path;
     config = {
       DOMAIN = "https://${vaultDomain}";
       SIGNUPS_ALLOWED = false;

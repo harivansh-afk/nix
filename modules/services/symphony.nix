@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  mkSparkSecret,
   pkgs,
   username,
   ...
@@ -41,13 +40,6 @@ let
   ];
 in
 {
-  sops.secrets."symphony.env" = mkSparkSecret "symphony.env" {
-    owner = username;
-    group = "users";
-    mode = "0400";
-    restartUnits = [ "symphony.service" ];
-  };
-
   services.tailscale.serve = {
     enable = true;
     services.symphony.endpoints."tcp:443" = "http://127.0.0.1:${toString port}";

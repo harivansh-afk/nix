@@ -22,7 +22,7 @@ in
   services.ollama.enable = lib.mkForce false;
 
   services.llama-cpp = {
-    enable = true;
+    enable = false;
     host = "127.0.0.1";
     port = 8080;
     package = llamaCpp;

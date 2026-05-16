@@ -1,8 +1,17 @@
-import { diffUrlFromLocation } from "../shared/repo-path.js";
+import { diffUrlFromLocation, isPullFilesPath } from "../shared/repo-path.js";
 import { scheduleViewportWork } from "../shared/viewport.js";
 import { loadPierre } from "./client.js";
 import { getDiffText, getParsedDiff, indexPatchFiles } from "./diff-data.js";
 import { pierreDiffRenderOptions } from "./options.js";
+import {
+  getAnnotationsForPath,
+  hasPullContext,
+  loadPullComments,
+  mountComposer,
+  renderCommentAnnotation,
+  renderFileLevelComments,
+  subscribeToRefresh,
+} from "./pr-comments.js";
 
 const diffSelectors = {
   boxes: '#diff-file-boxes .diff-file-box[id^="diff-"]',
@@ -95,6 +104,44 @@ function markDiffRendered(box) {
   };
 }
 
+function boxIsPullRequest(box) {
+  return box.querySelector('[data-harivan-pierre-pull="1"]') !== null;
+}
+
+function boxCanComment(box) {
+  return (
+    box.querySelector('[data-harivan-pierre-can-comment="1"]') !== null
+  );
+}
+
+function pathForBox(box, fileDiff) {
+  return (
+    fileDiff?.name ||
+    fileDiff?.prevName ||
+    box.dataset.newFilename ||
+    box.dataset.oldFilename ||
+    null
+  );
+}
+
+const boxInstances = new WeakMap();
+
+async function refreshAnnotationsForBox(box) {
+  const entry = boxInstances.get(box);
+  if (!entry) return;
+  try {
+    const annotations = await getAnnotationsForPath(entry.path);
+    entry.instance.setLineAnnotations(annotations);
+    // Pierre allocates grid slots for annotations during render(); a bare
+    // setLineAnnotations() will not re-run grid layout, so existing rows
+    // wouldn't have slots and the wrapper nodes would fall to the bottom.
+    // Force a rerender so the slots line up with the right code rows.
+    entry.instance.rerender();
+  } catch (error) {
+    console.warn("Pierre PR bridge: refreshing annotations failed", error);
+  }
+}
+
 function renderDiffBox(box, fileDiff, cacheKey, pierre) {
   if (box.dataset.harivanPierreState === diffState.rendered) return false;
   if (box.dataset.harivanPierreState === diffState.rendering) return false;
@@ -110,6 +157,10 @@ function renderDiffBox(box, fileDiff, cacheKey, pierre) {
   const fileContainer = mountDiffContainer(placeholder);
   const options = pierreDiffRenderOptions();
   const markRendered = markDiffRendered(box);
+  const isPullRequest = boxIsPullRequest(box);
+  const canComment = isPullRequest && boxCanComment(box);
+  const path = pathForBox(box, fileDiff);
+
   options.onLineSelectionEnd = (range) => {
     if (!range) return;
     const prefix = range.side === "additions" ? "R" : "L";
@@ -121,6 +172,22 @@ function renderDiffBox(box, fileDiff, cacheKey, pierre) {
   };
   options.onPostRender = markRendered;
 
+  if (isPullRequest) {
+    options.renderAnnotation = renderCommentAnnotation;
+    if (canComment && path) {
+      options.enableGutterUtility = true;
+      options.onGutterUtilityClick = (range) => {
+        if (!range) return;
+        mountComposer({
+          box,
+          side: range.side === "deletions" ? "deletions" : "additions",
+          lineNumber: range.start,
+          path,
+        });
+      };
+    }
+  }
+
   try {
     const instance = new pierre.FileDiff(options);
     const rendered = instance.render({
@@ -131,6 +198,26 @@ function renderDiffBox(box, fileDiff, cacheKey, pierre) {
       fileContainer,
     });
     if (rendered) markRendered();
+    if (isPullRequest && path) {
+      boxInstances.set(box, { instance, path });
+      getAnnotationsForPath(path)
+        .then((annotations) => {
+          if (annotations.length === 0) return;
+          instance.setLineAnnotations(annotations);
+          // Re-run render so Pierre allocates grid slots for the annotation
+          // wrapper nodes; otherwise they fall to the bottom of the file.
+          instance.rerender();
+        })
+        .catch((error) => {
+          console.warn("Pierre PR bridge: initial annotations failed", error);
+        });
+      const fileLevelContainer = box.querySelector(
+        '[data-harivan-pierre-file-comments="1"]',
+      );
+      if (fileLevelContainer) {
+        renderFileLevelComments({ container: fileLevelContainer, path });
+      }
+    }
     return true;
   } catch (error) {
     console.warn("Pierre diff rendering failed", error);
@@ -231,6 +318,38 @@ function observeDiffBoxes() {
   diffBoxObserver.observe(container, { childList: true, subtree: true });
 }
 
+let refreshSubscribed = false;
+
+function subscribeBoxesToRefresh() {
+  if (refreshSubscribed) return;
+  refreshSubscribed = true;
+  subscribeToRefresh(async () => {
+    for (const box of document.querySelectorAll(
+      '#diff-file-boxes .diff-file-box[id^="diff-"]',
+    )) {
+      const entry = boxInstances.get(box);
+      if (entry) {
+        try {
+          const annotations = await getAnnotationsForPath(entry.path);
+          entry.instance.setLineAnnotations(annotations);
+          entry.instance.rerender();
+        } catch (error) {
+          console.warn("Pierre PR bridge: refresh failed", error);
+        }
+        const fileLevelContainer = box.querySelector(
+          '[data-harivan-pierre-file-comments="1"]',
+        );
+        if (fileLevelContainer) {
+          renderFileLevelComments({
+            container: fileLevelContainer,
+            path: entry.path,
+          });
+        }
+      }
+    }
+  });
+}
+
 export async function renderDiffView() {
   const boxes = renderableDiffBoxes();
   if (boxes.length === 0) return;
@@ -238,6 +357,11 @@ export async function renderDiffView() {
   if (!url) return;
   markDiffsPending(boxes);
   observeDiffBoxes();
+
+  if (isPullFilesPath() && hasPullContext()) {
+    loadPullComments().catch(() => {});
+    subscribeBoxesToRefresh();
+  }
 
   try {
     const pierrePromise = loadPierre();

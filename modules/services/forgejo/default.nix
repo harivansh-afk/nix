@@ -529,6 +529,15 @@ in
   };
   users.groups.git = { };
 
+  # Restart Forgejo whenever the rendered templates or the JS bundle change.
+  # Forgejo parses templates once at startup, so without this `just switch`
+  # would update the symlinks but leave the in-memory templates stale.
+  systemd.services.forgejo.restartTriggers = [
+    forgejoWeb.frontend
+    forgejoWeb.templates
+    forgejoWeb.assets
+  ];
+
   systemd.services.forgejo.preStart = lib.mkAfter ''
     . ${mirrorEnvFile}
     printf 'https://oauth2:%s@github.com\n' "$GITHUB_TOKEN" > ${gitCredentialFile}

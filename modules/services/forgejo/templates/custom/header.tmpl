@@ -6,18 +6,27 @@
     const prefix = "/" + parts[0] + "/" + parts[1];
     const commitIndex = parts.indexOf("commit");
     const compareIndex = parts.indexOf("compare");
+    const pullsIndex = parts.indexOf("pulls");
     const srcIndex = parts.indexOf("src");
     const blameIndex = parts.indexOf("blame");
     const isCommitDiff = commitIndex >= 0 && parts[commitIndex + 1];
     const isCompareDiff = compareIndex >= 0 && parts[compareIndex + 1];
-    const shouldPreloadPierre = isCommitDiff || isCompareDiff || srcIndex >= 0 || blameIndex >= 0;
+    const isPullFiles =
+      pullsIndex >= 0 && parts[pullsIndex + 1] && parts[pullsIndex + 2] === "files";
+    const shouldPreloadPierre =
+      isCommitDiff || isCompareDiff || isPullFiles || srcIndex >= 0 || blameIndex >= 0;
     if (shouldPreloadPierre) {
       import("{{AssetUrlPrefix}}/js/pierre-preload.js?v=__HARIVAN_FORGEJO_PIERRE_PRELOAD_VERSION__").catch(() => {});
     }
-    if (!isCommitDiff && !isCompareDiff) return;
-    const url = isCommitDiff
-      ? prefix + "/commit/" + parts[commitIndex + 1] + ".diff"
-      : prefix + "/compare/" + parts.slice(compareIndex + 1).join("/") + ".diff";
+    if (!isCommitDiff && !isCompareDiff && !isPullFiles) return;
+    let url;
+    if (isCommitDiff) {
+      url = prefix + "/commit/" + parts[commitIndex + 1] + ".diff";
+    } else if (isCompareDiff) {
+      url = prefix + "/compare/" + parts.slice(compareIndex + 1).join("/") + ".diff";
+    } else {
+      url = prefix + "/pulls/" + parts[pullsIndex + 1] + ".diff";
+    }
     window.__harivanForgejoDiffPreload = {
       url,
       textPromise: fetch(url, { credentials: "same-origin" }).then((response) => {

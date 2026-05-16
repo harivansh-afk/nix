@@ -1,6 +1,6 @@
 {
   "providers": {
-    "local": {
+    "step": {
       "name": "llama.cpp Step",
       "baseUrl": "http://127.0.0.1:8080/v1",
       "apiKey": "none",
@@ -25,13 +25,13 @@
             "cacheRead": 0,
             "cacheWrite": 0
           },
-          "contextWindow": 131072,
+          "contextWindow": 32768,
           "maxTokens": 32768
         }
       ]
     },
-    "qwen-hermes": {
-      "name": "llama.cpp Qwen Hermes",
+    "qwen": {
+      "name": "llama.cpp Qwen",
       "baseUrl": "http://127.0.0.1:8081/v1",
       "apiKey": "none",
       "api": "openai-completions",
@@ -45,8 +45,8 @@
       },
       "models": [
         {
-          "id": "qwen3.6-27b-hermes",
-          "name": "Qwen3.6 27B Hermes UD Q4_K_XL (llama.cpp)",
+          "id": "qwen3.6-27b",
+          "name": "Qwen3.6 27B UD Q6_K_XL (llama.cpp)",
           "reasoning": false,
           "input": ["text"],
           "cost": {

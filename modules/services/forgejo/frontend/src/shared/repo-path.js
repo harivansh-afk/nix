@@ -7,6 +7,22 @@ export function repoPrefix(parts = pathParts()) {
   return `/${encodeURIComponent(parts[0])}/${encodeURIComponent(parts[1])}`;
 }
 
+export function pullsIndex(parts = pathParts()) {
+  const pullsAt = parts.indexOf("pulls");
+  if (pullsAt < 0) return null;
+  const indexPart = parts[pullsAt + 1];
+  if (!indexPart) return null;
+  const index = Number.parseInt(indexPart, 10);
+  if (!Number.isFinite(index)) return null;
+  return index;
+}
+
+export function isPullFilesPath(parts = pathParts()) {
+  const pullsAt = parts.indexOf("pulls");
+  if (pullsAt < 0) return false;
+  return Boolean(parts[pullsAt + 1]) && parts[pullsAt + 2] === "files";
+}
+
 export function diffUrlFromLocation(parts = pathParts()) {
   const prefix = repoPrefix(parts);
   if (!prefix) return null;
@@ -23,6 +39,13 @@ export function diffUrlFromLocation(parts = pathParts()) {
       .map(encodeURIComponent)
       .join("/");
     return `${prefix}/compare/${compareSpec}.diff`;
+  }
+
+  if (isPullFilesPath(parts)) {
+    const index = pullsIndex(parts);
+    if (index !== null) {
+      return `${prefix}/pulls/${index}.diff`;
+    }
   }
 
   return null;

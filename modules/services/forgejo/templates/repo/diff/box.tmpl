@@ -85,6 +85,22 @@
 			diffFileInfo.files.push(...diffDataFiles);
 			window.config.pageData.diffFileInfo = diffFileInfo;
 		</script>
+		{{if .PageIsPullFiles}}
+		<script id="harivan-pierre-pull-context" type="application/json">
+			{
+				"issueLink": "{{$.Issue.Link}}",
+				"pullIndex": {{$.Issue.Index}},
+				"repoLink": "{{$.RepoLink}}",
+				"apiCommentsUrl": "{{AppSubUrl}}/api/v1/repos/{{$.Repository.OwnerName}}/{{$.Repository.Name}}/pulls/{{$.Issue.Index}}/comments",
+				"newCommentUrl": "{{$.Issue.Link}}/files/reviews/new_comment",
+				"diffStyle": "{{if $.IsSplitStyle}}split{{else}}unified{{end}}",
+				"canComment": {{if and $.IsSigned (not $.IsArchived)}}true{{else}}false{{end}},
+				"isShowingAllCommits": {{$.IsShowingAllCommits}},
+				"afterCommitID": "{{$.AfterCommitID}}",
+				"beforeCommitID": "{{$.BeforeCommitID}}"
+			}
+		</script>
+		{{end}}
 	{{end}}
 	<div id="diff-container">
 		{{if $showFileTree}}
@@ -106,7 +122,8 @@
 						{{$isImage:= or (call $.IsSniffedTypeAnImage $sniffedTypeBase) (call $.IsSniffedTypeAnImage $sniffedTypeHead)}}
 						{{$isCsv := (call $.IsCsvFile $file)}}
 						{{$showFileViewToggle := or $isImage (and (not $file.IsIncomplete) $isCsv)}}
-						{{$usePierreDiff := and (or $.PageIsDiff $.IsDiffCompare) (not $.PageIsPullFiles) (not $file.IsIncomplete) (not $file.IsBin) (not $file.IsSubmodule) (not $showFileViewToggle)}}
+						{{$usePierreDiff := and (or $.PageIsDiff $.IsDiffCompare $.PageIsPullFiles) (not $file.IsIncomplete) (not $file.IsBin) (not $file.IsSubmodule) (not $showFileViewToggle)}}
+						{{$pierrePullContext := and $.PageIsPullFiles $.Issue $.Issue.Link}}
 						{{$isExpandable := or (gt $file.Addition 0) (gt $file.Deletion 0) $file.IsBin}}
 						{{$isReviewFile := and $.IsSigned $.PageIsPullFiles (not $.IsArchived) $.IsShowingAllCommits}}
 						<div class="diff-file-box diff-box file-content {{TabSizeClass $.Editorconfig $file.Name}} tw-mt-0" id="diff-{{$file.NameHash}}" data-old-filename="{{$file.OldName}}" data-new-filename="{{$file.Name}}" data-harivan-pierre-mode="{{if $usePierreDiff}}placeholder{{else}}native{{end}}" {{if or ($file.ShouldBeHidden) (not $isExpandable)}}data-folded="true"{{end}}>
@@ -182,7 +199,7 @@
 							</h4>
 							<div class="diff-file-body ui attached unstackable table segment" {{if and $file.IsViewed $.IsShowingAllCommits}}data-folded="true"{{end}}>
 								{{if $usePierreDiff}}
-									<div id="diff-source-{{$file.NameHash}}" class="file-body file-code unicode-escaped harivan-pierre-diff-target{{if $.IsSplitStyle}} code-diff-split{{else}} code-diff-unified{{end}}" data-harivan-pierre-placeholder="1" data-old-filename="{{$file.OldName}}" data-new-filename="{{$file.Name}}"></div>
+									<div id="diff-source-{{$file.NameHash}}" class="file-body file-code unicode-escaped harivan-pierre-diff-target{{if $.IsSplitStyle}} code-diff-split{{else}} code-diff-unified{{end}}" data-harivan-pierre-placeholder="1" data-old-filename="{{$file.OldName}}" data-new-filename="{{$file.Name}}"{{if $pierrePullContext}} data-harivan-pierre-pull="1" data-harivan-pierre-issue-link="{{$.Issue.Link}}" data-harivan-pierre-new-comment-url="{{$.Issue.Link}}/files/reviews/new_comment" data-harivan-pierre-can-comment="{{if and $.IsSigned (not $.IsArchived)}}1{{else}}0{{end}}"{{end}}></div>
 								{{else}}
 									<div id="diff-source-{{$file.NameHash}}" class="file-body file-code unicode-escaped code-diff{{if $.IsSplitStyle}} code-diff-split{{else}} code-diff-unified{{end}}{{if $showFileViewToggle}} tw-hidden{{end}}">
 								{{if or $file.IsIncomplete $file.IsBin}}

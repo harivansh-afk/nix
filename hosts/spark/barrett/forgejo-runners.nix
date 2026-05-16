@@ -202,7 +202,7 @@ in
             WorkingDirectory = runner.stateDir;
             ExecStartPre = runner.registerPath;
             ExecStart = runner.daemonPath;
-            Restart = "on-failure";
+            Restart = "always";
             RestartSec = 2;
           };
           Install.WantedBy = [ "default.target" ];

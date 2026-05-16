@@ -7,8 +7,10 @@ import {
   getAnnotationsForPath,
   hasPullContext,
   loadPullComments,
-  makeRenderCommentAnnotation,
   mountComposer,
+  renderCommentAnnotation,
+  renderFileLevelComments,
+  subscribeToRefresh,
 } from "./pr-comments.js";
 
 const diffSelectors = {
@@ -171,9 +173,7 @@ function renderDiffBox(box, fileDiff, cacheKey, pierre) {
   options.onPostRender = markRendered;
 
   if (isPullRequest) {
-    options.renderAnnotation = makeRenderCommentAnnotation(() =>
-      refreshAnnotationsForBox(box),
-    );
+    options.renderAnnotation = renderCommentAnnotation;
     if (canComment && path) {
       options.enableGutterUtility = true;
       options.onGutterUtilityClick = (range) => {
@@ -183,7 +183,6 @@ function renderDiffBox(box, fileDiff, cacheKey, pierre) {
           side: range.side === "deletions" ? "deletions" : "additions",
           lineNumber: range.start,
           path,
-          onSubmitted: () => refreshAnnotationsForBox(box),
         });
       };
     }
@@ -212,6 +211,12 @@ function renderDiffBox(box, fileDiff, cacheKey, pierre) {
         .catch((error) => {
           console.warn("Pierre PR bridge: initial annotations failed", error);
         });
+      const fileLevelContainer = box.querySelector(
+        '[data-harivan-pierre-file-comments="1"]',
+      );
+      if (fileLevelContainer) {
+        renderFileLevelComments({ container: fileLevelContainer, path });
+      }
     }
     return true;
   } catch (error) {
@@ -313,6 +318,38 @@ function observeDiffBoxes() {
   diffBoxObserver.observe(container, { childList: true, subtree: true });
 }
 
+let refreshSubscribed = false;
+
+function subscribeBoxesToRefresh() {
+  if (refreshSubscribed) return;
+  refreshSubscribed = true;
+  subscribeToRefresh(async () => {
+    for (const box of document.querySelectorAll(
+      '#diff-file-boxes .diff-file-box[id^="diff-"]',
+    )) {
+      const entry = boxInstances.get(box);
+      if (entry) {
+        try {
+          const annotations = await getAnnotationsForPath(entry.path);
+          entry.instance.setLineAnnotations(annotations);
+          entry.instance.rerender();
+        } catch (error) {
+          console.warn("Pierre PR bridge: refresh failed", error);
+        }
+        const fileLevelContainer = box.querySelector(
+          '[data-harivan-pierre-file-comments="1"]',
+        );
+        if (fileLevelContainer) {
+          renderFileLevelComments({
+            container: fileLevelContainer,
+            path: entry.path,
+          });
+        }
+      }
+    }
+  });
+}
+
 export async function renderDiffView() {
   const boxes = renderableDiffBoxes();
   if (boxes.length === 0) return;
@@ -323,6 +360,7 @@ export async function renderDiffView() {
 
   if (isPullFilesPath() && hasPullContext()) {
     loadPullComments().catch(() => {});
+    subscribeBoxesToRefresh();
   }
 
   try {

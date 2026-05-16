@@ -741,7 +741,6 @@ in
       labels = [
         "native:host"
         "spark:host"
-        "ubuntu-latest:docker://node:24-bookworm"
       ];
 
       hostPackages = with pkgs; [

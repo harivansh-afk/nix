@@ -5,7 +5,6 @@
 **spark** - NVIDIA DGX Spark (aarch64-linux) running NixOS
 
 Both are declared in one flake using [flake-parts](https://github.com/hercules-ci/flake-parts) and managed with [Determinate Nix](https://docs.determinate.systems/determinate-nix/)
-
 configs live in `dots/` and get symlinked into XDG paths
 
 Spark is a shared NixOS workstation
@@ -18,24 +17,18 @@ Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix)
 
 [cozybox.nvim](https://git.harivan.sh/harivansh-afk/cozybox.nvim) provides the unified theme across everything
 
-## Cloudflare SSH
+## Cloudflare SSH and mosh
 
-Spark exposes SSH through the existing Cloudflare tunnel at `spark.harivan.sh`. The tunnel forwards `spark.harivan.sh` to `sshd` on `127.0.0.1:22`; Caddy is not in this path.
-
-The macbook SSH config uses `cloudflared access ssh` as its `ProxyCommand`, so both commands work after `just switch`:
+Spark exposes SSH through the existing Cloudflare tunnel at `spark.harivan.sh`. The tunnel forwards `spark.harivan.sh` to `sshd` on `127.0.0.1:22`; Caddy is not in this path. I use mosh for extended SSH access over direct IP / tailnet when coding on remote machines.
 
 ```sh
-ssh spark
+mosh spark
 ssh spark.harivan.sh
 ```
 
 Unmanaged clients need `cloudflared` and an SSH config `ProxyCommand` for `spark.harivan.sh`; raw OpenSSH alone is not expected to pass through Cloudflare Access.
 
-Cloudflare still needs the external Access app and DNS route for `spark.harivan.sh`. Allow Hari and Barrett in the Access policy. OpenSSH remains the machine identity layer, so Barrett continues to log in as `barrett` with the key from `users/barrett.nix`.
-
-Spark no longer joins the personal Tailscale tailnet for SSH access. The remaining Tailscale config is the isolated ix tailnet as `spark-ix`; personal SSH access goes through Cloudflare SSH.
-
-Spark local inference runs Pi against `llama.cpp` on `127.0.0.1:8080` using `step-3.5-flash-reap-121b`.
+Spark local inference runs Pi against `llama.cpp` on `127.0.0.1:8080`
 
 ## Structure
 

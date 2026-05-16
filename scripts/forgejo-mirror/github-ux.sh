@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Apply the "barrettruth full treatment" to every repo listed as a push-mirror
-# in /etc/forgejo-mirror/manifest.json. For each repo:
+# Apply the "barrettruth full treatment" to every owned repo that currently
+# has a forgejo->github push-mirror. Targets are discovered from forgejo's
+# push_mirror table at runtime; nothing is hardcoded. For each repo:
 #
 #   1. github metadata: description prefix, homepage, has_issues/wiki/projects=false,
 #      archived=false (unarchive if v1 deprecation left it archived).
@@ -31,6 +32,7 @@
 set -euo pipefail
 
 MANIFEST="${FORGEJO_MIRROR_MANIFEST:-/etc/forgejo-mirror/manifest.json}"
+DB="${FORGEJO_DB:-/var/lib/forgejo/data/forgejo.db}"
 TEA_LOGIN="${TEA_LOGIN:-harivan}"
 FORGEJO_HOST="git.harivan.sh"
 DRY=0
@@ -276,16 +278,30 @@ main() {
   log "manifest: $MANIFEST"
   [ "$DRY" = "1" ] && log "DRY RUN"
 
+  local owned_owner
+  owned_owner=$(jq -r '.owned_owner' "$MANIFEST")
+
+  declare -A is_no_mirror
+  while IFS= read -r p; do
+    [ -n "$p" ] && is_no_mirror["$p"]=1
+  done < <(jq -r '.no_mirror[]' "$MANIFEST")
+
   local repos
   if [ "${#ONLY[@]}" -gt 0 ]; then
     repos=$(printf '%s\n' "${ONLY[@]}")
   else
-    repos=$(jq -r '.push_mirrors | keys[]' "$MANIFEST")
+    command -v sqlite3 >/dev/null 2>&1 || die "missing sqlite3 (needed to discover push-mirror targets)"
+    [ -r "$DB" ] || die "forgejo db not readable: $DB (need root)"
+    repos=$(sqlite3 -bail -batch "$DB" "SELECT DISTINCT u.lower_name || '/' || r.lower_name FROM push_mirror p JOIN repository r ON r.id=p.repo_id JOIN user u ON u.id=r.owner_id WHERE u.lower_name='$owned_owner' ORDER BY 1;")
   fi
 
   local needs_sync=0
   while IFS= read -r path; do
     [ -z "$path" ] && continue
+    if [ -n "${is_no_mirror[$path]+x}" ]; then
+      log "$path: in no_mirror set, skipping"
+      continue
+    fi
     local owner name
     owner="${path%%/*}"; name="${path##*/}"
     log "$path"

@@ -49,16 +49,13 @@ return {
     before = function()
       vim.g.diffs = {
         integrations = {
-          fugitive = {
-            enabled = true,
-            horizontal = false,
-            vertical = false,
-          },
+          fugitive = true,
         },
-        hide_prefix = true,
+        view = {
+          prefix = false,
+        },
         highlights = {
           warn_max_lines = false,
-          gutter = true,
           blend_alpha = 0.5,
           intra = { enabled = true },
         },

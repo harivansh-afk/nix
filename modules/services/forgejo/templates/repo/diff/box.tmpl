@@ -92,12 +92,14 @@
 				"pullIndex": {{$.Issue.Index}},
 				"repoLink": "{{$.RepoLink}}",
 				"apiCommentsUrl": "{{AppSubUrl}}/api/v1/repos/{{$.Repository.OwnerName}}/{{$.Repository.Name}}/pulls/{{$.Issue.Index}}/comments",
-				"newCommentUrl": "{{$.Issue.Link}}/files/reviews/new_comment",
+				"createCommentUrl": "{{$.Issue.Link}}/files/reviews/comments",
+				"resolveConversationUrl": "{{$.Issue.Link}}/resolve_conversation",
 				"diffStyle": "{{if $.IsSplitStyle}}split{{else}}unified{{end}}",
 				"canComment": {{if and $.IsSigned (not $.IsArchived)}}true{{else}}false{{end}},
 				"isShowingAllCommits": {{$.IsShowingAllCommits}},
 				"afterCommitID": "{{$.AfterCommitID}}",
-				"beforeCommitID": "{{$.BeforeCommitID}}"
+				"beforeCommitID": "{{$.BeforeCommitID}}",
+				"signedUserID": {{$.SignedUserID}}
 			}
 		</script>
 		{{end}}

@@ -7,8 +7,8 @@ import {
   getAnnotationsForPath,
   hasPullContext,
   loadPullComments,
+  makeRenderCommentAnnotation,
   mountComposer,
-  renderCommentAnnotation,
 } from "./pr-comments.js";
 
 const diffSelectors = {
@@ -130,6 +130,11 @@ async function refreshAnnotationsForBox(box) {
   try {
     const annotations = await getAnnotationsForPath(entry.path);
     entry.instance.setLineAnnotations(annotations);
+    // Pierre allocates grid slots for annotations during render(); a bare
+    // setLineAnnotations() will not re-run grid layout, so existing rows
+    // wouldn't have slots and the wrapper nodes would fall to the bottom.
+    // Force a rerender so the slots line up with the right code rows.
+    entry.instance.rerender();
   } catch (error) {
     console.warn("Pierre PR bridge: refreshing annotations failed", error);
   }
@@ -166,7 +171,9 @@ function renderDiffBox(box, fileDiff, cacheKey, pierre) {
   options.onPostRender = markRendered;
 
   if (isPullRequest) {
-    options.renderAnnotation = renderCommentAnnotation;
+    options.renderAnnotation = makeRenderCommentAnnotation(() =>
+      refreshAnnotationsForBox(box),
+    );
     if (canComment && path) {
       options.enableGutterUtility = true;
       options.onGutterUtilityClick = (range) => {
@@ -198,6 +205,9 @@ function renderDiffBox(box, fileDiff, cacheKey, pierre) {
         .then((annotations) => {
           if (annotations.length === 0) return;
           instance.setLineAnnotations(annotations);
+          // Re-run render so Pierre allocates grid slots for the annotation
+          // wrapper nodes; otherwise they fall to the bottom of the file.
+          instance.rerender();
         })
         .catch((error) => {
           console.warn("Pierre PR bridge: initial annotations failed", error);

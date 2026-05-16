@@ -6,6 +6,7 @@ export function pierreDiffRenderOptions(overrides = {}) {
     ...diffRenderOptions(),
     disableFileHeader: true,
     enableLineSelection: true,
+    disableVirtualizationBuffers: true,
     theme: pierreTheme,
     ...overrides,
   };

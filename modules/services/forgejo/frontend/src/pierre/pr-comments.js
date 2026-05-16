@@ -1,20 +1,19 @@
 // PR review comment bridge for Pierre.
 //
-// Reads the pull-context JSON embedded by box.tmpl, fetches existing review
-// comments via Forgejo's public API, and exposes the per-line annotations
-// plus inline composer / reply / resolve actions used by diff-view.js.
-//
-// v2 wires up:
-//   - existing top-level comments (read-only inline annotation)
-//   - new top-level comment via the gutter "+" affordance
-//   - reply within an existing thread
-//   - resolve / unresolve conversation
-//   - outdated marker for comments whose commit_id != original_commit_id
+// One module owns the full lifecycle of code-review comments rendered on top
+// of Pierre's diff: load, group, render thread, compose new, reply, quote
+// reply, edit, delete, react, resolve, suggestion blocks, outdated filtering,
+// and the pending-review batching state machine.
+
+import { attachAutocomplete } from "./pr-autocomplete.js";
+import { renderMarkup } from "./pr-markup.js";
 
 let pullContextCache;
 let pullCommentsPromise;
 let pullCommentsByPath;
 let lastCommentsFetchAt = 0;
+
+const refreshListeners = new Set();
 
 function readPullContext() {
   if (pullContextCache !== undefined) return pullContextCache;
@@ -43,20 +42,30 @@ export function hasPullContext() {
   return Boolean(readPullContext());
 }
 
+export function pullContextSync() {
+  return readPullContext();
+}
+
 function csrfToken() {
   return window.config?.csrfToken || "";
 }
 
-// Map an API comment to {side, lineNumber}. Forgejo's API returns `position`
-// for an additions-side comment (line number in the new file) and
-// `original_position` for a deletions-side comment (line number in the old
-// file). Exactly one of them is non-zero per comment.
+function getShowOutdated() {
+  const params = new URLSearchParams(window.location.search);
+  const flag = params.get("show-outdated");
+  if (flag === "true" || flag === "1") return true;
+  if (flag === "false" || flag === "0") return false;
+  const ctx = readPullContext();
+  return Boolean(ctx?.showOutdatedComments);
+}
+
 function placementForComment(comment) {
   const position = Number(comment.position) || 0;
   const original = Number(comment.original_position) || 0;
   if (position > 0) return { side: "additions", lineNumber: position };
   if (original > 0) return { side: "deletions", lineNumber: original };
-  return null;
+  // File-level comment (no specific line).
+  return { side: "additions", lineNumber: 0 };
 }
 
 function commentIsOutdated(comment) {
@@ -64,31 +73,69 @@ function commentIsOutdated(comment) {
   return comment.commit_id !== comment.original_commit_id;
 }
 
-function groupCommentsByPath(comments) {
+// --- Fetch + group --------------------------------------------------------
+
+function normalizeComment(comment) {
+  const placement = placementForComment(comment);
+  return {
+    id: comment.id,
+    side: placement.side,
+    lineNumber: placement.lineNumber,
+    isFileLevel: placement.lineNumber === 0,
+    body: comment.body || "",
+    htmlBody: comment.body_html || null,
+    user: comment.user || null,
+    createdAt: comment.created_at || null,
+    updatedAt: comment.updated_at || null,
+    htmlUrl: comment.html_url || null,
+    resolver: comment.resolver || null,
+    outdated: commentIsOutdated(comment),
+    commitId: comment.commit_id || null,
+    originalCommitId: comment.original_commit_id || null,
+    reviewId: comment.pull_request_review_id || 0,
+    reactions: comment.reactions || null,
+    isPending: false,
+    raw: comment,
+  };
+}
+
+function groupCommentsByPath(comments, pendingReviewIds) {
   const byPath = new Map();
   for (const comment of comments) {
     if (!comment || !comment.path) continue;
-    const placement = placementForComment(comment);
-    if (!placement) continue;
+    const normalized = normalizeComment(comment);
+    if (pendingReviewIds && pendingReviewIds.has(normalized.reviewId)) {
+      normalized.isPending = true;
+    }
     const entry = byPath.get(comment.path) || [];
-    entry.push({
-      id: comment.id,
-      side: placement.side,
-      lineNumber: placement.lineNumber,
-      body: comment.body || "",
-      htmlBody: comment.body_html || null,
-      user: comment.user || null,
-      createdAt: comment.created_at || null,
-      htmlUrl: comment.html_url || null,
-      resolver: comment.resolver || null,
-      outdated: commentIsOutdated(comment),
-      commitId: comment.commit_id || null,
-      originalCommitId: comment.original_commit_id || null,
-      raw: comment,
-    });
+    entry.push(normalized);
     byPath.set(comment.path, entry);
   }
   return byPath;
+}
+
+async function fetchPendingReviewIds(ctx) {
+  if (!ctx?.apiReviewsUrl || !ctx.signedUserID) return new Set();
+  try {
+    const response = await fetch(ctx.apiReviewsUrl, {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) return new Set();
+    const reviews = await response.json();
+    return new Set(
+      (Array.isArray(reviews) ? reviews : [])
+        .filter(
+          (r) =>
+            r &&
+            r.state === "PENDING" &&
+            r.user?.id === ctx.signedUserID,
+        )
+        .map((r) => r.id),
+    );
+  } catch {
+    return new Set();
+  }
 }
 
 export async function loadPullComments({ force = false } = {}) {
@@ -101,16 +148,20 @@ export async function loadPullComments({ force = false } = {}) {
       pullCommentsByPath = new Map();
       return pullCommentsByPath;
     }
-    const response = await fetch(ctx.apiCommentsUrl, {
-      credentials: "same-origin",
-      headers: { Accept: "application/json" },
-    });
+    const [response, pendingReviewIds] = await Promise.all([
+      fetch(ctx.apiCommentsUrl, {
+        credentials: "same-origin",
+        headers: { Accept: "application/json" },
+      }),
+      fetchPendingReviewIds(ctx),
+    ]);
     if (!response.ok) {
       throw new Error(`comments fetch failed: ${response.status}`);
     }
     const comments = await response.json();
     pullCommentsByPath = groupCommentsByPath(
       Array.isArray(comments) ? comments : [],
+      pendingReviewIds,
     );
     lastCommentsFetchAt = Date.now();
     return pullCommentsByPath;
@@ -122,46 +173,248 @@ export async function loadPullComments({ force = false } = {}) {
   return pullCommentsPromise;
 }
 
+// --- Annotation grouping --------------------------------------------------
+
 function threadKey(side, lineNumber) {
   return `${side}:${lineNumber}`;
 }
 
-function annotationsFromComments(perPath, path) {
-  const comments = perPath.get(path) || [];
+function buildThreadMetadata(path, side, lineNumber) {
+  return {
+    kind: "pr-thread",
+    path,
+    line: lineNumber,
+    side,
+    rootCommentId: null,
+    resolved: true,
+    outdated: false,
+    hasPending: false,
+    comments: [],
+  };
+}
+
+function annotationsFromComments(perPath, path, { includeOutdated }) {
+  const comments = (perPath.get(path) || []).filter(
+    (comment) => !comment.isFileLevel,
+  );
   const threads = new Map();
   for (const comment of comments) {
+    if (!includeOutdated && comment.outdated) continue;
     const key = threadKey(comment.side, comment.lineNumber);
-    const existing = threads.get(key);
-    if (existing) {
-      existing.metadata.comments.push(comment);
-      // Thread is resolved iff every comment in it has a resolver. Forgejo
-      // marks the whole conversation but we recompute defensively.
-      if (!comment.resolver) existing.metadata.resolved = false;
-      if (comment.outdated) existing.metadata.outdated = true;
-    } else {
-      threads.set(key, {
+    let thread = threads.get(key);
+    if (!thread) {
+      thread = {
         side: comment.side,
         lineNumber: comment.lineNumber,
-        metadata: {
-          kind: "pr-thread",
-          path,
-          line: comment.lineNumber,
-          side: comment.side,
-          rootCommentId: comment.id,
-          resolved: Boolean(comment.resolver),
-          outdated: Boolean(comment.outdated),
-          comments: [comment],
-        },
-      });
+        metadata: buildThreadMetadata(path, comment.side, comment.lineNumber),
+      };
+      threads.set(key, thread);
+      thread.metadata.rootCommentId = comment.id;
     }
+    thread.metadata.comments.push(comment);
+    if (!comment.resolver) thread.metadata.resolved = false;
+    if (comment.outdated) thread.metadata.outdated = true;
+    if (comment.isPending) thread.metadata.hasPending = true;
+  }
+  for (const thread of threads.values()) {
+    thread.metadata.comments.sort((a, b) => {
+      const ta = a.createdAt ? Date.parse(a.createdAt) : 0;
+      const tb = b.createdAt ? Date.parse(b.createdAt) : 0;
+      return ta - tb;
+    });
   }
   return Array.from(threads.values());
 }
 
 export async function getAnnotationsForPath(path) {
   const byPath = await loadPullComments();
-  return annotationsFromComments(byPath, path);
+  return annotationsFromComments(byPath, path, {
+    includeOutdated: getShowOutdated(),
+  });
 }
+
+export async function getFileLevelComments(path) {
+  const byPath = await loadPullComments();
+  return (byPath.get(path) || [])
+    .filter((c) => c.isFileLevel)
+    .sort(
+      (a, b) => Date.parse(a.createdAt || 0) - Date.parse(b.createdAt || 0),
+    );
+}
+
+export async function getCommentCounts() {
+  const byPath = await loadPullComments();
+  const counts = new Map();
+  for (const [path, list] of byPath.entries()) {
+    let total = 0;
+    let unresolved = 0;
+    const seenThreads = new Set();
+    for (const comment of list) {
+      total += 1;
+      const key = comment.isFileLevel
+        ? `file:${comment.id}`
+        : threadKey(comment.side, comment.lineNumber);
+      if (seenThreads.has(key)) continue;
+      seenThreads.add(key);
+      if (!comment.resolver) unresolved += 1;
+    }
+    counts.set(path, { total, unresolved });
+  }
+  return counts;
+}
+
+export function subscribeToRefresh(fn) {
+  refreshListeners.add(fn);
+  return () => refreshListeners.delete(fn);
+}
+
+function notifyRefreshed() {
+  for (const fn of refreshListeners) {
+    try {
+      fn();
+    } catch (error) {
+      console.warn("Pierre PR bridge: refresh listener failed", error);
+    }
+  }
+}
+
+export async function refreshAll() {
+  await loadPullComments({ force: true });
+  notifyRefreshed();
+}
+
+// --- POST helpers --------------------------------------------------------
+
+async function postFormToForgejo(url, fields, { acceptJson = false } = {}) {
+  const form = new FormData();
+  form.set("_csrf", csrfToken());
+  for (const [k, v] of Object.entries(fields)) {
+    if (v === undefined || v === null) continue;
+    form.set(k, typeof v === "boolean" ? (v ? "true" : "false") : String(v));
+  }
+  const response = await fetch(url, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      "X-Csrf-Token": csrfToken(),
+      ...(acceptJson ? { Accept: "application/json" } : {}),
+    },
+    body: form,
+  });
+  if (!response.ok) {
+    throw new Error(`POST ${url} failed: ${response.status}`);
+  }
+  return response;
+}
+
+function pierreSideToFormSide(side) {
+  return side === "deletions" ? "previous" : "proposed";
+}
+
+export async function postNewComment({
+  path,
+  side,
+  line,
+  body,
+  mode = "single",
+}) {
+  const ctx = await getPullContext();
+  if (!ctx?.createCommentUrl) throw new Error("missing create-comment URL");
+  if (!body || !body.trim()) throw new Error("empty comment");
+  const fields = {
+    origin: "diff",
+    before_commit_id: ctx.beforeCommitID || "",
+    latest_commit_id: ctx.afterCommitID || "",
+    side: pierreSideToFormSide(side),
+    line: line || 0,
+    path,
+    content: body,
+  };
+  if (mode === "single") fields.single_review = true;
+  await postFormToForgejo(ctx.createCommentUrl, fields);
+  await refreshAll();
+  return true;
+}
+
+export async function postReplyComment({
+  path,
+  side,
+  line,
+  body,
+  replyTo,
+  mode = "single",
+}) {
+  const ctx = await getPullContext();
+  if (!ctx?.createCommentUrl) throw new Error("missing create-comment URL");
+  if (!body || !body.trim()) throw new Error("empty comment");
+  const fields = {
+    origin: "diff",
+    before_commit_id: ctx.beforeCommitID || "",
+    latest_commit_id: ctx.afterCommitID || "",
+    side: pierreSideToFormSide(side),
+    line: line || 0,
+    path,
+    content: body,
+    reply: replyTo,
+  };
+  if (mode === "single") fields.single_review = true;
+  await postFormToForgejo(ctx.createCommentUrl, fields);
+  await refreshAll();
+  return true;
+}
+
+export async function toggleResolveConversation({ commentId, resolved }) {
+  const ctx = await getPullContext();
+  if (!ctx?.resolveConversationUrl) throw new Error("missing resolve URL");
+  await postFormToForgejo(ctx.resolveConversationUrl, {
+    origin: "diff",
+    action: resolved ? "UnResolve" : "Resolve",
+    comment_id: commentId,
+  });
+  await refreshAll();
+  return true;
+}
+
+export async function updateCommentContent({ commentId, content }) {
+  const ctx = await getPullContext();
+  if (!ctx?.updateCommentUrl) throw new Error("missing update-comment URL");
+  await postFormToForgejo(`${ctx.updateCommentUrl}/${commentId}`, { content });
+  await refreshAll();
+  return true;
+}
+
+export async function deleteComment({ commentId }) {
+  const ctx = await getPullContext();
+  if (!ctx?.updateCommentUrl) throw new Error("missing update-comment URL");
+  await postFormToForgejo(`${ctx.updateCommentUrl}/${commentId}/delete`, {});
+  await refreshAll();
+  return true;
+}
+
+export async function toggleReaction({ commentId, content, mode }) {
+  const ctx = await getPullContext();
+  if (!ctx?.reactionsBaseUrl) throw new Error("missing reactions URL");
+  await postFormToForgejo(
+    `${ctx.reactionsBaseUrl}/${commentId}/reactions/${mode}`,
+    { content },
+  );
+  await refreshAll();
+  return true;
+}
+
+export async function submitReview({ type, body }) {
+  const ctx = await getPullContext();
+  if (!ctx?.submitReviewUrl) throw new Error("missing submit-review URL");
+  await postFormToForgejo(ctx.submitReviewUrl, {
+    commit_id: ctx.afterCommitID || "",
+    Type: type,
+    Content: body || "",
+  });
+  await refreshAll();
+  return true;
+}
+
+// --- Rendering ------------------------------------------------------------
 
 function fmtTimestamp(iso) {
   if (!iso) return "";
@@ -181,81 +434,171 @@ function renderAvatar(user) {
   return img;
 }
 
-function pierreSideToFormSide(side) {
-  return side === "deletions" ? "previous" : "proposed";
+function isSignedUserOwn(comment, ctx) {
+  if (!ctx?.signedUserID) return false;
+  return comment.user?.id === ctx.signedUserID;
 }
 
-async function postFormToForgejo(url, fields) {
-  const form = new FormData();
-  form.set("_csrf", csrfToken());
-  for (const [k, v] of Object.entries(fields)) {
-    if (v === undefined || v === null) continue;
-    form.set(k, typeof v === "boolean" ? (v ? "true" : "false") : String(v));
+const DEFAULT_REACTIONS = [
+  "+1",
+  "-1",
+  "laugh",
+  "hooray",
+  "confused",
+  "heart",
+  "rocket",
+  "eyes",
+];
+
+function reactionEmoji(name) {
+  switch (name) {
+    case "+1":
+      return "\u{1F44D}";
+    case "-1":
+      return "\u{1F44E}";
+    case "laugh":
+      return "\u{1F604}";
+    case "hooray":
+      return "\u{1F389}";
+    case "confused":
+      return "\u{1F615}";
+    case "heart":
+      return "\u{2764}\u{FE0F}";
+    case "rocket":
+      return "\u{1F680}";
+    case "eyes":
+      return "\u{1F440}";
+    default:
+      return name;
   }
-  const response = await fetch(url, {
-    method: "POST",
-    credentials: "same-origin",
-    headers: { "X-Csrf-Token": csrfToken() },
-    body: form,
-  });
-  if (!response.ok) {
-    throw new Error(`POST ${url} failed: ${response.status}`);
+}
+
+function renderReactions(comment, ctx) {
+  if (!ctx?.canComment) return null;
+  const allowed =
+    Array.isArray(ctx.allowedReactions) && ctx.allowedReactions.length
+      ? ctx.allowedReactions
+      : DEFAULT_REACTIONS;
+  const counts = new Map();
+  if (Array.isArray(comment.reactions)) {
+    for (const r of comment.reactions) {
+      if (!r || !r.content) continue;
+      const entry = counts.get(r.content) || { count: 0, mine: false };
+      entry.count += 1;
+      if (r.user?.id === ctx.signedUserID) entry.mine = true;
+      counts.set(r.content, entry);
+    }
   }
-  return response;
+
+  const bar = document.createElement("div");
+  bar.className = "harivan-pierre-reactions";
+
+  for (const [content, entry] of counts.entries()) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "harivan-pierre-reaction";
+    if (entry.mine) btn.classList.add("is-mine");
+    btn.title = content;
+    btn.dataset.content = content;
+    const emoji = document.createElement("span");
+    emoji.className = "harivan-pierre-reaction-emoji";
+    emoji.textContent = reactionEmoji(content);
+    const num = document.createElement("span");
+    num.className = "harivan-pierre-reaction-count";
+    num.textContent = String(entry.count);
+    btn.append(emoji, num);
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      try {
+        await toggleReaction({
+          commentId: comment.id,
+          content,
+          mode: entry.mine ? "unreact" : "react",
+        });
+      } catch (error) {
+        console.warn("Pierre PR bridge: reaction failed", error);
+        btn.disabled = false;
+      }
+    });
+    bar.append(btn);
+  }
+
+  const picker = document.createElement("details");
+  picker.className = "harivan-pierre-reaction-picker";
+  const summary = document.createElement("summary");
+  summary.className = "harivan-pierre-reaction-add";
+  summary.textContent = "+";
+  summary.title = "Add reaction";
+  picker.append(summary);
+
+  const palette = document.createElement("div");
+  palette.className = "harivan-pierre-reaction-palette";
+  for (const name of allowed) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "harivan-pierre-reaction-palette-btn";
+    btn.title = name;
+    btn.textContent = reactionEmoji(name);
+    btn.addEventListener("click", async () => {
+      picker.open = false;
+      try {
+        const mine = counts.get(name)?.mine;
+        await toggleReaction({
+          commentId: comment.id,
+          content: name,
+          mode: mine ? "unreact" : "react",
+        });
+      } catch (error) {
+        console.warn("Pierre PR bridge: reaction failed", error);
+      }
+    });
+    palette.append(btn);
+  }
+  picker.append(palette);
+  bar.append(picker);
+
+  return bar;
 }
 
-export async function postNewComment({ path, side, line, body }) {
-  const ctx = await getPullContext();
-  if (!ctx?.createCommentUrl) throw new Error("missing create-comment URL");
-  if (!body || !body.trim()) throw new Error("empty comment");
-  await postFormToForgejo(ctx.createCommentUrl, {
-    origin: "diff",
-    before_commit_id: ctx.beforeCommitID || "",
-    latest_commit_id: ctx.afterCommitID || "",
-    side: pierreSideToFormSide(side),
-    line,
-    path,
-    content: body,
-    single_review: true,
-  });
-  await loadPullComments({ force: true });
-  return true;
+function detectSuggestion(comment) {
+  const re = /```suggestion\n([\s\S]*?)```/g;
+  const matches = [];
+  let m;
+  while ((m = re.exec(comment.body)) !== null) {
+    matches.push({ original: m[0], replacement: m[1] });
+  }
+  return matches;
 }
 
-export async function postReplyComment({ path, side, line, body, replyTo }) {
-  const ctx = await getPullContext();
-  if (!ctx?.createCommentUrl) throw new Error("missing create-comment URL");
-  if (!body || !body.trim()) throw new Error("empty comment");
-  await postFormToForgejo(ctx.createCommentUrl, {
-    origin: "diff",
-    before_commit_id: ctx.beforeCommitID || "",
-    latest_commit_id: ctx.afterCommitID || "",
-    side: pierreSideToFormSide(side),
-    line,
-    path,
-    content: body,
-    reply: replyTo,
-  });
-  await loadPullComments({ force: true });
-  return true;
+function renderSuggestionBlocks(comment, bodyContainer) {
+  const suggestions = detectSuggestion(comment);
+  if (suggestions.length === 0) return;
+  for (const suggestion of suggestions) {
+    const wrap = document.createElement("div");
+    wrap.className = "harivan-pierre-suggestion";
+    const header = document.createElement("div");
+    header.className = "harivan-pierre-suggestion-header";
+    header.textContent = "Suggested change";
+    wrap.append(header);
+    const pre = document.createElement("pre");
+    pre.className = "harivan-pierre-suggestion-body";
+    pre.textContent = suggestion.replacement;
+    wrap.append(pre);
+    const note = document.createElement("div");
+    note.className = "harivan-pierre-suggestion-note";
+    note.textContent =
+      "Forgejo does not support applying suggestions directly. Copy the change manually.";
+    wrap.append(note);
+    bodyContainer.append(wrap);
+  }
 }
 
-export async function toggleResolveConversation({ commentId, resolved }) {
-  const ctx = await getPullContext();
-  if (!ctx?.resolveConversationUrl) throw new Error("missing resolve URL");
-  await postFormToForgejo(ctx.resolveConversationUrl, {
-    origin: "diff",
-    action: resolved ? "UnResolve" : "Resolve",
-    comment_id: commentId,
-  });
-  await loadPullComments({ force: true });
-  return true;
-}
-
-function renderCommentItem(comment) {
+function renderCommentItem(comment, meta) {
+  const ctx = readPullContext();
   const item = document.createElement("article");
   item.className = "harivan-pierre-comment";
   if (comment.id != null) item.dataset.commentId = String(comment.id);
+  if (comment.isPending) item.classList.add("harivan-pierre-comment-pending");
 
   const header = document.createElement("header");
   header.className = "harivan-pierre-comment-header";
@@ -280,6 +623,13 @@ function renderCommentItem(comment) {
   } else {
     header.append(ts);
   }
+  if (comment.isPending) {
+    const pendingBadge = document.createElement("span");
+    pendingBadge.className =
+      "harivan-pierre-comment-badge harivan-pierre-comment-badge-pending";
+    pendingBadge.textContent = "Pending";
+    header.append(pendingBadge);
+  }
   if (comment.outdated) {
     const badge = document.createElement("span");
     badge.className =
@@ -296,12 +646,138 @@ function renderCommentItem(comment) {
   } else {
     body.textContent = comment.body;
   }
+  renderSuggestionBlocks(comment, body);
   item.append(body);
+
+  const reactions = renderReactions(comment, ctx);
+  if (reactions) item.append(reactions);
+
+  const own = isSignedUserOwn(comment, ctx);
+  const canComment = Boolean(ctx?.canComment);
+  if (canComment) {
+    const actions = document.createElement("div");
+    actions.className = "harivan-pierre-comment-actions";
+
+    const quoteBtn = document.createElement("button");
+    quoteBtn.type = "button";
+    quoteBtn.className = "harivan-pierre-link-btn";
+    quoteBtn.textContent = "Quote reply";
+    quoteBtn.addEventListener("click", () => {
+      openReplyComposer({
+        meta,
+        replyTo: meta.rootCommentId,
+        prefill:
+          comment.body
+            .split("\n")
+            .map((line) => `> ${line}`)
+            .join("\n") + "\n\n",
+      });
+    });
+    actions.append(quoteBtn);
+
+    if (comment.htmlUrl) {
+      const permaBtn = document.createElement("button");
+      permaBtn.type = "button";
+      permaBtn.className = "harivan-pierre-link-btn";
+      permaBtn.textContent = "Copy link";
+      permaBtn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(
+            new URL(comment.htmlUrl, window.location.origin).toString(),
+          );
+          permaBtn.textContent = "Copied";
+          window.setTimeout(
+            () => (permaBtn.textContent = "Copy link"),
+            1500,
+          );
+        } catch {
+          permaBtn.textContent = "Copy failed";
+        }
+      });
+      actions.append(permaBtn);
+    }
+
+    if (own) {
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "harivan-pierre-link-btn";
+      editBtn.textContent = "Edit";
+      editBtn.addEventListener("click", () =>
+        mountInlineEditor(item, comment),
+      );
+      actions.append(editBtn);
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className =
+        "harivan-pierre-link-btn harivan-pierre-link-danger";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.addEventListener("click", async () => {
+        if (!window.confirm("Delete this comment? This cannot be undone."))
+          return;
+        try {
+          await deleteComment({ commentId: comment.id });
+        } catch (error) {
+          console.warn("Pierre PR bridge: delete failed", error);
+        }
+      });
+      actions.append(deleteBtn);
+    }
+
+    item.append(actions);
+  }
 
   return item;
 }
 
-function renderThreadActions(meta, refresh) {
+function mountInlineEditor(item, comment) {
+  if (item.querySelector(".harivan-pierre-inline-editor")) return;
+  const ctx = readPullContext();
+  const editor = document.createElement("form");
+  editor.className = "harivan-pierre-inline-editor";
+
+  const textarea = document.createElement("textarea");
+  textarea.className = "harivan-pierre-composer-textarea";
+  textarea.rows = 5;
+  textarea.value = comment.body;
+  editor.append(textarea);
+  attachAutocomplete(textarea, ctx?.postersUrl);
+
+  const actions = document.createElement("div");
+  actions.className = "harivan-pierre-composer-actions";
+  const save = document.createElement("button");
+  save.type = "submit";
+  save.className = "ui primary button";
+  save.textContent = "Save";
+  const cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.className = "ui basic button";
+  cancel.textContent = "Cancel";
+  actions.append(save, cancel);
+  editor.append(actions);
+
+  cancel.addEventListener("click", () => editor.remove());
+
+  editor.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    save.disabled = true;
+    try {
+      await updateCommentContent({
+        commentId: comment.id,
+        content: textarea.value,
+      });
+    } catch (error) {
+      console.warn("Pierre PR bridge: edit failed", error);
+      save.disabled = false;
+    }
+  });
+
+  item.append(editor);
+  textarea.focus();
+  textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+}
+
+function renderThreadActions(meta) {
   const ctx = readPullContext();
   const canComment = Boolean(ctx?.canComment);
   const wrapper = document.createElement("div");
@@ -312,25 +788,9 @@ function renderThreadActions(meta, refresh) {
     replyBtn.type = "button";
     replyBtn.className = "ui basic tiny button harivan-pierre-reply-btn";
     replyBtn.textContent = "Reply";
-    replyBtn.addEventListener("click", () => {
-      const parent = wrapper.parentElement;
-      if (!parent) return;
-      const existing = parent.querySelector(".harivan-pierre-composer");
-      if (existing) {
-        existing.remove();
-        return;
-      }
-      const composer = buildComposer({
-        path: meta.path,
-        side: meta.side,
-        lineNumber: meta.line,
-        mode: "reply",
-        replyTo: meta.rootCommentId,
-        onSubmitted: refresh,
-      });
-      parent.append(composer);
-      composer.querySelector("textarea")?.focus();
-    });
+    replyBtn.addEventListener("click", () =>
+      openReplyComposer({ meta, replyTo: meta.rootCommentId }),
+    );
     wrapper.append(replyBtn);
 
     const resolveBtn = document.createElement("button");
@@ -344,7 +804,6 @@ function renderThreadActions(meta, refresh) {
           commentId: meta.rootCommentId,
           resolved: meta.resolved,
         });
-        refresh?.();
       } catch (error) {
         console.warn("Pierre PR bridge: resolve toggle failed", error);
         resolveBtn.disabled = false;
@@ -356,37 +815,61 @@ function renderThreadActions(meta, refresh) {
   return wrapper;
 }
 
-export function makeRenderCommentAnnotation(refresh) {
-  return function renderCommentAnnotation(annotation) {
-    const meta = annotation?.metadata;
-    if (!meta || meta.kind !== "pr-thread") return undefined;
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "harivan-pierre-comment-thread";
-    if (meta.resolved)
-      wrapper.classList.add("harivan-pierre-comment-thread-resolved");
-    if (meta.outdated)
-      wrapper.classList.add("harivan-pierre-comment-thread-outdated");
-    wrapper.dataset.path = meta.path || "";
-    wrapper.dataset.line = String(meta.line || "");
-    wrapper.dataset.side = meta.side || "";
-    wrapper.dataset.rootCommentId = String(meta.rootCommentId || "");
-
-    if (meta.resolved) {
-      const banner = document.createElement("div");
-      banner.className = "harivan-pierre-thread-banner";
-      banner.textContent = "Conversation resolved";
-      wrapper.append(banner);
-    }
-
-    for (const comment of meta.comments) {
-      wrapper.append(renderCommentItem(comment));
-    }
-
-    wrapper.append(renderThreadActions(meta, refresh));
-    return wrapper;
-  };
+function openReplyComposer({ meta, replyTo, prefill }) {
+  const thread = document.querySelector(
+    `.harivan-pierre-comment-thread[data-root-comment-id="${meta.rootCommentId}"]`,
+  );
+  if (!thread) return;
+  const existing = thread.querySelector(".harivan-pierre-composer");
+  if (existing) {
+    existing.remove();
+    return;
+  }
+  const composer = buildComposer({
+    path: meta.path,
+    side: meta.side,
+    lineNumber: meta.line,
+    mode: "reply",
+    replyTo,
+    prefill,
+  });
+  thread.append(composer);
+  composer.querySelector("textarea")?.focus();
 }
+
+export function renderCommentAnnotation(annotation) {
+  const meta = annotation?.metadata;
+  if (!meta || meta.kind !== "pr-thread") return undefined;
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "harivan-pierre-comment-thread";
+  if (meta.resolved)
+    wrapper.classList.add("harivan-pierre-comment-thread-resolved");
+  if (meta.outdated)
+    wrapper.classList.add("harivan-pierre-comment-thread-outdated");
+  if (meta.hasPending)
+    wrapper.classList.add("harivan-pierre-comment-thread-has-pending");
+  wrapper.dataset.path = meta.path || "";
+  wrapper.dataset.line = String(meta.line || "");
+  wrapper.dataset.side = meta.side || "";
+  wrapper.dataset.rootCommentId = String(meta.rootCommentId || "");
+
+  if (meta.resolved) {
+    const banner = document.createElement("div");
+    banner.className = "harivan-pierre-thread-banner";
+    banner.textContent = "Conversation resolved";
+    wrapper.append(banner);
+  }
+
+  for (const comment of meta.comments) {
+    wrapper.append(renderCommentItem(comment, meta));
+  }
+
+  wrapper.append(renderThreadActions(meta));
+  return wrapper;
+}
+
+// --- Composer -------------------------------------------------------------
 
 function buildComposer({
   path,
@@ -394,8 +877,9 @@ function buildComposer({
   lineNumber,
   mode,
   replyTo,
-  onSubmitted,
+  prefill,
 }) {
+  const ctx = readPullContext();
   const wrapper = document.createElement("form");
   wrapper.className = "harivan-pierre-composer";
   wrapper.dataset.side = side;
@@ -404,39 +888,137 @@ function buildComposer({
 
   const heading = document.createElement("div");
   heading.className = "harivan-pierre-composer-heading";
-  heading.textContent =
-    mode === "reply"
-      ? `Reply on ${path} ${side === "deletions" ? "L" : "R"}${lineNumber}`
-      : `Comment on ${path} ${side === "deletions" ? "L" : "R"}${lineNumber}`;
+  if (mode === "reply") {
+    heading.textContent = `Reply on ${path} ${side === "deletions" ? "L" : "R"}${lineNumber}`;
+  } else if (mode === "file") {
+    heading.textContent = `Comment on ${path}`;
+  } else {
+    heading.textContent = `Comment on ${path} ${side === "deletions" ? "L" : "R"}${lineNumber}`;
+  }
   wrapper.append(heading);
+
+  const tabs = document.createElement("div");
+  tabs.className = "harivan-pierre-composer-tabs";
+  const tabWrite = document.createElement("button");
+  tabWrite.type = "button";
+  tabWrite.className = "harivan-pierre-composer-tab is-active";
+  tabWrite.textContent = "Write";
+  const tabPreview = document.createElement("button");
+  tabPreview.type = "button";
+  tabPreview.className = "harivan-pierre-composer-tab";
+  tabPreview.textContent = "Preview";
+  tabs.append(tabWrite, tabPreview);
+  wrapper.append(tabs);
 
   const textarea = document.createElement("textarea");
   textarea.className = "harivan-pierre-composer-textarea";
   textarea.placeholder =
-    mode === "reply" ? "Leave a reply" : "Leave a comment";
+    mode === "reply"
+      ? "Leave a reply"
+      : mode === "file"
+        ? "Leave a comment on this file"
+        : "Leave a comment";
   textarea.rows = 4;
+  if (prefill) textarea.value = prefill;
   wrapper.append(textarea);
+  attachAutocomplete(textarea, ctx?.postersUrl);
+
+  const preview = document.createElement("div");
+  preview.className = "harivan-pierre-composer-preview tw-hidden";
+  wrapper.append(preview);
+
+  tabWrite.addEventListener("click", () => {
+    tabWrite.classList.add("is-active");
+    tabPreview.classList.remove("is-active");
+    textarea.classList.remove("tw-hidden");
+    preview.classList.add("tw-hidden");
+    textarea.focus();
+  });
+  tabPreview.addEventListener("click", async () => {
+    tabPreview.classList.add("is-active");
+    tabWrite.classList.remove("is-active");
+    textarea.classList.add("tw-hidden");
+    preview.classList.remove("tw-hidden");
+    preview.textContent = "Loading preview...";
+    try {
+      const html = await renderMarkup({
+        markupUrl: ctx?.markupUrl,
+        repoLink: ctx?.repoLink,
+        text: textarea.value,
+      });
+      preview.innerHTML = html || "<em>Nothing to preview</em>";
+    } catch (error) {
+      preview.textContent = `Preview failed: ${error.message}`;
+    }
+  });
 
   const actions = document.createElement("div");
   actions.className = "harivan-pierre-composer-actions";
-  const submit = document.createElement("button");
-  submit.type = "submit";
-  submit.className = "ui primary button";
-  submit.textContent = mode === "reply" ? "Reply" : "Comment";
+
+  const hasPending = Boolean(ctx?.hasCurrentReview);
+  const submits = [];
+
+  if (mode === "reply") {
+    const replyBtn = document.createElement("button");
+    replyBtn.type = "submit";
+    replyBtn.className = "ui primary button";
+    replyBtn.textContent = "Reply";
+    replyBtn.dataset.mode = "single";
+    submits.push({ button: replyBtn, mode: "single" });
+    actions.append(replyBtn);
+  } else if (hasPending) {
+    const addBtn = document.createElement("button");
+    addBtn.type = "submit";
+    addBtn.className = "ui primary button";
+    addBtn.textContent = "Add review comment";
+    addBtn.dataset.mode = "queue";
+    submits.push({ button: addBtn, mode: "queue" });
+    actions.append(addBtn);
+
+    const singleBtn = document.createElement("button");
+    singleBtn.type = "submit";
+    singleBtn.className = "ui button";
+    singleBtn.textContent = "Add single comment";
+    singleBtn.dataset.mode = "single";
+    submits.push({ button: singleBtn, mode: "single" });
+    actions.append(singleBtn);
+  } else {
+    const startBtn = document.createElement("button");
+    startBtn.type = "submit";
+    startBtn.className = "ui primary button";
+    startBtn.textContent = "Start a review";
+    startBtn.dataset.mode = "queue";
+    submits.push({ button: startBtn, mode: "queue" });
+    actions.append(startBtn);
+
+    const singleBtn = document.createElement("button");
+    singleBtn.type = "submit";
+    singleBtn.className = "ui button";
+    singleBtn.textContent = "Add single comment";
+    singleBtn.dataset.mode = "single";
+    submits.push({ button: singleBtn, mode: "single" });
+    actions.append(singleBtn);
+  }
+
   const cancel = document.createElement("button");
   cancel.type = "button";
   cancel.className = "ui basic button";
   cancel.textContent = "Cancel";
-  actions.append(submit, cancel);
+  actions.append(cancel);
   wrapper.append(actions);
 
-  cancel.addEventListener("click", () => {
-    wrapper.remove();
-  });
+  cancel.addEventListener("click", () => wrapper.remove());
+
+  let chosenMode = submits[0]?.mode ?? "single";
+  for (const { button, mode: m } of submits) {
+    button.addEventListener("click", () => {
+      chosenMode = m;
+    });
+  }
 
   wrapper.addEventListener("submit", async (event) => {
     event.preventDefault();
-    submit.disabled = true;
+    for (const { button } of submits) button.disabled = true;
     try {
       if (mode === "reply") {
         await postReplyComment({
@@ -445,20 +1027,21 @@ function buildComposer({
           line: lineNumber,
           body: textarea.value,
           replyTo,
+          mode: chosenMode,
         });
       } else {
         await postNewComment({
           path,
           side,
-          line: lineNumber,
+          line: mode === "file" ? 0 : lineNumber,
           body: textarea.value,
+          mode: chosenMode,
         });
       }
       wrapper.remove();
-      onSubmitted?.();
     } catch (error) {
       console.warn("Pierre PR bridge: comment submit failed", error);
-      submit.disabled = false;
+      for (const { button } of submits) button.disabled = false;
       const err =
         wrapper.querySelector(".harivan-pierre-composer-error") ||
         document.createElement("div");
@@ -471,7 +1054,7 @@ function buildComposer({
   return wrapper;
 }
 
-export function mountComposer({ box, side, lineNumber, path, onSubmitted }) {
+export function mountComposer({ box, side, lineNumber, path }) {
   const existing = box.querySelector(".harivan-pierre-composer");
   if (existing) existing.remove();
   const composer = buildComposer({
@@ -479,8 +1062,52 @@ export function mountComposer({ box, side, lineNumber, path, onSubmitted }) {
     side,
     lineNumber,
     mode: "new",
-    onSubmitted,
   });
   box.append(composer);
   composer.querySelector("textarea")?.focus();
+}
+
+export function mountFileLevelComposerTrigger({ container, path }) {
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "ui basic button harivan-pierre-file-comment-trigger";
+  trigger.textContent = "Add a comment on this file";
+  trigger.addEventListener("click", () => {
+    trigger.replaceWith(
+      buildComposer({
+        path,
+        side: "additions",
+        lineNumber: 0,
+        mode: "file",
+      }),
+    );
+  });
+  container.append(trigger);
+}
+
+export function renderFileLevelComments({ container, path }) {
+  const ctx = readPullContext();
+  container.replaceChildren();
+  getFileLevelComments(path)
+    .then((comments) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "harivan-pierre-file-comments-wrap";
+      for (const comment of comments) {
+        wrapper.append(
+          renderCommentItem(comment, {
+            kind: "pr-thread",
+            path,
+            line: 0,
+            side: "additions",
+            rootCommentId: comment.id,
+          }),
+        );
+      }
+      if (comments.length > 0) container.append(wrapper);
+      if (ctx?.canComment)
+        mountFileLevelComposerTrigger({ container, path });
+    })
+    .catch((error) => {
+      console.warn("Pierre PR bridge: file-level comments failed", error);
+    });
 }

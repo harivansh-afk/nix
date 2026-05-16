@@ -2,12 +2,19 @@ import { replaceRepositoryFileIcons } from "./nonicons.js";
 import { renderPullRequestDiffView } from "./diff/pr-native-bridge.js";
 import { renderDiffView } from "./pierre/diff-view.js";
 import { renderFileView } from "./pierre/file-view.js";
+import { hasPullContext } from "./pierre/pr-comments.js";
+import { startFileTreeBadges } from "./pierre/pr-tree.js";
+import { startSubmitReviewPanel } from "./pierre/pr-review-submit.js";
 
 function init() {
   renderFileView();
   renderDiffView();
   renderPullRequestDiffView();
   replaceRepositoryFileIcons();
+  if (hasPullContext()) {
+    startFileTreeBadges();
+    startSubmitReviewPanel();
+  }
 }
 
 if (document.readyState === "loading") {

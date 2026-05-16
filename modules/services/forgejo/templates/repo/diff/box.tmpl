@@ -89,17 +89,33 @@
 		<script id="harivan-pierre-pull-context" type="application/json">
 			{
 				"issueLink": "{{$.Issue.Link}}",
+				"issueIndex": {{$.Issue.Index}},
 				"pullIndex": {{$.Issue.Index}},
 				"repoLink": "{{$.RepoLink}}",
+				"repoOwner": "{{$.Repository.OwnerName}}",
+				"repoName": "{{$.Repository.Name}}",
 				"apiCommentsUrl": "{{AppSubUrl}}/api/v1/repos/{{$.Repository.OwnerName}}/{{$.Repository.Name}}/pulls/{{$.Issue.Index}}/comments",
+				"apiReviewsUrl": "{{AppSubUrl}}/api/v1/repos/{{$.Repository.OwnerName}}/{{$.Repository.Name}}/pulls/{{$.Issue.Index}}/reviews",
 				"createCommentUrl": "{{$.Issue.Link}}/files/reviews/comments",
+				"submitReviewUrl": "{{$.Issue.Link}}/files/reviews/submit",
 				"resolveConversationUrl": "{{$.Issue.Link}}/resolve_conversation",
+				"updateCommentUrl": "{{$.RepoLink}}/comments",
+				"reactionsBaseUrl": "{{$.RepoLink}}/comments",
+				"markupUrl": "{{$.RepoLink}}/markup",
+				"postersUrl": "{{$.RepoLink}}/issues/posters?type=pulls",
+				"contentHistoryUrl": "{{$.RepoLink}}/issues/{{$.Issue.Index}}/content-history",
 				"diffStyle": "{{if $.IsSplitStyle}}split{{else}}unified{{end}}",
 				"canComment": {{if and $.IsSigned (not $.IsArchived)}}true{{else}}false{{end}},
 				"isShowingAllCommits": {{$.IsShowingAllCommits}},
+				"showOutdatedComments": {{$.ShowOutdatedComments}},
 				"afterCommitID": "{{$.AfterCommitID}}",
 				"beforeCommitID": "{{$.BeforeCommitID}}",
-				"signedUserID": {{$.SignedUserID}}
+				"signedUserID": {{$.SignedUserID}},
+				"signedUserName": "{{if $.SignedUser}}{{$.SignedUser.Name}}{{end}}",
+				"isArchived": {{$.IsArchived}},
+				"hasCurrentReview": {{if $.CurrentReview}}true{{else}}false{{end}},
+				"currentReviewType": "{{if $.CurrentReview}}{{$.CurrentReview.Type}}{{end}}",
+				"allowedReactions": [{{range $i, $reaction := $.AllowedReactions}}{{if $i}},{{end}}"{{$reaction}}"{{end}}]
 			}
 		</script>
 		{{end}}
@@ -201,7 +217,10 @@
 							</h4>
 							<div class="diff-file-body ui attached unstackable table segment" {{if and $file.IsViewed $.IsShowingAllCommits}}data-folded="true"{{end}}>
 								{{if $usePierreDiff}}
-									<div id="diff-source-{{$file.NameHash}}" class="file-body file-code unicode-escaped harivan-pierre-diff-target{{if $.IsSplitStyle}} code-diff-split{{else}} code-diff-unified{{end}}" data-harivan-pierre-placeholder="1" data-old-filename="{{$file.OldName}}" data-new-filename="{{$file.Name}}"{{if $pierrePullContext}} data-harivan-pierre-pull="1" data-harivan-pierre-issue-link="{{$.Issue.Link}}" data-harivan-pierre-new-comment-url="{{$.Issue.Link}}/files/reviews/new_comment" data-harivan-pierre-can-comment="{{if and $.IsSigned (not $.IsArchived)}}1{{else}}0{{end}}"{{end}}></div>
+									<div id="diff-source-{{$file.NameHash}}" class="file-body file-code unicode-escaped harivan-pierre-diff-target{{if $.IsSplitStyle}} code-diff-split{{else}} code-diff-unified{{end}}" data-harivan-pierre-placeholder="1" data-old-filename="{{$file.OldName}}" data-new-filename="{{$file.Name}}"{{if $pierrePullContext}} data-harivan-pierre-pull="1" data-harivan-pierre-issue-link="{{$.Issue.Link}}" data-harivan-pierre-can-comment="{{if and $.IsSigned (not $.IsArchived)}}1{{else}}0{{end}}"{{end}}></div>
+									{{if $pierrePullContext}}
+									<div class="harivan-pierre-file-comments" data-harivan-pierre-file-comments="1" data-path="{{$file.Name}}" data-name-hash="{{$file.NameHash}}"></div>
+									{{end}}
 								{{else}}
 									<div id="diff-source-{{$file.NameHash}}" class="file-body file-code unicode-escaped code-diff{{if $.IsSplitStyle}} code-diff-split{{else}} code-diff-unified{{end}}{{if $showFileViewToggle}} tw-hidden{{end}}">
 								{{if or $file.IsIncomplete $file.IsBin}}

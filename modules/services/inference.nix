@@ -22,7 +22,7 @@ in
   services.ollama.enable = lib.mkForce false;
 
   services.llama-cpp = {
-    enable = false;
+    enable = true;
     host = "127.0.0.1";
     port = 8080;
     package = llamaCpp;
@@ -32,9 +32,11 @@ in
       "--alias"
       "step-3.5-flash-reap-121b"
       "-c"
-      "131072"
+      "32768"
       "-ngl"
       "99"
+      "--sleep-idle-seconds"
+      "600"
       "--temp"
       "0.7"
       "--top-p"
@@ -68,5 +70,8 @@ in
   systemd.services.llama-cpp = {
     after = [ "llama-cpp-step-reap-download.service" ];
     requires = [ "llama-cpp-step-reap-download.service" ];
+    serviceConfig = {
+      OOMScoreAdjust = 1000;
+    };
   };
 }

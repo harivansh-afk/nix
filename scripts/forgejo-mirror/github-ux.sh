@@ -281,11 +281,6 @@ main() {
   local owned_owner
   owned_owner=$(jq -r '.owned_owner' "$MANIFEST")
 
-  declare -A is_no_mirror
-  while IFS= read -r p; do
-    [ -n "$p" ] && is_no_mirror["$p"]=1
-  done < <(jq -r '.no_mirror[]' "$MANIFEST")
-
   local repos
   if [ "${#ONLY[@]}" -gt 0 ]; then
     repos=$(printf '%s\n' "${ONLY[@]}")
@@ -298,10 +293,6 @@ main() {
   local needs_sync=0
   while IFS= read -r path; do
     [ -z "$path" ] && continue
-    if [ -n "${is_no_mirror[$path]+x}" ]; then
-      log "$path: in no_mirror set, skipping"
-      continue
-    fi
     local owner name
     owner="${path%%/*}"; name="${path##*/}"
     log "$path"

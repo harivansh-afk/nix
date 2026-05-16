@@ -5,15 +5,12 @@
 # /etc/forgejo-mirror/manifest.json:
 #
 #   owned_owner            : the user whose repos get push-mirrored
-#   no_mirror              : repos whose mirrors are deleted entirely
 #   actions_enabled_repos  : the only repos allowed to dispatch CI jobs
 #   push_mirror_interval   : forgejo push-mirror periodic interval
 #   pull_mirror_interval   : (informational; the prestart script enforces it)
 #
 # What this does (in order):
-#   1. For every repo in `no_mirror`: delete its pull-mirror row, delete its
-#      push-mirror rows, clear `is_mirror=0`.
-#   2. For every repo under `owned_owner` NOT in `no_mirror`:
+#   1. For every repo under `owned_owner`:
 #        - If a pull-mirror exists, capture its remote_address and DELETE the
 #          row (forgejo can't be both directions cleanly).
 #        - If no push-mirror exists yet, create one targeting the captured
@@ -21,8 +18,11 @@
 #          sync_on_commit=true. Register the returned public_key as a github
 #          deploy key with read_only=false.
 #        - Existing push-mirrors are left alone.
-#   3. Every repo: flip `has_actions` to match the allowlist.
-#   4. Re-jitter the pull-mirror schedule (matches the forgejo prestart hook).
+#   2. Every repo: flip `has_actions` to match the allowlist.
+#   3. Re-jitter the pull-mirror schedule (matches the forgejo prestart hook).
+#
+# To stop mirroring a specific repo: delete it on forgejo (tea api -X DELETE
+# /repos/owner/name). This script doesn't try to be a destructive force.
 #
 # Safe to re-run. --dry-run prints intended mutations only.
 
@@ -95,43 +95,17 @@ main() {
   sync_on_commit=$(jq -r '.push_mirror_sync_on_commit' "$MANIFEST")
   interval=$(jq -r '.push_mirror_interval' "$MANIFEST")
 
-  local no_mirror actions_enabled
-  no_mirror=$(jq -r '.no_mirror[]' "$MANIFEST")
+  local actions_enabled
   actions_enabled=$(jq -r '.actions_enabled_repos[]' "$MANIFEST")
 
   # ------------------------------------------------------------------------
-  # 1. no_mirror: tear down every mirror row
+  # 1. Owned repos: convert pull -> push, ensure push-mirror exists
   # ------------------------------------------------------------------------
-  log "phase 1: clearing mirrors on no_mirror set"
-  while IFS= read -r path; do
-    [ -z "$path" ] && continue
-    local owner name rid
-    owner="${path%%/*}"; name="${path##*/}"
-    rid=$(sq "SELECT r.id FROM repository r JOIN user u ON u.id=r.owner_id WHERE u.lower_name='$owner' AND r.lower_name='$name';" || true)
-    [ -z "$rid" ] && { warn "no_mirror: $path not found, skipping"; continue; }
-    local pull_count push_count
-    pull_count=$(sq "SELECT COUNT(*) FROM mirror WHERE repo_id=$rid;")
-    push_count=$(sq "SELECT COUNT(*) FROM push_mirror WHERE repo_id=$rid;")
-    if [ "$pull_count" = "0" ] && [ "$push_count" = "0" ]; then
-      log "  $path already mirror-free"; continue
-    fi
-    log "  $path: deleting $pull_count pull + $push_count push mirror row(s)"
-    [ "$DRY" = "1" ] || sq "DELETE FROM mirror WHERE repo_id=$rid; DELETE FROM push_mirror WHERE repo_id=$rid; UPDATE repository SET is_mirror=0 WHERE id=$rid;"
-  done <<< "$no_mirror"
-
-  # ------------------------------------------------------------------------
-  # 2. Owned repos: convert pull -> push, ensure push-mirror exists
-  # ------------------------------------------------------------------------
-  log "phase 2: ensuring push-mirrors for $owned_owner/*"
-
-  # Build a set for fast membership checks.
-  declare -A is_no_mirror
-  while IFS= read -r p; do is_no_mirror["$p"]=1; done <<< "$no_mirror"
+  log "phase 1: ensuring push-mirrors for $owned_owner/*"
 
   while IFS=$'\t' read -r rid name original_url; do
     [ -z "$rid" ] && continue
     local path="$owned_owner/$name"
-    [ -n "${is_no_mirror[$path]+x}" ] && continue
 
     local pull_url
     pull_url=$(sq "SELECT remote_address FROM mirror WHERE repo_id=$rid LIMIT 1;" || true)
@@ -196,9 +170,9 @@ main() {
   done < <(sq "SELECT r.id, r.lower_name, COALESCE(r.original_url,'') FROM repository r JOIN user u ON u.id=r.owner_id WHERE u.lower_name='$owned_owner' AND r.is_empty=0 ORDER BY r.lower_name;" -separator $'\t')
 
   # ------------------------------------------------------------------------
-  # 3. actions: enable only on allowlist
+  # 2. actions: enable only on allowlist
   # ------------------------------------------------------------------------
-  log "phase 3: gating forgejo Actions per allowlist"
+  log "phase 2: gating forgejo Actions per allowlist"
   declare -A allow
   while IFS= read -r p; do allow["$p"]=1; done <<< "$actions_enabled"
 
@@ -223,9 +197,9 @@ main() {
   done < <(sq "SELECT u.lower_name, r.lower_name FROM repository r JOIN user u ON u.id=r.owner_id WHERE r.is_archived=0 AND r.is_empty=0 ORDER BY u.lower_name, r.lower_name;" -separator $'\t')
 
   # ------------------------------------------------------------------------
-  # 4. re-jitter pull-mirror schedule (matches the forgejo prestart hook)
+  # 3. re-jitter pull-mirror schedule (matches the forgejo prestart hook)
   # ------------------------------------------------------------------------
-  log "phase 4: re-jittering pull-mirror schedule"
+  log "phase 3: re-jittering pull-mirror schedule"
   local interval_seconds=$((15 * 60))
   local interval_nanos=$((interval_seconds * 1000000000))
   if [ "$DRY" = "1" ]; then

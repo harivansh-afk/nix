@@ -105,10 +105,13 @@ modules/
     caddy.nix          Reverse proxy on loopback, loopbackVhost helper
     cloudflared.nix    Cloudflare tunnel to Caddy
     delta.nix          Delta todo app service
-    forgejo.nix        Forgejo + GitHub mirror sync + heatmap reconciliation + Actions runner
+    forgejo/           Forgejo server, cozybox themes, mirror manifest, Actions runner
+scripts/
+  forgejo-mirror/      reconcile.sh + github-ux.sh (manifest-driven, run on demand)
     vaultwarden.nix    Vaultwarden password manager
 scripts/
   default.nix          Script builder (theme, ga, ghpr, iosrun, wallpaper-gen)
+  forgejo-mirror/      Mirror reconciliation against /etc/forgejo-mirror/manifest.json
 users/
   default.nix          User registry
   rathi.nix            SSH keys + groups for rathi
@@ -140,3 +143,13 @@ The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A ru
 1. Create `users/<name>.nix` with `sshKeys`, `shell`, and `extraGroups`.
 2. Create `hosts/spark/<name>/default.nix` for their home-manager config.
 3. The user is automatically picked up by `hosts/spark/users.nix`.
+
+## Forgejo mirroring
+
+The legacy gitea-mirror Bun service has been removed. Forgejo's native mirror tables (`mirror` for inbound pulls, `push_mirror` for outbound pushes) are the source of truth. Two files drive the system:
+
+- `modules/services/forgejo/mirror-manifest.nix`: policy-only config (intervals, `owned_owner`, the small `no_mirror` set, the `actions_enabled_repos` allowlist). No repo inventory is checked into nix; the actual list of repos to mirror is discovered at runtime by querying forgejo's own database. Rendered to `/etc/forgejo-mirror/manifest.json` at activation.
+- `scripts/forgejo-mirror/reconcile.sh`: idempotent script that reads the manifest, deletes pull-mirror rows on push-mirror targets, creates missing push-mirrors with `use_ssh=true sync_on_commit=true interval=15m`, registers the forgejo-generated public key as a github deploy key, and flips `has_actions` per the allowlist. Run as root: `sudo FORGEJO_MIRROR_MANIFEST=/etc/forgejo-mirror/manifest.json bash scripts/forgejo-mirror/reconcile.sh [--dry-run]`.
+- `scripts/forgejo-mirror/github-ux.sh`: optional, applies the barrettruth full treatment (github description/homepage/has_* metadata, `.github/README.md` banner, redirect-pr workflow) to every push-mirror. Run on demand: `bash scripts/forgejo-mirror/github-ux.sh [--dry-run] [--only owner/name]`.
+
+Forgejo's own `[mirror] DEFAULT_INTERVAL` is `15m` and `[queue.mirror] MAX_WORKERS` is capped at `1`. The pre-start hook in `modules/services/forgejo/default.nix` uniformly jitters every pull-mirror's `next_update_unix` to `now + (repo_id % 900s)` on each forgejo start, so 100+ mirrors never bunch into a single hour the way they did under the old gitea-mirror scheduler.

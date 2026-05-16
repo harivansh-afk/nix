@@ -39,7 +39,9 @@ let
       ${lib.escapeShellArg source.clientIdVariable} \
       ${lib.escapeShellArg source.clientSecretVariable}
   '') forgejoOauthSourceList;
-  throttleForgejoMirrors = pkgs.writeShellScript "forgejo-throttle-mirrors" ''
+  mirrorIntervalSeconds = 15 * 60;
+  mirrorIntervalNanos = toString (mirrorIntervalSeconds * 1000000000);
+  normalizeForgejoMirrorSchedule = pkgs.writeShellScript "forgejo-normalize-mirror-schedule" ''
     set -eu
     DB=/var/lib/forgejo/data/forgejo.db
     [ -f "$DB" ] || exit 0
@@ -48,10 +50,12 @@ let
       PRAGMA journal_mode=WAL;
       PRAGMA busy_timeout=10000;
       UPDATE mirror
-      SET interval = 86400000000000,
-          next_update_unix = CAST(strftime('%s','now') AS INTEGER) + 86400 + (repo_id % 3600)
-      WHERE interval < 86400000000000
-         OR next_update_unix < CAST(strftime('%s','now') AS INTEGER) + 3600;
+      SET interval = ${mirrorIntervalNanos},
+          next_update_unix = CAST(strftime('%s','now') AS INTEGER)
+                             + (repo_id % ${toString mirrorIntervalSeconds});
+      DELETE FROM action_task
+      WHERE status IN (6)
+        AND updated < CAST(strftime('%s','now','-1 day') AS INTEGER);
       PRAGMA optimize;
     "
   '';
@@ -494,6 +498,10 @@ let
   });
 in
 {
+  imports = [
+    ./mirror-manifest.nix
+  ];
+
   services.caddy.virtualHosts."http://${forgejoDomain}" =
     lib.recursiveUpdate (loopbackVhost backendPort)
       {
@@ -616,8 +624,11 @@ in
         SQLITE_TIMEOUT = 10000;
       };
       mirror = {
-        DEFAULT_INTERVAL = "24h";
-        MIN_INTERVAL = "1h";
+        DEFAULT_INTERVAL = "15m";
+        MIN_INTERVAL = "5m";
+      };
+      "queue.mirror" = {
+        MAX_WORKERS = 1;
       };
       actions = {
         ENABLED = true;
@@ -648,7 +659,7 @@ in
   };
 
   systemd.services.forgejo.serviceConfig.ExecStartPre = lib.mkBefore [
-    throttleForgejoMirrors.outPath
+    normalizeForgejoMirrorSchedule.outPath
   ];
   systemd.services.forgejo.serviceConfig.LoadCredential = lib.mkAfter (
     lib.mapAttrsToList (name: path: "${name}:${path}") forgejoOauthCredentials

@@ -80,13 +80,6 @@
       restartUnits = [ "symphony.service" ];
     };
 
-    "gitea-mirror.env" = {
-      owner = "gitea-mirror";
-      group = "gitea-mirror";
-      mode = "0400";
-      restartUnits = [ "gitea-mirror.service" ];
-    };
-
     "forgejo-smtp-password" = {
       owner = "git";
       group = "git";

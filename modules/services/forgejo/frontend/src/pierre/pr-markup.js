@@ -13,14 +13,15 @@ export async function renderMarkup({ markupUrl, repoLink, text, mode = "comment"
   if (!markupUrl) throw new Error("missing markup URL");
   const trimmed = (text || "").trim();
   if (!trimmed) return "";
-  const cacheKey = `${mode}:${trimmed}`;
+  const cacheKey = `${markupUrl}:${repoLink || ""}:${mode}:${trimmed}`;
   if (previewCache.has(cacheKey)) return previewCache.get(cacheKey);
 
   const form = new FormData();
   form.set("_csrf", csrfToken());
-  form.set("Mode", mode);
-  form.set("Context", repoLink || "");
-  form.set("Text", text);
+  form.set("mode", mode);
+  form.set("context", repoLink || "");
+  form.set("text", text);
+  form.set("wiki", "false");
 
   const response = await fetch(markupUrl, {
     method: "POST",

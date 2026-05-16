@@ -325,11 +325,6 @@ samp,
   background: var(--color-box-body, #1e1e1e);
 }
 
-.harivan-pierre-composer-heading {
-  font-size: 0.8125rem;
-  color: var(--color-text-light, #928374);
-}
-
 .harivan-pierre-composer-textarea {
   width: 100%;
   min-height: 4rem;
@@ -347,6 +342,7 @@ samp,
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .harivan-pierre-composer-error {
@@ -378,20 +374,8 @@ samp,
   border-top: 1px solid var(--color-secondary, #404040);
 }
 
-.harivan-pierre-thread-banner {
-  padding: 0.375rem 0.5rem;
-  border-radius: 4px;
-  background: var(--color-input-background, #141414);
-  color: var(--color-text-light, #928374);
-  font-size: 0.8125rem;
-}
-
 .harivan-pierre-comment-thread-resolved .harivan-pierre-comment {
   opacity: 0.7;
-}
-
-.harivan-pierre-comment-thread-outdated {
-  border-left: 3px solid var(--color-orange, #d79921);
 }
 
 /* ---- Per-comment overflow menu ---- */
@@ -695,99 +679,8 @@ samp,
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- Suggestion block ---- */
-.harivan-pierre-suggestion {
-  margin-top: 0.5rem;
-  border: 1px solid var(--color-secondary, #404040);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.harivan-pierre-suggestion-header {
-  padding: 0.375rem 0.75rem;
-  background: var(--color-input-background, #141414);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-light, #928374);
-}
-
-.harivan-pierre-suggestion-body {
-  margin: 0;
-  padding: 0.5rem 0.75rem;
-  font-family: var(--fonts-monospace);
-  font-size: 0.8125rem;
-  background: var(--diffs-bg-addition-emphasis-override, rgba(142, 201, 124, 0.12));
-  color: var(--color-text, #ebdbb2);
-  white-space: pre-wrap;
-}
-
-.harivan-pierre-suggestion-note {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.75rem;
-  color: var(--color-text-light, #928374);
-  border-top: 1px solid var(--color-secondary, #404040);
-}
-
-/* ---- Composer split submit (primary + chevron alternate) ---- */
-.harivan-pierre-composer-split {
-  display: inline-flex;
-  align-items: stretch;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.harivan-pierre-composer-split .harivan-pierre-composer-primary {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  margin-right: 0;
-}
-
-.harivan-pierre-composer-chevron {
-  position: relative;
-}
-
-.harivan-pierre-composer-chevron-summary {
-  list-style: none;
-  cursor: pointer;
-  padding: 0 0.5rem;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  border-left: 1px solid rgba(0, 0, 0, 0.18);
-  display: inline-flex;
-  align-items: center;
-}
-
-.harivan-pierre-composer-chevron-summary::-webkit-details-marker {
-  display: none;
-}
-
-.harivan-pierre-composer-chevron-menu {
-  position: absolute;
-  z-index: 60;
-  right: 0;
-  top: calc(100% + 4px);
-  min-width: 11rem;
-  padding: 0.25rem;
-  background: var(--color-box-body, #1e1e1e);
-  border: 1px solid var(--color-secondary, #404040);
-  border-radius: 6px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-}
-
 /* ---- Pending state ---- */
 .harivan-pierre-comment-badge-pending {
   background: var(--color-primary, #5b84de);
   color: var(--color-white, #141414);
-}
-
-.harivan-pierre-comment-pending {
-  background: rgba(91, 132, 222, 0.06);
-}
-
-.harivan-pierre-comment-thread-has-pending {
-  border-left: 3px solid var(--color-primary, #5b84de);
 }

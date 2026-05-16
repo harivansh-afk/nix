@@ -4,7 +4,6 @@ import { renderDiffView } from "./pierre/diff-view.js";
 import { renderFileView } from "./pierre/file-view.js";
 import { hasPullContext } from "./pierre/pr-comments.js";
 import { startFileTreeBadges } from "./pierre/pr-tree.js";
-import { startSubmitReviewPanel } from "./pierre/pr-review-submit.js";
 
 function init() {
   renderFileView();
@@ -13,7 +12,6 @@ function init() {
   replaceRepositoryFileIcons();
   if (hasPullContext()) {
     startFileTreeBadges();
-    startSubmitReviewPanel();
   }
 }
 

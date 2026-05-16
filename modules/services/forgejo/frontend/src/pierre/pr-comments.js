@@ -655,14 +655,27 @@ function renderCommentItem(comment, meta) {
   const own = isSignedUserOwn(comment, ctx);
   const canComment = Boolean(ctx?.canComment);
   if (canComment) {
-    const actions = document.createElement("div");
-    actions.className = "harivan-pierre-comment-actions";
+    const overflow = buildCommentOverflowMenu({
+      comment,
+      meta,
+      own,
+      itemEl: item,
+    });
+    if (overflow) {
+      // Stash the menu inside the header so it floats to the right edge.
+      header.append(overflow);
+    }
+  }
 
-    const quoteBtn = document.createElement("button");
-    quoteBtn.type = "button";
-    quoteBtn.className = "harivan-pierre-link-btn";
-    quoteBtn.textContent = "Quote reply";
-    quoteBtn.addEventListener("click", () => {
+  return item;
+}
+
+function buildCommentOverflowMenu({ comment, meta, own, itemEl }) {
+  const items = [];
+
+  items.push({
+    label: "Quote reply",
+    onSelect: () => {
       openReplyComposer({
         meta,
         replyTo: meta.rootCommentId,
@@ -672,47 +685,33 @@ function renderCommentItem(comment, meta) {
             .map((line) => `> ${line}`)
             .join("\n") + "\n\n",
       });
-    });
-    actions.append(quoteBtn);
+    },
+  });
 
-    if (comment.htmlUrl) {
-      const permaBtn = document.createElement("button");
-      permaBtn.type = "button";
-      permaBtn.className = "harivan-pierre-link-btn";
-      permaBtn.textContent = "Copy link";
-      permaBtn.addEventListener("click", async () => {
+  if (comment.htmlUrl) {
+    items.push({
+      label: "Copy link",
+      onSelect: async () => {
         try {
           await navigator.clipboard.writeText(
             new URL(comment.htmlUrl, window.location.origin).toString(),
           );
-          permaBtn.textContent = "Copied";
-          window.setTimeout(
-            () => (permaBtn.textContent = "Copy link"),
-            1500,
-          );
         } catch {
-          permaBtn.textContent = "Copy failed";
+          // ignore clipboard failure
         }
-      });
-      actions.append(permaBtn);
-    }
+      },
+    });
+  }
 
-    if (own) {
-      const editBtn = document.createElement("button");
-      editBtn.type = "button";
-      editBtn.className = "harivan-pierre-link-btn";
-      editBtn.textContent = "Edit";
-      editBtn.addEventListener("click", () =>
-        mountInlineEditor(item, comment),
-      );
-      actions.append(editBtn);
-
-      const deleteBtn = document.createElement("button");
-      deleteBtn.type = "button";
-      deleteBtn.className =
-        "harivan-pierre-link-btn harivan-pierre-link-danger";
-      deleteBtn.textContent = "Delete";
-      deleteBtn.addEventListener("click", async () => {
+  if (own) {
+    items.push({
+      label: "Edit",
+      onSelect: () => mountInlineEditor(itemEl, comment),
+    });
+    items.push({
+      label: "Delete",
+      danger: true,
+      onSelect: async () => {
         if (!window.confirm("Delete this comment? This cannot be undone."))
           return;
         try {
@@ -720,14 +719,46 @@ function renderCommentItem(comment, meta) {
         } catch (error) {
           console.warn("Pierre PR bridge: delete failed", error);
         }
-      });
-      actions.append(deleteBtn);
-    }
-
-    item.append(actions);
+      },
+    });
   }
 
-  return item;
+  if (items.length === 0) return null;
+
+  const wrap = document.createElement("details");
+  wrap.className = "harivan-pierre-overflow";
+  const summary = document.createElement("summary");
+  summary.className = "harivan-pierre-overflow-summary";
+  summary.setAttribute("aria-label", "More actions");
+  summary.textContent = "⋯"; // horizontal ellipsis
+  wrap.append(summary);
+
+  const menu = document.createElement("div");
+  menu.className = "harivan-pierre-overflow-menu";
+  for (const entry of items) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "harivan-pierre-overflow-item";
+    if (entry.danger) btn.classList.add("harivan-pierre-overflow-danger");
+    btn.textContent = entry.label;
+    btn.addEventListener("click", (event) => {
+      event.preventDefault();
+      wrap.open = false;
+      entry.onSelect();
+    });
+    menu.append(btn);
+  }
+  wrap.append(menu);
+
+  // Close when clicking outside.
+  const closeOnOutside = (event) => {
+    if (!wrap.open) return;
+    if (event.target instanceof Node && wrap.contains(event.target)) return;
+    wrap.open = false;
+  };
+  document.addEventListener("pointerdown", closeOnOutside);
+
+  return wrap;
 }
 
 function mountInlineEditor(item, comment) {
@@ -958,58 +989,71 @@ function buildComposer({
   const hasPending = Boolean(ctx?.hasCurrentReview);
   const submits = [];
 
+  // Single primary submit, plus an optional chevron menu for the alternate
+  // submission mode. Reply mode collapses to one button entirely.
+  const primary = document.createElement("button");
+  primary.type = "submit";
+  primary.className = "ui primary button harivan-pierre-composer-primary";
+  let primaryMode = "single";
+  let alternate = null;
+
   if (mode === "reply") {
-    const replyBtn = document.createElement("button");
-    replyBtn.type = "submit";
-    replyBtn.className = "ui primary button";
-    replyBtn.textContent = "Reply";
-    replyBtn.dataset.mode = "single";
-    submits.push({ button: replyBtn, mode: "single" });
-    actions.append(replyBtn);
+    primary.textContent = "Reply";
+    primaryMode = "single";
   } else if (hasPending) {
-    const addBtn = document.createElement("button");
-    addBtn.type = "submit";
-    addBtn.className = "ui primary button";
-    addBtn.textContent = "Add review comment";
-    addBtn.dataset.mode = "queue";
-    submits.push({ button: addBtn, mode: "queue" });
-    actions.append(addBtn);
-
-    const singleBtn = document.createElement("button");
-    singleBtn.type = "submit";
-    singleBtn.className = "ui button";
-    singleBtn.textContent = "Add single comment";
-    singleBtn.dataset.mode = "single";
-    submits.push({ button: singleBtn, mode: "single" });
-    actions.append(singleBtn);
+    primary.textContent = "Add review comment";
+    primaryMode = "queue";
+    alternate = { label: "Add single comment", mode: "single" };
   } else {
-    const startBtn = document.createElement("button");
-    startBtn.type = "submit";
-    startBtn.className = "ui primary button";
-    startBtn.textContent = "Start a review";
-    startBtn.dataset.mode = "queue";
-    submits.push({ button: startBtn, mode: "queue" });
-    actions.append(startBtn);
-
-    const singleBtn = document.createElement("button");
-    singleBtn.type = "submit";
-    singleBtn.className = "ui button";
-    singleBtn.textContent = "Add single comment";
-    singleBtn.dataset.mode = "single";
-    submits.push({ button: singleBtn, mode: "single" });
-    actions.append(singleBtn);
+    primary.textContent = "Start a review";
+    primaryMode = "queue";
+    alternate = { label: "Add single comment", mode: "single" };
   }
+  primary.dataset.mode = primaryMode;
+  submits.push({ button: primary, mode: primaryMode });
 
   const cancel = document.createElement("button");
   cancel.type = "button";
   cancel.className = "ui basic button";
   cancel.textContent = "Cancel";
+
+  if (alternate) {
+    const group = document.createElement("div");
+    group.className = "harivan-pierre-composer-split";
+    group.append(primary);
+
+    const chevronWrap = document.createElement("details");
+    chevronWrap.className = "harivan-pierre-composer-chevron";
+    const chevronSummary = document.createElement("summary");
+    chevronSummary.className =
+      "ui primary button harivan-pierre-composer-chevron-summary";
+    chevronSummary.setAttribute("aria-label", "More submit options");
+    chevronSummary.textContent = "▾"; // small down triangle
+    chevronWrap.append(chevronSummary);
+
+    const altMenu = document.createElement("div");
+    altMenu.className = "harivan-pierre-composer-chevron-menu";
+    const altBtn = document.createElement("button");
+    altBtn.type = "submit";
+    altBtn.className = "harivan-pierre-overflow-item";
+    altBtn.textContent = alternate.label;
+    altBtn.dataset.mode = alternate.mode;
+    submits.push({ button: altBtn, mode: alternate.mode });
+    altMenu.append(altBtn);
+    chevronWrap.append(altMenu);
+
+    group.append(chevronWrap);
+    actions.append(group);
+  } else {
+    actions.append(primary);
+  }
+
   actions.append(cancel);
   wrapper.append(actions);
 
   cancel.addEventListener("click", () => wrapper.remove());
 
-  let chosenMode = submits[0]?.mode ?? "single";
+  let chosenMode = primaryMode;
   for (const { button, mode: m } of submits) {
     button.addEventListener("click", () => {
       chosenMode = m;
@@ -1067,29 +1111,17 @@ export function mountComposer({ box, side, lineNumber, path }) {
   composer.querySelector("textarea")?.focus();
 }
 
-export function mountFileLevelComposerTrigger({ container, path }) {
-  const trigger = document.createElement("button");
-  trigger.type = "button";
-  trigger.className = "ui basic button harivan-pierre-file-comment-trigger";
-  trigger.textContent = "Add a comment on this file";
-  trigger.addEventListener("click", () => {
-    trigger.replaceWith(
-      buildComposer({
-        path,
-        side: "additions",
-        lineNumber: 0,
-        mode: "file",
-      }),
-    );
-  });
-  container.append(trigger);
-}
-
+// Only mounts when there are existing file-level comments from the API.
+// We do not surface a "Add a comment on this file" trigger because the
+// per-line gutter already covers the common case; file-level commenting
+// is an edge case that doesn't deserve a permanent affordance.
 export function renderFileLevelComments({ container, path }) {
-  const ctx = readPullContext();
   container.replaceChildren();
+  container.classList.remove("harivan-pierre-file-comments-visible");
   getFileLevelComments(path)
     .then((comments) => {
+      if (comments.length === 0) return;
+      container.classList.add("harivan-pierre-file-comments-visible");
       const wrapper = document.createElement("div");
       wrapper.className = "harivan-pierre-file-comments-wrap";
       for (const comment of comments) {
@@ -1103,9 +1135,7 @@ export function renderFileLevelComments({ container, path }) {
           }),
         );
       }
-      if (comments.length > 0) container.append(wrapper);
-      if (ctx?.canComment)
-        mountFileLevelComposerTrigger({ container, path });
+      container.append(wrapper);
     })
     .catch((error) => {
       console.warn("Pierre PR bridge: file-level comments failed", error);

@@ -394,36 +394,75 @@ samp,
   border-left: 3px solid var(--color-orange, #d79921);
 }
 
-/* ---- Per-comment toolbar (Quote, Copy link, Edit, Delete) ---- */
-.harivan-pierre-comment-actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-  flex-wrap: wrap;
+/* ---- Per-comment overflow menu ---- */
+.harivan-pierre-overflow {
+  position: relative;
+  margin-left: auto;
 }
 
-.harivan-pierre-link-btn {
+.harivan-pierre-overflow-summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 4px;
+  color: var(--color-text-light, #928374);
+  font-size: 1rem;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.harivan-pierre-overflow-summary::-webkit-details-marker {
+  display: none;
+}
+
+.harivan-pierre-comment:hover .harivan-pierre-overflow-summary,
+.harivan-pierre-overflow[open] .harivan-pierre-overflow-summary {
+  opacity: 1;
+}
+
+.harivan-pierre-overflow-summary:hover {
+  background: var(--color-input-background, #141414);
+  color: var(--color-text, #ebdbb2);
+}
+
+.harivan-pierre-overflow-menu {
+  position: absolute;
+  z-index: 60;
+  right: 0;
+  top: calc(100% + 4px);
+  min-width: 9rem;
+  padding: 0.25rem;
+  background: var(--color-box-body, #1e1e1e);
+  border: 1px solid var(--color-secondary, #404040);
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+.harivan-pierre-overflow-item {
   appearance: none;
   background: none;
   border: 0;
-  padding: 0;
+  padding: 0.375rem 0.625rem;
+  text-align: left;
   font-family: inherit;
   font-size: 0.8125rem;
-  color: var(--color-text-light, #928374);
+  color: var(--color-text, #ebdbb2);
   cursor: pointer;
-  text-decoration: none;
+  border-radius: 4px;
 }
 
-.harivan-pierre-link-btn:hover {
-  color: var(--color-primary, #5b84de);
-  text-decoration: underline;
+.harivan-pierre-overflow-item:hover {
+  background: var(--color-input-background, #141414);
 }
 
-.harivan-pierre-link-danger {
-  color: var(--color-red, #ea6962);
-}
-
-.harivan-pierre-link-danger:hover {
+.harivan-pierre-overflow-danger {
   color: var(--color-red, #ea6962);
 }
 
@@ -520,6 +559,13 @@ samp,
 
 .harivan-pierre-reaction-picker {
   position: relative;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.harivan-pierre-comment:hover .harivan-pierre-reaction-picker,
+.harivan-pierre-reaction-picker[open] {
+  opacity: 1;
 }
 
 .harivan-pierre-reaction-add {
@@ -613,8 +659,12 @@ samp,
   color: var(--color-text-light, #928374);
 }
 
-/* ---- File-level comments ---- */
+/* ---- File-level comments (rendered only when threads exist) ---- */
 .harivan-pierre-file-comments {
+  display: none;
+}
+
+.harivan-pierre-file-comments-visible {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -626,12 +676,6 @@ samp,
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
-.harivan-pierre-file-comment-trigger {
-  align-self: flex-start;
-  color: var(--color-text-light, #928374);
-  font-size: 0.8125rem;
 }
 
 /* ---- File tree badges ---- */
@@ -686,53 +730,52 @@ samp,
   border-top: 1px solid var(--color-secondary, #404040);
 }
 
-/* ---- Submit review panel ---- */
-.harivan-pierre-review-panel {
-  position: fixed;
-  right: 1.5rem;
-  bottom: 1.5rem;
-  z-index: 60;
-  width: 22rem;
-  max-width: calc(100vw - 3rem);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.875rem 1rem;
-  border-radius: 8px;
-  background: var(--color-box-body, #1e1e1e);
-  border: 1px solid var(--color-secondary, #404040);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+/* ---- Composer split submit (primary + chevron alternate) ---- */
+.harivan-pierre-composer-split {
+  display: inline-flex;
+  align-items: stretch;
+  border-radius: 4px;
+  overflow: hidden;
 }
 
-.harivan-pierre-review-panel.is-collapsed > :not(.harivan-pierre-review-panel-heading):not(.harivan-pierre-review-panel-actions) {
+.harivan-pierre-composer-split .harivan-pierre-composer-primary {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  margin-right: 0;
+}
+
+.harivan-pierre-composer-chevron {
+  position: relative;
+}
+
+.harivan-pierre-composer-chevron-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0 0.5rem;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 1px solid rgba(0, 0, 0, 0.18);
+  display: inline-flex;
+  align-items: center;
+}
+
+.harivan-pierre-composer-chevron-summary::-webkit-details-marker {
   display: none;
 }
 
-.harivan-pierre-review-panel-heading {
-  font-weight: 600;
-  color: var(--color-text, #ebdbb2);
-}
-
-.harivan-pierre-review-panel-summary {
-  font-size: 0.8125rem;
-  color: var(--color-text-light, #928374);
-}
-
-.harivan-pierre-review-panel-choices {
+.harivan-pierre-composer-chevron-menu {
+  position: absolute;
+  z-index: 60;
+  right: 0;
+  top: calc(100% + 4px);
+  min-width: 11rem;
+  padding: 0.25rem;
+  background: var(--color-box-body, #1e1e1e);
+  border: 1px solid var(--color-secondary, #404040);
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-}
-
-.harivan-pierre-review-panel-choice {
-  font-size: 0.875rem;
-  color: var(--color-text, #ebdbb2);
-}
-
-.harivan-pierre-review-panel-actions {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
 }
 
 /* ---- Pending state ---- */

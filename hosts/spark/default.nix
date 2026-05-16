@@ -18,7 +18,6 @@
     ../../modules/services/cloudflared.nix
     ../../modules/services/delta.nix
     ../../modules/services/forgejo
-    ../../modules/services/gitea-mirror.nix
     ../../modules/services/inference.nix
     ../../modules/services/mosh.nix
     ../../modules/services/symphony.nix

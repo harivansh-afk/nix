@@ -67,11 +67,6 @@
       url = "github:sadjow/codex-cli-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    gitea-mirror = {
-      url = "github:RayLabsHQ/gitea-mirror/v3.13.4";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =

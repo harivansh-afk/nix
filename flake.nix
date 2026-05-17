@@ -67,6 +67,16 @@
       url = "github:sadjow/codex-cli-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Symphony ships its own NixOS deployment artifacts: the run-nix
+    # entrypoint, the encrypted env file at secrets/symphony.env, and
+    # eventually a NixOS module. Pinning it here means an admin can
+    # `nix flake update symphony` and `nixos-rebuild switch` to roll
+    # forward both the binary and the encrypted env atomically.
+    symphony = {
+      url = "github:indexable-inc/symphony";
+      flake = false;
+    };
   };
 
   outputs =

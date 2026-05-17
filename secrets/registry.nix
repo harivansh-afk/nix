@@ -13,6 +13,9 @@
 #                          host. Land at /run/secrets/<name>. Each entry is
 #                          passed verbatim into sops.secrets, so it can carry
 #                          owner / group / mode / restartUnits / neededForUsers.
+#                          An entry can also override `sopsFile` to point at
+#                          a file outside this repo (e.g. a flake input) for
+#                          secrets that ship with their consuming service.
 #
 # Adding a new secret:
 #   1. Drop the plaintext or encrypted file into the matching directory:
@@ -21,7 +24,7 @@
 #      .sops.yaml will pick the right recipient set automatically.
 #   2. Add a one-line entry here.
 #   3. Consume via config.sops.secrets."<name>".path.
-{ username }:
+{ username, inputs }:
 {
   user = {
     "linear.env" = { };
@@ -73,11 +76,19 @@
       restartUnits = [ "vaultwarden.service" ];
     };
 
+    # Owned by the symphony repo: the encrypted source lives at
+    # `secrets/symphony.env` in the symphony flake input so any host
+    # that pins symphony gets the env file colocated with the service
+    # definition. Overrides the default `sopsFile = secrets/hosts/spark/
+    # symphony.env` that modules/security/sops.nix would otherwise
+    # compute, and skips the legacy `secrets/hosts/spark/symphony.env`
+    # file that was deleted in this PR.
     "symphony.env" = {
       owner = username;
       group = "users";
       mode = "0400";
       restartUnits = [ "symphony.service" ];
+      sopsFile = inputs.symphony + "/secrets/symphony.env";
     };
 
     "forgejo-smtp-password" = {

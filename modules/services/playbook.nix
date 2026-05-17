@@ -20,7 +20,6 @@ let
   playbookSubdir = "${ixRepoDir}/playbook";
   port = 4060;
   serveHost = "spark-ix.tail368802.ts.net";
-  basePath = "/playbooks";
 
   path = lib.makeBinPath [
     pkgs.bash
@@ -66,11 +65,12 @@ in
       NODE_ENV = "production";
       PORT = toString port;
       HOST = "127.0.0.1";
-      ORIGIN = "https://${serveHost}${basePath}";
-      # BASE_PATH is read by playbook/svelte.config.js at build time so the
-      # SvelteKit app serves at the /playbooks sub-path that tailscale-serve
-      # forwards to. Keep this aligned with the public URL above.
-      BASE_PATH = basePath;
+      # Playbook serves at the deploy host's root so the public URL
+      # matches what `vite dev` produces locally. No BASE_PATH; the
+      # SvelteKit config falls through to `paths.base = ''` and the
+      # tailscale-serve mount for port 8443 forwards `/` directly to
+      # this app.
+      ORIGIN = "https://${serveHost}";
       PROTOCOL_HEADER = "x-forwarded-proto";
       HOST_HEADER = "x-forwarded-host";
       CODEX_VIEWER_ENABLED = "1";

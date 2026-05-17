@@ -62,6 +62,10 @@ in
       SYMPHONY_IX_REPO = ixRepoDir;
       SYMPHONY_PORT = toString port;
       PLAYBOOK_CODEX_BASE_URL = "https://spark-ix.tail368802.ts.net:8443";
+      # Enable the in-dashboard codex session viewer that landed in
+      # indexable-inc/symphony#48. Without this set, /codex renders the
+      # "viewer disabled" stub.
+      CODEX_VIEWER_ENABLED = "1";
     };
 
     serviceConfig = {

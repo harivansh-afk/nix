@@ -40,7 +40,7 @@ let
 
     echo "advancing playbook: $local_sha -> $remote_sha"
     runuser -u ${username} -- git reset --hard --quiet FETCH_HEAD
-    systemctl restart playbook.service
+    ${pkgs.systemd}/bin/systemctl restart playbook.service
   '';
 in
 {

@@ -1002,7 +1002,8 @@
         "nixpkgs-nushell": "nixpkgs-nushell",
         "openspec": "openspec",
         "pi-mono": "pi-mono",
-        "sops-nix": "sops-nix"
+        "sops-nix": "sops-nix",
+        "symphony": "symphony"
       }
     },
     "sops-nix": {
@@ -1022,6 +1023,22 @@
       "original": {
         "owner": "Mic92",
         "repo": "sops-nix",
+        "type": "github"
+      }
+    },
+    "symphony": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1779035093,
+        "narHash": "sha256-IfCQlpQEObpQr8f243YX0Qj+HlN85uQt/Jn2alIbQx8=",
+        "owner": "indexable-inc",
+        "repo": "symphony",
+        "rev": "1f1fc2f67ff1a6a2d2d4ce17a597d814b08daf18",
+        "type": "github"
+      },
+      "original": {
+        "owner": "indexable-inc",
+        "repo": "symphony",
         "type": "github"
       }
     },

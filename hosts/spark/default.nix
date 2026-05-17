@@ -20,6 +20,7 @@
     ../../modules/services/forgejo
     ../../modules/services/inference.nix
     ../../modules/services/mosh.nix
+    ../../modules/services/playbook.nix
     ../../modules/services/symphony.nix
     ../../modules/services/vaultwarden.nix
     ../../modules/services/website.nix

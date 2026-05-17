@@ -82,6 +82,7 @@ let
     pkgs.openssh
     pkgs.python3
     pkgs.ripgrep
+    pkgs.util-linux
     pkgs.zsh
     pkgs.mgrep
     pinnedBuck2

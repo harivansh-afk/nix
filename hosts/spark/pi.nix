@@ -13,7 +13,7 @@ in
     models = null;
     extraFlags = [
       "--provider"
-      "local"
+      "step"
       "--model"
       "step-3.5-flash-reap-121b"
     ];

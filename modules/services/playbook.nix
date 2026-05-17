@@ -8,7 +8,8 @@
 let
   repoDir = "/home/${username}/Documents/Git/indexable/playbook";
   port = 4060;
-  serveHost = "playbook.tail368802.ts.net";
+  serveHost = "spark-ix.tail368802.ts.net";
+  basePath = "/playbooks";
 
   path = lib.makeBinPath [
     pkgs.bash
@@ -43,11 +44,6 @@ let
   '';
 in
 {
-  services.tailscale.serve = {
-    enable = true;
-    services.playbook.endpoints."tcp:443" = "http://127.0.0.1:${toString port}";
-  };
-
   systemd.services.playbook = {
     description = "Indexable Playbook UI (SvelteKit adapter-node)";
     after = [ "network-online.target" ];
@@ -59,7 +55,8 @@ in
       NODE_ENV = "production";
       PORT = toString port;
       HOST = "127.0.0.1";
-      ORIGIN = "https://${serveHost}";
+      ORIGIN = "https://${serveHost}${basePath}";
+      BASE_PATH = basePath;
       PROTOCOL_HEADER = "x-forwarded-proto";
       HOST_HEADER = "x-forwarded-host";
     };

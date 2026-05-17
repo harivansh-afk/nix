@@ -40,11 +40,6 @@ let
   ];
 in
 {
-  services.tailscale.serve = {
-    enable = true;
-    services.symphony.endpoints."tcp:443" = "http://127.0.0.1:${toString port}";
-  };
-
   systemd.tmpfiles.rules = [
     "d ${stateDir} 0750 ${username} users -"
     "d ${stateDir}/log 0750 ${username} users -"

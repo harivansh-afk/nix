@@ -14,7 +14,6 @@
     ../../modules/security/sops.nix
     ../../modules/security/user-isolation.nix
     ../../modules/services/caddy.nix
-    ../../modules/services/claude-demo.nix
     ../../modules/services/cloudflared.nix
     ../../modules/services/delta.nix
     ../../modules/services/forgejo
@@ -27,6 +26,7 @@
     ./hardware.nix
     ./networking.nix
     ./pi.nix
+    ./tailscale-serve.nix
     ./barrett/system.nix
     ./users.nix
   ]

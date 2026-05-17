@@ -1029,11 +1029,11 @@
     "symphony": {
       "flake": false,
       "locked": {
-        "lastModified": 1779049324,
-        "narHash": "sha256-hzs481GV6J6pDKhUFdzUZHbOuWAieQDj7FIHGjki5yg=",
+        "lastModified": 1779051342,
+        "narHash": "sha256-MZiXkQpeYfLT9OAALwt8VIDAq+KMcPZ9HWI1GOpN+nc=",
         "owner": "indexable-inc",
         "repo": "symphony",
-        "rev": "2ad96a6cd358a31367104373e3be27becccda297",
+        "rev": "715f2cbe5c2ff48a55bbf3266c4e7feeda7dc09d",
         "type": "github"
       },
       "original": {

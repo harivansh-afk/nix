@@ -59,6 +59,7 @@ in
       BASE_PATH = basePath;
       PROTOCOL_HEADER = "x-forwarded-proto";
       HOST_HEADER = "x-forwarded-host";
+      CODEX_VIEWER_ENABLED = "1";
     };
 
     serviceConfig = {

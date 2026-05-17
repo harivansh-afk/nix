@@ -5,6 +5,7 @@
 let
   tsHost = "spark-ix.tail368802.ts.net";
   serveConfig = {
+    version = "0.0.1";
     TCP."443".HTTPS = true;
     Web."${tsHost}:443".Handlers = {
       "/".Proxy = "http://127.0.0.1:4040";

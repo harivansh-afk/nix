@@ -61,6 +61,7 @@ in
       SYMPHONY_LOGS_ROOT = "${stateDir}/log";
       SYMPHONY_IX_REPO = ixRepoDir;
       SYMPHONY_PORT = toString port;
+      PLAYBOOK_CODEX_BASE_URL = "https://spark-ix.tail368802.ts.net:8443/playbooks";
     };
 
     serviceConfig = {

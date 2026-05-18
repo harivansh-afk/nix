@@ -45,9 +45,11 @@ Options: >
       options.lua               Vim options
       keymaps.lua               Global keymaps
       autocmds.lua              Autocommands
+      completion.lua            Native automatic completion
     lua/
       config/
-        lsp.lua                 Shared on_attach and capabilities
+        completion.lua          Native completefunc providers
+        lsp.lua                 Shared on_attach
       lsp/
         lua_ls.lua              Per-server settings
         pyright.lua
@@ -55,7 +57,6 @@ Options: >
         ts_ls.lua
       plugins/
         editor.lua              Autopairs, surround, ufo, preview
-        cmp.lua                 Blink.cmp completion
         fzf.lua                 Fzf-lua fuzzy finder
         git.lua                 Fugitive, gitsigns, diffs.nvim
         lsp.lua                 nvim-lspconfig
@@ -100,8 +101,7 @@ Plugins are declared with vim.pack and loaded through lz.n.
     windwp/nvim-autopairs           Auto-close brackets
     kylechui/nvim-surround          Surround operations
     kevinhwang91/nvim-ufo           Code folding
-    saghen/blink.lib                Blink.cmp runtime library
-    saghen/blink.cmp                Autocompletion (LSP, path, buffer, snippets)
+    Native Neovim completion        LSP, path, buffer, snippets, env vars
 
 ==============================================================================
 5. KEYMAPS                                                  *config-keymaps*

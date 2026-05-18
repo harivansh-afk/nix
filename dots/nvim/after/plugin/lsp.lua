@@ -2,7 +2,6 @@ local lsp = require "config.lsp"
 
 vim.lsp.config("*", {
   on_attach = lsp.on_attach,
-  capabilities = lsp.capabilities(),
 })
 
 for _, server in ipairs {

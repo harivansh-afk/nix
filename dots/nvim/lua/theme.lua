@@ -22,6 +22,27 @@ local function ensure_server_socket()
 end
 
 local function apply_cozybox_overrides()
+  local normal = vim.api.nvim_get_hl(0, { name = "Normal", link = false })
+  local cursor_line = vim.api.nvim_get_hl(0, { name = "CursorLine", link = false })
+  local visual = vim.api.nvim_get_hl(0, { name = "Visual", link = false })
+  local comment = vim.api.nvim_get_hl(0, { name = "Comment", link = false })
+  local identifier = vim.api.nvim_get_hl(0, { name = "Identifier", link = false })
+  local statement = vim.api.nvim_get_hl(0, { name = "Statement", link = false })
+  local menu = { fg = normal.fg, bg = normal.bg }
+  local selected = { fg = normal.fg, bg = cursor_line.bg or visual.bg or normal.bg, bold = true }
+
+  vim.api.nvim_set_hl(0, "Pmenu", menu)
+  vim.api.nvim_set_hl(0, "PmenuBorder", { fg = comment.fg or normal.fg, bg = normal.bg })
+  vim.api.nvim_set_hl(0, "PmenuKind", { fg = identifier.fg or normal.fg, bg = normal.bg })
+  vim.api.nvim_set_hl(0, "PmenuKindSel", { fg = identifier.fg or normal.fg, bg = selected.bg, bold = true })
+  vim.api.nvim_set_hl(0, "PmenuExtra", { fg = comment.fg or normal.fg, bg = normal.bg })
+  vim.api.nvim_set_hl(0, "PmenuExtraSel", { fg = comment.fg or normal.fg, bg = selected.bg, bold = true })
+  vim.api.nvim_set_hl(0, "PmenuMatch", { fg = statement.fg or normal.fg, bg = normal.bg, bold = true })
+  vim.api.nvim_set_hl(0, "PmenuMatchSel", { fg = statement.fg or normal.fg, bg = selected.bg, bold = true })
+  vim.api.nvim_set_hl(0, "PmenuSbar", { bg = selected.bg })
+  vim.api.nvim_set_hl(0, "PmenuThumb", { bg = visual.bg or selected.bg })
+  vim.api.nvim_set_hl(0, "PmenuSel", selected)
+
   local links = {
     { "DiffsAdd", "DiffAdd" },
     { "DiffsDelete", "DiffDelete" },

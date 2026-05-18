@@ -15,6 +15,7 @@ in
     ast-grep
     bitwarden-cli
     curl
+    elixir
     fd
     gnupg
     gcc

@@ -33,6 +33,8 @@ in
       bat
       clang
       clang-tools
+      elixir_1_19
+      elixir-ls
       fd
       fzf
       gh

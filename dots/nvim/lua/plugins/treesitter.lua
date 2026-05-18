@@ -79,6 +79,7 @@ return {
     "nvim-treesitter/nvim-treesitter",
     after = function()
       require("nvim-treesitter").setup { auto_install = true }
+      pcall(function() require("nvim-treesitter").install { "elixir", "heex", "eex" } end)
       register_query_directive_compat()
 
       vim.api.nvim_create_autocmd("FileType", {

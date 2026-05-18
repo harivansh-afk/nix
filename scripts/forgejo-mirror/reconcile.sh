@@ -1,31 +1,3 @@
-#!/usr/bin/env bash
-# Idempotent reconciliation of forgejo mirror state. Repos are discovered at
-# runtime from /var/lib/forgejo/data/forgejo.db so this script and its
-# committed config carry zero repo inventory. The only operator config lives in
-# /etc/forgejo-mirror/manifest.json:
-#
-#   owned_owner            : the user whose repos get push-mirrored
-#   actions_enabled_repos  : the only repos allowed to dispatch CI jobs
-#   push_mirror_interval   : forgejo push-mirror periodic interval
-#   pull_mirror_interval   : (informational; the prestart script enforces it)
-#
-# What this does (in order):
-#   1. For every repo under `owned_owner`:
-#        - If a pull-mirror exists, capture its remote_address and DELETE the
-#          row (forgejo can't be both directions cleanly).
-#        - If no push-mirror exists yet, create one targeting the captured
-#          github URL (or repository.original_url as a fallback). use_ssh=true,
-#          sync_on_commit=true. Register the returned public_key as a github
-#          deploy key with read_only=false.
-#        - Existing push-mirrors are left alone.
-#   2. Every repo: flip `has_actions` to match the allowlist.
-#   3. Re-jitter the pull-mirror schedule (matches the forgejo prestart hook).
-#
-# To stop mirroring a specific repo: delete it on forgejo (tea api -X DELETE
-# /repos/owner/name). This script doesn't try to be a destructive force.
-#
-# Safe to re-run. --dry-run prints intended mutations only.
-
 set -euo pipefail
 
 MANIFEST="${FORGEJO_MIRROR_MANIFEST:-/etc/forgejo-mirror/manifest.json}"

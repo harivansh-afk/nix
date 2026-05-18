@@ -1,34 +1,3 @@
-#!/usr/bin/env bash
-# Apply the "barrettruth full treatment" to every owned repo that currently
-# has a forgejo->github push-mirror. Targets are discovered from forgejo's
-# push_mirror table at runtime; nothing is hardcoded. For each repo:
-#
-#   1. github metadata: description prefix, homepage, has_issues/wiki/projects=false,
-#      archived=false (unarchive if v1 deprecation left it archived).
-#   2. .github/README.md in forgejo: banner + full root README, propagated to
-#      github by the push-mirror.
-#   3. .github/workflows/redirect-pr-to-forgejo.yaml in forgejo: closes inbound
-#      github PRs with a forgejo redirect.
-#
-# Items 2 and 3 are committed to forgejo via the API (no local clone), then
-# the script triggers `push_mirrors-sync` to fan them out to github.
-#
-# This script is intentionally NOT auto-run on rebuild. Run it once after the
-# initial deploy, then re-run only when you want to refresh metadata.
-#
-# Requirements:
-#   - tea CLI logged into git.harivan.sh as harivansh-afk
-#   - gh CLI logged in with `repo` scope (admin:public_key not required here;
-#     reconcile.sh handles deploy keys)
-#
-# Flags:
-#   --dry-run             print intended mutations, perform none
-#   --skip-metadata       don't touch github description/homepage/has_*
-#   --skip-banner         don't commit .github/README.md
-#   --skip-redirect       don't commit .github/workflows/redirect-pr-to-forgejo.yaml
-#   --only <owner/name>   restrict to a single repo (can be repeated)
-#   --refresh-banner      regenerate .github/README.md even if it already exists
-
 set -euo pipefail
 
 MANIFEST="${FORGEJO_MIRROR_MANIFEST:-/etc/forgejo-mirror/manifest.json}"

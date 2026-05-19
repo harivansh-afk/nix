@@ -12,14 +12,19 @@ let
   # the SvelteKit app from the playbook/ subdirectory of the local ix
   # checkout.
   #
+  # The deployed branch is `dev`: ix's release flow lands work on `dev`
+  # first and only fast-forwards `main` on cut, so tracking `dev` keeps
+  # the spark playbook UI on the latest in-progress build.
+  #
   # The ix checkout is shared with symphony, which roots every dispatch
   # worktree under ${ixRepoDir}/.worktrees/. Worktrees are pinned to their
-  # own branches, so the periodic `git reset --hard FETCH_HEAD` of the main
-  # checkout below does not disturb any in-flight symphony run.
+  # own branches, so the periodic `git reset --hard FETCH_HEAD` of the
+  # top-level checkout below does not disturb any in-flight symphony run.
   ixRepoDir = "/home/${username}/Documents/Git/indexable/ix";
   playbookSubdir = "${ixRepoDir}/playbook";
   port = 4060;
   serveHost = "spark-ix.tail368802.ts.net";
+  trackedBranch = "dev";
 
   path = lib.makeBinPath [
     pkgs.bash
@@ -38,17 +43,17 @@ let
     cd ${ixRepoDir}
     auth_url="https://x-access-token:''${GITHUB_TOKEN}@github.com/indexable-inc/ix.git"
 
-    runuser -u ${username} -- git fetch --prune --quiet "$auth_url" main
+    runuser -u ${username} -- git fetch --prune --quiet "$auth_url" ${trackedBranch}
 
     local_sha=$(runuser -u ${username} -- git rev-parse HEAD)
     remote_sha=$(runuser -u ${username} -- git rev-parse FETCH_HEAD)
 
     if [ "$local_sha" = "$remote_sha" ]; then
-      echo "ix up to date at $local_sha"
+      echo "ix up to date at $local_sha (tracking ${trackedBranch})"
       exit 0
     fi
 
-    echo "advancing ix: $local_sha -> $remote_sha"
+    echo "advancing ix (${trackedBranch}): $local_sha -> $remote_sha"
     runuser -u ${username} -- git reset --hard --quiet FETCH_HEAD
     ${pkgs.systemd}/bin/systemctl restart playbook.service
   '';
@@ -93,7 +98,7 @@ in
   };
 
   systemd.services.playbook-update = {
-    description = "Pull indexable-inc/ix main; restart playbook.service on advance";
+    description = "Pull indexable-inc/ix ${trackedBranch}; restart playbook.service on advance";
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
 
@@ -105,7 +110,7 @@ in
   };
 
   systemd.timers.playbook-update = {
-    description = "Poll indexable-inc/ix main every 10 minutes";
+    description = "Poll indexable-inc/ix ${trackedBranch} every 10 minutes";
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnBootSec = "2min";

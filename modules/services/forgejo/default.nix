@@ -41,6 +41,58 @@ let
   '') forgejoOauthSourceList;
   mirrorIntervalSeconds = 15 * 60;
   mirrorIntervalNanos = toString (mirrorIntervalSeconds * 1000000000);
+  # Reads /etc/forgejo-mirror/manifest.json, scans the forgejo SQLite db for
+  # repos with the Actions unit enabled (repo_unit.type=10), and disables it
+  # via the API on anything not in actions_enabled_repos. This is the policy
+  # backstop: even if a mirror is created with actions on (e.g. via the UI),
+  # the next tick of this service will turn it back off.
+  enforceForgejoActionsAllowlist = pkgs.writeShellScript "forgejo-actions-enforce" ''
+    set -eu
+    MANIFEST=/etc/forgejo-mirror/manifest.json
+    DB=/var/lib/forgejo/data/forgejo.db
+    [ -r "$MANIFEST" ] || { echo "manifest not readable"; exit 0; }
+    [ -r "$DB" ]       || { echo "forgejo db not readable"; exit 0; }
+    . ${mirrorEnvFile}
+    : "''${FORGEJO_TOKEN:?missing FORGEJO_TOKEN in EnvironmentFile}"
+    JQ=${pkgs.jq}/bin/jq
+    SQLITE=${pkgs.sqlite}/bin/sqlite3
+    CURL=${pkgs.curl}/bin/curl
+    API="https://${forgejoDomain}/api/v1"
+
+    allowlist=$(mktemp); trap 'rm -f "$allowlist" "$on"' EXIT
+    "$JQ" -r '.actions_enabled_repos[]' "$MANIFEST" | sort -u > "$allowlist"
+
+    on=$(mktemp)
+    "$SQLITE" -bail "$DB" \
+      "SELECT u.lower_name||'/'||r.lower_name
+       FROM repo_unit ru
+       JOIN repository r ON r.id=ru.repo_id
+       JOIN user u       ON u.id=r.owner_id
+       WHERE ru.type=10;" | sort -u > "$on"
+
+    # Repos that have actions on but should not (= violations)
+    comm -23 "$on" "$allowlist" | while IFS= read -r repo; do
+      [ -z "$repo" ] && continue
+      echo "  disabling actions: $repo"
+      "$CURL" -fsS -X PATCH \
+        -H "Authorization: token $FORGEJO_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"has_actions": false}' \
+        "$API/repos/$repo" >/dev/null || echo "    PATCH failed for $repo"
+    done
+
+    # Repos that should have actions but do not (= re-enable)
+    comm -13 "$on" "$allowlist" | while IFS= read -r repo; do
+      [ -z "$repo" ] && continue
+      echo "  enabling actions: $repo"
+      "$CURL" -fsS -X PATCH \
+        -H "Authorization: token $FORGEJO_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"has_actions": true}' \
+        "$API/repos/$repo" >/dev/null || echo "    PATCH failed for $repo"
+    done
+  '';
+
   normalizeForgejoMirrorSchedule = pkgs.writeShellScript "forgejo-normalize-mirror-schedule" ''
     set -eu
     DB=/var/lib/forgejo/data/forgejo.db
@@ -618,6 +670,14 @@ in
       repository = {
         DEFAULT_PRIVATE = "private";
         DEFAULT_PUSH_CREATE_PRIVATE = true;
+        # Actions are off by default for every repo (owned, fork, mirror,
+        # template). Only the four repos in mirror-manifest.actions_enabled_repos
+        # opt back in via the actions-allowlist enforcement service below.
+        # This prevents org mirrors from running GitHub Actions on this host.
+        DEFAULT_REPO_UNITS = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
+        DEFAULT_FORK_REPO_UNITS = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
+        DEFAULT_MIRROR_REPO_UNITS = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
+        DEFAULT_TEMPLATE_REPO_UNITS = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
       };
       mailer = {
         ENABLED = true;
@@ -674,6 +734,32 @@ in
     lib.mapAttrsToList (name: path: "${name}:${path}") forgejoOauthCredentials
   );
 
+  # Enforce the Actions allowlist (mirror-manifest.actions_enabled_repos):
+  # any repo with the Actions unit on that is not in the allowlist gets it
+  # turned off; any allowlisted repo missing the unit gets it turned on.
+  # Runs at boot (after forgejo) and every 30 minutes so newly migrated
+  # mirrors get clamped before they can run anything.
+  systemd.services.forgejo-actions-enforce = {
+    description = "Force Actions on/off per mirror-manifest allowlist";
+    after = [ "forgejo.service" ];
+    requires = [ "forgejo.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      EnvironmentFile = [ mirrorEnvFile ];
+      ExecStart = enforceForgejoActionsAllowlist.outPath;
+    };
+  };
+  systemd.timers.forgejo-actions-enforce = {
+    description = "Periodic Actions allowlist enforcement";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "2min";
+      OnUnitActiveSec = "30min";
+      AccuracySec = "30s";
+      Unit = "forgejo-actions-enforce.service";
+    };
+  };
+
   systemd.services.gitea-runner-netty.serviceConfig = {
     DynamicUser = lib.mkForce false;
     User = lib.mkForce "gitea-runner";
@@ -714,6 +800,13 @@ in
     "d ${runnerCacheRoot}/rustup 0750 gitea-runner gitea-runner -"
     "d ${runnerCacheRoot}/uv 0750 gitea-runner gitea-runner -"
     "d ${runnerCacheRoot}/actcache 0750 gitea-runner gitea-runner -"
+
+    # Forgejo runs git with HOME=/var/lib/forgejo, but writes its rendered
+    # gitconfig (with the credential.helper line pointing at .git-credentials)
+    # into /var/lib/forgejo/data/home/.gitconfig. Without this symlink the git
+    # subprocess never reads the credential helper, so mirror fetches against
+    # private GitHub repos fail with "could not read Username/Password".
+    "L+ /var/lib/forgejo/.gitconfig - - - - /var/lib/forgejo/data/home/.gitconfig"
 
     "d /var/lib/forgejo/custom 0750 git git -"
     "d /var/lib/forgejo/custom/public 0750 git git -"

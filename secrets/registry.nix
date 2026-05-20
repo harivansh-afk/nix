@@ -31,6 +31,7 @@
     "graphite.env" = { };
     "mgrep.env" = { };
     "gws.env" = { };
+    "mxbai.env" = { };
   };
 
   hosts.spark = {

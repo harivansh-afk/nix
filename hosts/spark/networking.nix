@@ -1,7 +1,11 @@
 {
   config,
+  pkgs,
   ...
 }:
+let
+  personalSocket = "/run/tailscale-personal/tailscaled.sock";
+in
 {
   networking.networkmanager = {
     enable = true;
@@ -42,6 +46,24 @@
       "--ssh=false"
     ];
   };
+
+  systemd.services.tailscaled-personal = {
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      ExecStart = "${pkgs.tailscale}/bin/tailscaled --tun=userspace-networking --socket=${personalSocket} --state=/var/lib/tailscale-personal/tailscaled.state --port=41642 --socks5-server=127.0.0.1:1055 --outbound-http-proxy-listen=127.0.0.1:1056";
+      Restart = "on-failure";
+      RuntimeDirectory = "tailscale-personal";
+      StateDirectory = "tailscale-personal";
+    };
+  };
+
+  environment.systemPackages = [
+    (pkgs.writeShellScriptBin "tailscale-personal" ''
+      exec ${pkgs.tailscale}/bin/tailscale --socket=${personalSocket} "$@"
+    '')
+  ];
 
   networking.firewall.enable = true;
 

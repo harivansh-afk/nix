@@ -17,16 +17,21 @@ Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix)
 
 [cozybox.nvim](https://git.harivan.sh/harivansh-afk/cozybox.nvim) provides the unified theme across everything
 
-## Cloudflare SSH and mosh
+## Spark access
 
-Spark exposes SSH through the existing Cloudflare tunnel at `spark.harivan.sh`. The tunnel forwards `spark.harivan.sh` to `sshd` on `127.0.0.1:22`; Caddy is not in this path. I use mosh for extended SSH access over direct IP / tailnet when coding on remote machines.
+Spark SSH is private tailnet-only. `spark` resolves on the personal tailnet and is the normal SSH entry point; the old Cloudflare Access SSH path is gone.
+
+Spark runs two Tailscale identities:
+
+- `spark-ix` on the Indexable tailnet for shared service routing and Funnel/Serve.
+- `spark` on the personal tailnet for admin SSH and personal access.
 
 ```sh
 mosh spark
-ssh spark.harivan.sh
+ssh spark
 ```
 
-Unmanaged clients need `cloudflared` and an SSH config `ProxyCommand` for `spark.harivan.sh`; raw OpenSSH alone is not expected to pass through Cloudflare Access.
+Use `ssh spark-lan` only for direct LAN access at home.
 
 Spark local inference runs Pi against `llama.cpp` on `127.0.0.1:8080`
 

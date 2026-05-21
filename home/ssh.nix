@@ -12,10 +12,6 @@ let
     serverAliveCountMax = 3;
   };
 
-  sparkCloudflareHostOptions = sparkHostOptions // {
-    proxyCommand = "cloudflared access ssh --hostname %h";
-  };
-
   ixHostOptions = {
     addKeysToAgent = "yes";
     forwardAgent = true;
@@ -48,15 +44,15 @@ in
       };
 
       spark = sparkHostOptions // {
+        hostname = "spark";
+        extraOptions.HostKeyAlias = "spark";
+      };
+
+      spark-lan = sparkHostOptions // {
         hostname = "192.168.0.6";
         extraOptions.HostKeyAlias = "spark";
       };
 
-      spark-cloudflare = sparkCloudflareHostOptions // {
-        hostname = "spark.harivan.sh";
-      };
-
-      "spark.harivan.sh" = sparkCloudflareHostOptions;
     }
     // ixMatchBlocks;
   };

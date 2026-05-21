@@ -55,6 +55,10 @@ let
 
     echo "advancing ix (${trackedBranch}): $local_sha -> $remote_sha"
     runuser -u ${username} -- git reset --hard --quiet FETCH_HEAD
+    # Clear any prior rate-limit state from StartLimitBurst so a new
+    # commit always gets a fresh start attempt, even if the previous
+    # build was failing in a tight loop.
+    ${pkgs.systemd}/bin/systemctl reset-failed playbook.service
     ${pkgs.systemd}/bin/systemctl restart playbook.service
   '';
 in
@@ -79,6 +83,23 @@ in
       PROTOCOL_HEADER = "x-forwarded-proto";
       HOST_HEADER = "x-forwarded-host";
       CODEX_VIEWER_ENABLED = "1";
+    };
+
+    # Cap the restart loop at 5 attempts per ix SHA. A failing
+    # `bun run build` (e.g. a SvelteKit prerender throwing on a stale
+    # embed) was previously free to retry every ~28s indefinitely, each
+    # attempt allocating ~1.4 GiB while holding the build CPU hot.
+    #
+    # StartLimitIntervalSec = infinity makes the burst counter never
+    # decay on its own. After 5 failed starts the unit stays in failed
+    # state until something explicitly calls `systemctl reset-failed`;
+    # the playbook-update script does exactly that when (and only when)
+    # the tracked ix branch advances. Net effect: a broken commit on
+    # `dev` burns 5 attempts and then stops, and the next good commit
+    # gets a fresh 5 attempts.
+    unitConfig = {
+      StartLimitBurst = 5;
+      StartLimitIntervalSec = "infinity";
     };
 
     serviceConfig = {

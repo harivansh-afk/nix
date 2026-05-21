@@ -68,6 +68,7 @@ function renderableDiffBoxes() {
 function showDiffRenderFallback(box, url) {
   const target = pierreDiffPlaceholder(box);
   if (!target) return;
+  if (target.querySelector("table.chroma")) return;
   target.classList.add("harivan-pierre-diff-fallback");
   target.replaceChildren();
 
@@ -84,20 +85,28 @@ function showDiffRenderFallback(box, url) {
   }
 }
 
-function mountDiffContainer(placeholder) {
-  placeholder.classList.add("harivan-pierre-diff");
-  placeholder.replaceChildren();
-  const fileContainer = document.createElement("diffs-container");
-  placeholder.append(fileContainer);
-  return fileContainer;
+function createDiffContainer() {
+  return document.createElement("diffs-container");
 }
 
-function markDiffRendered(box) {
+function mountRenderedDiff(placeholder, fileContainer) {
+  placeholder.classList.remove(
+    "code-diff",
+    "harivan-pr-diff",
+    "harivan-pierre-diff-fallback",
+  );
+  placeholder.classList.add("harivan-pierre-diff");
+  delete placeholder.dataset.harivanPrDiffIndicators;
+  placeholder.replaceChildren(fileContainer);
+}
+
+function markDiffRendered(box, placeholder, fileContainer) {
   let marked = false;
   return () => {
     if (marked) return;
     marked = true;
     requestAnimationFrame(() => {
+      mountRenderedDiff(placeholder, fileContainer);
       box.dataset.harivanPierreState = diffState.rendered;
       delete box.dataset.harivanPierreQueued;
     });
@@ -154,9 +163,9 @@ function renderDiffBox(box, fileDiff, cacheKey, pierre) {
   }
   box.dataset.harivanPierreState = diffState.rendering;
 
-  const fileContainer = mountDiffContainer(placeholder);
+  const fileContainer = createDiffContainer();
   const options = pierreDiffRenderOptions();
-  const markRendered = markDiffRendered(box);
+  const markRendered = markDiffRendered(box, placeholder, fileContainer);
   const isPullRequest = boxIsPullRequest(box);
   const canComment = isPullRequest && boxCanComment(box);
   const path = pathForBox(box, fileDiff);

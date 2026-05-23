@@ -24,7 +24,7 @@ let
   playbookSubdir = "${ixRepoDir}/playbook";
   port = 4060;
   serveHost = "spark-ix.tail368802.ts.net";
-  trackedBranch = "dev";
+  trackedBranch = "main";
 
   path = lib.makeBinPath [
     pkgs.bash

@@ -10,6 +10,7 @@
   imports = [
     ../../system/common.nix
     ../../system/packages.nix
+    ../../modules/dotfiles
     inputs.sops-nix.darwinModules.sops
     ../../modules/security/sops.nix
     ./macos.nix
@@ -21,6 +22,12 @@
     name = username;
     home = "/Users/${username}";
     shell = pkgs.zsh;
+  };
+
+  dotfiles.users.${username} = {
+    enable = true;
+    homeDirectory = "/Users/${username}";
+    group = "staff";
   };
 
   system.primaryUser = username;

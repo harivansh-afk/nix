@@ -20,14 +20,6 @@ let
     hostname = host.hostname;
     hostConfig = host;
   };
-
-  mkHomeManagerModule = host: {
-    home-manager.useGlobalPkgs = true;
-    home-manager.useUserPackages = true;
-    home-manager.extraSpecialArgs = mkSpecialArgs host;
-    home-manager.backupCommand = "bash ${../scripts/lib/home-manager-backup.sh}";
-    home-manager.users.${username} = import ../home;
-  };
 in
 {
   systems = lib.unique (
@@ -43,7 +35,6 @@ in
       hosts
       mkPkgs
       mkSpecialArgs
-      mkHomeManagerModule
       ;
   };
 }

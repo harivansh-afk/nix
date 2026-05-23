@@ -5,7 +5,7 @@
   ...
 }:
 let
-  homeDir = config.home.homeDirectory;
+  homeDir = config.homeDirectory;
   cacheHome = config.xdg.cacheHome;
   configHome = config.xdg.configHome;
   stateHome = config.xdg.stateHome;
@@ -55,6 +55,10 @@ let
       -exec ${pkgs.coreutils}/bin/rm -rf {} +
   '';
   yamlFormat = pkgs.formats.yaml { };
+  iniFormat = pkgs.formats.ini { listToValue = lib.concatStringsSep " "; };
+
+  renderSystemdUnit = name: unitConfig: iniFormat.generate name unitConfig;
+
   runnerNames = [
     "spark-nix-1"
     "spark-nix-2"
@@ -143,6 +147,25 @@ let
         "${cacheRoot}/rustup"
         "${cacheRoot}/uv"
       ];
+      unitFile = renderSystemdUnit "forgejo-runner-${name}.service" {
+        Unit = {
+          Description = "Forgejo Runner (${name})";
+          Wants = [ "network-online.target" ];
+          After = [ "network-online.target" ];
+        };
+        Service = {
+          Type = "simple";
+          Environment = [
+            "PATH=${runnerPath}:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin"
+          ];
+          WorkingDirectory = stateDir;
+          ExecStartPre = registerPath;
+          ExecStart = daemonPath;
+          Restart = "always";
+          RestartSec = 2;
+        };
+        Install.WantedBy = [ "default.target" ];
+      };
     in
     {
       inherit
@@ -157,69 +180,20 @@ let
         registerPath
         registerRelPath
         stateDir
+        unitFile
         ;
     };
 
   runners = map mkRunner runnerNames;
-in
-{
-  xdg.configFile = lib.listToAttrs (
-    map (runner: lib.nameValuePair runner.configRelPath { source = runner.configFile; }) runners
-  );
 
-  home.file = lib.listToAttrs (
-    lib.concatMap (runner: [
-      (lib.nameValuePair runner.registerRelPath { source = runner.registerScript; })
-      (lib.nameValuePair runner.daemonRelPath { source = runner.daemonScript; })
-    ]) runners
-  );
-
-  home.activation.ensureForgejoRunnerDirs = lib.hm.dag.entryAfter [ "writeBoundary" ] (
-    lib.concatLines (
-      lib.concatMap (
-        runner:
-        [ "mkdir -p ${lib.escapeShellArg runner.stateDir}" ]
-        ++ map (dir: "mkdir -p ${lib.escapeShellArg dir}") runner.cacheDirs
-      ) runners
-    )
-  );
-
-  systemd.user.services =
-    lib.listToAttrs (
-      map (
-        runner:
-        lib.nameValuePair "forgejo-runner-${runner.name}" {
-          Unit = {
-            Description = "Forgejo Runner (${runner.name})";
-            Wants = [ "network-online.target" ];
-            After = [ "network-online.target" ];
-          };
-          Service = {
-            Type = "simple";
-            Environment = [
-              "PATH=${runnerPath}:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin"
-            ];
-            WorkingDirectory = runner.stateDir;
-            ExecStartPre = runner.registerPath;
-            ExecStart = runner.daemonPath;
-            Restart = "always";
-            RestartSec = 2;
-          };
-          Install.WantedBy = [ "default.target" ];
-        }
-      ) runners
-    )
-    // {
-      forgejo-runner-act-cache-cleanup = {
-        Unit.Description = "Prune Forgejo runner act per-job cache entries older than 7 days";
-        Service = {
-          Type = "oneshot";
-          ExecStart = "${actCacheCleanupScript}";
-        };
-      };
+  cacheCleanupUnitFile = renderSystemdUnit "forgejo-runner-act-cache-cleanup.service" {
+    Unit.Description = "Prune Forgejo runner act per-job cache entries older than 7 days";
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${actCacheCleanupScript}";
     };
-
-  systemd.user.timers.forgejo-runner-act-cache-cleanup = {
+  };
+  cacheCleanupTimerFile = renderSystemdUnit "forgejo-runner-act-cache-cleanup.timer" {
     Unit.Description = "Daily prune of Forgejo runner act per-job cache entries older than 7 days";
     Timer = {
       OnCalendar = "daily";
@@ -227,4 +201,46 @@ in
     };
     Install.WantedBy = [ "timers.target" ];
   };
+
+  perRunnerFiles =
+    runner:
+    let
+      unitName = "forgejo-runner-${runner.name}.service";
+    in
+    {
+      ${runner.configRelPath}.source = runner.configFile;
+      ${runner.registerRelPath} = {
+        source = runner.registerScript;
+        executable = true;
+      };
+      ${runner.daemonRelPath} = {
+        source = runner.daemonScript;
+        executable = true;
+      };
+      ".config/systemd/user/${unitName}".source = runner.unitFile;
+      ".config/systemd/user/default.target.wants/${unitName}".source = runner.unitFile;
+    };
+in
+{
+  files = lib.mkMerge (
+    (map perRunnerFiles runners)
+    ++ [
+      {
+        ".config/systemd/user/forgejo-runner-act-cache-cleanup.service".source = cacheCleanupUnitFile;
+        ".config/systemd/user/forgejo-runner-act-cache-cleanup.timer".source = cacheCleanupTimerFile;
+        ".config/systemd/user/timers.target.wants/forgejo-runner-act-cache-cleanup.timer".source =
+          cacheCleanupTimerFile;
+      }
+    ]
+  );
+
+  # Pre-create state + cache dirs for each runner.
+  dirs = lib.concatMap (runner: [ runner.stateDir ] ++ runner.cacheDirs) runners;
+
+  activationLines = ''
+    # Reload systemd user units so newly written / changed unit files take effect.
+    if command -v ${pkgs.systemd}/bin/systemctl >/dev/null 2>&1; then
+      ${pkgs.systemd}/bin/systemctl --user daemon-reload 2>/dev/null || true
+    fi
+  '';
 }

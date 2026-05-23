@@ -46,7 +46,20 @@ in
       };
     };
 
-  home-manager.users = lib.genAttrs enabledUsers (name: import ./${name});
+  dotfiles.users = lib.genAttrs enabledUsers (
+    name:
+    {
+      enable = true;
+      homeDirectory = "/home/${name}";
+      group = "users";
+    }
+    // lib.optionalAttrs (name == "barrett") {
+      imports = [
+        ./barrett/forgejo-runners.nix
+        ./barrett/spark-builds.nix
+      ];
+    }
+  );
 
   services.openssh = {
     enable = true;

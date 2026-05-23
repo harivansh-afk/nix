@@ -1,4 +1,4 @@
-{ config, ... }:
+{ homeDirectory, xdg, ... }:
 let
   defaultMode = "dark";
   sharedPalette = {
@@ -63,27 +63,27 @@ let
       };
     };
   wallpapers = {
-    dir = "${config.home.homeDirectory}/Pictures/Screensavers";
-    dark = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper-dark.png";
-    light = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper-light.png";
-    current = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper.png";
+    dir = "${homeDirectory}/Pictures/Screensavers";
+    dark = "${homeDirectory}/Pictures/Screensavers/wallpaper-dark.png";
+    light = "${homeDirectory}/Pictures/Screensavers/wallpaper-light.png";
+    current = "${homeDirectory}/Pictures/Screensavers/wallpaper.png";
     staticDark = ./wallpapers/topography-dark.png;
     staticLight = ./wallpapers/topography-light.png;
     generation = wallpaperGeneration;
   };
   paths = {
-    stateDir = "${config.xdg.stateHome}/theme";
-    stateFile = "${config.xdg.stateHome}/theme/current";
-    fzfDir = "${config.xdg.configHome}/fzf/themes";
-    fzfCurrentFile = "${config.xdg.configHome}/fzf/themes/theme";
-    ghosttyDir = "${config.xdg.configHome}/ghostty/themes";
-    ghosttyCurrentFile = "${config.xdg.configHome}/ghostty/themes/cozybox-current";
-    tmuxDir = "${config.xdg.configHome}/tmux/theme";
-    tmuxCurrentFile = "${config.xdg.configHome}/tmux/theme/current.conf";
-    lazygitDir = "${config.xdg.configHome}/lazygit";
-    lazygitCurrentFile = "${config.xdg.configHome}/lazygit/config.yml";
-    gitDir = "${config.xdg.configHome}/git";
-    gitThemeCurrentFile = "${config.xdg.configHome}/git/theme.inc";
+    stateDir = "${xdg.stateHome}/theme";
+    stateFile = "${xdg.stateHome}/theme/current";
+    fzfDir = "${xdg.configHome}/fzf/themes";
+    fzfCurrentFile = "${xdg.configHome}/fzf/themes/theme";
+    ghosttyDir = "${xdg.configHome}/ghostty/themes";
+    ghosttyCurrentFile = "${xdg.configHome}/ghostty/themes/cozybox-current";
+    tmuxDir = "${xdg.configHome}/tmux/theme";
+    tmuxCurrentFile = "${xdg.configHome}/tmux/theme/current.conf";
+    lazygitDir = "${xdg.configHome}/lazygit";
+    lazygitCurrentFile = "${xdg.configHome}/lazygit/config.yml";
+    gitDir = "${xdg.configHome}/git";
+    gitThemeCurrentFile = "${xdg.configHome}/git/theme.inc";
   };
 
   themes = {

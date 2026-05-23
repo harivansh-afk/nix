@@ -10,7 +10,6 @@
       formatter = pkgs.nixfmt-tree;
 
       packages = {
-        home-manager = inputs.home-manager.packages.${system}.home-manager;
         nixos-anywhere = inputs.nixos-anywhere.packages.${system}.nixos-anywhere;
       }
       // lib.optionalAttrs (lib.hasSuffix "darwin" system) {

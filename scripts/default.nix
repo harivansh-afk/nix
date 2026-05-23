@@ -1,10 +1,10 @@
 {
-  config,
+  paths,
   lib,
   pkgs,
 }:
 let
-  theme = import ../lib/theme.nix { inherit config; };
+  theme = import ../lib/theme.nix { inherit (paths) homeDirectory xdg; };
 
   tmuxConfigs = {
     dark = pkgs.writeText "tmux-theme-dark.conf" (theme.renderTmux "dark");
@@ -22,7 +22,7 @@ let
 
   wallpaperPython = pkgs.python3.withPackages (ps: [ ps.pillow ]);
 
-  lazygitDarwinDir = "${config.home.homeDirectory}/Library/Application Support/lazygit";
+  lazygitDarwinDir = "${paths.homeDirectory}/Library/Application Support/lazygit";
 
   modeAssets = {
     dark = {
@@ -158,7 +158,7 @@ let
         "@GHOSTTY_CURRENT_FILE@" = theme.paths.ghosttyCurrentFile;
         "@TMUX_DIR@" = theme.paths.tmuxDir;
         "@TMUX_CURRENT_FILE@" = theme.paths.tmuxCurrentFile;
-        "@TMUX_CONFIG@" = "${config.xdg.configHome}/tmux/tmux.conf";
+        "@TMUX_CONFIG@" = "${paths.xdg.configHome}/tmux/tmux.conf";
         "@LAZYGIT_DIR@" = theme.paths.lazygitDir;
         "@LAZYGIT_CURRENT_FILE@" = theme.paths.lazygitCurrentFile;
         "@GIT_THEME_DIR@" = theme.paths.gitDir;

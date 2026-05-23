@@ -10,6 +10,7 @@
   imports = [
     ../../system/common.nix
     ../../system/packages.nix
+    ../../modules/dotfiles
     inputs.sops-nix.nixosModules.sops
     ../../modules/security/sops.nix
     ../../modules/security/user-isolation.nix

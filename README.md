@@ -1,15 +1,15 @@
 # nix
 
-**macbook** - MacBook (aarch64-darwin) running nix-darwin + home-manager + nix-homebrew
+**macbook** - MacBook (aarch64-darwin) running nix-darwin + nix-homebrew
 
 **spark** - NVIDIA DGX Spark (aarch64-linux) running NixOS
 
 Both are declared in one flake using [flake-parts](https://github.com/hercules-ci/flake-parts) and managed with [Determinate Nix](https://docs.determinate.systems/determinate-nix/)
-configs live in `dots/` and get symlinked into XDG paths
+configs live in `dots/` and get symlinked into XDG paths via `modules/dotfiles`
 
 Spark is a shared NixOS workstation
 
-Friends who want access get a user definition in `users` and per-user home-manager config under `hosts/spark/<name>`
+Friends who want access get a user definition in `users` and per-user dotfiles config under `hosts/spark/<name>`
 
 NVIDIA kernel, drivers, and container support come from the upstream [nixos-dgx-spark](https://github.com/graham33/nixos-dgx-spark) module
 
@@ -40,13 +40,16 @@ Spark local inference runs Pi against `llama.cpp` on `127.0.0.1:8080`
 ```
 flake.nix          entrypoint - inputs and outputs
 flake/             host assembly, devshell, args
-lib/               host metadata, theme palette
+lib/               host metadata, theme palette, paths helper
 hosts/             per-host config (macbook/, spark/)
 users/             multi-user definitions for spark
-home/              home-manager modules, one file per tool
+modules/dotfiles/  per-user dotfile materialization (replaces home-manager)
+  options.nix      submodule type for dotfiles.users.<name>
+  tools/           one file per tool (zsh, git, tmux, neovim, ...)
+  platform/        linux + darwin activation finalizers
 dots/              app configs symlinked into XDG
 modules/           reusable NixOS modules (services, security)
 system/            shared system-level config and packages
-scripts/           runtime scripts wired via home/scripts.nix
+scripts/           runtime scripts wired via tools/scripts.nix
 secrets/           sops-encrypted secrets per host
 ```

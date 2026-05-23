@@ -59,7 +59,6 @@ let
     }
   );
 
-  # Tool modules (added incrementally as Chunks 3+4 progress).
   toolModules = [
     ./tools/bat.nix
     ./tools/btop.nix
@@ -161,14 +160,11 @@ let
       };
 
       config = {
-        # Default xdg paths derived from homeDirectory. Override per-user
-        # if you ever need non-standard XDG.
         xdg.configHome = lib.mkDefault "${config.homeDirectory}/.config";
         xdg.stateHome = lib.mkDefault "${config.homeDirectory}/.local/state";
         xdg.dataHome = lib.mkDefault "${config.homeDirectory}/.local/share";
         xdg.cacheHome = lib.mkDefault "${config.homeDirectory}/.cache";
 
-        # Auto-derived per-user theme + paths, exposed to all tool modules.
         _module.args.paths = import ../../lib/paths.nix {
           homeDirectory = config.homeDirectory;
         };

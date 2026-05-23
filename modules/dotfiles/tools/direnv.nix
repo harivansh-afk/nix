@@ -14,7 +14,6 @@
     source ${pkgs.nix-direnv}/share/nix-direnv/direnvrc
   '';
 
-  # silent = true in HM is achieved by exporting DIRENV_LOG_FORMAT=""
   sessionVars.DIRENV_LOG_FORMAT = "";
 
   zshInit = lib.mkOrder 850 ''

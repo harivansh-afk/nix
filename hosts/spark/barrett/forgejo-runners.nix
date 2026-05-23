@@ -208,7 +208,7 @@ let
       unitName = "forgejo-runner-${runner.name}.service";
     in
     {
-      ${runner.configRelPath}.source = runner.configFile;
+      ".config/${runner.configRelPath}".source = runner.configFile;
       ${runner.registerRelPath} = {
         source = runner.registerScript;
         executable = true;
@@ -234,13 +234,11 @@ in
     ]
   );
 
-  # Pre-create state + cache dirs for each runner.
   dirs = lib.concatMap (runner: [ runner.stateDir ] ++ runner.cacheDirs) runners;
 
   activationLines = ''
-    # Reload systemd user units so newly written / changed unit files take effect.
     if command -v ${pkgs.systemd}/bin/systemctl >/dev/null 2>&1; then
-      ${pkgs.systemd}/bin/systemctl --user daemon-reload 2>/dev/null || true
+      ${pkgs.systemd}/bin/systemctl --user daemon-reload
     fi
   '';
 }

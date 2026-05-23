@@ -46,8 +46,10 @@ let
       "true"
     else if v == false then
       "false"
+    else if builtins.isInt v then
+      toString v
     else
-      toString v;
+      builtins.toJSON (toString v);
 
   renderOpt =
     k: v:
@@ -110,7 +112,6 @@ let
       username = "harivansh-afk";
     };
 
-    # gh credential helper (was programs.gh.gitCredentialHelper.enable)
     "credential \"https://github.com\"".helper = "!${pkgs.gh}/bin/gh auth git-credential";
     "credential \"https://gist.github.com\"".helper = "!${pkgs.gh}/bin/gh auth git-credential";
 
@@ -120,7 +121,6 @@ let
       useUnicodeRuler = true;
     };
 
-    # git-lfs filters
     "filter \"lfs\"" = {
       smudge = "git-lfs smudge -- %f";
       clean = "git-lfs clean -- %f";
@@ -128,7 +128,6 @@ let
       required = true;
     };
 
-    # theme include
     include.path = theme.paths.gitThemeCurrentFile;
   };
 in

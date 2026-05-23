@@ -4,18 +4,14 @@ let
   findBin = "${pkgs.findutils}/bin/find";
 in
 rec {
-  # Resolve a target path against a user's home, supporting absolute targets.
   resolveTarget = home: target: if lib.hasPrefix "/" target then target else "${home}/${target}";
 
-  # Materialize a file submodule entry into a source store path.
-  # Returns null if neither source nor text is set.
   materialize =
     name: file:
     if file.source != null then
       file.source
     else if file.text != null then
       let
-        # Sanitize the attr name so writeText/writeTextFile gets a clean basename.
         safeName = lib.replaceStrings [ "/" "." ] [ "_" "_" ] name;
       in
       if file.executable then
@@ -29,9 +25,6 @@ rec {
     else
       null;
 
-  # Idempotent install of one symlink target. Backs up pre-existing real
-  # files once (with a timestamp suffix) unless `force` is set; replaces
-  # any existing symlink unconditionally.
   mkInstallSnippet =
     {
       user,
@@ -72,13 +65,9 @@ rec {
       }
       fi
       ${cu}/chown -h ${lib.escapeShellArg "${user}:${group}"} "$tgt"
-      # mode is recorded for documentation; symlink itself is 777 on disk
-      true # ${modeFlag}
+      true
     '';
 
-  # Recursive symlink farm: target is a real directory, each file inside
-  # source is symlinked into the corresponding path inside target. Matches
-  # home-manager's xdg.configFile.X.recursive = true.
   mkRecursiveInstallSnippet =
     {
       user,
@@ -106,7 +95,6 @@ rec {
       done
     '';
 
-  # mkdir -p -ish for a path that may be relative or absolute.
   mkDirSnippet =
     {
       user,
@@ -117,9 +105,6 @@ rec {
       ${cu}/install -d -o ${lib.escapeShellArg user} -g ${lib.escapeShellArg group} ${lib.escapeShellArg path}
     '';
 
-  # Build the full per-user installation script body. Pure shell, no
-  # privilege escalation - the platform layer wraps this in runuser/su
-  # on linux or runs it under postUserActivation on darwin.
   buildUserScript =
     userCfg:
     let

@@ -4,9 +4,6 @@
   hostConfig,
   ...
 }:
-# Karabiner symlinks ~/.config/karabiner to the live repo checkout (not the
-# /nix/store source) so its GUI can write into the repo dot files. The
-# checkout path is fixed by convention.
 lib.mkIf hostConfig.isDarwin {
   activationLines = ''
     karabiner_link="${config.homeDirectory}/.config/karabiner"

@@ -65,19 +65,15 @@ let
   '';
 
   zshrcText = ''
-    # vi mode
     bindkey -v
 
-    # history
     HISTSIZE=50000
     SAVEHIST=50000
     HISTFILE="${config.xdg.stateHome}/zsh_history"
     setopt hist_ignore_all_dups hist_ignore_space extended_history inc_append_history
 
-    # aliases
     ${aliasLines}
 
-    # All other init from tools, ordered by mkOrder priority
     ${config.zshInit}
   '';
 in
@@ -92,14 +88,12 @@ in
   files.".zshrc".text = zshrcText;
 
   zshInit = lib.mkMerge [
-    # 550 - compinit setup (matches original home/zsh.nix mkOrder 550)
     (lib.mkOrder 550 ''
       autoload -U compinit && compinit -d "${config.xdg.stateHome}/zcompdump" -u
       zmodload zsh/complist
       zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-za-z}'
     '')
 
-    # 1000 - main init (matches original home/zsh.nix mkOrder 1000)
     (lib.mkOrder 1000 ''
       if [[ -f ~/.config/secrets/shell.zsh ]]; then
         source ~/.config/secrets/shell.zsh
@@ -226,7 +220,6 @@ in
       _codex_apply_bat_theme
     '')
 
-    # mkAfter - bindkeys + syntax-highlighting + autosuggestions
     (lib.mkAfter ''
       bindkey '^k' forward-char
       bindkey '^j' backward-char

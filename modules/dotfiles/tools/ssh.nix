@@ -50,7 +50,6 @@ let
   }
   // ixMatchBlocks;
 
-  # Render matchBlocks to ssh_config format.
   optMap = {
     addKeysToAgent = "AddKeysToAgent";
     controlMaster = "ControlMaster";

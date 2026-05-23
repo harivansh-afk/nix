@@ -9,10 +9,8 @@ let
   continuumPlugin = pkgs.tmuxPlugins.continuum;
 
   pluginsSection = ''
-    # plugin: resurrect
     run-shell ${resurrectPlugin}/share/tmux-plugins/resurrect/resurrect.tmux
 
-    # plugin: continuum (with extraConfig set before run-shell)
     set -g @continuum-restore 'on'
     set -g @continuum-save-interval '5'
     set -g status-right ""

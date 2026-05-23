@@ -44,7 +44,6 @@ in
       PSQL_HISTORY = "${config.xdg.stateHome}/psql_history";
       SQLITE_HISTORY = "${config.xdg.stateHome}/sqlite_history";
     }
-    # XDG base dirs themselves (xdg.enable = true equivalent)
     {
       XDG_CONFIG_HOME = config.xdg.configHome;
       XDG_STATE_HOME = config.xdg.stateHome;

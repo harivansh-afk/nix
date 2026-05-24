@@ -69,6 +69,11 @@ function showDiffRenderFallback(box, url) {
   const target = pierreDiffPlaceholder(box);
   if (!target) return;
   if (target.querySelector("table.chroma")) return;
+  // If the sidecar already injected server-rendered Pierre HTML, don't
+  // clobber it with a "diff rendering failed" message just because the
+  // browser-side Pierre swap could not run. The SSR'd HTML is already
+  // the same visual quality the swap would have produced.
+  if (target.dataset.harivanPierreSsr === "1") return;
   target.classList.add("harivan-pierre-diff-fallback");
   target.replaceChildren();
 

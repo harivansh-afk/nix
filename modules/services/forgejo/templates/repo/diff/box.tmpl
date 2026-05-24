@@ -141,6 +141,13 @@
 						{{$showFileViewToggle := or $isImage (and (not $file.IsIncomplete) $isCsv)}}
 						{{$usePierreDiff := and (or $.PageIsDiff $.IsDiffCompare $.PageIsPullFiles) (not $file.IsIncomplete) (not $file.IsBin) (not $file.IsSubmodule) (not $showFileViewToggle)}}
 						{{$pierrePullContext := and $.PageIsPullFiles $.Issue $.Issue.Link}}
+						{{/* Server-side Pierre HTML is injected as the initial paint when the
+						sidecar is up. Client-side Pierre still swaps in a live FileDiff for
+						interactivity (comments, composer, line selection). When PierreDiff
+						returns empty (sidecar down, binary, etc.), we fall through to the
+						chroma table, which client-side Pierre also still swaps. */}}
+						{{$pierreSsr := ""}}
+						{{if $usePierreDiff}}{{$pierreSsr = PierreDiff $file $.IsSplitStyle}}{{end}}
 						{{$isExpandable := or (gt $file.Addition 0) (gt $file.Deletion 0) $file.IsBin}}
 						{{$isReviewFile := and $.IsSigned $.PageIsPullFiles (not $.IsArchived) $.IsShowingAllCommits}}
 						<div class="diff-file-box diff-box file-content {{TabSizeClass $.Editorconfig $file.Name}} tw-mt-0" id="diff-{{$file.NameHash}}" data-old-filename="{{$file.OldName}}" data-new-filename="{{$file.Name}}" data-harivan-pierre-mode="{{if $usePierreDiff}}placeholder{{else}}native{{end}}" {{if or ($file.ShouldBeHidden) (not $isExpandable)}}data-folded="true"{{end}}>
@@ -215,8 +222,15 @@
 							</div>
 							</h4>
 							<div class="diff-file-body ui attached unstackable table segment" {{if and $file.IsViewed $.IsShowingAllCommits}}data-folded="true"{{end}}>
-								<div id="diff-source-{{$file.NameHash}}" class="file-body file-code unicode-escaped code-diff{{if $usePierreDiff}} harivan-pierre-diff-target{{end}}{{if $.IsSplitStyle}} code-diff-split{{else}} code-diff-unified{{end}}{{if and (not $usePierreDiff) $showFileViewToggle}} tw-hidden{{end}}"{{if $usePierreDiff}} data-harivan-pierre-placeholder="1" data-old-filename="{{$file.OldName}}" data-new-filename="{{$file.Name}}"{{if $pierrePullContext}} data-harivan-pierre-pull="1" data-harivan-pierre-issue-link="{{$.Issue.Link}}" data-harivan-pierre-can-comment="{{if and $.IsSigned (not $.IsArchived)}}1{{else}}0{{end}}"{{end}}{{end}}>
-									{{if or $file.IsIncomplete $file.IsBin}}
+								<div id="diff-source-{{$file.NameHash}}" class="file-body file-code unicode-escaped code-diff{{if $usePierreDiff}} harivan-pierre-diff-target{{end}}{{if $pierreSsr}} harivan-pierre-diff-ssr{{end}}{{if $.IsSplitStyle}} code-diff-split{{else}} code-diff-unified{{end}}{{if and (not $usePierreDiff) $showFileViewToggle}} tw-hidden{{end}}"{{if $usePierreDiff}} data-harivan-pierre-placeholder="1" data-old-filename="{{$file.OldName}}" data-new-filename="{{$file.Name}}"{{if $pierreSsr}} data-harivan-pierre-ssr="1"{{end}}{{if $pierrePullContext}} data-harivan-pierre-pull="1" data-harivan-pierre-issue-link="{{$.Issue.Link}}" data-harivan-pierre-can-comment="{{if and $.IsSigned (not $.IsArchived)}}1{{else}}0{{end}}"{{end}}{{end}}>
+									{{if $pierreSsr}}
+										{{/* Server-rendered Pierre HTML. Visible immediately; the
+										client-side Pierre runtime swaps in a live FileDiff
+										instance on top of this (see diff-view.js
+										mountRenderedDiff) so comments, composer, and line
+										selection keep working. */}}
+										{{$pierreSsr}}
+									{{else if or $file.IsIncomplete $file.IsBin}}
 										<div class="diff-file-body binary">
 											{{if $file.IsIncomplete}}
 												{{if $file.IsIncompleteLineTooLong}}

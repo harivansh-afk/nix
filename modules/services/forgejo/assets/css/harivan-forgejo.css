@@ -137,6 +137,36 @@ samp,
   min-height: 1px;
 }
 
+/* Server-rendered Pierre HTML (from pierre-ssr sidecar) reuses the same
+   row backgrounds and code background as the client-rendered .harivan-pierre-diff
+   so the eventual client-side swap is visually invisible. */
+.harivan-pierre-diff-ssr {
+  background: var(--harivan-pierre-code-bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  .harivan-pierre-diff-ssr {
+    --harivan-pierre-code-bg: var(--color-code-bg);
+    --diffs-bg-deletion-override: var(--color-diff-removed-row-bg);
+    --diffs-bg-deletion-number-override: var(--color-diff-removed-row-bg);
+    --diffs-bg-deletion-emphasis-override: var(--color-diff-removed-word-bg);
+    --diffs-bg-addition-override: var(--color-diff-added-row-bg);
+    --diffs-bg-addition-number-override: var(--color-diff-added-row-bg);
+    --diffs-bg-addition-emphasis-override: var(--color-diff-added-word-bg);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .harivan-pierre-diff-ssr {
+    --diffs-bg-deletion-override: color-mix(in srgb, var(--color-red) 54%, var(--harivan-pierre-code-bg));
+    --diffs-bg-deletion-number-override: color-mix(in srgb, var(--color-red) 54%, var(--harivan-pierre-code-bg));
+    --diffs-bg-deletion-emphasis-override: color-mix(in srgb, var(--color-red) 54%, var(--harivan-pierre-code-bg));
+    --diffs-bg-addition-override: color-mix(in srgb, var(--color-green) 54%, var(--harivan-pierre-code-bg));
+    --diffs-bg-addition-number-override: color-mix(in srgb, var(--color-green) 54%, var(--harivan-pierre-code-bg));
+    --diffs-bg-addition-emphasis-override: color-mix(in srgb, var(--color-green) 54%, var(--harivan-pierre-code-bg));
+  }
+}
+
 .diff-file-box[data-harivan-pierre-state="pending"] .harivan-pierre-diff-target,
 .diff-file-box[data-harivan-pierre-state="rendering"] .harivan-pierre-diff-target {
   min-height: 4rem;

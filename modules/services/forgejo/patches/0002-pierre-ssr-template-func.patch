@@ -1,0 +1,247 @@
+diff -ruN a/modules/templates/helper.go b/modules/templates/helper.go
+--- a/modules/templates/helper.go
++++ b/modules/templates/helper.go
+@@ -33,6 +33,9 @@
+ 		"DumpVar": dumpVar,
+
+ 		// -----------------------------------------------------------------
++		// Pierre server-side diff rendering bridge.
++		"PierreDiff": PierreDiff,
++		// -----------------------------------------------------------------
+ 		// html/template related functions
+ 		"dict":         dict, // it's lowercase because this name has been widely used. Our other functions should have uppercase names.
+ 		"Eval":         Eval,
+diff -ruN a/modules/templates/pierre.go b/modules/templates/pierre.go
+--- /dev/null
++++ b/modules/templates/pierre.go
+@@ -0,0 +1,230 @@
++// Pierre server-side diff renderer bridge. Forgejo templates call
++// {{PierreDiff $file $.IsSplitStyle}} once per diff file. We reconstruct
++// a unified-diff patch for that single file from the parsed DiffSection
++// structures, POST it to the pierre-ssr sidecar over a unix socket, and
++// return the rendered HTML. On any error (sidecar unreachable, timeout,
++// non-2xx, malformed response) we return an empty template.HTML so the
++// caller falls back to the existing chroma table. The sidecar caches by
++// content hash, so steady-state cost is one socket round-trip + a disk
++// read.
++package templates
++
++import (
++	"bytes"
++	"context"
++	"encoding/json"
++	"fmt"
++	"html/template"
++	"net"
++	"net/http"
++	"os"
++	"strings"
++	"sync"
++	"time"
++
++	"forgejo.org/services/gitdiff"
++)
++
++const (
++	pierreSSRSocketEnv   = "PIERRE_SSR_SOCKET"
++	pierreSSRTimeoutEnv  = "PIERRE_SSR_TIMEOUT_MS"
++	pierreSSRDefaultTime = 750 * time.Millisecond
++)
++
++var (
++	pierreClientOnce sync.Once
++	pierreClient     *http.Client
++	pierreSocket     string
++	pierreTimeout    time.Duration
++)
++
++func pierreInit() {
++	pierreSocket = os.Getenv(pierreSSRSocketEnv)
++	pierreTimeout = pierreSSRDefaultTime
++	if raw := os.Getenv(pierreSSRTimeoutEnv); raw != "" {
++		if ms, err := time.ParseDuration(raw + "ms"); err == nil && ms > 0 {
++			pierreTimeout = ms
++		}
++	}
++	transport := &http.Transport{
++		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
++			var d net.Dialer
++			return d.DialContext(ctx, "unix", pierreSocket)
++		},
++		MaxIdleConns:        16,
++		MaxIdleConnsPerHost: 16,
++		IdleConnTimeout:     90 * time.Second,
++	}
++	pierreClient = &http.Client{
++		Transport: transport,
++		Timeout:   pierreTimeout,
++	}
++}
++
++// pierreRenderOptions is what we send to the sidecar as JSON.options.
++// It mirrors the in-browser options the deleted client renderer used to
++// build, minus DOM-only callbacks. The sidecar fills in the theme
++// defaults if any field here is absent.
++type pierreRenderOptions struct {
++	DiffStyle           string `json:"diffStyle"`
++	DiffIndicators      string `json:"diffIndicators,omitempty"`
++	LineDiffType        string `json:"lineDiffType,omitempty"`
++	MaxLineDiffLength   int    `json:"maxLineDiffLength,omitempty"`
++	DisableFileHeader   bool   `json:"disableFileHeader"`
++	EnableLineSelection bool   `json:"enableLineSelection,omitempty"`
++}
++
++type pierreRequest struct {
++	Patch   string              `json:"patch"`
++	Options pierreRenderOptions `json:"options"`
++}
++
++type pierreResponse struct {
++	HTML  string `json:"html"`
++	Error string `json:"error,omitempty"`
++}
++
++// PierreDiff renders a single DiffFile via the pierre-ssr sidecar.
++// Returns empty HTML on any error so the caller falls back to chroma.
++func PierreDiff(file *gitdiff.DiffFile, isSplit bool) template.HTML {
++	pierreClientOnce.Do(pierreInit)
++	if pierreSocket == "" || file == nil {
++		return ""
++	}
++	if file.IsBin || file.IsIncomplete || file.IsSubmodule {
++		return ""
++	}
++	if len(file.Sections) == 0 {
++		return ""
++	}
++	patch := buildUnifiedPatchForFile(file)
++	if patch == "" {
++		return ""
++	}
++	options := pierreRenderOptions{
++		DiffStyle:           "unified",
++		DiffIndicators:      "bars",
++		LineDiffType:        "char",
++		MaxLineDiffLength:   500,
++		DisableFileHeader:   true,
++		EnableLineSelection: true,
++	}
++	if isSplit {
++		options.DiffStyle = "split"
++	}
++	body, err := json.Marshal(pierreRequest{Patch: patch, Options: options})
++	if err != nil {
++		return ""
++	}
++	ctx, cancel := context.WithTimeout(context.Background(), pierreTimeout)
++	defer cancel()
++	// Host header is irrelevant for a unix-socket transport but must be
++	// syntactically valid; "pierre" reads cleanly in trace output.
++	req, err := http.NewRequestWithContext(
++		ctx, http.MethodPost, "http://pierre/render", bytes.NewReader(body),
++	)
++	if err != nil {
++		return ""
++	}
++	req.Header.Set("Content-Type", "application/json")
++	resp, err := pierreClient.Do(req)
++	if err != nil {
++		return ""
++	}
++	defer resp.Body.Close()
++	if resp.StatusCode != http.StatusOK {
++		return ""
++	}
++	var parsed pierreResponse
++	if err := json.NewDecoder(resp.Body).Decode(&parsed); err != nil {
++		return ""
++	}
++	if parsed.Error != "" || parsed.HTML == "" {
++		return ""
++	}
++	return template.HTML(parsed.HTML)
++}
++
++// buildUnifiedPatchForFile reconstructs a single-file unified diff from
++// Forgejo's parsed DiffFile. DiffLine.Content already includes the
++// leading +, -, or space marker (and DiffLineSection.Content is the
++// raw "@@ -..." hunk header), so most of the work is producing valid
++// file headers that Pierre's parser will accept.
++func buildUnifiedPatchForFile(file *gitdiff.DiffFile) string {
++	if file == nil {
++		return ""
++	}
++	oldPath := file.OldName
++	newPath := file.Name
++	if oldPath == "" {
++		oldPath = newPath
++	}
++	if newPath == "" {
++		newPath = oldPath
++	}
++	if oldPath == "" && newPath == "" {
++		return ""
++	}
++
++	var b strings.Builder
++	b.Grow(2048)
++	// diff --git header. The a/ b/ prefixes are conventional and the
++	// patch parser uses them to identify the file paths.
++	fmt.Fprintf(&b, "diff --git a/%s b/%s\n", oldPath, newPath)
++	if file.OldMode != "" && file.Mode != "" && file.OldMode != file.Mode {
++		fmt.Fprintf(&b, "old mode %s\n", file.OldMode)
++		fmt.Fprintf(&b, "new mode %s\n", file.Mode)
++	}
++	if file.IsRenamed {
++		b.WriteString("rename from ")
++		b.WriteString(oldPath)
++		b.WriteByte('\n')
++		b.WriteString("rename to ")
++		b.WriteString(newPath)
++		b.WriteByte('\n')
++	}
++	switch {
++	case file.IsCreated:
++		b.WriteString("--- /dev/null\n")
++		fmt.Fprintf(&b, "+++ b/%s\n", newPath)
++	case file.IsDeleted:
++		fmt.Fprintf(&b, "--- a/%s\n", oldPath)
++		b.WriteString("+++ /dev/null\n")
++	default:
++		fmt.Fprintf(&b, "--- a/%s\n", oldPath)
++		fmt.Fprintf(&b, "+++ b/%s\n", newPath)
++	}
++
++	for _, section := range file.Sections {
++		if section == nil {
++			continue
++		}
++		for _, line := range section.Lines {
++			if line == nil {
++				continue
++			}
++			content := line.Content
++			if line.Type == gitdiff.DiffLineSection {
++				// Hunk header. Content already starts with "@@" or is
++				// otherwise the literal section line.
++				b.WriteString(content)
++				if !strings.HasSuffix(content, "\n") {
++					b.WriteByte('\n')
++				}
++				continue
++			}
++			// DiffLine.Content for non-section lines starts with the
++			// +/-/space marker, which is exactly what the unified diff
++			// format expects.
++			if content == "" {
++				b.WriteString(" \n")
++				continue
++			}
++			b.WriteString(content)
++			if !strings.HasSuffix(content, "\n") {
++				b.WriteByte('\n')
++			}
++		}
++	}
++	return b.String()
++}

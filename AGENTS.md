@@ -144,6 +144,41 @@ The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A ru
 2. Create `hosts/spark/<name>/default.nix` for their home-manager config.
 3. The user is automatically picked up by `hosts/spark/users.nix`.
 
+## Pierre diff rendering (SSR + client hybrid)
+
+Diff pages on forgejo paint Pierre-quality HTML on the first byte, then a
+client-side `FileDiff` runtime hydrates on top for inline PR comments,
+the composer, and line selection. The flow:
+
+1. `modules/services/pierre-ssr/` runs a Node sidecar on the unix socket
+   `/run/pierre-ssr/render.sock`. It loads `@pierre/diffs/ssr` and caches
+   rendered HTML in memory (LRU) and on disk under
+   `/var/cache/pierre-ssr`. Diffs between two fixed SHAs are immutable,
+   so cache entries never need invalidation.
+2. Forgejo patch `0002-pierre-ssr-template-func.patch` adds a Go template
+   function `PierreDiff(file, isSplit)` that reconstructs a per-file
+   unified-diff patch from `gitdiff.DiffFile.Sections.Lines.Content`,
+   POSTs it to the sidecar, and returns `template.HTML`. On any error
+   (sidecar down, timeout, malformed response) the func returns the
+   empty string so `box.tmpl` falls back to the existing chroma table.
+3. `templates/repo/diff/box.tmpl` calls `PierreDiff` once per file and
+   either inlines the response into `#diff-source-{NameHash}` (marked
+   with `data-harivan-pierre-ssr="1"`) or falls through to chroma.
+4. The client bundle (`frontend/src/pierre/`) still loads. `diff-view.js`
+   constructs a fresh `FileDiff` per box, renders into a detached
+   `<diffs-container>`, then `mountRenderedDiff` swaps the SSR'd HTML
+   for the live instance in one `replaceChildren` call. From that
+   moment on, the inline-comment layer (`pr-comments`, `pr-composer`,
+   `pr-reactions`, `pr-tree`) attaches via Pierre's
+   `renderAnnotation` / `onGutterUtilityClick` callbacks.
+5. If the sidecar is offline, the user sees the chroma table at first
+   paint and the client-side Pierre still swaps in on top. Comments
+   keep working in every case.
+
+Do not remove the `data-harivan-pierre-*` attributes on
+`#diff-source-...` or the `harivan-pierre-file-comments` sidecar div;
+the interactive layer depends on them.
+
 ## Forgejo mirroring
 
 The legacy gitea-mirror Bun service has been removed. Forgejo's native mirror tables (`mirror` for inbound pulls, `push_mirror` for outbound pushes) are the source of truth. Two files drive the system:

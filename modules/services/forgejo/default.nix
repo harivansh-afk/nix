@@ -546,6 +546,7 @@ let
   forgejoPackage = pkgs.forgejo-lts.overrideAttrs (old: {
     patches = (old.patches or [ ]) ++ [
       ./patches/0001-client-side-file-rendering.patch
+      ./patches/0002-pierre-ssr-template-func.patch
     ];
   });
 in
@@ -581,6 +582,13 @@ in
   };
   users.groups.git = { };
 
+  # The Pierre SSR sidecar provides server-side diff rendering that the
+  # patched Forgejo template helper dials over a unix socket. With the
+  # sidecar up, the initial paint of a diff is already Pierre-quality
+  # HTML; the client-side Pierre still hydrates on top so inline review
+  # comments, the composer, and gutter interactions keep working.
+  services.pierre-ssr.enable = true;
+
   # Restart Forgejo whenever the rendered templates or the JS bundle change.
   # Forgejo parses templates once at startup, so without this `just switch`
   # would update the symlinks but leave the in-memory templates stale.
@@ -589,6 +597,15 @@ in
     forgejoWeb.templates
     forgejoWeb.assets
   ];
+
+  # Tell the patched template helper where to dial the Pierre sidecar.
+  # The matching unit's RuntimeDirectory creates /run/pierre-ssr; the
+  # socket inside is chmod 0660 with group = git, so the forgejo user
+  # (in the git group) can connect.
+  systemd.services.forgejo.environment.PIERRE_SSR_SOCKET =
+    config.services.pierre-ssr.socketPath;
+  systemd.services.forgejo.after = [ "pierre-ssr.service" ];
+  systemd.services.forgejo.wants = [ "pierre-ssr.service" ];
 
   systemd.services.forgejo.preStart = lib.mkAfter ''
     . ${mirrorEnvFile}

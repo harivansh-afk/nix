@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.services.pierre-ssr;
-  pierreSsrPackage = pkgs.buildNpmPackage {
+  defaultPackage = pkgs.buildNpmPackage {
     pname = "pierre-ssr";
     version = "0.0.0";
     src = ./pierre-ssr;
@@ -35,12 +35,24 @@ in
       type = lib.types.str;
       default = "/var/cache/pierre-ssr";
     };
+    user = lib.mkOption {
+      type = lib.types.str;
+      default = "git";
+    };
+    group = lib.mkOption {
+      type = lib.types.str;
+      default = "git";
+    };
+    package = lib.mkOption {
+      type = lib.types.package;
+      default = defaultPackage;
+    };
   };
 
   config = lib.mkIf cfg.enable {
     systemd.tmpfiles.rules = [
-      "d /run/pierre-ssr 0755 git git -"
-      "d ${cfg.cacheDir} 0750 git git -"
+      "d /run/pierre-ssr 0755 ${cfg.user} ${cfg.group} -"
+      "d ${cfg.cacheDir} 0750 ${cfg.user} ${cfg.group} -"
     ];
 
     systemd.services.pierre-ssr = {
@@ -49,15 +61,15 @@ in
       before = [ "forgejo.service" ];
       serviceConfig = {
         Type = "simple";
-        User = "git";
-        Group = "git";
+        User = cfg.user;
+        Group = cfg.group;
         RuntimeDirectory = "pierre-ssr";
         CacheDirectory = "pierre-ssr";
         Environment = [
           "PIERRE_SSR_SOCKET=${cfg.socketPath}"
           "PIERRE_SSR_CACHE_DIR=${cfg.cacheDir}"
         ];
-        ExecStart = "${pierreSsrPackage}/bin/pierre-ssr";
+        ExecStart = "${cfg.package}/bin/pierre-ssr";
         Restart = "on-failure";
         RestartSec = "2s";
         NoNewPrivileges = true;

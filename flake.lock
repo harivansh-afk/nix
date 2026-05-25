@@ -968,16 +968,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1779716361,
-        "narHash": "sha256-FCAgxSNTIQc+964SspYfr3/TweE2KGBHfN5smA7XotQ=",
-        "ref": "refs/heads/main",
-        "rev": "2c9ca6df99aed094802b4d6989e8d67457d61dd0",
-        "revCount": 2,
+        "lastModified": 1779721157,
+        "narHash": "sha256-S8bhEOnD7Q+f+HXw2aXvkK01dLuis4zKpQmymB3Kw84=",
+        "ref": "fix-pierre-ssr-unit",
+        "rev": "adb9a28df9a090afc7c3aecce7dd7b528a2352d0",
+        "revCount": 6,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/pierrejo.git"
       },
       "original": {
-        "rev": "2c9ca6df99aed094802b4d6989e8d67457d61dd0",
+        "ref": "fix-pierre-ssr-unit",
+        "rev": "adb9a28df9a090afc7c3aecce7dd7b528a2352d0",
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/pierrejo.git"
       }

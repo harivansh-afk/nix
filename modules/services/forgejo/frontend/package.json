@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "esbuild src/harivan-forgejo.js --bundle --format=esm --target=es2022 --outdir=dist --entry-names=[name] --chunk-names=chunks/[name]-[hash] --splitting --minify"
+    "build": "esbuild src/harivan-forgejo.js src/pierre-forgejo.js --bundle --format=esm --target=es2022 --outdir=dist --entry-names=[name] --chunk-names=chunks/[name]-[hash] --splitting --minify"
   },
   "dependencies": {
     "@pierre/diffs": "1.2.3"

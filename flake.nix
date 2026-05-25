@@ -45,7 +45,7 @@
     };
 
     pierrejo = {
-      url = "git+https://git.harivan.sh/harivansh-afk/pierrejo.git?rev=2c9ca6df99aed094802b4d6989e8d67457d61dd0";
+      url = "git+https://git.harivan.sh/harivansh-afk/pierrejo.git?ref=fix-pierre-ssr-unit&rev=adb9a28df9a090afc7c3aecce7dd7b528a2352d0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

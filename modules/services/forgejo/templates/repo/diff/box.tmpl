@@ -201,7 +201,7 @@
 										{{end}}
 									</div>
 								{{else}}
-									{{$pierreTheme := DefaultTheme}}
+									{{$pierreTheme := "system"}}
 									{{if $.IsSigned}}
 										{{$pierreTheme = $.SignedUser.Theme}}
 									{{end}}

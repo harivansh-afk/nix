@@ -201,7 +201,11 @@
 										{{end}}
 									</div>
 								{{else}}
-									{{$pierreSsr := PierreDiff $file $.IsSplitStyle}}
+									{{$pierreTheme := DefaultTheme}}
+									{{if $.IsSigned}}
+										{{$pierreTheme = $.SignedUser.Theme}}
+									{{end}}
+									{{$pierreSsr := PierreDiff $file $.IsSplitStyle $pierreTheme}}
 									{{if $pierreSsr}}
 										{{/*
 											Pierre's interactive layer (gutter "+", expand-lines, annotations)

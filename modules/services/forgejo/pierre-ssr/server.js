@@ -84,7 +84,7 @@ function diffOptions(payload) {
 
 function forceRenderedColorScheme(html, themeType) {
   if (themeType !== "dark" && themeType !== "light") return html;
-  return html.replaceAll("color-scheme:light dark", "color-scheme:" + themeType);
+  return html.replace(/color-scheme:\s*light\s+dark/g, "color-scheme:" + themeType);
 }
 
 function innerCodeHtml(rendered) {
@@ -136,7 +136,7 @@ async function render(payload) {
   const themeType = forgejoThemeType(payload.theme);
   const options = diffOptions(payload);
   const key = createHash("sha256")
-    .update(JSON.stringify({ patch, options, themeType, version: 3 }))
+    .update(JSON.stringify({ patch, options, themeType, version: 4 }))
     .digest("hex");
   const path = cachePath(key);
 

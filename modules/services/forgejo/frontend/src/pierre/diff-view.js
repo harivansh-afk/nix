@@ -48,6 +48,12 @@ function matchFile(files, name) {
   return files.find((file) => file.name === name || file.prevName === name);
 }
 
+function forceHostColorScheme(placeholder, options) {
+  if (options.themeType === "dark" || options.themeType === "light") {
+    placeholder.style.colorScheme = options.themeType;
+  }
+}
+
 async function hydratePlaceholder(placeholder) {
   if (placeholder.dataset.harivanPierreHydrated === "1") return;
   placeholder.dataset.harivanPierreHydrated = "1";
@@ -60,8 +66,10 @@ async function hydratePlaceholder(placeholder) {
   }
 
   try {
+    const options = pierreDiffOptions(placeholder);
+    forceHostColorScheme(placeholder, options);
     const instance = new pierre.FileDiff({
-      ...pierreDiffOptions(placeholder),
+      ...options,
       renderAnnotation,
       renderGutterUtility: renderGutterUtility(placeholder),
     });
@@ -77,6 +85,7 @@ async function hydratePlaceholder(placeholder) {
       fileDiff,
       lineAnnotations: lineAnnotations(placeholder),
     });
+    forceHostColorScheme(placeholder, options);
     // Apply the full view-state (existing conversations + composer slot if any)
     // so Pierre projects each annotation into a slot at the matching row.
     instance.setLineAnnotations(viewAnnotationsForPlaceholder(placeholder));

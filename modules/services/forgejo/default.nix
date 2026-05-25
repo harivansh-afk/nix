@@ -608,6 +608,7 @@ in
     forgejoWeb.templates
     forgejoWeb.assets
     pierreForgejo.frontend
+    pierreForgejo.assets
     pierreForgejo.templates
   ];
 
@@ -846,6 +847,7 @@ in
     "d /var/lib/forgejo/custom/public/assets/fonts 0750 git git -"
     "d /var/lib/forgejo/custom/public/assets/img 0750 git git -"
     "L+ /var/lib/forgejo/custom/public/assets/css/harivan-forgejo.css - - - - ${forgejoWeb.assets}/css/harivan-forgejo.css"
+    "L+ /var/lib/forgejo/custom/public/assets/css/pierre-forgejo.css - - - - ${pierreForgejo.assets}/css/pierre-forgejo.css"
     "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-auto.css - - - - ${forgejoCozyboxAutoCss}"
     "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-light.css - - - - ${forgejoCozyboxLightCss}"
     "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-dark.css - - - - ${forgejoCozyboxDarkCss}"

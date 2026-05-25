@@ -44,6 +44,8 @@ let
 
     substituteInPlace $out/custom/header.tmpl \
       --replace-fail __HARIVAN_FORGEJO_CSS_VERSION__ "$(version_for ${assets}/css/harivan-forgejo.css)"
+    substituteInPlace $out/custom/header.tmpl \
+      --replace-fail __PIERRE_FORGEJO_CSS_VERSION__ "$(version_for ${pierreForgejo.assets}/css/pierre-forgejo.css)"
 
     substituteInPlace $out/custom/footer.tmpl \
       --replace-fail __HARIVAN_FORGEJO_JS_VERSION__ "$(version_for ${js}/js/harivan-forgejo.js)"

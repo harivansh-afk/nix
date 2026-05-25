@@ -82,6 +82,11 @@ function diffOptions(payload) {
   };
 }
 
+function forceRenderedColorScheme(html, themeType) {
+  if (themeType !== "dark" && themeType !== "light") return html;
+  return html.replaceAll("color-scheme:light dark", "color-scheme:" + themeType);
+}
+
 function innerCodeHtml(rendered) {
   const open = rendered.indexOf("<code>");
   const close = rendered.lastIndexOf("</code>");
@@ -128,9 +133,10 @@ async function render(payload) {
   const patch = typeof payload.patch === "string" ? payload.patch : "";
   if (patch === "") return { html: "" };
 
+  const themeType = forgejoThemeType(payload.theme);
   const options = diffOptions(payload);
   const key = createHash("sha256")
-    .update(JSON.stringify({ patch, options, version: 2 }))
+    .update(JSON.stringify({ patch, options, themeType, version: 3 }))
     .digest("hex");
   const path = cachePath(key);
 
@@ -144,7 +150,7 @@ async function render(payload) {
     options,
     annotations: [],
   });
-  const out = { html: result.prerenderedHTML ?? "" };
+  const out = { html: forceRenderedColorScheme(result.prerenderedHTML ?? "", themeType) };
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, JSON.stringify(out));
   return out;

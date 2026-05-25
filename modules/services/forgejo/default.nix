@@ -542,16 +542,28 @@ let
     buttonLabel = "Confirm email";
     codeLivesVar = ".ActiveCodeLives";
   };
-  forgejoWeb = import ./web.nix { inherit pkgs; };
-  forgejoPackage = pkgs.forgejo-lts.overrideAttrs (old: {
-    patches = (old.patches or [ ]) ++ [
-      ./patches/0001-client-side-file-rendering.patch
+  forgejoWeb = import ./web.nix { inherit lib pkgs; };
+  forgejoPackageBase = pkgs.callPackage (
+    import "${pkgs.path}/pkgs/by-name/fo/forgejo/generic.nix" {
+      version = "15.0.2";
+      hash = "sha256-ba5jog6eXY4TTmBblhfVa2LSLPGE1/HPfslIb30b3kk=";
+      npmDepsHash = "sha256-70w39jbMWpuAsbzBC9oFHaUMwshtFDeTSEOXDgFNPmE=";
+      vendorHash = "sha256-I6bGvXBP2K3+Xx9E9DS/AyG6Ilqf/s8VjfBnCmLUHsk=";
+      lts = false;
+    }
+  ) { };
+  forgejoPackage = forgejoPackageBase.overrideAttrs (old: {
+    patches = [
+      "${pkgs.path}/pkgs/by-name/fo/forgejo/static-root-path.patch"
+      ./patches/0001-pierre-ssr-highlighting.patch
+      ./patches/0002-expose-init-globals.patch
     ];
   });
 in
 {
   imports = [
     ./mirror-manifest.nix
+    ./pierre-ssr.nix
   ];
 
   services.caddy.virtualHosts."http://${forgejoDomain}" =
@@ -725,6 +737,16 @@ in
         ENABLE_SWAGGER = false;
       };
     };
+  };
+
+  services.pierre-ssr.enable = true;
+
+  systemd.services.forgejo = {
+    after = [ "pierre-ssr.service" ];
+    wants = [ "pierre-ssr.service" ];
+    serviceConfig.Environment = [
+      "PIERRE_SSR_SOCKET=${config.services.pierre-ssr.socketPath}"
+    ];
   };
 
   systemd.services.forgejo.serviceConfig.ExecStartPre = lib.mkBefore [

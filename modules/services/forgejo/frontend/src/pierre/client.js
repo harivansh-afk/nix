@@ -1,18 +1,12 @@
-import { registerPierreThemes } from "./themes.js";
+import * as pierreModule from "@pierre/diffs";
+import cozyboxDark from "./themes/cozybox-dark.json" with { type: "json" };
+import cozyboxLight from "./themes/cozybox-light.json" with { type: "json" };
 
-let pierreModulePromise;
-
-export async function loadPierre() {
-  if (!pierreModulePromise) {
-    pierreModulePromise = import("@pierre/diffs")
-      .then((module) => {
-        registerPierreThemes(module);
-        return module;
-      })
-      .catch((error) => {
-        pierreModulePromise = undefined;
-        throw error;
-      });
-  }
-  return pierreModulePromise;
+let registered = false;
+if (!registered) {
+  pierreModule.registerCustomTheme("cozybox-dark", () => Promise.resolve(cozyboxDark));
+  pierreModule.registerCustomTheme("cozybox-light", () => Promise.resolve(cozyboxLight));
+  registered = true;
 }
+
+export const pierre = pierreModule;

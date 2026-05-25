@@ -1,133 +1,65 @@
-import { attachAutocomplete } from "./pr-autocomplete.js";
-import { postNewComment, postReplyComment } from "./pr-api.js";
-import {
-  buildSubmitButtons,
-  mountPreviewTabs,
-} from "./pr-composer-controls.js";
-import { pullContextSync } from "./pr-context.js";
+import { fetchNativeCommentForm } from "./pr-api.js";
 
-function buildComposer({
+function setInput(root, name, value) {
+  const input = root.querySelector(`[name="${name}"]`);
+  if (input) input.value = value;
+}
+
+// Mount Forgejo's native composer HTML into the slotted annotation wrapper.
+// Forgejo's own `initRepoDiffConversationForm` (web_src/js/features/repo-diff.js)
+// already installs a delegated submit handler on `.conversation-holder form`.
+// Slotted elements remain in light-DOM ownership so the delegated handler fires
+// normally; after submit Forgejo replaces the inner .conversation-holder with
+// the rendered thread, and Pierre's slot keeps projecting it into the row.
+//
+// All this code needs to do is fetch the form, populate path/line/side, and
+// optionally initialize ComboMarkdownEditor + Dropzone if Forgejo's bootstrap
+// has exposed them globally (see 0002-forgejo-init-globals.patch).
+export async function mountNativeComposer({
+  host,
+  newCommentUrl,
   path,
-  side,
   lineNumber,
-  mode,
-  replyTo,
-  prefill,
+  side,
+  onClose,
 }) {
-  const ctx = pullContextSync();
-  const wrapper = document.createElement("form");
-  wrapper.className = "harivan-pierre-composer";
-  wrapper.dataset.side = side;
-  wrapper.dataset.line = String(lineNumber);
-  wrapper.dataset.mode = mode;
+  const wrapper = document.createElement("div");
+  wrapper.className = "harivan-pierre-native-composer";
+  wrapper.innerHTML = await fetchNativeCommentForm(newCommentUrl);
 
-  const textarea = document.createElement("textarea");
-  textarea.className = "harivan-pierre-composer-textarea";
-  textarea.placeholder =
-    mode === "reply"
-      ? "Leave a reply"
-      : mode === "file"
-        ? "Leave a comment on this file"
-        : "Leave a comment";
-  textarea.rows = 4;
-  if (prefill) textarea.value = prefill;
-  attachAutocomplete(textarea, ctx?.postersUrl);
-  mountPreviewTabs({ wrapper, textarea, ctx });
+  setInput(wrapper, "line", String(lineNumber || 0));
+  setInput(wrapper, "side", side === "deletions" ? "previous" : "proposed");
+  setInput(wrapper, "path", path);
 
-  const actions = document.createElement("div");
-  actions.className = "harivan-pierre-composer-actions";
-  const hasPending = Boolean(ctx?.hasCurrentReview);
-  const { submits, primaryMode } = buildSubmitButtons({
-    actions,
-    mode,
-    hasPending,
-  });
-
-  const cancel = document.createElement("button");
-  cancel.type = "button";
-  cancel.className = "ui submit tiny basic button";
-  cancel.textContent = "Cancel";
-  actions.append(cancel);
-  wrapper.append(actions);
-
-  cancel.addEventListener("click", () => wrapper.remove());
-
-  let chosenMode = primaryMode;
-  for (const { button, mode: submitMode } of submits) {
-    button.addEventListener("click", () => {
-      chosenMode = submitMode;
+  // Wire cancel buttons (markup uses .cancel-code-comment or .quote-reply-cancel).
+  const cancelButtons = wrapper.querySelectorAll(
+    ".cancel-code-comment, .quote-reply-cancel, [data-button-name='cancel-edit']",
+  );
+  for (const button of cancelButtons) {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      onClose?.();
     });
   }
 
-  wrapper.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    for (const { button } of submits) button.disabled = true;
-    try {
-      if (mode === "reply") {
-        await postReplyComment({
-          path,
-          side,
-          line: lineNumber,
-          body: textarea.value,
-          replyTo,
-          mode: chosenMode,
-        });
-      } else {
-        await postNewComment({
-          path,
-          side,
-          line: mode === "file" ? 0 : lineNumber,
-          body: textarea.value,
-          mode: chosenMode,
-        });
-      }
-      wrapper.remove();
-    } catch (error) {
-      console.warn("Pierre PR bridge: comment submit failed", error);
-      for (const { button } of submits) button.disabled = false;
-      const err =
-        wrapper.querySelector(".harivan-pierre-composer-error") ||
-        document.createElement("div");
-      err.className = "harivan-pierre-composer-error";
-      err.textContent = String(error.message || error);
-      if (!err.isConnected) wrapper.append(err);
+  host.append(wrapper);
+
+  // Initialize ComboMarkdownEditor + Dropzone on the new form so the markdown
+  // toolbar, @mention autocomplete, preview tab, and attachment uploader work
+  // exactly like Forgejo's native inline composer.
+  try {
+    const dropzone = wrapper.querySelector(".dropzone");
+    if (dropzone && typeof window.initDropzone === "function") {
+      await window.initDropzone(dropzone);
     }
-  });
-
-  return wrapper;
-}
-
-export function openReplyComposer({ meta, replyTo, prefill }) {
-  const thread = document.querySelector(
-    `.harivan-pierre-comment-thread[data-root-comment-id="${meta.rootCommentId}"]`,
-  );
-  if (!thread) return;
-  const existing = thread.querySelector(".harivan-pierre-composer");
-  if (existing) {
-    existing.remove();
-    return;
+    const editor = wrapper.querySelector(".combo-markdown-editor");
+    if (editor && typeof window.initComboMarkdownEditor === "function") {
+      const instance = await window.initComboMarkdownEditor(editor);
+      instance?.focus?.();
+    }
+  } catch (error) {
+    console.warn("Pierre composer init hooks failed", error);
   }
-  const composer = buildComposer({
-    path: meta.path,
-    side: meta.side,
-    lineNumber: meta.line,
-    mode: "reply",
-    replyTo,
-    prefill,
-  });
-  thread.append(composer);
-  composer.querySelector("textarea")?.focus();
-}
 
-export function mountComposer({ box, side, lineNumber, path }) {
-  const existing = box.querySelector(".harivan-pierre-composer");
-  if (existing) existing.remove();
-  const composer = buildComposer({
-    path,
-    side,
-    lineNumber,
-    mode: "new",
-  });
-  box.append(composer);
-  composer.querySelector("textarea")?.focus();
+  wrapper.querySelector("textarea, input[type='text']")?.focus();
 }

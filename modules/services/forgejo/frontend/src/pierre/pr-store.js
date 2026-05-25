@@ -1,71 +1,92 @@
-import {
-  getPullContext,
-  getShowOutdated,
-  notifyRefreshed,
-} from "./pr-context.js";
-import {
-  annotationsFromComments,
-  commentCounts,
-  fileLevelComments,
-  groupCommentsByPath,
-} from "./pr-comment-model.js";
-import { fetchReviewsWithComments } from "./pr-review-comments.js";
+// Per-placeholder index: { fileDiff, instance, annotationsByKey: Map<"side:line", annotation> }
+const placeholderState = new WeakMap();
 
-let pullCommentsPromise;
-let pullCommentsByPath;
-let lastCommentsFetchAt = 0;
+// Per-path list of stable annotations (existing review conversations), used as
+// the baseline; the active composer (if any) is layered on top.
+const conversationsByPath = new Map();
 
-export async function loadPullComments({ force = false } = {}) {
-  if (pullCommentsPromise && !force && Date.now() - lastCommentsFetchAt < 1000) {
-    return pullCommentsPromise;
-  }
-  pullCommentsPromise = (async () => {
-    const ctx = await getPullContext();
-    if (!ctx?.apiReviewsUrl) {
-      pullCommentsByPath = new Map();
-      return pullCommentsByPath;
+function annotationKey(side, lineNumber) {
+  return `${side}:${lineNumber}`;
+}
+
+export function setDiffInstance(placeholder, entry) {
+  placeholderState.set(placeholder, { ...entry, composer: null });
+}
+
+export function getDiffInstance(placeholder) {
+  return placeholderState.get(placeholder);
+}
+
+// Walk the server-emitted hidden conversation blocks and group them by path.
+// Each `<div class="harivan-pierre-conversation-item">` is one review thread for
+// a single line + side. We hand its outerHTML to Pierre as the annotation body.
+export function loadConversationsFromDom() {
+  conversationsByPath.clear();
+  const blocks = document.querySelectorAll('[data-harivan-pierre-conversations="1"]');
+  for (const block of blocks) {
+    const path = block.dataset.path;
+    if (!path) continue;
+    const items = block.querySelectorAll(".harivan-pierre-conversation-item");
+    const annotations = [];
+    for (const item of items) {
+      const line = Number(item.dataset.line);
+      const side = item.dataset.side === "deletions" ? "deletions" : "additions";
+      if (!Number.isFinite(line) || line <= 0) continue;
+      annotations.push({
+        side,
+        lineNumber: line,
+        metadata: {
+          kind: "conversation",
+          path,
+          conversationId: item.dataset.conversationId,
+          html: item.innerHTML,
+        },
+      });
     }
-    const comments = await fetchReviewsWithComments(ctx);
-    const pendingReviewIds = new Set(
-      comments
-        .filter(
-          (comment) =>
-            comment.review_state === "PENDING" &&
-            comment.review_user_id === ctx.signedUserID,
-        )
-        .map((comment) => comment.pull_request_review_id),
-    );
-    pullCommentsByPath = groupCommentsByPath(comments, pendingReviewIds);
-    lastCommentsFetchAt = Date.now();
-    return pullCommentsByPath;
-  })().catch((error) => {
-    console.warn("Pierre PR bridge: failed to load comments", error);
-    pullCommentsByPath = new Map();
-    return pullCommentsByPath;
+    conversationsByPath.set(path, annotations);
+    block.remove();
+  }
+}
+
+export function annotationsForPath(path) {
+  return (conversationsByPath.get(path) ?? []).slice();
+}
+
+export function replaceConversation({ path, lineNumber, side, html, conversationId }) {
+  const list = conversationsByPath.get(path) ?? [];
+  const key = annotationKey(side, lineNumber);
+  const next = list.filter((a) => annotationKey(a.side, a.lineNumber) !== key);
+  next.push({
+    side,
+    lineNumber,
+    metadata: { kind: "conversation", path, conversationId, html },
   });
-  return pullCommentsPromise;
+  conversationsByPath.set(path, next);
 }
 
-export async function getAnnotationsForPath(path) {
-  const byPath = await loadPullComments();
-  return annotationsFromComments(byPath, path, {
-    includeOutdated: getShowOutdated(),
-  });
+// Compose the current view-state for a placeholder = stable conversations
+// + active composer (if any).
+export function viewAnnotationsForPlaceholder(placeholder) {
+  const state = placeholderState.get(placeholder);
+  if (!state) return [];
+  const path = placeholder.dataset.harivanPierreFile;
+  const base = annotationsForPath(path);
+  if (!state.composer) return base;
+  // Composer overrides any existing conversation at the same line+side slot.
+  const key = annotationKey(state.composer.side, state.composer.lineNumber);
+  const filtered = base.filter((a) => annotationKey(a.side, a.lineNumber) !== key);
+  filtered.push(state.composer);
+  return filtered;
 }
 
-export async function getFileLevelComments(path) {
-  const byPath = await loadPullComments();
-  return fileLevelComments(byPath, path);
+export function setComposer(placeholder, composer) {
+  const state = placeholderState.get(placeholder);
+  if (!state) return;
+  state.composer = composer;
 }
 
-export async function getCommentCounts() {
-  const byPath = await loadPullComments();
-  return commentCounts(byPath);
+export function clearComposer(placeholder) {
+  const state = placeholderState.get(placeholder);
+  if (!state) return;
+  state.composer = null;
 }
-
-export async function refreshAll() {
-  await loadPullComments({ force: true });
-  notifyRefreshed();
-}
-
-export { subscribeToRefresh } from "./pr-context.js";

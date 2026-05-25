@@ -26,9 +26,9 @@
 	{{end}}
 
 	<h4 class="file-header ui top attached header tw-flex tw-items-center tw-justify-between tw-flex-wrap">
-		<div class="file-header-left tw-flex tw-items-center tw-py-2 tw-pr-4">
+		<div class="file-header-left tw-flex tw-items-center tw-pr-4 tw-flex-wrap {{if .IsCitationFile}}tw-gap-4{{else}}tw-gap-2{{end}}">
 			{{if .ReadmeInList}}
-				{{svg "octicon-book" 16 "tw-mr-2"}}
+				{{svg "octicon-book"}}
 				<strong><a class="default-link muted" href="#readme">{{.FileName}}</a></strong>
 			{{else}}
 				{{template "repo/file_info" .}}
@@ -59,8 +59,12 @@
 						<button class="ui mini basic button escape-button">{{ctx.Locale.Tr "repo.escape_control_characters"}}</button>
 					{{end}}
 				</div>
-				<a download href="{{$.RawFileLink}}"><span class="btn-octicon" data-tooltip-content="{{ctx.Locale.Tr "repo.download_file"}}">{{svg "octicon-download"}}</span></a>
-				<a href="#" id="copy-content" class="btn-octicon {{if not .CanCopyContent}} disabled{{end}}"{{if or .IsImageFile (and .HasSourceRenderedToggle (not .IsDisplayingSource))}} data-link="{{$.RawFileLink}}"{{end}} data-tooltip-content="{{if .CanCopyContent}}{{ctx.Locale.Tr "copy_content"}}{{else}}{{ctx.Locale.Tr "copy_type_unsupported"}}{{end}}">{{svg "octicon-copy" 14}}</a>
+				<a download class="btn-octicon" href="{{$.RawFileLink}}" data-tooltip-content="{{ctx.Locale.Tr "repo.download_file"}}">
+					{{svg "octicon-download"}}
+				</a>
+				<a href="#" id="copy-content" class="btn-octicon {{if not .CanCopyContent}} disabled{{end}}"{{if or .IsImageFile (and .HasSourceRenderedToggle (not .IsDisplayingSource))}} data-link="{{$.RawFileLink}}"{{end}} data-tooltip-content="{{if .CanCopyContent}}{{ctx.Locale.Tr "copy_content"}}{{else}}{{ctx.Locale.Tr "copy_type_unsupported"}}{{end}}">
+					{{svg "octicon-copy" 14}}
+				</a>
 				{{if .EnableFeed}}
 					{{if .IsViewBranch}}
 						<a class="btn-octicon" href="{{$.FeedURL}}/rss/{{$.BranchNameSubURL}}/{{PathEscapeSegments .TreePath}}" data-tooltip-content="{{ctx.Locale.Tr "rss_feed"}}">
@@ -74,14 +78,22 @@
 				{{end}}
 				{{if .Repository.CanEnableEditor}}
 					{{if .CanEditFile}}
-						<a href="{{.RepoLink}}/_edit/{{PathEscapeSegments .BranchName}}/{{PathEscapeSegments .TreePath}}"><span class="btn-octicon" data-tooltip-content="{{.EditFileTooltip}}">{{svg "octicon-pencil"}}</span></a>
+						<a class="btn-octicon" href="{{.RepoLink}}/_edit/{{PathEscapeSegments .BranchName}}/{{PathEscapeSegments .TreePath}}" data-tooltip-content="{{.EditFileTooltip}}">
+							{{svg "octicon-pencil"}}
+						</a>
 					{{else}}
-						<span class="btn-octicon disabled" data-tooltip-content="{{.EditFileTooltip}}">{{svg "octicon-pencil"}}</span>
+						<span class="btn-octicon disabled" data-tooltip-content="{{.EditFileTooltip}}">
+							{{svg "octicon-pencil"}}
+						</span>
 					{{end}}
 					{{if .CanDeleteFile}}
-						<a href="{{.RepoLink}}/_delete/{{PathEscapeSegments .BranchName}}/{{PathEscapeSegments .TreePath}}"><span class="btn-octicon btn-octicon-danger"  data-tooltip-content="{{.DeleteFileTooltip}}">{{svg "octicon-trash"}}</span></a>
+						<a class="btn-octicon btn-octicon-danger" href="{{.RepoLink}}/_delete/{{PathEscapeSegments .BranchName}}/{{PathEscapeSegments .TreePath}}" data-tooltip-content="{{.DeleteFileTooltip}}">
+							{{svg "octicon-trash"}}
+						</a>
 					{{else}}
-						<span class="btn-octicon disabled" data-tooltip-content="{{.DeleteFileTooltip}}">{{svg "octicon-trash"}}</span>
+						<span class="btn-octicon disabled" data-tooltip-content="{{.DeleteFileTooltip}}">
+							{{svg "octicon-trash"}}
+						</span>
 					{{end}}
 				{{end}}
 			{{else if .EscapeStatus.Escaped}}
@@ -115,7 +127,15 @@
 							<strong>{{ctx.Locale.Tr "repo.audio_not_supported_in_browser"}}</strong>
 						</audio>
 					{{else if .IsPDFFile}}
-						<div class="pdf-content is-loading" data-src="{{$.RawFileLink}}" data-fallback-button-text="{{ctx.Locale.Tr "repo.diff.view_file"}}"></div>
+						<lazy-webc tag="pdf-object" src="{{$.RawFileLink}}">
+							<a href="{{$.RawFileLink}}" class="ui basic button">{{ctx.Locale.Tr "repo.diff.view_file"}}</a>
+						</lazy-webc>
+					{{else if .Is3DModelFile}}
+						{{if .IsGLBFile}}
+							<lazy-webc tag="model-viewer" src="{{$.RawFileLink}}" ar shadow-intensity="2" camera-controls touch-action="pan-y"></lazy-webc>
+						{{else}}
+							<a href="{{$.RawFileLink}}" rel="nofollow">{{ctx.Locale.Tr "repo.file_view_raw"}}</a>
+						{{end}}
 					{{else}}
 						<a href="{{$.RawFileLink}}" rel="nofollow">{{ctx.Locale.Tr "repo.file_view_raw"}}</a>
 					{{end}}
@@ -130,19 +150,15 @@
 					</tbody>
 				</table>
 				{{else}}
-				{{if .UseClientSideFileRendering}}
-				<div class="harivan-file-render-target"
-					data-filename="{{.FileName}}"
-					data-file-path="{{.TreePath}}"
-					data-cache-key="{{.CommitID}}:{{.TreePath}}"
-					data-raw-url="{{$.RawFileLink}}"></div>
-				{{else}}
+				{{if .IsCitationFile}}
+				<lazy-webc tag="citation-information">
+				{{end}}
 				<table>
 					<tbody>
 						{{range $idx, $code := .FileContent}}
 						{{$line := Eval $idx "+" 1}}
 						<tr>
-							<td id="L{{$line}}" class="lines-num"><span id="L{{$line}}" data-line-number="{{$line}}"></span></td>
+							<td class="lines-num"><span id="L{{$line}}" data-line-number="{{$line}}"></span></td>
 							{{if $.EscapeStatus.Escaped}}
 								<td class="lines-escape">{{if (index $.LineEscapeStatus $idx).Escaped}}<button class="toggle-escape-button btn interact-bg" title="{{if (index $.LineEscapeStatus $idx).HasInvisible}}{{ctx.Locale.Tr "repo.invisible_runes_line"}} {{end}}{{if (index $.LineEscapeStatus $idx).HasAmbiguous}}{{ctx.Locale.Tr "repo.ambiguous_runes_line"}}{{end}}"></button>{{end}}</td>
 							{{end}}
@@ -151,6 +167,8 @@
 						{{end}}
 					</tbody>
 				</table>
+				{{if .IsCitationFile}}
+				</lazy-webc>
 				{{end}}
 				<div class="code-line-menu tippy-target">
 					{{if $.Permission.CanRead $.UnitTypeIssues}}

@@ -65,13 +65,20 @@ function cachePath(key) {
   return join(cacheDir, key.slice(0, 2), key + ".json");
 }
 
+function forgejoThemeType(theme) {
+  if (typeof theme !== "string") return "system";
+  if (theme.endsWith("-dark") || theme === "dark") return "dark";
+  if (theme.endsWith("-light") || theme === "light") return "light";
+  return "system";
+}
+
 function diffOptions(payload) {
   return {
     disableFileHeader: true,
     diffStyle: payload.split ? "split" : "unified",
     lineDiffType: payload.lineDiffType === "char" ? "char" : "word-alt",
     theme: themes,
-    themeType: "system",
+    themeType: forgejoThemeType(payload.theme),
   };
 }
 

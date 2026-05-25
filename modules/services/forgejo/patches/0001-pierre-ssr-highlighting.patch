@@ -80,7 +80,7 @@ new file mode 100644
 index 0000000..ba88fab
 --- /dev/null
 +++ b/services/gitdiff/pierre.go
-@@ -0,0 +1,274 @@
+@@ -0,0 +1,275 @@
 +// Copyright 2026 The Forgejo Authors. All rights reserved.
 +// SPDX-License-Identifier: MIT
 +
@@ -123,6 +123,7 @@ index 0000000..ba88fab
 +type pierreRenderRequest struct {
 +	Patch string `json:"patch"`
 +	Split bool   `json:"split"`
++	Theme string `json:"theme"`
 +}
 +
 +type pierreRenderResponse struct {
@@ -190,7 +191,7 @@ index 0000000..ba88fab
 +}
 +
 +// PierreDiff returns a server-rendered Pierre diff for a Forgejo diff file.
-+func PierreDiff(file *DiffFile, isSplit bool) template.HTML {
++func PierreDiff(file *DiffFile, isSplit bool, theme string) template.HTML {
 +	if file == nil || file.IsBin || file.IsIncomplete || file.IsSubmodule {
 +		return ""
 +	}
@@ -200,7 +201,7 @@ index 0000000..ba88fab
 +		return ""
 +	}
 +
-+	html, ok := pierreRender(patch, isSplit)
++	html, ok := pierreRender(patch, isSplit, theme)
 +	if !ok {
 +		return ""
 +	}
@@ -264,13 +265,13 @@ index 0000000..ba88fab
 +	return builder.String()
 +}
 +
-+func pierreRender(patch string, isSplit bool) (template.HTML, bool) {
++func pierreRender(patch string, isSplit bool, theme string) (template.HTML, bool) {
 +	socketPath := pierreSocketPath()
 +	if socketPath == "" || patch == "" || !utf8.ValidString(patch) {
 +		return "", false
 +	}
 +
-+	payload, err := json.Marshal(pierreRenderRequest{Patch: patch, Split: isSplit})
++	payload, err := json.Marshal(pierreRenderRequest{Patch: patch, Split: isSplit, Theme: theme})
 +	if err != nil {
 +		return "", false
 +	}
@@ -283,7 +284,7 @@ index 0000000..ba88fab
 +		return "", false
 +	}
 +	req.Header.Set("Content-Type", "application/json")
-+	req.Header.Set("Idempotency-Key", pierreRequestKey("diff", fmt.Sprintf("%t", isSplit), patch))
++	req.Header.Set("Idempotency-Key", pierreRequestKey("diff", fmt.Sprintf("%t", isSplit), theme, patch))
 +
 +	resp, err := getPierreClient(socketPath).Do(req)
 +	if err != nil {

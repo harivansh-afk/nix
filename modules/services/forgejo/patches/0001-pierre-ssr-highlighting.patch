@@ -352,7 +352,7 @@ index 0000000..ba88fab
 +	return &out, true
 +}
 +
-+func pierreRequestKey(fileName, language, code string) string {
-+	sum := sha256.Sum256([]byte(strings.Join([]string{fileName, language, code}, "\x00")))
++func pierreRequestKey(parts ...string) string {
++	sum := sha256.Sum256([]byte(strings.Join(parts, "\x00")))
 +	return fmt.Sprintf("%x", sum[:])
 +}

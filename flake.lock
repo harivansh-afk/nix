@@ -961,6 +961,27 @@
         "type": "github"
       }
     },
+    "pierrejo": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1779716361,
+        "narHash": "sha256-FCAgxSNTIQc+964SspYfr3/TweE2KGBHfN5smA7XotQ=",
+        "ref": "refs/heads/main",
+        "rev": "2c9ca6df99aed094802b4d6989e8d67457d61dd0",
+        "revCount": 2,
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/pierrejo.git"
+      },
+      "original": {
+        "rev": "2c9ca6df99aed094802b4d6989e8d67457d61dd0",
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/pierrejo.git"
+      }
+    },
     "pre-commit-hooks": {
       "inputs": {
         "flake-compat": "flake-compat_2",
@@ -1002,6 +1023,7 @@
         "nixpkgs-nushell": "nixpkgs-nushell",
         "openspec": "openspec",
         "pi-mono": "pi-mono",
+        "pierrejo": "pierrejo",
         "sops-nix": "sops-nix",
         "symphony": "symphony"
       }

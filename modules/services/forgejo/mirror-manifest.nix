@@ -9,6 +9,7 @@ let
 
   actionsEnabledRepos = [
     "${ownedOwner}/nix"
+    "${ownedOwner}/pierrejo"
     "${ownedOwner}/deskctl"
     "${ownedOwner}/betternas"
     "${ownedOwner}/agentikube"

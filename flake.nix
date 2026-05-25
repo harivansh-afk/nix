@@ -44,6 +44,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    pierrejo = {
+      url = "git+https://git.harivan.sh/harivansh-afk/pierrejo.git?rev=2c9ca6df99aed094802b4d6989e8d67457d61dd0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";

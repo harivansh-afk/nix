@@ -1,5 +1,6 @@
 {
   lib,
+  pierreForgejo,
   pkgs,
   ...
 }:
@@ -14,7 +15,7 @@ let
     pname = "harivan-forgejo-web-frontend";
     version = "0.0.0";
     src = ./frontend;
-    npmDepsHash = "sha256-q0qBatC/+nZuk2GtQE4ht3kK1cIRn4Lz1CAAM3SYSas=";
+    npmDepsHash = "sha256-orNmifSF/ycAXTLBRNKSUuNaR3Dh24QkKCzbq3GMGd4=";
     installPhase = ''
       runHook preInstall
       mkdir -p $out/js
@@ -22,6 +23,11 @@ let
       runHook postInstall
     '';
   };
+  js = pkgs.runCommand "harivan-forgejo-web-js" { } ''
+    mkdir -p $out/js
+    cp -R ${frontend}/js/. $out/js/
+    cp -R ${pierreForgejo.frontend}/js/. $out/js/
+  '';
   assets = pkgs.runCommand "harivan-forgejo-web-assets" { } ''
     mkdir -p $out
     cp -R ${./assets}/. $out/
@@ -40,9 +46,16 @@ let
       --replace-fail __HARIVAN_FORGEJO_CSS_VERSION__ "$(version_for ${assets}/css/harivan-forgejo.css)"
 
     substituteInPlace $out/custom/footer.tmpl \
-      --replace-fail __HARIVAN_FORGEJO_JS_VERSION__ "$(version_for ${frontend}/js/harivan-forgejo.js)"
+      --replace-fail __HARIVAN_FORGEJO_JS_VERSION__ "$(version_for ${js}/js/harivan-forgejo.js)"
+    substituteInPlace $out/custom/footer.tmpl \
+      --replace-fail __PIERRE_FORGEJO_JS_VERSION__ "$(version_for ${js}/js/pierre-forgejo.js)"
   '';
 in
 {
-  inherit assets frontend templates;
+  inherit
+    assets
+    frontend
+    js
+    templates
+    ;
 }

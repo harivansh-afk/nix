@@ -1,0 +1,40 @@
+{
+  "name": "cozybox-dark",
+  "type": "dark",
+  "colors": {
+    "editor.background": "#141414",
+    "editor.foreground": "#ebdbb2",
+    "foreground": "#ebdbb2",
+    "focusBorder": "#5b84de",
+    "selection.background": "#504945",
+    "editor.selectionBackground": "#504945",
+    "editor.lineHighlightBackground": "#1e1e1e",
+    "editorCursor.foreground": "#ebdbb2",
+    "editorLineNumber.foreground": "#928374",
+    "editorLineNumber.activeForeground": "#d5c4a1",
+    "gitDecoration.addedResourceForeground": "#8ec97c",
+    "gitDecoration.modifiedResourceForeground": "#5b84de",
+    "gitDecoration.deletedResourceForeground": "#ea6962",
+    "terminal.ansiRed": "#ea6962",
+    "terminal.ansiGreen": "#8ec97c",
+    "terminal.ansiYellow": "#d79921",
+    "terminal.ansiBlue": "#5b84de",
+    "terminal.ansiMagenta": "#d3869b",
+    "terminal.ansiCyan": "#8ec07c"
+  },
+  "tokenColors": [
+    { "scope": ["comment", "punctuation.definition.comment"], "settings": { "foreground": "#928374", "fontStyle": "italic" } },
+    { "scope": ["string", "constant.other.symbol"], "settings": { "foreground": "#8ec97c" } },
+    { "scope": ["constant.numeric", "constant.language.boolean"], "settings": { "foreground": "#d3869b" } },
+    { "scope": ["constant", "variable.language"], "settings": { "foreground": "#d79921" } },
+    { "scope": ["keyword", "storage", "storage.type", "storage.modifier"], "settings": { "foreground": "#ea6962" } },
+    { "scope": ["variable", "identifier", "meta.definition.variable"], "settings": { "foreground": "#ebdbb2" } },
+    { "scope": ["variable.parameter", "variable.parameter.function"], "settings": { "foreground": "#d5c4a1" } },
+    { "scope": ["support.function", "entity.name.function", "meta.function-call", "variable.function"], "settings": { "foreground": "#5b84de" } },
+    { "scope": ["support.type", "entity.name.type", "entity.name.class", "support.class"], "settings": { "foreground": "#d3869b" } },
+    { "scope": ["keyword.operator", "punctuation", "meta.brace"], "settings": { "foreground": "#a89984" } },
+    { "scope": ["keyword.operator.logical", "keyword.operator.arithmetic", "keyword.operator.comparison"], "settings": { "foreground": "#8ec07c" } },
+    { "scope": ["entity.name.tag", "support.type.property-name", "meta.object-literal.key"], "settings": { "foreground": "#fabd2f" } },
+    { "scope": ["invalid", "invalid.illegal"], "settings": { "foreground": "#ea6962", "fontStyle": "bold" } }
+  ]
+}

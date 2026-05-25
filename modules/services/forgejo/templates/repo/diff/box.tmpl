@@ -53,7 +53,7 @@
 	{{if not .DiffNotAvailable}}
 		{{if and .IsShowingOnlySingleCommit .PageIsPullFiles}}
 			<div class="ui info message">
-				<div>{{ctx.Locale.Tr "repo.pulls.showing_only_single_commit" (ShortSha .AfterCommitID)}} - <a href="{{$.Issue.Link}}/files?style={{if $.IsSplitStyle}}split{{else}}unified{{end}}&whitespace={{$.WhitespaceBehavior}}&show-outdated={{$.ShowOutdatedComments}}">{{ctx.Locale.Tr "repo.pulls.show_all_commits"}}</a></div>
+				<div>{{ctx.Locale.Tr "repo.pulls.showing_only_single_commit" (ShortSha .CommitID)}} - <a href="{{$.Issue.Link}}/files?style={{if $.IsSplitStyle}}split{{else}}unified{{end}}&whitespace={{$.WhitespaceBehavior}}&show-outdated={{$.ShowOutdatedComments}}">{{ctx.Locale.Tr "repo.pulls.show_all_commits"}}</a></div>
 			</div>
 		{{else if and (not .IsShowingAllCommits) .PageIsPullFiles}}
 			<div class="ui info message">
@@ -85,39 +85,6 @@
 			diffFileInfo.files.push(...diffDataFiles);
 			window.config.pageData.diffFileInfo = diffFileInfo;
 		</script>
-		{{if .PageIsPullFiles}}
-		<script id="harivan-pierre-pull-context" type="application/json">
-			{
-				"issueLink": "{{$.Issue.Link}}",
-				"issueIndex": {{$.Issue.Index}},
-				"pullIndex": {{$.Issue.Index}},
-				"repoLink": "{{$.RepoLink}}",
-				"repoOwner": "{{$.Repository.OwnerName}}",
-				"repoName": "{{$.Repository.Name}}",
-				"apiReviewsUrl": "{{AppSubUrl}}/api/v1/repos/{{$.Repository.OwnerName}}/{{$.Repository.Name}}/pulls/{{$.Issue.Index}}/reviews",
-				"createCommentUrl": "{{$.Issue.Link}}/files/reviews/comments",
-				"submitReviewUrl": "{{$.Issue.Link}}/files/reviews/submit",
-				"resolveConversationUrl": "{{$.Issue.Link}}/resolve_conversation",
-				"updateCommentUrl": "{{$.RepoLink}}/comments",
-				"reactionsBaseUrl": "{{$.RepoLink}}/comments",
-				"markupUrl": "{{$.RepoLink}}/markup",
-				"postersUrl": "{{$.RepoLink}}/issues/posters?type=pulls",
-				"contentHistoryUrl": "{{$.RepoLink}}/issues/{{$.Issue.Index}}/content-history",
-				"diffStyle": "{{if $.IsSplitStyle}}split{{else}}unified{{end}}",
-				"canComment": {{if and $.IsSigned (not $.IsArchived)}}true{{else}}false{{end}},
-				"isShowingAllCommits": {{$.IsShowingAllCommits}},
-				"showOutdatedComments": {{$.ShowOutdatedComments}},
-				"afterCommitID": "{{$.AfterCommitID}}",
-				"beforeCommitID": "{{$.BeforeCommitID}}",
-				"signedUserID": {{$.SignedUserID}},
-				"signedUserName": "{{if $.SignedUser}}{{$.SignedUser.Name}}{{end}}",
-				"isArchived": {{$.IsArchived}},
-				"hasCurrentReview": {{if $.CurrentReview}}true{{else}}false{{end}},
-				"currentReviewType": "{{if $.CurrentReview}}{{$.CurrentReview.Type}}{{end}}",
-				"allowedReactions": [{{range $i, $reaction := $.AllowedReactions}}{{if $i}},{{end}}"{{$reaction}}"{{end}}]
-			}
-		</script>
-		{{end}}
 	{{end}}
 	<div id="diff-container">
 		{{if $showFileTree}}
@@ -126,7 +93,13 @@
 				if (diffTreeVisible) document.getElementById('diff-file-tree').classList.remove('tw-hidden');
 			</script>
 		{{end}}
-			{{if .DiffNotAvailable}}
+		<div id="diff-content-container">
+		{{if .IsShowingOnlySingleCommit}}
+			<div id="diff-commit-header">
+			{{template "repo/commit_header" .}}
+			</div>
+		{{end}}
+		{{if .DiffNotAvailable}}
 			<h4>{{ctx.Locale.Tr "repo.diff.data_not_available"}}</h4>
 		{{else}}
 			<div id="diff-file-boxes" class="sixteen wide column">
@@ -135,15 +108,13 @@
 					{{$blobBase := call $.GetBlobByPathForCommit $.BeforeCommit $file.OldName}}
 					{{$blobHead := call $.GetBlobByPathForCommit $.HeadCommit $file.Name}}
 					{{$sniffedTypeBase := call $.GetSniffedTypeForBlob $blobBase}}
-						{{$sniffedTypeHead := call $.GetSniffedTypeForBlob $blobHead}}
-						{{$isImage:= or (call $.IsSniffedTypeAnImage $sniffedTypeBase) (call $.IsSniffedTypeAnImage $sniffedTypeHead)}}
-						{{$isCsv := (call $.IsCsvFile $file)}}
-						{{$showFileViewToggle := or $isImage (and (not $file.IsIncomplete) $isCsv)}}
-						{{$usePierreDiff := and (or $.PageIsDiff $.IsDiffCompare $.PageIsPullFiles) (not $file.IsIncomplete) (not $file.IsBin) (not $file.IsSubmodule) (not $showFileViewToggle)}}
-						{{$pierrePullContext := and $.PageIsPullFiles $.Issue $.Issue.Link}}
-						{{$isExpandable := or (gt $file.Addition 0) (gt $file.Deletion 0) $file.IsBin}}
-						{{$isReviewFile := and $.IsSigned $.PageIsPullFiles (not $.IsArchived) $.IsShowingAllCommits}}
-						<div class="diff-file-box diff-box file-content {{TabSizeClass $.Editorconfig $file.Name}} tw-mt-0" id="diff-{{$file.NameHash}}" data-old-filename="{{$file.OldName}}" data-new-filename="{{$file.Name}}" data-harivan-pierre-mode="{{if $usePierreDiff}}placeholder{{else}}native{{end}}" {{if or ($file.ShouldBeHidden) (not $isExpandable)}}data-folded="true"{{end}}>
+					{{$sniffedTypeHead := call $.GetSniffedTypeForBlob $blobHead}}
+					{{$isImage:= or (call $.IsSniffedTypeAnImage $sniffedTypeBase) (call $.IsSniffedTypeAnImage $sniffedTypeHead)}}
+					{{$isCsv := (call $.IsCsvFile $file)}}
+					{{$showFileViewToggle := or $isImage (and (not $file.IsIncomplete) $isCsv)}}
+					{{$isExpandable := or (gt $file.Addition 0) (gt $file.Deletion 0) $file.IsBin}}
+					{{$isReviewFile := and $.IsSigned $.PageIsPullFiles (not $.IsArchived) $.IsShowingAllCommits}}
+					<div class="diff-file-box diff-box file-content {{TabSizeClass $.Editorconfig $file.Name}} tw-mt-0" id="diff-{{$file.NameHash}}" data-old-filename="{{$file.OldName}}" data-new-filename="{{$file.Name}}" {{if or ($file.ShouldBeHidden) (not $isExpandable)}}data-folded="true"{{end}}>
 						<h4 class="diff-file-header sticky-2nd-row ui top attached header tw-font-normal tw-flex tw-items-center tw-justify-between tw-flex-wrap">
 							<div class="diff-file-name tw-flex tw-flex-1 tw-items-center tw-gap-1 tw-flex-wrap">
 								<button class="fold-file btn interact-bg tw-p-1{{if not $isExpandable}} tw-invisible{{end}}">
@@ -213,22 +184,63 @@
 									</label>
 								{{end}}
 							</div>
-							</h4>
-							<div class="diff-file-body ui attached unstackable table segment" {{if and $file.IsViewed $.IsShowingAllCommits}}data-folded="true"{{end}}>
-								<div id="diff-source-{{$file.NameHash}}" class="file-body file-code unicode-escaped code-diff{{if $usePierreDiff}} harivan-pierre-diff-target{{end}}{{if $.IsSplitStyle}} code-diff-split{{else}} code-diff-unified{{end}}{{if and (not $usePierreDiff) $showFileViewToggle}} tw-hidden{{end}}"{{if $usePierreDiff}} data-harivan-pierre-placeholder="1" data-old-filename="{{$file.OldName}}" data-new-filename="{{$file.Name}}"{{if $pierrePullContext}} data-harivan-pierre-pull="1" data-harivan-pierre-issue-link="{{$.Issue.Link}}" data-harivan-pierre-can-comment="{{if and $.IsSigned (not $.IsArchived)}}1{{else}}0{{end}}"{{end}}{{end}}>
-									{{if or $file.IsIncomplete $file.IsBin}}
-										<div class="diff-file-body binary">
-											{{if $file.IsIncomplete}}
-												{{if $file.IsIncompleteLineTooLong}}
-													{{ctx.Locale.Tr "repo.diff.file_suppressed_line_too_long"}}
-												{{else}}
-													{{ctx.Locale.Tr "repo.diff.file_suppressed"}}
-													<a class="ui basic tiny button diff-load-button" data-href="?file-only=true&files={{$file.Name}}&files={{$file.OldName}}">{{ctx.Locale.Tr "repo.diff.load"}}</a>
-												{{end}}
+						</h4>
+						<div class="diff-file-body ui attached unstackable table segment" {{if and $file.IsViewed $.IsShowingAllCommits}}data-folded="true"{{end}}>
+							<div id="diff-source-{{$file.NameHash}}" class="file-body file-code unicode-escaped code-diff{{if $.IsSplitStyle}} code-diff-split{{else}} code-diff-unified{{end}}{{if $showFileViewToggle}} tw-hidden{{end}}">
+								{{if or $file.IsIncomplete $file.IsBin}}
+									<div class="diff-file-body binary">
+										{{if $file.IsIncomplete}}
+											{{if $file.IsIncompleteLineTooLong}}
+												{{ctx.Locale.Tr "repo.diff.file_suppressed_line_too_long"}}
 											{{else}}
-												{{ctx.Locale.Tr "repo.diff.bin_not_shown"}}
+												{{ctx.Locale.Tr "repo.diff.file_suppressed"}}
+												<a class="ui basic tiny button diff-load-button" data-href="?file-only=true&files={{$file.Name}}&files={{$file.OldName}}">{{ctx.Locale.Tr "repo.diff.load"}}</a>
 											{{end}}
-										</div>
+										{{else}}
+											{{ctx.Locale.Tr "repo.diff.bin_not_shown"}}
+										{{end}}
+									</div>
+								{{else}}
+									{{$pierreSsr := PierreDiff $file $.IsSplitStyle}}
+									{{if $pierreSsr}}
+										{{/*
+											Pierre's interactive layer (gutter "+", expand-lines, annotations)
+											needs the host to be the registered <diffs-container> custom element
+											with a shadow root. Declarative shadow DOM puts the SSR HTML in the
+											shadow root at parse time, before any JS runs.
+										*/}}
+										<diffs-container class="harivan-pierre-diff"
+											data-harivan-pierre-placeholder="1"
+											data-harivan-pierre-file="{{$file.Name}}"
+											data-harivan-pierre-split="{{if $.IsSplitStyle}}1{{else}}0{{end}}"
+											data-harivan-pierre-pull="{{if $.PageIsPullFiles}}1{{else}}0{{end}}"
+											data-harivan-pierre-can-comment="{{if and $.PageIsPullFiles $.IsSigned (not $.Repository.IsArchived)}}1{{else}}0{{end}}"
+											data-new-comment-url="{{$.Issue.Link}}/files/reviews/new_comment"
+											data-path="{{$file.Name}}">
+											<template shadowrootmode="open">{{$pierreSsr}}</template>
+										</diffs-container>
+										{{if $.PageIsPullFiles}}
+											{{/*
+												Hidden sibling carries the native Forgejo conversation HTML for each
+												existing review thread on this file. The client picks these up at
+												hydrate time and pushes them through Pierre's annotation API, where
+												Pierre wraps them in slotted light-DOM <div slot="annotation-...">
+												elements that project into shadow-DOM slots at the right row. The
+												conversation DOM stays in light-DOM ownership so every native Forgejo
+												delegated handler ($(document).on('click', '.resolve-conversation', ...))
+												continues to fire correctly.
+											*/}}
+											<div class="harivan-pierre-conversations" data-harivan-pierre-conversations="1" data-path="{{$file.Name}}" hidden>
+												{{range $section := $file.Sections}}{{range $line := $section.Lines}}{{range $conv := $line.Conversations}}
+													<div class="harivan-pierre-conversation-item"
+														data-conversation-id="{{(index $conv 0).ID}}"
+														data-line="{{if $line.RightIdx}}{{$line.RightIdx}}{{else}}{{$line.LeftIdx}}{{end}}"
+														data-side="{{if $line.RightIdx}}additions{{else}}deletions{{end}}">
+														{{template "repo/diff/conversation" dict "root" $ "comments" $conv}}
+													</div>
+												{{end}}{{end}}{{end}}
+											</div>
+										{{end}}
 									{{else}}
 										<table class="chroma" data-new-comment-url="{{$.Issue.Link}}/files/reviews/new_comment" data-path="{{$file.Name}}">
 											{{if $.IsSplitStyle}}
@@ -238,11 +250,9 @@
 											{{end}}
 										</table>
 									{{end}}
-								</div>
-								{{if and $usePierreDiff $pierrePullContext}}
-									<div class="harivan-pierre-file-comments" data-harivan-pierre-file-comments="1" data-path="{{$file.Name}}" data-name-hash="{{$file.NameHash}}"></div>
 								{{end}}
-								{{if $showFileViewToggle}}
+							</div>
+							{{if $showFileViewToggle}}
 								{{/* for image or CSV, it can have a horizontal scroll bar, there won't be review comment context menu (position absolute) which would be clipped by "overflow" */}}
 								<div id="diff-rendered-{{$file.NameHash}}" class="file-body file-code {{if $.IsSplitStyle}}code-diff-split{{else}}code-diff-unified{{end}} tw-overflow-x-scroll">
 									<table class="chroma tw-w-full">
@@ -268,6 +278,7 @@
 				{{end}}
 			</div>
 		{{end}}
+		</div>
 	</div>
 
 	{{if and (not $.Repository.IsArchived) (not .DiffNotAvailable)}}

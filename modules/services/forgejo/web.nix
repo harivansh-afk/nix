@@ -1,4 +1,5 @@
 {
+  lib,
   pkgs,
   ...
 }:
@@ -13,7 +14,7 @@ let
     pname = "harivan-forgejo-web-frontend";
     version = "0.0.0";
     src = ./frontend;
-    npmDepsHash = "sha256-StwGQh7wbwhF8hC/Pqb7ROKyCGK3Rc6fXQYQ6JmOlZM=";
+    npmDepsHash = "sha256-q0qBatC/+nZuk2GtQE4ht3kK1cIRn4Lz1CAAM3SYSas=";
     installPhase = ''
       runHook preInstall
       mkdir -p $out/js
@@ -36,8 +37,7 @@ let
     }
 
     substituteInPlace $out/custom/header.tmpl \
-      --replace-fail __HARIVAN_FORGEJO_CSS_VERSION__ "$(version_for ${assets}/css/harivan-forgejo.css)" \
-      --replace-fail __HARIVAN_FORGEJO_PIERRE_PRELOAD_VERSION__ "$(version_for ${frontend}/js/pierre-preload.js)"
+      --replace-fail __HARIVAN_FORGEJO_CSS_VERSION__ "$(version_for ${assets}/css/harivan-forgejo.css)"
 
     substituteInPlace $out/custom/footer.tmpl \
       --replace-fail __HARIVAN_FORGEJO_JS_VERSION__ "$(version_for ${frontend}/js/harivan-forgejo.js)"

@@ -6,6 +6,15 @@ let
       echo "password=$(cat /run/secrets/forgejo-token.env)"
     fi
   '';
+
+  ixForgejoCredentialHelper = pkgs.writeShellScript "git-credential-ix-forgejo" ''
+    if [ "$1" = "get" ] && [ -r /run/secrets/forgejo-ix.env ]; then
+      set -a
+      . /run/secrets/forgejo-ix.env
+      echo "username=harivansh-afk"
+      echo "password=$FORGEJO_IX_TOKEN"
+    fi
+  '';
 in
 {
   programs.git = {
@@ -92,6 +101,11 @@ in
 
       "credential \"https://git.harivan.sh\"" = {
         helper = "!${forgejoCredentialHelper}";
+        username = "harivansh-afk";
+      };
+
+      "credential \"https://git.ix.dev\"" = {
+        helper = "!${ixForgejoCredentialHelper}";
         username = "harivansh-afk";
       };
 

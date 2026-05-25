@@ -32,6 +32,7 @@
     "mgrep.env" = { };
     "gws.env" = { };
     "mxbai.env" = { };
+    "forgejo-ix.env" = { };
   };
 
   hosts.spark = {

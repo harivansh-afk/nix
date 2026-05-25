@@ -14,9 +14,8 @@ let
   homeBin = pkgs.runCommand "symphony-home-bin" { } ''
     mkdir -p $out/bin
     ln -s /home/${username}/.local/share/npm/bin/codex $out/bin/codex
-    ln -s /home/${username}/.local/share/npm/bin/gt $out/bin/gt
-    ln -s /home/${username}/.local/share/npm/bin/graphite $out/bin/graphite
   '';
+  forgejoSshKey = config.sops.secrets."symphony-forgejo-ssh-key".path;
 
   # Auto-deploy: poll indexable-inc/symphony main every 10 minutes and
   # advance the local checkout if origin/main moves. Mirrors the
@@ -82,6 +81,7 @@ let
     pkgs.openssh
     pkgs.python3
     pkgs.ripgrep
+    pkgs.tea
     pkgs.util-linux
     pkgs.zsh
     pkgs.mgrep
@@ -112,6 +112,10 @@ in
       SYMPHONY_IX_REPO = ixRepoDir;
       SYMPHONY_PORT = toString port;
       PLAYBOOK_CODEX_BASE_URL = "https://spark-ix.tail368802.ts.net:8443";
+      FORGEJO_BASE_URL = "https://git.ix.dev";
+      FORGEJO_API_URL = "https://git.ix.dev/api/v1";
+      FORGEJO_LOGIN = "ix";
+      FORGEJO_GIT_SSH_COMMAND = "ssh -i ${forgejoSshKey} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new";
       # Enable the in-dashboard codex session viewer that landed in
       # indexable-inc/symphony#48. Without this set, /codex renders the
       # "viewer disabled" stub.
@@ -125,7 +129,7 @@ in
       WorkingDirectory = repoDir;
       EnvironmentFile = [
         config.sops.secrets."symphony.env".path
-        config.sops.secrets."graphite.env".path
+        config.sops.secrets."symphony-forgejo.env".path
         config.sops.secrets."mgrep.env".path
       ];
       Environment = "PATH=${path}";

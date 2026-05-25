@@ -92,6 +92,22 @@
       sopsFile = inputs.symphony + "/secrets/symphony.env";
     };
 
+    "symphony-forgejo-ssh-key" = {
+      owner = username;
+      group = "users";
+      mode = "0400";
+      restartUnits = [ "symphony.service" ];
+      sopsFile = inputs.symphony + "/secrets/symphony-forgejo-ssh-key";
+    };
+
+    "symphony-forgejo.env" = {
+      owner = username;
+      group = "users";
+      mode = "0400";
+      restartUnits = [ "symphony.service" ];
+      sopsFile = inputs.symphony + "/secrets/symphony-forgejo.env";
+    };
+
     "forgejo-smtp-password" = {
       owner = "git";
       group = "git";

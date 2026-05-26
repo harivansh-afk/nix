@@ -23,6 +23,7 @@
           git
           just
           nixfmt-tree
+          nix-output-monitor
           prettier
           pre-commit
           selene

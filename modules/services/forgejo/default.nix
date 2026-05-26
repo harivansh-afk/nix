@@ -16,6 +16,12 @@ let
   runnerTokenFile = config.sops.secrets."forgejo-runner-token".path;
   runnerCacheRoot = "/var/cache/forgejo-runner";
   forgejoOauthSources = {
+    github = {
+      provider = "github";
+      secretName = "forgejo-github-oauth.env";
+      clientIdVariable = "GITHUB_OAUTH_CLIENT_ID";
+      clientSecretVariable = "GITHUB_OAUTH_CLIENT_SECRET";
+    };
     google = {
       provider = "gplus";
       secretName = "forgejo-google-oauth.env";

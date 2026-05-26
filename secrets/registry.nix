@@ -132,6 +132,13 @@
       restartUnits = [ "forgejo.service" ];
     };
 
+    "forgejo-github-oauth.env" = {
+      owner = "git";
+      group = "git";
+      mode = "0400";
+      restartUnits = [ "forgejo.service" ];
+    };
+
     "forgejo-runner-token" = {
       owner = "gitea-runner";
       group = "gitea-runner";

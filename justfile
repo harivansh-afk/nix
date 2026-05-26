@@ -16,9 +16,9 @@ switch:
     set -euo pipefail
     case "$(uname -s)" in
       Darwin)
+        nix run nixpkgs#nix-output-monitor -- build --no-link .#darwinConfigurations.macbook.system
         sudo --set-home --preserve-env=PATH \
-          nix run .#darwin-rebuild -- switch --flake .#macbook --log-format internal-json -v 2>&1 \
-          | nix run nixpkgs#nix-output-monitor -- --json
+          nix run .#darwin-rebuild -- switch --flake .#macbook
         ;;
       Linux)
         nix run nixpkgs#nixos-rebuild -- switch \

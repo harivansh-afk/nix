@@ -109,7 +109,25 @@ in
       SYMPHONY_RUNTIME_DIR = "${stateDir}/runtime";
       SYMPHONY_WORKSPACE_ROOT = "${ixRepoDir}/.worktrees";
       SYMPHONY_LOGS_ROOT = "${stateDir}/log";
-      SYMPHONY_IX_REPO = ixRepoDir;
+
+      # indexable-inc/symphony#137 (OSS-prep) renamed SYMPHONY_IX_REPO to
+      # SYMPHONY_PRIMARY_REPO and moved the indexable workflow pack out of
+      # the symphony repo into indexable-inc/ix#3467 at ix/symphony-pack.
+      # Point both env vars at the live ix checkout this host already
+      # maintains for skill workspaces.
+      SYMPHONY_PRIMARY_REPO = ixRepoDir;
+      SYMPHONY_PACK_DIR = "${ixRepoDir}/symphony-pack";
+
+      # Bot identity, stats query, and Linear workspace slug used to be
+      # hardcoded in the symphony runtime. They moved to configuration in
+      # #137. Same values as before so existing playbook auto-merge gates
+      # and dashboard URLs keep matching.
+      SYMPHONY_BOT_USERNAME = "ix-playbook-agent[bot]";
+      SYMPHONY_BOT_EMAIL = "ix-playbook-agent[bot]@users.noreply.github.com";
+      SYMPHONY_GITHUB_APP_OWNER_REPO = "indexable-inc/ix";
+      SYMPHONY_GITHUB_STATS_QUERY = "repo:indexable-inc/ix is:pr author:app/ix-playbook-agent sort:created-desc";
+      LINEAR_WORKSPACE_SLUG = "indexable";
+
       SYMPHONY_PORT = toString port;
       PLAYBOOK_CODEX_BASE_URL = "https://spark-ix.tail368802.ts.net:8443";
       FORGEJO_BASE_URL = "https://git.ix.dev";
@@ -133,7 +151,24 @@ in
         config.sops.secrets."mgrep.env".path
       ];
       Environment = "PATH=${path}";
-      ExecStart = "${pkgs.nix}/bin/nix run ${repoDir} -- --i-understand-that-this-will-be-running-without-the-usual-guardrails";
+      # The encrypted symphony.env still exposes IX_PLAYBOOK_APP_*. #137
+      # renamed those to SYMPHONY_GITHUB_APP_*. Re-export at launch so the
+      # new runtime sees what it expects without forcing an emergency
+      # re-encryption of the sops file. Drop this shim once symphony.env
+      # is re-encrypted with the new key names (planned as part of the
+      # credential rotation that's queued anyway).
+      ExecStart = toString (
+        pkgs.writeShellScript "symphony-launch" ''
+          set -euo pipefail
+          if [ -n "''${IX_PLAYBOOK_APP_ID:-}" ]; then
+            export SYMPHONY_GITHUB_APP_ID="$IX_PLAYBOOK_APP_ID"
+          fi
+          if [ -n "''${IX_PLAYBOOK_APP_PRIVATE_KEY_BASE64:-}" ]; then
+            export SYMPHONY_GITHUB_APP_PRIVATE_KEY_BASE64="$IX_PLAYBOOK_APP_PRIVATE_KEY_BASE64"
+          fi
+          exec ${pkgs.nix}/bin/nix run ${repoDir} -- --i-understand-that-this-will-be-running-without-the-usual-guardrails
+        ''
+      );
       Restart = "on-failure";
       RestartSec = 10;
     };

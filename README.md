@@ -7,31 +7,24 @@
 Both are declared in one flake using [flake-parts](https://github.com/hercules-ci/flake-parts) and managed with [Determinate Nix](https://docs.determinate.systems/determinate-nix/)
 configs live in `dots/` and get symlinked into XDG paths
 
+NVIDIA kernel, drivers, and container support come from the upstream [nixos-dgx-spark](https://github.com/graham33/nixos-dgx-spark) module
+
+Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix) and [vaultwarden](https://github.com/dani-garcia/vaultwarden)
+
+[cozybox.nvim](https://git.harivan.sh/harivansh-afk/cozybox.nvim) provides the unified theme for everything
+
+### Spark
+
 Spark is a shared NixOS workstation
 
 Friends who want access get a user definition in `users` and per-user home-manager config under `hosts/spark/<name>`
 
-NVIDIA kernel, drivers, and container support come from the upstream [nixos-dgx-spark](https://github.com/graham33/nixos-dgx-spark) module
+`spark` resolves on the personal tailnet and is the normal SSH/mosh entry point. It runs two Tailscale identities:
 
-Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix)
+- `spark-ix` on the Indexable tailnet for shared service routing and Funnel/Serve
+- `spark` on the personal tailnet for admin SSH and personal access
 
-[cozybox.nvim](https://git.harivan.sh/harivansh-afk/cozybox.nvim) provides the unified theme across everything
-
-## Spark access
-
-Spark SSH is private tailnet-only. `spark` resolves on the personal tailnet and is the normal SSH entry point; the old Cloudflare Access SSH path is gone.
-
-Spark runs two Tailscale identities:
-
-- `spark-ix` on the Indexable tailnet for shared service routing and Funnel/Serve.
-- `spark` on the personal tailnet for admin SSH and personal access.
-
-```sh
-mosh spark
-ssh spark
-```
-
-Use `ssh spark-lan` only for direct LAN access at home.
+Use `ssh spark-lan` only for direct LAN access on shared network
 
 Spark local inference runs Pi against `llama.cpp` on `127.0.0.1:8080`
 

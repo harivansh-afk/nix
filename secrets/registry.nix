@@ -6,7 +6,8 @@
 # - `user.<name>`        : per-admin-user secrets. Decrypted on every host the
 #                          admin's SSH key is a sops recipient for (currently
 #                          both macbook and spark). Land at /run/secrets/<name>
-#                          and are auto-sourced into interactive zsh.
+#                          and are auto-sourced into interactive zsh unless
+#                          `exposeToShell = false`.
 #                          Defaults: owner = ${username}, mode = "0400".
 #
 # - `hosts.<host>.<name>`: host-bound secrets. Decrypted only on the named
@@ -34,6 +35,12 @@
     "mxbai.env" = { };
     "forgejo-ix.env" = {
       format = "dotenv";
+    };
+    # Raw token (not KEY=value). Consumed verbatim by home/tea.nix and
+    # home/git.nix, but must not be sourced by interactive shells.
+    "forgejo-token.env" = {
+      exposeToShell = false;
+      sopsFile = ./hosts/spark/forgejo-token.env;
     };
   };
 

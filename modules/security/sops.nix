@@ -22,24 +22,30 @@ let
 
   userSecrets = lib.mapAttrs (
     name: cfg:
+    let
+      secretCfg = builtins.removeAttrs cfg [ "exposeToShell" ];
+    in
     {
       sopsFile = ../../secrets/user + "/${name}";
       format = "binary";
       owner = username;
       mode = "0400";
     }
-    // cfg
+    // secretCfg
   ) registry.user;
 
   hostRegistry = registry.hosts.${hostname} or { };
 
   hostSecrets = lib.mapAttrs (
     name: cfg:
+    let
+      secretCfg = builtins.removeAttrs cfg [ "exposeToShell" ];
+    in
     {
       sopsFile = ../../secrets/hosts + "/${hostname}/${name}";
       format = "binary";
     }
-    // cfg
+    // secretCfg
   ) hostRegistry;
 in
 {

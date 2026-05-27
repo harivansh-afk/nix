@@ -172,6 +172,10 @@ in
           _codex_trusted low "$@"
         }
 
+        com() {
+          _codex_trusted medium "$@"
+        }
+
         coh() {
           _codex_trusted xhigh "$@"
         }

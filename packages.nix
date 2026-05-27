@@ -1,5 +1,6 @@
 {
   inputs,
+  lib,
   pkgs,
   ...
 }:
@@ -11,33 +12,36 @@ let
 
 in
 {
-  core = with pkgs; [
-    ast-grep
-    bitwarden-cli
-    curl
-    elixir
-    fd
-    gnupg
-    gcc
-    go_1_26
-    jujutsu
-    jq
-    just
-    nodejs_24
-    nushell
-    pnpm
-    pkg-config
-    python3
-    ranger
-    ripgrep
-    rsync
-    rust-analyzer
-    rustup
-    tree
-    uv
-    wget
-    zoxide
-  ];
+  core =
+    (with pkgs; [
+      ast-grep
+      bitwarden-cli
+      curl
+      elixir
+      fd
+      gnupg
+      go_1_26
+      jujutsu
+      jq
+      just
+      nodejs_24
+      nushell
+      pnpm
+      pkg-config
+      python3
+      ranger
+      ripgrep
+      rsync
+      rust-analyzer
+      rustup
+      tree
+      uv
+      wget
+      zoxide
+    ])
+    ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+      pkgs.gcc
+    ];
 
   extras =
     (with pkgs; [

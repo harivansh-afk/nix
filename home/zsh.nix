@@ -14,7 +14,8 @@ let
   # function signature matches modules/security/sops.nix's caller and
   # we do not have to maintain two import styles.
   userSecretRegistry = (import ../secrets/registry.nix { inherit username inputs; }).user;
-  userSecretNames = builtins.attrNames userSecretRegistry;
+  shellSecretRegistry = lib.filterAttrs (_: cfg: cfg.exposeToShell or true) userSecretRegistry;
+  userSecretNames = builtins.attrNames shellSecretRegistry;
   loadUserSecrets = lib.concatMapStringsSep "\n" (name: ''
     if [[ -r /run/secrets/${name} ]]; then
       set -a; source /run/secrets/${name}; set +a

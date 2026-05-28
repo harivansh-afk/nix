@@ -9,7 +9,11 @@ let
   claudeSettings = jsonFormat.generate "claude-settings.json" {
     "$schema" = "https://json.schemastore.org/claude-code-settings.json";
     env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
-    model = "opus[1m]";
+    model = "claude-opus-4-8[1m]";
+    # Stay on the classic renderer; the v2.1.110+ fullscreen TUI breaks
+    # native scrollback / Cmd+f / tmux copy-mode. Override with /tui fullscreen
+    # if you want to opt in for a session.
+    tui = "default";
     permissions.defaultMode = "bypassPermissions";
     includeCoAuthoredBy = false;
     autoCompactEnabled = true;

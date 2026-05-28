@@ -42,8 +42,8 @@ in
       ca = "cursor-agent";
       agent-claude = "cursor-agent --model=claude-opus-4-7 --force";
       agent-codex = "cursor-agent --model=gpt-5.4-xhigh-fast --force";
-      cc = "claude --model 'claude-opus-4-7[1m]' --system-prompt \"$CLAUDE_SYS_PROMPT\"";
-      ccf = "claude --model 'claude-opus-4-6[1m]' --settings '{\"fastMode\":true}'";
+      cc = "claude --model 'claude-opus-4-8[1m]' --system-prompt \"$CLAUDE_SYS_PROMPT\"";
+      ccf = "claude --model 'claude-opus-4-8[1m]' --settings '{\"fastMode\":true}'";
       ch = "claude-handoff";
       cl = "clear";
       gc = "git commit";
@@ -65,7 +65,6 @@ in
       if [[ -f "$HOME/.cargo/env" ]]; then
         . "$HOME/.cargo/env"
       fi
-      export CLAUDE_CODE_ENABLE_OPUS_4_7_FAST_MODE=1
       export NODE_NO_WARNINGS=1
     ''
     + lib.optionalString hostConfig.isDarwin ''

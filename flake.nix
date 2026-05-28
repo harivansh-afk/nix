@@ -64,10 +64,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    devin-cli = {
-      url = "github:charliemeyer2000/devin-cli-overlay";
-    };
-
     codex-cli = {
       url = "github:sadjow/codex-cli-nix";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -20,13 +20,11 @@
     ../../modules/services/inference.nix
     ../../modules/services/mosh.nix
     ../../modules/services/playbook.nix
-    ../../modules/services/symphony.nix
     ../../modules/services/vaultwarden.nix
     ../../modules/services/website.nix
     ./hardware.nix
     ./networking.nix
     ./pi.nix
-    ./tailscale-serve.nix
     ./barrett/system.nix
     ./users.nix
   ]

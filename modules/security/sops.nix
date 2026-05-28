@@ -8,17 +8,12 @@
   config,
   hostConfig,
   hostname,
-  inputs,
   lib,
   username,
   ...
 }:
 let
-  # Pass `inputs` so registry entries can override `sopsFile` to point
-  # at an encrypted file shipped by another flake (e.g. inputs.symphony
-  # for symphony.env). The merge in mapAttrs below already lets a
-  # registry entry override any default we set per-secret.
-  registry = import ../../secrets/registry.nix { inherit username inputs; };
+  registry = import ../../secrets/registry.nix { inherit username; };
 
   userSecrets = lib.mapAttrs (
     name: cfg:

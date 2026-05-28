@@ -989,8 +989,7 @@
         "openspec": "openspec",
         "pi-mono": "pi-mono",
         "pierrejo": "pierrejo",
-        "sops-nix": "sops-nix",
-        "symphony": "symphony"
+        "sops-nix": "sops-nix"
       }
     },
     "sops-nix": {
@@ -1010,22 +1009,6 @@
       "original": {
         "owner": "Mic92",
         "repo": "sops-nix",
-        "type": "github"
-      }
-    },
-    "symphony": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1779691158,
-        "narHash": "sha256-oNS7dnm8arJK9P/ZQWn7vY42My7UlHRVCbmOuzC2tXo=",
-        "owner": "indexable-inc",
-        "repo": "symphony",
-        "rev": "4294a35df747d8d999e2c619efac4d1e4da55f88",
-        "type": "github"
-      },
-      "original": {
-        "owner": "indexable-inc",
-        "repo": "symphony",
         "type": "github"
       }
     },

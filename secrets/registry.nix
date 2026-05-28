@@ -25,7 +25,7 @@
 #      .sops.yaml will pick the right recipient set automatically.
 #   2. Add a one-line entry here.
 #   3. Consume via config.sops.secrets."<name>".path.
-{ username, inputs }:
+{ username }:
 {
   user = {
     "linear.env" = { };
@@ -85,37 +85,6 @@
       group = "vaultwarden";
       mode = "0400";
       restartUnits = [ "vaultwarden.service" ];
-    };
-
-    # Owned by the symphony repo: the encrypted source lives at
-    # `secrets/symphony.env` in the symphony flake input so any host
-    # that pins symphony gets the env file colocated with the service
-    # definition. Overrides the default `sopsFile = secrets/hosts/spark/
-    # symphony.env` that modules/security/sops.nix would otherwise
-    # compute, and skips the legacy `secrets/hosts/spark/symphony.env`
-    # file that was deleted in this PR.
-    "symphony.env" = {
-      owner = username;
-      group = "users";
-      mode = "0400";
-      restartUnits = [ "symphony.service" ];
-      sopsFile = inputs.symphony + "/secrets/symphony.env";
-    };
-
-    "symphony-forgejo-ssh-key" = {
-      owner = username;
-      group = "users";
-      mode = "0400";
-      restartUnits = [ "symphony.service" ];
-      sopsFile = inputs.symphony + "/secrets/symphony-forgejo-ssh-key";
-    };
-
-    "symphony-forgejo.env" = {
-      owner = username;
-      group = "users";
-      mode = "0400";
-      restartUnits = [ "symphony.service" ];
-      sopsFile = inputs.symphony + "/secrets/symphony-forgejo.env";
     };
 
     "forgejo-smtp-password" = {

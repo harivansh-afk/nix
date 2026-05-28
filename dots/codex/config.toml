@@ -72,9 +72,6 @@ network_access = true
 [projects."/home/rathi/Documents/Git/indexable/ix"]
 trust_level = "trusted"
 
-[projects."/home/rathi/Documents/Git/indexable/symphony"]
-trust_level = "trusted"
-
 [notice]
 hide_rate_limit_model_nudge = true
 

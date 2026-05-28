@@ -1,6 +1,5 @@
 {
   config,
-  inputs,
   lib,
   pkgs,
   hostConfig,
@@ -9,11 +8,7 @@
   ...
 }:
 let
-  # zsh.nix only consumes the `user.` bucket of the registry, which has
-  # no flake-input-backed entries today. We still pass `inputs` so the
-  # function signature matches modules/security/sops.nix's caller and
-  # we do not have to maintain two import styles.
-  userSecretRegistry = (import ../secrets/registry.nix { inherit username inputs; }).user;
+  userSecretRegistry = (import ../secrets/registry.nix { inherit username; }).user;
   shellSecretRegistry = lib.filterAttrs (_: cfg: cfg.exposeToShell or true) userSecretRegistry;
   userSecretNames = builtins.attrNames shellSecretRegistry;
   loadUserSecrets = lib.concatMapStringsSep "\n" (name: ''

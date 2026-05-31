@@ -47,7 +47,6 @@
       "karabiner-elements"
       "raycast"
       "riptide-beta"
-      "wispr-flow"
     ];
   };
 }

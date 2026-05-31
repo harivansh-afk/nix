@@ -10,7 +10,6 @@ let
     "Ghostty"
     "Karabiner-Elements"
     "Tailscale"
-    "Wispr Flow"
   ];
 in
 {

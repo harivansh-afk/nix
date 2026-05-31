@@ -161,20 +161,20 @@ let
       --steel-150: #e1d5a8;
       --steel-100: #ebdbb2;
 
-      /* surface / structure (cozybox.nvim Normal #181818, CursorLine #1e1e1e) */
-      --color-body:               #181818;
-      --color-box-body:           #181818;
-      --color-box-body-highlight: #1e1e1e;
-      --color-box-header:         #141414;
-      --color-header-wrapper:     #141414;
-      --color-footer:             #141414;
-      --color-nav-bg:             #141414;
+      /* surface / structure (cozybox.nvim Normal #101010, CursorLine #161616) */
+      --color-body:               #101010;
+      --color-box-body:           #101010;
+      --color-box-body-highlight: #161616;
+      --color-box-header:         #0c0c0c;
+      --color-header-wrapper:     #0c0c0c;
+      --color-footer:             #0c0c0c;
+      --color-nav-bg:             #0c0c0c;
       --color-nav-hover-bg:       #2a2a2a;
-      --color-secondary-nav-bg:   #141414;
-      --color-card:               #1e1e1e;
-      --color-menu:               #141414;
-      --color-button:             #141414;
-      --color-hover:              #1e1e1e;
+      --color-secondary-nav-bg:   #0c0c0c;
+      --color-card:               #161616;
+      --color-menu:               #0c0c0c;
+      --color-button:             #0c0c0c;
+      --color-hover:              #161616;
       --color-active:             #2a2a2a;
       --color-timeline:           #504945;
 
@@ -189,7 +189,7 @@ let
 
       /* secondary */
       --color-secondary:           #504945;
-      --color-secondary-bg:        #1e1e1e;
+      --color-secondary-bg:        #161616;
       --color-secondary-dark-1:    #504945;
       --color-secondary-dark-2:    #665c54;
       --color-secondary-light-1:   #2a2a2a;
@@ -207,7 +207,7 @@ let
       --color-secondary-alpha-90:  #504945e6;
 
       /* inputs */
-      --color-input-background:   #141414;
+      --color-input-background:   #0c0c0c;
       --color-input-text:         #ebdbb2;
       --color-input-border:       #504945;
       --color-input-border-hover: #665c54;
@@ -282,11 +282,11 @@ let
       /* console palette (actions runner / job log box) - neutral, no blue */
       --color-console-fg:          #ebdbb2;
       --color-console-fg-subtle:   #928374;
-      --color-console-bg:          #141414;
+      --color-console-bg:          #0c0c0c;
       --color-console-border:      #3c3836;
       --color-console-hover-bg:    #ffffff0d;
       --color-console-active-bg:   #504945;
-      --color-console-menu-bg:     #1e1e1e;
+      --color-console-menu-bg:     #161616;
       --color-console-menu-border: #504945;
 
       /* info banner backdrop - neutralize the upstream blue */
@@ -294,8 +294,8 @@ let
       --color-info-bg:     #232425;
       --color-info-text:   #ebdbb2;
 
-      --color-code-bg:                 #141414;
-      --color-markup-code-block:       #141414;
+      --color-code-bg:                 #0c0c0c;
+      --color-markup-code-block:       #0c0c0c;
       --color-markup-code-inline:      #232425;
       --color-markup-table-row:        #ffffff06;
       /* diff bgs from cozybox.nvim DiffAdd/Change/Delete */

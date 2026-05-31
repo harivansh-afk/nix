@@ -88,12 +88,12 @@ let
 
   themes = {
     dark = {
-      background = "#181818";
-      surface = "#1e1e1e";
+      background = "#101010";
+      surface = "#161616";
       selectionBackground = "#504945";
       selectionForeground = "#ebdbb2";
       cursorColor = "#ddc7a1";
-      cursorText = "#181818";
+      cursorText = "#101010";
       foreground = "#ebdbb2";
       text = "#d4be98";
       mutedText = "#7c6f64";

@@ -10,7 +10,7 @@ let
     font-family = Berkeley Mono
     font-codepoint-map = U+f101-U+f25c=nonicons
     background-opacity = 1
-    font-size = 16.5
+    font-size = 16
     window-padding-y = 0
     window-padding-x = 0
     window-padding-color = extend

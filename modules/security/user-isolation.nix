@@ -15,11 +15,4 @@
     MemoryMax = "32G";
     CPUQuota = "800%";
   };
-
-  systemd.slices."user-1002".sliceConfig = {
-    # advait
-    MemoryHigh = "24G";
-    MemoryMax = "32G";
-    CPUQuota = "800%";
-  };
 }

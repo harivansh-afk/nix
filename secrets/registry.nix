@@ -28,6 +28,7 @@
 { username }:
 {
   user = {
+    "antithesis.env" = { };
     "linear.env" = { };
     "graphite.env" = { };
     "mgrep.env" = { };

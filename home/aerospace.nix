@@ -122,6 +122,11 @@
         alt-slash = "layout tiles horizontal vertical";
         alt-comma = "layout accordion horizontal vertical";
 
+        ctrl-alt-h = "join-with left";
+        ctrl-alt-j = "join-with down";
+        ctrl-alt-k = "join-with up";
+        ctrl-alt-l = "join-with right";
+
         alt-f = "fullscreen";
 
         alt-shift-f = "layout floating tiling";

@@ -40,7 +40,9 @@ in
       ".env.*.local"
       ".vscode/"
       ".idea/"
-      ".claude/"
+      # Track committed .claude content (agents, hooks, settings.json) across all
+      # repos; only the per-machine local override stays out of git.
+      ".claude/settings.local.json"
       "CLAUDE.md"
       "node_modules/"
       "__pycache__/"

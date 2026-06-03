@@ -19,7 +19,6 @@
     ./k9s.nix
     ./lazygit.nix
     ./nvim.nix
-    ./openwhispr.nix
     ./prompt.nix
     ./scripts.nix
     ./security.nix

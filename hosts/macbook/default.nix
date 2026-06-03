@@ -47,6 +47,7 @@
       "karabiner-elements"
       "raycast"
       "riptide-beta"
+      "voiceink"
     ];
   };
 }

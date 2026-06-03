@@ -24,6 +24,9 @@ let
   #
   #   parakeet-tdt-0.6b-v3      latest, multilingual (set LANGUAGE=en for English)
   #   parakeet-unified-en-0.6b  English-only, slightly higher accuracy
+  # PANEL_START_POSITION accepts: bottom-right | center | bottom-left.
+  # FLOATING_ICON_AUTO_HIDE=true hides the floating icon when not dictating, so
+  # it is not parked on screen all the time.
   envText = ''
     # Managed by nix (home/openwhispr.nix). Edits are overwritten on rebuild.
     LOCAL_TRANSCRIPTION_PROVIDER=parakeet
@@ -32,6 +35,8 @@ let
     UI_LANGUAGE=en
     DICTATION_KEY=GLOBE
     ACTIVATION_MODE=push
+    FLOATING_ICON_AUTO_HIDE=true
+    PANEL_START_POSITION=bottom-left
   '';
   envSrc = pkgs.writeText "openwhispr-env" envText;
 

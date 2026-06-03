@@ -25,6 +25,10 @@ let
     pkgs.uv
     pkgs.ffmpeg
     pkgs.coreutils
+    # transformers' Parakeet path JIT-compiles Triton CUDA kernels at first
+    # inference, which needs a host C compiler and binutils at runtime.
+    pkgs.gcc
+    pkgs.binutils
   ];
 
   # Bump REQ_VERSION to force a venv reinstall after changing deps.
@@ -65,6 +69,8 @@ in
       LD_LIBRARY_PATH = "/run/opengl-driver/lib:${runtimeLibs}";
       # triton resolves libcuda here instead of calling /sbin/ldconfig.
       TRITON_LIBCUDA_PATH = "/run/opengl-driver/lib";
+      # Deterministic C compiler for Triton's runtime kernel build.
+      CC = "${pkgs.gcc}/bin/gcc";
       HF_HOME = "${stateDir}/hf";
       PARAKEET_MODEL_ID = modelId;
       PATH = lib.mkForce "${runtimeBins}";

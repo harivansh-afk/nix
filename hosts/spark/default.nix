@@ -19,6 +19,7 @@
     ../../modules/services/forgejo
     ../../modules/services/inference.nix
     ../../modules/services/mosh.nix
+    ../../modules/services/parakeet.nix
     ../../modules/services/playbook.nix
     ../../modules/services/vaultwarden.nix
     ../../modules/services/website.nix

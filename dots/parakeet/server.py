@@ -1,6 +1,6 @@
-import os, subprocess, numpy as np, torch
-from fastapi import FastAPI, UploadFile, Form
-from fastapi.responses import JSONResponse, PlainTextResponse
+import os, json, time, subprocess, numpy as np, torch
+from fastapi import FastAPI, UploadFile, Form, Request
+from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 from transformers import AutoModel, AutoProcessor
 
 MODEL_ID = os.environ.get("PARAKEET_MODEL_ID", "nvidia/parakeet-tdt-0.6b-v3")
@@ -37,3 +37,33 @@ async def tr(file: UploadFile, response_format: str = Form(default="json"), mode
     text = transcribe(decode(await file.read()))
     if response_format == "text": return PlainTextResponse(text)
     return JSONResponse({"text": text})
+
+@app.post("/v1/chat/completions")
+async def chat(req: Request):
+    # No-op "cleanup": clients (e.g. OpenWhispr text cleanup) POST the transcript
+    # as the user message expecting a polished version back. This is an ASR box,
+    # not an LLM, so return the transcript unchanged instead of 404ing.
+    body = await req.json()
+    msgs = body.get("messages") or []
+    content = ""
+    for m in reversed(msgs):
+        if m.get("role") == "user":
+            content = m.get("content") or ""
+            break
+    mdl = body.get("model") or MODEL_ID
+    created = int(time.time())
+    if body.get("stream"):
+        def gen():
+            chunk = {"id": "chatcmpl-noop", "object": "chat.completion.chunk", "created": created,
+                     "model": mdl, "choices": [{"index": 0, "delta": {"role": "assistant", "content": content}, "finish_reason": None}]}
+            yield f"data: {json.dumps(chunk)}\n\n"
+            done = {"id": "chatcmpl-noop", "object": "chat.completion.chunk", "created": created,
+                    "model": mdl, "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]}
+            yield f"data: {json.dumps(done)}\n\n"
+            yield "data: [DONE]\n\n"
+        return StreamingResponse(gen(), media_type="text/event-stream")
+    return JSONResponse({
+        "id": "chatcmpl-noop", "object": "chat.completion", "created": created, "model": mdl,
+        "choices": [{"index": 0, "message": {"role": "assistant", "content": content}, "finish_reason": "stop"}],
+        "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+    })

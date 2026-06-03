@@ -28,6 +28,10 @@ def transcribe(audio: np.ndarray) -> str:
 app = FastAPI()
 @app.get("/health")
 def health(): return {"ok": True, "model": MODEL_ID}
+@app.get("/v1/models")
+def models():
+    # OpenAI-compatible model list (clients probe this to populate the picker).
+    return {"object": "list", "data": [{"id": MODEL_ID, "object": "model", "owned_by": "parakeet"}]}
 @app.post("/v1/audio/transcriptions")
 async def tr(file: UploadFile, response_format: str = Form(default="json"), model: str = Form(default=MODEL_ID)):
     text = transcribe(decode(await file.read()))

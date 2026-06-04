@@ -20,19 +20,48 @@ repo; it is read from `CLOUDFLARE_API_TOKEN` at runtime.
   `cloudflare_dns_record` resources generated from `records.nix`.
 - `state/terraform.tfstate` - committed state.
 
-## Token
+## Token (SOP)
 
-The Cloudflare provider reads `CLOUDFLARE_API_TOKEN`.
+The Cloudflare provider reads `CLOUDFLARE_API_TOKEN`. The `cloudflare-dns`
+runner resolves it automatically, in this order:
 
-- Backfill and verification (dump, import, plan) only need a **read-only**
-  token: `Zone:Read` + `DNS:Read`, scoped to `harivan.sh`. A read-only token
-  cannot modify the zone, so the entire alignment phase is safe by
-  construction.
-- Applying changes needs `DNS:Edit` (and `Zone:Read`).
+1. `CLOUDFLARE_API_TOKEN` from the environment (one-off / CI override).
+2. The sops secret at `/run/secrets/cloudflare-api-token` (the normal path).
+
+So `just dns-plan` works with no manual `export` once the secret is in sops
+and the host has been switched. If neither source is present the runner exits
+with an explicit message instead of a confusing provider error.
+
+### Token scopes
+
+- `dns-plan` (and the one-time backfill) only need a **read-only** token:
+  `Zone:Read` + `DNS:Read`, scoped to `harivan.sh`. It cannot modify the zone.
+- `dns-apply` needs an **edit** token: `DNS:Edit` + `Zone:Read`. Use one edit
+  token for both and you never think about it again.
+
+### Set or rotate the token (the SOP)
+
+The token lives in sops (`secrets/user/cloudflare-api-token`, user bucket, so
+it decrypts on both macbook and spark). To set or rotate it:
 
 ```
-export CLOUDFLARE_API_TOKEN="$(cat ~/cf-token)"
+# 1. Mint a token in the Cloudflare dashboard (My Profile -> API Tokens).
+#    For full plan+apply: DNS:Edit + Zone:Read, scoped to harivan.sh.
+# 2. Store it (replaces the existing value):
+just sops-edit secrets/user/cloudflare-api-token
+# 3. Apply so it lands at /run/secrets/cloudflare-api-token:
+just switch          # on the host you run dns from
+# 4. Verify:
+just dns-plan        # no manual export needed
 ```
+
+The token never touches the Nix store or git in plaintext; sops keeps it
+encrypted at rest and the runner reads the decrypted copy from `/run/secrets`
+at runtime.
+
+> The value currently committed is a read-only backfill token that was once
+> pasted in chat. Rotate it (steps above) to an edit-capable token before the
+> first `dns-apply`, and revoke the old one in the Cloudflare dashboard.
 
 ## Backfill (one-time, aligning Nix with the live zone)
 

@@ -75,7 +75,6 @@ lib/
 system/
   common.nix           Shared nix settings, overlays, base packages
   packages.nix         Extra packages + fonts
-  buck2.nix            Pinned buck2 binary derivation
 home/
   default.nix          Import hub for all home-manager modules
   common.nix           Platform-conditional imports (darwin: ghostty/aerospace/karabiner/helium)

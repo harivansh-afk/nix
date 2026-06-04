@@ -32,7 +32,8 @@ in
   services.llama-cpp = {
     enable = true;
     host = "127.0.0.1";
-    port = 8080;
+    # Keep inference off well-known/high-value ports (no 8080); loopback only.
+    port = 18080;
     package = llamaCpp;
     extraFlags = [
       "-m"

@@ -2,7 +2,7 @@
   "providers": {
     "nemotron": {
       "name": "llama.cpp Nemotron",
-      "baseUrl": "http://127.0.0.1:8080/v1",
+      "baseUrl": "http://127.0.0.1:18080/v1",
       "apiKey": "none",
       "api": "openai-completions",
       "authHeader": false,
@@ -26,36 +26,6 @@
             "cacheWrite": 0
           },
           "contextWindow": 32768,
-          "maxTokens": 32768
-        }
-      ]
-    },
-    "qwen": {
-      "name": "llama.cpp Qwen",
-      "baseUrl": "http://127.0.0.1:8081/v1",
-      "apiKey": "none",
-      "api": "openai-completions",
-      "authHeader": false,
-      "compat": {
-        "supportsStore": false,
-        "supportsDeveloperRole": false,
-        "supportsReasoningEffort": false,
-        "supportsStrictMode": false,
-        "maxTokensField": "max_tokens"
-      },
-      "models": [
-        {
-          "id": "qwen3.6-27b",
-          "name": "Qwen3.6 27B UD Q6_K_XL (llama.cpp)",
-          "reasoning": false,
-          "input": ["text"],
-          "cost": {
-            "input": 0,
-            "output": 0,
-            "cacheRead": 0,
-            "cacheWrite": 0
-          },
-          "contextWindow": 131072,
           "maxTokens": 32768
         }
       ]

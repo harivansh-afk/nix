@@ -46,6 +46,17 @@ switch-spark:
       -v 2>&1 \
       | nix run nixpkgs#nix-output-monitor -- --json
 
+# --- dns (cloudflare) ---
+
+dns-init:
+    nix run .#cloudflare-dns -- init
+
+dns-plan:
+    nix run .#cloudflare-dns -- plan
+
+dns-apply:
+    nix run .#cloudflare-dns -- apply
+
 # --- secrets ---
 
 sops-edit FILE:

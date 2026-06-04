@@ -68,6 +68,11 @@
       url = "github:sadjow/codex-cli-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    terranix = {
+      url = "github:terranix/terranix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -75,6 +80,7 @@
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         ./flake/args.nix
+        ./flake/cloudflare.nix
         ./flake/devshell.nix
         ./flake/hosts.nix
         ./flake/nixos.nix

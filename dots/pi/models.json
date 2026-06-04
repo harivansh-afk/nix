@@ -1,7 +1,7 @@
 {
   "providers": {
-    "step": {
-      "name": "llama.cpp Step",
+    "nemotron": {
+      "name": "llama.cpp Nemotron",
       "baseUrl": "http://127.0.0.1:8080/v1",
       "apiKey": "none",
       "api": "openai-completions",
@@ -15,9 +15,9 @@
       },
       "models": [
         {
-          "id": "step-3.5-flash-reap-121b",
-          "name": "Step 3.5 Flash REAP 121B A11B Q4_K_M (llama.cpp)",
-          "reasoning": false,
+          "id": "nemotron-3-super-120b",
+          "name": "Nemotron 3 Super 120B A12B UD-Q4_K_M (llama.cpp)",
+          "reasoning": true,
           "input": ["text"],
           "cost": {
             "input": 0,

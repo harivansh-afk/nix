@@ -8,6 +8,8 @@
 }:
 {
   imports = [
+    inputs.disko.nixosModules.disko
+    inputs.dgx-spark.nixosModules.dgx-spark
     ../../system/common.nix
     ../../system/packages.nix
     inputs.sops-nix.nixosModules.sops

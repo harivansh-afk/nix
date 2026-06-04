@@ -6,7 +6,7 @@
 }:
 let
   username = "rathi";
-  hosts = import ../lib/hosts.nix { inherit username; };
+  hosts = import ../inventory { inherit lib username; };
 
   mkPkgs =
     system:

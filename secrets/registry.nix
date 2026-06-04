@@ -43,6 +43,11 @@
       exposeToShell = false;
       sopsFile = ./hosts/spark/forgejo-token.env;
     };
+    # Raw Cloudflare API token. Consumed by the cloudflare-dns runner
+    # (flake/cloudflare.nix) from /run/secrets, never sourced into the shell.
+    "cloudflare-api-token" = {
+      exposeToShell = false;
+    };
   };
 
   hosts.spark = {

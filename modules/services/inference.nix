@@ -8,13 +8,21 @@ let
     pythonPackages.huggingface-hub
     pythonPackages.hf-transfer
   ]);
-  modelDir = "/var/lib/llama-cpp/models/step-3.5-flash-reap-121b";
-  modelFile = "Step-3.5-Flash-REAP-121B-A11B.Q4_K_M.gguf";
+  # Nemotron 3 Super (120B-A12B MoE). Ultra (550B) does not fit this box's
+  # 128 GB of unified memory; Super is the largest Nemotron 3 that does and is
+  # the variant NVIDIA officially ships a DGX Spark deployment guide for.
+  #
+  # Unsloth dynamic Q4_K_M: ~82 GB of weights split into three GGUF parts.
+  # llama.cpp loads the whole set from the first ("00001-of-00003") shard.
+  hfRepo = "unsloth/NVIDIA-Nemotron-3-Super-120B-A12B-GGUF";
+  quant = "UD-Q4_K_M";
+  modelDir = "/var/lib/llama-cpp/models/nemotron-3-super-120b";
+  modelFile = "${quant}/NVIDIA-Nemotron-3-Super-120B-A12B-${quant}-00001-of-00003.gguf";
   modelPath = "${modelDir}/${modelFile}";
-  downloadModel = pkgs.writeShellScript "download-step-3-5-flash-reap-121b-gguf" ''
+  downloadModel = pkgs.writeShellScript "download-nemotron-3-super-120b-gguf" ''
     set -euo pipefail
     if [ ! -s "${modelPath}" ]; then
-      ${huggingfaceCli}/bin/hf download mradermacher/Step-3.5-Flash-REAP-121B-A11B-GGUF --include "${modelFile}" --local-dir "${modelDir}"
+      ${huggingfaceCli}/bin/hf download ${hfRepo} --include "${quant}/*" --local-dir "${modelDir}"
     fi
   '';
 in
@@ -24,27 +32,28 @@ in
   services.llama-cpp = {
     enable = true;
     host = "127.0.0.1";
-    port = 8080;
+    # Keep inference off well-known/high-value ports (no 8080); loopback only.
+    port = 18080;
     package = llamaCpp;
     extraFlags = [
       "-m"
       modelPath
       "--alias"
-      "step-3.5-flash-reap-121b"
+      "nemotron-3-super-120b"
       "-c"
       "32768"
       "-ngl"
       "99"
       "--sleep-idle-seconds"
       "600"
+      # NVIDIA's universal recommendation for Nemotron 3 Super across reasoning,
+      # tool calling and chat: temperature 1.0, top-p 0.95.
       "--temp"
-      "0.7"
+      "1.0"
       "--top-p"
-      "0.8"
-      "--top-k"
-      "20"
-      "--presence-penalty"
-      "1.5"
+      "0.95"
+      # <think>/</think> are distinct tokens; keep them in the stream.
+      "--special"
     ];
   };
 
@@ -55,7 +64,7 @@ in
     "d /var/lib/llama-cpp/huggingface 0755 root root -"
   ];
 
-  systemd.services.llama-cpp-step-reap-download = {
+  systemd.services.llama-cpp-nemotron-download = {
     before = [ "llama-cpp.service" ];
     environment = {
       HF_HOME = "/var/lib/llama-cpp/huggingface";
@@ -68,8 +77,8 @@ in
   };
 
   systemd.services.llama-cpp = {
-    after = [ "llama-cpp-step-reap-download.service" ];
-    requires = [ "llama-cpp-step-reap-download.service" ];
+    after = [ "llama-cpp-nemotron-download.service" ];
+    requires = [ "llama-cpp-nemotron-download.service" ];
     serviceConfig = {
       OOMScoreAdjust = 1000;
     };

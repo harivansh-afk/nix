@@ -13,7 +13,15 @@ in
     listenAddresses = [ "127.0.0.1" ];
     extraConfig = ''
       root * ${serveDir}
-      file_server
+      handle /status-badge {
+        rewrite * /badge
+        reverse_proxy https://status.${domain} {
+          header_up Host status.${domain}
+        }
+      }
+      handle {
+        file_server
+      }
       handle_errors {
         @notFound expression {err.status_code} == 404
         rewrite @notFound /404.html

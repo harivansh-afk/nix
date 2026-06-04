@@ -34,6 +34,7 @@ Spark local inference runs Pi against `llama.cpp` on `127.0.0.1:8080`
 flake.nix          entrypoint - inputs and outputs
 flake/             host assembly, devshell, args
 lib/               host metadata, theme palette
+inventory/         typed host inventory via evalModules
 hosts/             per-host config (macbook/, spark/)
 users/             multi-user definitions for spark
 home/              home-manager modules, one file per tool
@@ -42,4 +43,5 @@ modules/           reusable NixOS modules (services, security)
 system/            shared system-level config and packages
 scripts/           runtime scripts wired via home/scripts.nix
 secrets/           sops-encrypted secrets per host
+terraform/         declarative Cloudflare DNS via terranix
 ```

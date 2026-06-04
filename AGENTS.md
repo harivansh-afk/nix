@@ -46,7 +46,7 @@ To add a Barrett-owned secret: drop the file at `secrets/spark/barrett-<name>`; 
 - `just fmt` runs `nix fmt` (nixfmt-tree).
 - For GitHub PR bodies with multiple lines, use `gh pr create/edit --body-file -` or a real temporary body file. Do not pass escaped `\\n` text through `--body`; it renders as literal backslash-n text. After creating or editing a PR, verify the rendered body with `gh pr view --json body` or the PR page before calling it done.
 - Install spark from scratch with `just spark-install user@host`.
-- The `tmp/` directory contains archived/reference configs - do not modify.
+- The `tmp/` directory is gitignored local scratch space. Nothing there is tracked or load-bearing.
 - Berkeley Mono is installed out-of-band. The flake only provides nerd-fonts symbol glyphs.
 - Ghostty is installed via Homebrew cask, not nixpkgs. home-manager owns only its config files.
 - Karabiner config is a directory symlink to `dots/karabiner/` so Karabiner can write freely.
@@ -99,18 +99,31 @@ hosts/
     rathi/default.nix  Home-manager for rathi on spark
     barrett/default.nix Home-manager for barrett on spark
 modules/
-  security/sops.nix    sops-nix setup, age key from SSH host key
+  security/
+    sops.nix           sops-nix setup, age key from SSH host key
+    user-isolation.nix Per-user cgroup memory caps for shared accounts on spark
   services/
     caddy.nix          Reverse proxy on loopback, loopbackVhost helper
     cloudflared.nix    Cloudflare tunnel to Caddy
     delta.nix          Delta todo app service
-    forgejo/           Forgejo server, cozybox themes, mirror manifest, Actions runner
-scripts/
-  forgejo-mirror/      reconcile.sh + github-ux.sh (manifest-driven, run on demand)
+    inference.nix      Local llama.cpp inference server (GPU)
+    mosh.nix           Mosh UDP server config
+    parakeet.nix       GPU speech-to-text server (parakeet.harivan.sh)
+    playbook.nix       Indexable Playbook UI service
     vaultwarden.nix    Vaultwarden password manager
+    website.nix        Static site for harivan.sh served via Caddy
+    forgejo/           Forgejo server, cozybox themes, mirror manifest, Actions runner
+inventory/
+  default.nix          Typed host inventory via evalModules
+  schema.nix           Host record schema
+  nodes/               Per-host records (macbook, spark)
+terraform/
+  cloudflare/          Declarative Cloudflare DNS for harivan.sh via terranix
 scripts/
   default.nix          Script builder (theme, ga, ghpr, iosrun, wallpaper-gen)
-  forgejo-mirror/      Mirror reconciliation against /etc/forgejo-mirror/manifest.json
+  bin/                 Script sources wired by default.nix
+  lib/                 Helpers (home-manager-backup, wallpaper-gen.py)
+  forgejo-mirror/      Mirror reconciliation against /etc/forgejo-mirror/manifest.json (run on demand)
 users/
   default.nix          User registry
   rathi.nix            SSH keys + groups for rathi

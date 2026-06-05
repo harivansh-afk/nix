@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   ...
 }:
 let
@@ -26,7 +27,8 @@ in
     after = [ "nss-lookup.target" ];
     wants = [ "nss-lookup.target" ];
     serviceConfig = {
-      Restart = "always";
+      # The upstream cloudflared module sets Restart = "on-failure"; force ours.
+      Restart = lib.mkForce "always";
       RestartSec = "15s";
     };
     startLimitIntervalSec = 0;

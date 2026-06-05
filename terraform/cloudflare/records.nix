@@ -39,12 +39,6 @@
       proxied = true;
       comment = "spark cloudflared tunnel";
     };
-    parakeet = {
-      name = "parakeet.harivan.sh";
-      type = "CNAME";
-      content = "64bce32c-6613-459c-bb68-262d73e1b78f.cfargotunnel.com";
-      proxied = true;
-    };
     status = {
       name = "status.harivan.sh";
       type = "CNAME";

@@ -2,12 +2,10 @@
   config,
   lib,
   pkgs,
-  loopbackVhost,
   ...
 }:
 let
   port = 6060;
-  domain = "parakeet.harivan.sh";
   modelId = "nvidia/parakeet-tdt-0.6b-v3";
   stateDir = "/var/lib/parakeet";
   venv = "${stateDir}/venv";
@@ -90,9 +88,24 @@ in
     };
   };
 
-  # Dictation clients reject plain-HTTP remote endpoints, so expose over HTTPS
-  # on the domain via the cloudflared tunnel -> Caddy (127.0.0.1:80) path that
-  # serves git.harivan.sh and friends. Needs a Cloudflare DNS record for
-  # parakeet.harivan.sh pointing at the tunnel.
-  services.caddy.virtualHosts."http://${domain}" = loopbackVhost port;
+  # Dictation clients reject plain-HTTP remote endpoints, so expose over HTTPS.
+  # The Cloudflare tunnel (parakeet.harivan.sh) hairpinned every request out to
+  # a CF edge PoP and back, which added too much latency for dictation. Serve
+  # directly over Tailscale HTTPS instead: a direct/LAN WireGuard path with a
+  # valid *.ts.net cert. Endpoint: https://spark-ix.tail368802.ts.net/
+  systemd.services.parakeet-tailscale-serve = {
+    description = "Expose parakeet over Tailscale HTTPS";
+    after = [
+      "parakeet.service"
+      "tailscaled.service"
+    ];
+    wants = [ "parakeet.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.tailscale}/bin/tailscale serve --bg ${toString port}";
+      ExecStop = "${pkgs.tailscale}/bin/tailscale serve reset";
+    };
+  };
 }

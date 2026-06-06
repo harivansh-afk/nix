@@ -41,6 +41,16 @@
     clang
   ];
 
+  # nh (Nix Helper) drives `just switch`/`switch-spark`; enable periodic GC via
+  # `nh clean` (keep last 5 generations and anything newer than 7 days).
+  programs.nh = {
+    enable = true;
+    clean = {
+      enable = true;
+      extraArgs = "--keep-since 7d --keep 5";
+    };
+  };
+
   system.configurationRevision = self.rev or self.dirtyRev or null;
 
   boot.specialFileSystems."/proc".options = [ "hidepid=invisible" ];

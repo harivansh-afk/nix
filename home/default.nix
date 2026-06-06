@@ -22,7 +22,6 @@
     ./prompt.nix
     ./scripts.nix
     ./security.nix
-    ./skills.nix
     ./ssh.nix
     ./tea.nix
     ./tmux.nix

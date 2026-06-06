@@ -67,6 +67,8 @@
       set -g set-clipboard on
       set -ag terminal-overrides ',*:Ms=\E]52;c;%p2%s\7'
 
+      bind x kill-pane
+
       bind h select-pane -L
       bind j select-pane -D
       bind k select-pane -U

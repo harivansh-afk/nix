@@ -84,7 +84,6 @@ home/
   tmux.nix             Tmux config with session-list statusline
   claude.nix           Claude Code binary + settings + commands
   codex.nix            Codex CLI + AGENTS.md
-  skills.nix           Global Claude skills auto-install
   scripts.nix          Theme activation + wallpaper seeding
   ...                  One file per tool (bat, fzf, eza, gh, k9s, ssh, etc.)
 hosts/

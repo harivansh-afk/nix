@@ -40,10 +40,17 @@ in
   programs.zsh.enable = true;
   environment.shells = [ pkgs.zsh ];
 
+  # nh (Nix Helper): friendlier rebuild wrapper that uses nix-output-monitor
+  # internally and shows an nvd package diff on every switch. The programs.nh
+  # module only exists on NixOS (configured in hosts/spark), so on Darwin we
+  # install the package directly.
   environment.systemPackages =
     packageSets.core
     ++ lib.optionals hostConfig.isLinux [
       pkgs.ghostty.terminfo
+    ]
+    ++ lib.optionals hostConfig.isDarwin [
+      pkgs.nh
     ];
 
   environment.variables = {

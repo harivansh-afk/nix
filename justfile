@@ -16,18 +16,10 @@ switch:
     set -euo pipefail
     case "$(uname -s)" in
       Darwin)
-        nix run nixpkgs#nix-output-monitor -- build --no-link .#darwinConfigurations.macbook.system
-        sudo --set-home --preserve-env=PATH \
-          nix run .#darwin-rebuild -- switch --flake .#macbook
+        nix run nixpkgs#nh -- darwin switch . -H macbook
         ;;
       Linux)
-        nix run nixpkgs#nixos-rebuild -- switch \
-          --flake .#spark \
-          --sudo \
-          --no-reexec \
-          --log-format internal-json \
-          -v 2>&1 \
-          | nix run nixpkgs#nix-output-monitor -- --json
+        nix run nixpkgs#nh -- os switch . -H spark
         ;;
       *)
         echo "Unsupported OS: $(uname -s)" >&2
@@ -36,15 +28,9 @@ switch:
     esac
 
 switch-spark:
-    nix run nixpkgs#nixos-rebuild -- switch \
-      --flake .#spark \
+    nix run nixpkgs#nh -- os switch . -H spark \
       --target-host rathi@spark \
-      --build-host rathi@spark \
-      --sudo \
-      --no-reexec \
-      --log-format internal-json \
-      -v 2>&1 \
-      | nix run nixpkgs#nix-output-monitor -- --json
+      --build-host rathi@spark
 
 # --- dns (cloudflare) ---
 

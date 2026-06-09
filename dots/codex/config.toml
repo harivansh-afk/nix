@@ -42,8 +42,14 @@ chronicle = true
 realtime_conversation = true
 remote_control = false
 
+# gpt-5.5 is not enabled for encrypted tool use, and multi_agent_v2 encrypts
+# the spawn_agent/send_message/followup_task `message` params unconditionally
+# (codex #26210), so the Responses API rejects every request with a 400
+# "spawn_agent declares encrypted parameters". enable_fanout above keeps
+# multi-agent v1 (unencrypted) sub-agents. Re-enable once gpt-5.5 supports
+# encrypted tool use. Verified by codex exec: v2 -> 400, v1 -> OK.
 [features.multi_agent_v2]
-enabled = true
+enabled = false
 max_concurrent_threads_per_session = 8
 
 [agents]

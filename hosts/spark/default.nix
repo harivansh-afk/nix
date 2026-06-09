@@ -37,6 +37,16 @@
 
   nixpkgs.config.cudaCapabilities = [ "12.1" ];
 
+  nix.settings = {
+    accept-flake-config = true;
+    experimental-features = [
+      "ca-derivations"
+      "fetch-tree"
+      "flakes"
+      "nix-command"
+    ];
+  };
+
   environment.systemPackages = with pkgs; [
     clang
   ];

@@ -44,6 +44,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    index = {
+      url = "github:indexable-inc/index";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     pierrejo = {
       url = "git+https://git.harivan.sh/harivansh-afk/pierrejo.git?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";

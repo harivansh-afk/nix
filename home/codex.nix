@@ -14,7 +14,21 @@ let
   codexConfigSource = ../dots/codex/config.toml;
   xattrName = "user.hari.codex-seed-source";
   coreutils = "${pkgs.coreutils}/bin";
-  attr = "${pkgs.attr}/bin";
+
+  # Extended-attribute tooling differs per platform: Linux uses the `attr`
+  # package (getfattr/setfattr), macOS ships its own BSD `xattr` at /usr/bin
+  # and has no `attr` package (it is Linux-only, so referencing pkgs.attr on
+  # darwin fails evaluation). Branch the read/write helpers accordingly.
+  readXattr =
+    if pkgs.stdenv.isDarwin then
+      ''/usr/bin/xattr -p "${xattrName}" "$target" 2>/dev/null''
+    else
+      ''${pkgs.attr}/bin/getfattr --only-values -n "${xattrName}" "$target" 2>/dev/null'';
+  writeXattr =
+    if pkgs.stdenv.isDarwin then
+      ''/usr/bin/xattr -w "${xattrName}" "$source" "$target"''
+    else
+      ''${pkgs.attr}/bin/setfattr -n "${xattrName}" -v "$source" "$target"'';
 in
 {
   home.file.".codex/AGENTS.md".source = ../dots/codex/AGENTS.md;
@@ -27,7 +41,7 @@ in
     ${coreutils}/mkdir -p "$HOME/.codex"
 
     if [ -e "$target" ] && [ ! -L "$target" ]; then
-      if xattr_value="$(${attr}/getfattr --only-values -n "${xattrName}" "$target" 2>&1)"; then
+      if xattr_value="$(${readXattr})"; then
         current="$xattr_value"
       fi
     fi
@@ -38,7 +52,7 @@ in
       ${coreutils}/cp --no-preserve=ownership "$source" "$tmp"
       ${coreutils}/chmod u+w "$tmp"
       ${coreutils}/mv "$tmp" "$target"
-      ${attr}/setfattr -n "${xattrName}" -v "$source" "$target"
+      ${writeXattr}
     fi
   '';
 }

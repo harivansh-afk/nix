@@ -17,6 +17,7 @@ let
     permissions.defaultMode = "bypassPermissions";
     includeCoAuthoredBy = false;
     autoCompactEnabled = true;
+    showThinkingSummaries = true;
     statusLine = {
       type = "command";
       command = "${config.home.homeDirectory}/.claude/statusline.sh";

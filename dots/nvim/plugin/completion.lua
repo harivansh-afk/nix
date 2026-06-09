@@ -78,13 +78,16 @@ vim.keymap.set("i", "<c-p>", function() return "<c-p>" end, { expr = true, desc 
 vim.keymap.set("i", "<c-s>", semantic_completion, { expr = true, desc = "semantic completion" })
 
 vim.keymap.set({ "i", "s" }, "<tab>", function()
-  if vim.fn.pumvisible() == 1 then return "<c-y>" end
+  if vim.fn.pumvisible() == 1 then
+    -- 'autocomplete' forces noselect, so nothing is selected when the menu
+    -- opens; select the first item before <c-y> can accept anything.
+    if vim.fn.complete_info({ "selected" }).selected == -1 then return "<c-n>" end
+    return "<c-y>"
+  end
   return snippet_jump(1) or "<tab>"
-end, { expr = true, desc = "accept completion or jump snippet" })
+end, { expr = true, desc = "select or accept completion, or jump snippet" })
 
-vim.keymap.set(
-  { "i", "s" },
-  "<s-tab>",
-  function() return snippet_jump(-1) or "<s-tab>" end,
-  { expr = true, desc = "jump snippet backward" }
-)
+vim.keymap.set({ "i", "s" }, "<s-tab>", function()
+  if vim.fn.pumvisible() == 1 then return "<c-p>" end
+  return snippet_jump(-1) or "<s-tab>"
+end, { expr = true, desc = "previous completion or jump snippet backward" })

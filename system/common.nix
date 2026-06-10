@@ -11,20 +11,9 @@ let
   homeDirectory = if hostConfig.isDarwin then "/Users/${username}" else "/home/${username}";
 in
 {
-  nix.settings = {
-    auto-optimise-store = true;
-    experimental-features = [
-      "nix-command"
-      "flakes"
-    ];
-    trusted-users = [
-      "root"
-      username
-    ];
-    use-xdg-base-directories = true;
-    max-jobs = "auto";
-    cores = 0;
-  };
+  # Shared with darwin's determinateNix.customSettings; see
+  # system/nix-settings.nix for why there are two consumers.
+  nix.settings = import ./nix-settings.nix username;
 
   nixpkgs.config.allowUnfree = true;
   nixpkgs.overlays =

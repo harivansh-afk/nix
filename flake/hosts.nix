@@ -32,20 +32,9 @@ let
 
           determinateNix = {
             enable = true;
-            customSettings = {
-              auto-optimise-store = true;
-              experimental-features = [
-                "nix-command"
-                "flakes"
-              ];
-              use-xdg-base-directories = true;
-              max-jobs = "auto";
-              cores = 0;
-              trusted-users = [
-                "root"
-                username
-              ];
-            };
+            # Same attrset spark uses for nix.settings; Determinate owns
+            # nix.conf on darwin, so it is fed in through customSettings.
+            customSettings = import ../system/nix-settings.nix username;
           };
         }
         (mkHomeManagerModule host)

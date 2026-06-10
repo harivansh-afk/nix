@@ -10,7 +10,7 @@ let
   inherit (config.xdg) configHome;
   inherit (config.xdg) stateHome;
   runnerEnvFile = "/run/secrets/barrett-forgejo-runner-token";
-  runnerUrl = "https://git.barrettruth.com";
+  runnerUrl = "https://forge.barrettruth.com";
   runnerPackages = with pkgs; [
     bash
     coreutils
@@ -111,11 +111,14 @@ let
         cd "$INSTANCE_DIR"
         LABELS_FILE="$INSTANCE_DIR/.labels"
         NAME_FILE="$INSTANCE_DIR/.name"
+        INSTANCE_FILE="$INSTANCE_DIR/.instance"
         LABELS_WANTED='${runnerLabelText}'
         NAME_WANTED='${name}'
+        INSTANCE_WANTED='${runnerUrl}'
         LABELS_CURRENT="$(cat "$LABELS_FILE" 2>/dev/null || printf '0')"
         NAME_CURRENT="$(cat "$NAME_FILE" 2>/dev/null || printf '0')"
-        if [ ! -e "$INSTANCE_DIR/.runner" ] || [ "$LABELS_WANTED" != "$LABELS_CURRENT" ] || [ "$NAME_WANTED" != "$NAME_CURRENT" ]; then
+        INSTANCE_CURRENT="$(cat "$INSTANCE_FILE" 2>/dev/null || printf '0')"
+        if [ ! -e "$INSTANCE_DIR/.runner" ] || [ "$LABELS_WANTED" != "$LABELS_CURRENT" ] || [ "$NAME_WANTED" != "$NAME_CURRENT" ] || [ "$INSTANCE_WANTED" != "$INSTANCE_CURRENT" ]; then
           rm -f "$INSTANCE_DIR/.runner"
           "$RUNNER_BIN" register --no-interactive \
             --instance ${lib.escapeShellArg runnerUrl} \
@@ -125,6 +128,7 @@ let
             --config "$CONFIG_FILE"
           printf '%s\n' "$LABELS_WANTED" > "$LABELS_FILE"
           printf '%s\n' "$NAME_WANTED" > "$NAME_FILE"
+          printf '%s\n' "$INSTANCE_WANTED" > "$INSTANCE_FILE"
         fi
       '';
       daemonScript = pkgs.writeShellScript "forgejo-runner-${name}-daemon" ''

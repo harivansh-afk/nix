@@ -11,8 +11,8 @@ let
   passwordHashFile = config.sops.secrets."user-password-hash".path;
 
   shellPackages = {
-    zsh = pkgs.zsh;
-    bash = pkgs.bash;
+    inherit (pkgs) zsh;
+    inherit (pkgs) bash;
   };
 in
 {
@@ -27,7 +27,7 @@ in
       {
         isNormalUser = true;
         shell = shellPackages.${user.shell};
-        extraGroups = user.extraGroups;
+        inherit (user) extraGroups;
         openssh.authorizedKeys.keys = user.sshKeys;
         homeMode = "0700";
       }

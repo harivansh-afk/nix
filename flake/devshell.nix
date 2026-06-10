@@ -10,11 +10,11 @@
       formatter = pkgs.nixfmt-tree;
 
       packages = {
-        home-manager = inputs.home-manager.packages.${system}.home-manager;
-        nixos-anywhere = inputs.nixos-anywhere.packages.${system}.nixos-anywhere;
+        inherit (inputs.home-manager.packages.${system}) home-manager;
+        inherit (inputs.nixos-anywhere.packages.${system}) nixos-anywhere;
       }
       // lib.optionalAttrs (lib.hasSuffix "darwin" system) {
-        darwin-rebuild = inputs.nix-darwin.packages.${system}.darwin-rebuild;
+        inherit (inputs.nix-darwin.packages.${system}) darwin-rebuild;
       };
 
       devShells.default = pkgs.mkShell {

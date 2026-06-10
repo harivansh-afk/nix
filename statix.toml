@@ -1,0 +1,8 @@
+# Statix lint config. Run `statix check .` (or `nix run nixpkgs#statix -- check .`).
+#
+# W20 repeated_keys is disabled deliberately: large modules here group options
+# by concern with section comments (e.g. modules/services/forgejo/default.nix
+# interleaves `services.*` / `systemd.*` / `users.*` blocks per feature).
+# Merging every repeated key into one attrset would trade that organization
+# for rule compliance. Re-enable if the house style changes.
+disabled = ["repeated_keys"]

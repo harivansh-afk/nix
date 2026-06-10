@@ -51,11 +51,11 @@ let
         view = viewPresets;
       };
       resolved = {
-        candidatePool = candidatePool;
+        inherit candidatePool;
         contours = {
           levels = densityPresets.${density};
         };
-        label = label;
+        inherit label;
         view = {
           tileConcurrency = 3;
           zoom = viewPresets.${view};
@@ -97,9 +97,9 @@ let
       foreground = "#ebdbb2";
       text = "#d4be98";
       mutedText = "#7c6f64";
-      blue = sharedPalette.blue;
-      green = sharedPalette.green;
-      purple = sharedPalette.purple;
+      inherit (sharedPalette) blue;
+      inherit (sharedPalette) green;
+      inherit (sharedPalette) purple;
       border = "#3c3836";
       palette = [
         "#1d2021"
@@ -131,9 +131,9 @@ let
       foreground = "#3c3836";
       text = "#3c3836";
       mutedText = "#665c54";
-      blue = sharedPalette.blue;
+      inherit (sharedPalette) blue;
       green = "#427b58";
-      purple = sharedPalette.purple;
+      inherit (sharedPalette) purple;
       border = "#000000";
       palette = [
         "#f9f5d7"
@@ -378,13 +378,13 @@ let
       };
       dark = {
         arg0 = sharedPalette.green;
-        aqua = sharedPalette.aqua;
-        purple = sharedPalette.purple;
+        inherit (sharedPalette) aqua;
+        inherit (sharedPalette) purple;
         yellow = "#d8a657";
         text = "#d4be98";
         comment = "#7c6f64";
         error = sharedPalette.red;
-        blue = sharedPalette.blue;
+        inherit (sharedPalette) blue;
       };
       c = if mode == "light" then light else dark;
       blueOrAqua = if mode == "light" then c.aqua else c.blue;

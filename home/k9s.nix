@@ -1,5 +1,4 @@
-{ ... }:
-{
+_: {
   programs.k9s = {
     enable = true;
     views."v1/pods".columns = [

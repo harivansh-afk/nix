@@ -1,4 +1,4 @@
-{ ... }:
+_:
 let
   extensions = {
     "ddkjiahejlhfcafbddmgiahcphecmpfh" = "uBlock Origin Lite";

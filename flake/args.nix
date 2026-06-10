@@ -17,7 +17,7 @@ let
 
   mkSpecialArgs = host: {
     inherit inputs self username;
-    hostname = host.hostname;
+    inherit (host) hostname;
     hostConfig = host;
   };
 

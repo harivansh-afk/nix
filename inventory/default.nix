@@ -17,7 +17,7 @@ let
     ];
   };
 
-  nodes = evaluated.config.nodes;
+  inherit (evaluated.config) nodes;
 
   invariants = lib.flatten (
     lib.mapAttrsToList (name: node: [

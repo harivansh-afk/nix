@@ -1,5 +1,4 @@
-{ ... }:
-{
+_: {
   # Per-user cgroup caps on spark for shared user accounts.
   #
   # systemd places each login session in user-<UID>.slice. Setting

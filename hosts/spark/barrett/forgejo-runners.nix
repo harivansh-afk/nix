@@ -6,9 +6,9 @@
 }:
 let
   homeDir = config.home.homeDirectory;
-  cacheHome = config.xdg.cacheHome;
-  configHome = config.xdg.configHome;
-  stateHome = config.xdg.stateHome;
+  inherit (config.xdg) cacheHome;
+  inherit (config.xdg) configHome;
+  inherit (config.xdg) stateHome;
   runnerEnvFile = "/run/secrets/barrett-forgejo-runner-token";
   runnerUrl = "https://git.barrettruth.com";
   runnerPackages = with pkgs; [

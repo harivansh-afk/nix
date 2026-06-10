@@ -33,7 +33,7 @@ in
     ]
     ++ lib.optionals hostConfig.isDarwin [
       (_final: _prev: {
-        nushell = inputs.nixpkgs-nushell.legacyPackages.${hostConfig.system}.nushell;
+        inherit (inputs.nixpkgs-nushell.legacyPackages.${hostConfig.system}) nushell;
       })
     ];
 

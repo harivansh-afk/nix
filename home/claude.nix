@@ -58,7 +58,8 @@ let
   };
 in
 {
-  home.file.".claude/CLAUDE.md".source = ../dots/claude/CLAUDE.md;
+  # ~/.claude/CLAUDE.md and ~/.claude/skills are owned by agent-context.nix,
+  # generated from dots/agent-context/sections.
   home.file.".claude/commands" = {
     source = ../dots/claude/commands;
     recursive = true;

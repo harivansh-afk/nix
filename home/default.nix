@@ -4,6 +4,7 @@
 
   imports = [
     ./common.nix
+    ./agent-context.nix
     ./bat.nix
     ./btop.nix
     ./claude.nix

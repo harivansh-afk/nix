@@ -31,8 +31,8 @@ let
       ''${pkgs.attr}/bin/setfattr -n "${xattrName}" -v "$source" "$target"'';
 in
 {
-  home.file.".codex/AGENTS.md".source = ../dots/codex/AGENTS.md;
-
+  # ~/.codex/AGENTS.md is owned by agent-context.nix, generated from
+  # dots/agent-context/sections (same always-on core as ~/.claude/CLAUDE.md).
   home.activation.seedCodexConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     target="$HOME/.codex/config.toml"
     source="${codexConfigSource}"

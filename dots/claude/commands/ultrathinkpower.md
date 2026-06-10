@@ -1,5 +1,5 @@
 ---
-description: Ultathink lol 
+description: Maximum-effort deep-thinking mode - question assumptions, plan before coding, iterate relentlessly. Use when the user invokes /ultrathinkpower on a hard or ambiguous problem.
 ---
 
 **ultrathink** — Take a deep breath. We’re not here to write code. We’re here to make a dent in the universe.

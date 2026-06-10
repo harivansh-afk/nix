@@ -1,0 +1,9 @@
+id: no-builtins-fetch
+valid:
+  - 'pkgs.fetchurl { url = u; hash = h; }'
+  - 'pkgs.fetchFromGitHub { owner = o; repo = r; rev = v; hash = h; }'
+invalid:
+  - 'builtins.fetchurl u'
+  - 'builtins.fetchTarball { url = u; sha256 = h; }'
+  - 'builtins.fetchGit { url = u; rev = v; }'
+  - 'builtins.fetchTree { type = "github"; owner = o; repo = r; }'

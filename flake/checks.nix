@@ -23,6 +23,12 @@
     in
     {
       checks = {
+        # House nix rules (sgconfig.yml / ast-grep/nix/rules). --error promotes
+        # warning-severity rules to gate failures. The companion test check
+        # proves every rule still flags its invalid fixtures and passes its
+        # valid ones, so a broken rule cannot silently stop matching.
+        ast-grep = lint "ast-grep" [ pkgs.ast-grep ] "ast-grep scan --error .";
+        ast-grep-test = lint "ast-grep-test" [ pkgs.ast-grep ] "ast-grep test --skip-snapshot-tests";
         statix = lint "statix" [ pkgs.statix ] "statix check .";
         deadnix = lint "deadnix" [ pkgs.deadnix ] ''
           deadnix --fail --exclude ./hosts/spark/hardware-configuration.nix -- .

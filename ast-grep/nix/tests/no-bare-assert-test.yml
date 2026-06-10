@@ -1,0 +1,8 @@
+id: no-bare-assert
+valid:
+  - 'assert lib.assertMsg cond "inventory: why"; x'
+  - 'assert lib.assertMsg (a == b) "module: a and b must match"; x'
+invalid:
+  - 'assert cond; x'
+  - 'assert a == b; x'
+  - 'assert lib.all (c: c) checks; x'

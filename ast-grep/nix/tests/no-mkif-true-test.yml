@@ -1,0 +1,9 @@
+id: no-mkif-true
+valid:
+  - 'lib.mkIf cond { services.foo.enable = true; }'
+  - 'mkIf config.services.foo.enable { x = 1; }'
+invalid:
+  - 'lib.mkIf true { x = 1; }'
+  - 'lib.mkIf false { x = 1; }'
+  - 'mkIf true { x = 1; }'
+  - 'mkIf false { x = 1; }'

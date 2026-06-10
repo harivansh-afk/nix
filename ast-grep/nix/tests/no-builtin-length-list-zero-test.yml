@@ -1,0 +1,11 @@
+id: no-builtin-length-list-zero
+valid:
+  - 'xs == [ ]'
+  - 'xs != [ ]'
+  - 'builtins.length xs == 3'
+  - 'builtins.length xs >= 2'
+invalid:
+  - 'builtins.length xs == 0'
+  - 'builtins.length xs > 0'
+  - 'length xs == 0'
+  - 'length xs > 0'

@@ -1,0 +1,21 @@
+id: no-bare-assert
+language: nix
+severity: warning
+message: "Bare `assert <cond>;` gives an opaque failure. Use `assert lib.assertMsg <cond> \"<why>\";` so the diagnostic names the invariant."
+note: |
+  WHY: When a bare `assert` fires, Nix prints the AST of the condition with no
+  context, which is uselessly cryptic for anyone downstream. `lib.assertMsg cond
+  msg` evaluates to `true` iff the cond holds and emits `msg` otherwise; combine it
+  with `assert` to both fail the eval and tell the operator what went wrong.
+  REPO: Use `assert lib.assertMsg <cond> "<area>: <why>";`.
+# inventory/default.nix forces a list of invariants that each already carry
+# their own lib.assertMsg (the assertMsg throw fires before the outer assert
+# could fail opaquely); the bare assert there is only the forcing point.
+ignores:
+  - "inventory/default.nix"
+rule:
+  kind: assert_expression
+  not:
+    has:
+      pattern: lib.assertMsg $$$ARGS
+      stopBy: end

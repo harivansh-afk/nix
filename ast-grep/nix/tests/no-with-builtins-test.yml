@@ -1,0 +1,7 @@
+id: no-with-builtins
+valid:
+  - 'builtins.map f xs'
+  - 'let inherit (builtins) map filter; in map f (filter g xs)'
+invalid:
+  - 'with builtins; map f xs'
+  - 'with builtins; { a = head xs; }'

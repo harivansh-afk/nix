@@ -1,0 +1,7 @@
+id: no-rec-attrset
+valid:
+  - 'let a = 1; in { inherit a; b = a; }'
+  - 'pkgs.stdenv.mkDerivation (finalAttrs: { pname = "x"; })'
+invalid:
+  - 'rec { a = 1; b = a; }'
+  - 'pkgs.stdenv.mkDerivation rec { pname = "x"; name = pname; }'

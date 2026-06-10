@@ -1,0 +1,11 @@
+# ast-grep project config. Rules are curated from indexable-inc/index's nix
+# rule suite (the subset that fits a system-config repo; the packaging-focused
+# rules there target derivation authorship this repo mostly does not do).
+#
+# Run locally:   ast-grep scan --error .
+# Rule self-test: ast-grep test --skip-snapshot-tests
+# Both run as flake checks (flake/checks.nix), so `nix flake check` gates them.
+ruleDirs:
+  - ./ast-grep/nix/rules
+testConfigs:
+  - testDir: ./ast-grep/nix/tests

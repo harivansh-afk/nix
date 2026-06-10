@@ -1,0 +1,7 @@
+id: no-builtins-current-system
+valid:
+  - 'pkgs.stdenv.hostPlatform.system'
+  - 'hostConfig.system'
+invalid:
+  - 'builtins.currentSystem'
+  - 'import nixpkgs { system = builtins.currentSystem; }'

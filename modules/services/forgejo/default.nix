@@ -565,7 +565,7 @@ let
     lts = false;
   }) { };
   forgejoPackage = pierreForgejo.mkForgejoWithPierre (
-    forgejoPackageBase.overrideAttrs (old: {
+    forgejoPackageBase.overrideAttrs (_: {
       patches = [
         "${pkgs.path}/pkgs/by-name/fo/forgejo/static-root-path.patch"
       ];

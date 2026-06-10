@@ -1,5 +1,4 @@
 {
-  lib,
   pierreForgejo,
   pkgs,
   ...

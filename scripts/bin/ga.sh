@@ -5,5 +5,5 @@ else
 fi
 
 if command -v critic >/dev/null 2>&1; then
-  ( critic review 2>/dev/null & )
+  (critic review 2>/dev/null &)
 fi

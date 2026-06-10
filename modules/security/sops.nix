@@ -5,7 +5,6 @@
 # sops-nix module (darwin vs nixos) is imported by each host config — this
 # file only needs to be platform-aware for the age key path.
 {
-  config,
   hostConfig,
   hostname,
   lib,

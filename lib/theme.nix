@@ -205,7 +205,6 @@ let
   renderPurePrompt =
     mode:
     let
-      theme = themes.${mode};
       c =
         if mode == "light" then
           {

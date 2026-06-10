@@ -94,7 +94,7 @@ function M.setup_integrations()
     callback = function(args)
       local bufnr = args.buf
       local name = vim.api.nvim_buf_get_name(bufnr)
-      if name:find("^fugitive://") then
+      if name:find "^fugitive://" then
         vim.schedule(function()
           if vim.api.nvim_buf_is_valid(bufnr) then
             vim.bo[bufnr].syntax = "fugitive"

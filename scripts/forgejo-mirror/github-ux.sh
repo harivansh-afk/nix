@@ -13,24 +13,36 @@ declare -a ONLY=()
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
-    --dry-run) DRY=1 ;;
-    --skip-metadata) DO_META=0 ;;
-    --skip-banner) DO_BANNER=0 ;;
-    --skip-redirect) DO_REDIRECT=0 ;;
-    --refresh-banner) FORCE_BANNER=1 ;;
-    --only) shift; ONLY+=("$1") ;;
-    -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
-    *) echo "unknown arg: $1" >&2; exit 2 ;;
+  --dry-run) DRY=1 ;;
+  --skip-metadata) DO_META=0 ;;
+  --skip-banner) DO_BANNER=0 ;;
+  --skip-redirect) DO_REDIRECT=0 ;;
+  --refresh-banner) FORCE_BANNER=1 ;;
+  --only)
+    shift
+    ONLY+=("$1")
+    ;;
+  -h | --help)
+    sed -n '2,30p' "$0"
+    exit 0
+    ;;
+  *)
+    echo "unknown arg: $1" >&2
+    exit 2
+    ;;
   esac
   shift
 done
 
-log()  { printf '%s %s\n' "[$(date +%H:%M:%S)]" "$*"; }
+log() { printf '%s %s\n' "[$(date +%H:%M:%S)]" "$*"; }
 warn() { printf '%s WARN  %s\n' "[$(date +%H:%M:%S)]" "$*" >&2; }
-die()  { printf '%s FATAL %s\n' "[$(date +%H:%M:%S)]" "$*" >&2; exit 1; }
+die() {
+  printf '%s FATAL %s\n' "[$(date +%H:%M:%S)]" "$*" >&2
+  exit 1
+}
 
 tea_api() { tea api --login "$TEA_LOGIN" "$@"; }
-gh_api()  { gh api "$@"; }
+gh_api() { gh api "$@"; }
 
 # Base64 helper for forgejo's content API (it wants raw base64, single-line).
 b64() {
@@ -45,7 +57,8 @@ b64() {
 # double quotes, control chars). Uses jq for correctness.
 json_str() { jq -Rs . <<<"$1"; }
 
-REDIRECT_WORKFLOW=$(cat <<'YAML'
+REDIRECT_WORKFLOW=$(
+  cat <<'YAML'
 name: Redirect PRs to Forgejo
 
 on:
@@ -130,8 +143,8 @@ put_forgejo_file() {
   b64content=$(printf '%s' "$content" | b64)
 
   local existing_sha
-  existing_sha=$(tea_api "/repos/$owner/$name/contents/$path" 2>/dev/null \
-    | jq -r '.sha // empty' || true)
+  existing_sha=$(tea_api "/repos/$owner/$name/contents/$path" 2>/dev/null |
+    jq -r '.sha // empty' || true)
 
   local body
   if [ -n "$existing_sha" ]; then
@@ -151,8 +164,8 @@ put_forgejo_file() {
   if [ "$DRY" = "1" ]; then
     return 0
   fi
-  printf '%s' "$body" \
-    | tea_api -X POST "/repos/$owner/$name/contents/$path" -H "Content-Type: application/json" --input - >/dev/null
+  printf '%s' "$body" |
+    tea_api -X POST "/repos/$owner/$name/contents/$path" -H "Content-Type: application/json" --input - >/dev/null
 }
 
 # True if file at path is byte-identical to provided content.
@@ -169,58 +182,61 @@ trigger_sync() {
     log "    DRY trigger push_mirrors-sync"
     return 0
   fi
-  tea_api -X POST "/repos/$owner/$name/push_mirrors-sync" >/dev/null \
-    || warn "    $owner/$name: push_mirrors-sync trigger failed"
+  tea_api -X POST "/repos/$owner/$name/push_mirrors-sync" >/dev/null ||
+    warn "    $owner/$name: push_mirrors-sync trigger failed"
 }
 
 apply_github_metadata() {
   local owner="$1" name="$2"
 
   local current
-  current=$(gh_api "/repos/$owner/$name" 2>/dev/null) \
-    || { warn "    gh api fetch failed; skipping metadata"; return 0; }
+  current=$(gh_api "/repos/$owner/$name" 2>/dev/null) ||
+    {
+      warn "    gh api fetch failed; skipping metadata"
+      return 0
+    }
 
   local archived has_issues has_wiki has_projects description homepage
-  archived=$(printf '%s' "$current"  | jq -r '.archived')
-  has_issues=$(printf '%s' "$current"| jq -r '.has_issues')
-  has_wiki=$(printf '%s' "$current"  | jq -r '.has_wiki')
-  has_projects=$(printf '%s' "$current"| jq -r '.has_projects')
-  description=$(printf '%s' "$current"| jq -r '.description // ""')
-  homepage=$(printf '%s' "$current"  | jq -r '.homepage // ""')
+  archived=$(printf '%s' "$current" | jq -r '.archived')
+  has_issues=$(printf '%s' "$current" | jq -r '.has_issues')
+  has_wiki=$(printf '%s' "$current" | jq -r '.has_wiki')
+  has_projects=$(printf '%s' "$current" | jq -r '.has_projects')
+  description=$(printf '%s' "$current" | jq -r '.description // ""')
+  homepage=$(printf '%s' "$current" | jq -r '.homepage // ""')
 
   local forgejo_url="https://$FORGEJO_HOST/$owner/$name"
   local desc_prefix="[mirror of $FORGEJO_HOST/$owner/$name]"
   local new_desc="$description"
   case "$description" in
-    "$desc_prefix"*) ;;                    # already prefixed
-    "")              new_desc="$desc_prefix" ;;
-    *)               new_desc="$desc_prefix $description" ;;
+  "$desc_prefix"*) ;; # already prefixed
+  "") new_desc="$desc_prefix" ;;
+  *) new_desc="$desc_prefix $description" ;;
   esac
 
   local needs_patch=0
   local -a patch_args=()
   if [ "$archived" = "true" ]; then
-    patch_args+=( -F "archived=false" )
+    patch_args+=(-F "archived=false")
     needs_patch=1
   fi
   if [ "$has_issues" = "true" ]; then
-    patch_args+=( -F "has_issues=false" )
+    patch_args+=(-F "has_issues=false")
     needs_patch=1
   fi
   if [ "$has_wiki" = "true" ]; then
-    patch_args+=( -F "has_wiki=false" )
+    patch_args+=(-F "has_wiki=false")
     needs_patch=1
   fi
   if [ "$has_projects" = "true" ]; then
-    patch_args+=( -F "has_projects=false" )
+    patch_args+=(-F "has_projects=false")
     needs_patch=1
   fi
   if [ "$homepage" != "$forgejo_url" ]; then
-    patch_args+=( -F "homepage=$forgejo_url" )
+    patch_args+=(-F "homepage=$forgejo_url")
     needs_patch=1
   fi
   if [ "$new_desc" != "$description" ]; then
-    patch_args+=( -F "description=$new_desc" )
+    patch_args+=(-F "description=$new_desc")
     needs_patch=1
   fi
 
@@ -233,14 +249,14 @@ apply_github_metadata() {
   if [ "$DRY" = "1" ]; then
     return 0
   fi
-  gh_api -X PATCH "/repos/$owner/$name" "${patch_args[@]}" >/dev/null \
-    || warn "    gh api PATCH failed"
+  gh_api -X PATCH "/repos/$owner/$name" "${patch_args[@]}" >/dev/null ||
+    warn "    gh api PATCH failed"
 }
 
 main() {
-  command -v jq   >/dev/null 2>&1 || die "missing jq"
-  command -v tea  >/dev/null 2>&1 || die "missing tea"
-  command -v gh   >/dev/null 2>&1 || die "missing gh"
+  command -v jq >/dev/null 2>&1 || die "missing jq"
+  command -v tea >/dev/null 2>&1 || die "missing tea"
+  command -v gh >/dev/null 2>&1 || die "missing gh"
   command -v base64 >/dev/null 2>&1 || die "missing base64"
 
   [ -r "$MANIFEST" ] || die "manifest not readable: $MANIFEST"
@@ -263,7 +279,8 @@ main() {
   while IFS= read -r path; do
     [ -z "$path" ] && continue
     local owner name
-    owner="${path%%/*}"; name="${path##*/}"
+    owner="${path%%/*}"
+    name="${path##*/}"
     log "$path"
 
     if [ "$DO_META" = "1" ]; then
@@ -285,7 +302,7 @@ main() {
 
     if [ "$DO_REDIRECT" = "1" ]; then
       if forgejo_file_equals "$owner" "$name" \
-          ".github/workflows/redirect-pr-to-forgejo.yaml" "$REDIRECT_WORKFLOW"; then
+        ".github/workflows/redirect-pr-to-forgejo.yaml" "$REDIRECT_WORKFLOW"; then
         log "    redirect workflow: unchanged"
       else
         put_forgejo_file "$owner" "$name" \
@@ -300,7 +317,7 @@ main() {
       trigger_sync "$owner" "$name"
       needs_sync=0
     fi
-  done <<< "$repos"
+  done <<<"$repos"
 
   log "done"
 }

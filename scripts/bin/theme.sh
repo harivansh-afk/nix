@@ -4,7 +4,7 @@ usage() {
 
 read_mode() {
   if [[ -f "@STATE_FILE@" ]]; then
-    mode=$(tr -d '[:space:]' < "@STATE_FILE@")
+    mode=$(tr -d '[:space:]' <"@STATE_FILE@")
     if [[ "$mode" == "dark" || "$mode" == "light" ]]; then
       echo "$mode"
       return
@@ -37,7 +37,7 @@ link_mode_assets() {
   mode="$THEME_MODE"
 
   mkdir -p "@STATE_DIR@" "@FZF_DIR@" "@GHOSTTY_DIR@" "@TMUX_DIR@" "@LAZYGIT_DIR@" "@GIT_THEME_DIR@" "@WALLPAPER_DIR@"
-  printf '%s\n' "$mode" > "@STATE_FILE@"
+  printf '%s\n' "$mode" >"@STATE_FILE@"
   ln -sfn "$THEME_FZF_TARGET" "@FZF_CURRENT_FILE@"
   ln -sfn "$THEME_GHOSTTY_TARGET" "@GHOSTTY_CURRENT_FILE@"
   ln -sfn "$THEME_TMUX_TARGET" "@TMUX_CURRENT_FILE@"
@@ -87,29 +87,29 @@ EOF
 mode="${1:-current}"
 
 case "$mode" in
-  dark|light)
-    ;;
-  toggle)
-    if [[ "$(read_mode)" == "dark" ]]; then
-      mode="light"
-    else
-      mode="dark"
-    fi
-    ;;
-  current)
-    read_mode
-    exit 0
-    ;;
-  gen)
-    wallpaper-gen
-    set_wallpaper
-    printf 'generated new wallpaper\n'
-    exit 0
-    ;;
-  *)
-    usage >&2
-    exit 1
-    ;;
+dark | light)
+  ;;
+toggle)
+  if [[ "$(read_mode)" == "dark" ]]; then
+    mode="light"
+  else
+    mode="dark"
+  fi
+  ;;
+current)
+  read_mode
+  exit 0
+  ;;
+gen)
+  wallpaper-gen
+  set_wallpaper
+  printf 'generated new wallpaper\n'
+  exit 0
+  ;;
+*)
+  usage >&2
+  exit 1
+  ;;
 esac
 
 link_mode_assets "$mode"

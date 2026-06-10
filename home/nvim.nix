@@ -8,7 +8,7 @@ let
   nvimConfig = lib.cleanSourceWith {
     src = ../dots/nvim;
     filter =
-      path: type:
+      path: _type:
       let
         baseName = builtins.baseNameOf path;
       in

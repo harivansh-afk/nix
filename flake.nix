@@ -117,6 +117,7 @@
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         ./flake/args.nix
+        ./flake/checks.nix
         ./flake/cloudflare.nix
         ./flake/devshell.nix
         ./flake/hosts.nix

@@ -1,0 +1,65 @@
+# Scheduled flake.lock bump as a reviewable PR (pattern borrowed from
+# indexable-inc/index). Weekly rather than hourly: this repo deploys spark
+# straight from main, so every merge is a system switch and lock bumps
+# should stay deliberate review events.
+#
+# The PR branch is force-pushed each run, so an unmerged bump PR is simply
+# refreshed in place instead of stacking up.
+name: update-flake-lock
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-flake-lock:
+    name: Update flake.lock
+    runs-on: native
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: nix flake update
+        run: nix flake update
+
+      - name: Push branch and open PR
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- flake.lock; then
+            echo "flake.lock already current"
+            exit 0
+          fi
+
+          git config user.name "forgejo-actions"
+          git config user.email "actions@noreply.harivan.sh"
+          git checkout -B update-flake-lock
+          git add flake.lock
+          git commit -m "chore: update flake.lock"
+          git push -f origin update-flake-lock
+
+          api="${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}"
+          auth="Authorization: token ${TOKEN}"
+
+          # One PR per branch: if a bump PR is already open the force-push
+          # above refreshed it and there is nothing else to do.
+          existing=$(curl -fsS -H "$auth" "$api/pulls?state=open" |
+            jq -r '.[] | select(.head.ref == "update-flake-lock") | .number' | head -1)
+          if [ -n "$existing" ]; then
+            echo "PR #$existing already open, refreshed by force-push"
+            exit 0
+          fi
+
+          jq -n '{
+            title: "chore: update flake.lock",
+            head: "update-flake-lock",
+            base: "main",
+            body: "Automated weekly `nix flake update`. Merging deploys spark, so check the quality run before merging."
+          }' | curl -fsS -X POST -H "$auth" -H "Content-Type: application/json" -d @- "$api/pulls"

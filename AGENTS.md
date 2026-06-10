@@ -108,7 +108,6 @@ modules/
     inference.nix      Local llama.cpp inference server (GPU)
     mosh.nix           Mosh UDP server config
     parakeet.nix       GPU speech-to-text server (parakeet.harivan.sh)
-    playbook.nix       Indexable Playbook UI service
     vaultwarden.nix    Vaultwarden password manager
     website.nix        Static site for harivan.sh served via Caddy
     forgejo/           Forgejo server, cozybox themes, mirror manifest, Actions runner

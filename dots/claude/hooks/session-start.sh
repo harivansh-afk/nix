@@ -3,6 +3,13 @@ set -e
 
 dir="${CLAUDE_PROJECT_DIR:-${CODEX_PROJECT_DIR:-$PWD}}"
 
+# A repo that ships its own session-start hook owns the banner. Running ours
+# too printed the host line and the 10-commit log twice in every such session
+# (ix does this); defer to the repo's hook.
+if [ -x "$dir/.claude/hooks/session-start.sh" ]; then
+  exit 0
+fi
+
 HOSTNAME=$(hostname -s)
 echo "You are running on host: $HOSTNAME. Run commands locally - do NOT ssh to this host."
 

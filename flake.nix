@@ -122,6 +122,7 @@
         ./flake/devshell.nix
         ./flake/hosts.nix
         ./flake/nixos.nix
+        ./flake/tests.nix
       ];
     };
 }

@@ -1,3 +1,7 @@
+## Work Mode
+
+Work silently; report only the final summary.
+
 ## Philosophy
 
 This codebase will outlive you. Every time you take a shortcut, someone else pays the price. Left unchecked, your shortcuts grow into the technical debt that slows the entire team down.

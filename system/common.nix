@@ -67,5 +67,11 @@ in
     [[hooks.PreToolUse.hooks]]
     type = "command"
     command = "$HOME/.claude/hooks/enforce-modern-tools.sh"
+
+    [[hooks.PreToolUse]]
+    matcher = "^Bash$"
+    [[hooks.PreToolUse.hooks]]
+    type = "command"
+    command = "$HOME/.claude/hooks/block-test-output-filtering.sh"
   '';
 }

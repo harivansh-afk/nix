@@ -43,17 +43,6 @@ let
           ];
         }
       ];
-      PreToolUse = [
-        {
-          matcher = "Bash";
-          hooks = [
-            {
-              type = "command";
-              command = hookCommand "enforce-modern-tools.sh";
-            }
-          ];
-        }
-      ];
     };
   };
 in
@@ -74,10 +63,6 @@ in
   };
   home.file.".claude/hooks/session-id.sh" = {
     source = ../dots/claude/hooks/session-id.sh;
-    executable = true;
-  };
-  home.file.".claude/hooks/enforce-modern-tools.sh" = {
-    source = ../dots/claude/hooks/enforce-modern-tools.sh;
     executable = true;
   };
 }

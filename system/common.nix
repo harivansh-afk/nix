@@ -61,11 +61,5 @@ in
     type = "command"
     command = "$HOME/.claude/hooks/session-id.sh"
     timeout = 5
-
-    [[hooks.PreToolUse]]
-    matcher = "^Bash$"
-    [[hooks.PreToolUse.hooks]]
-    type = "command"
-    command = "$HOME/.claude/hooks/enforce-modern-tools.sh"
   '';
 }

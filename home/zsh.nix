@@ -43,7 +43,7 @@ in
       agent-claude = "cursor-agent --model=claude-opus-4-7 --force";
       agent-codex = "cursor-agent --model=gpt-5.4-xhigh-fast --force";
       cc = "claude --model 'claude-fable-5' --system-prompt \"$CLAUDE_SYS_PROMPT\"";
-      ccf = "claude --model 'claude-fable-5' --system-prompt \"$CLAUDE_SYS_PROMPT\" --settings '{\"fastMode\":true}'";
+      ccf = "claude --model 'claude-opus-4-8' --system-prompt \"$CLAUDE_SYS_PROMPT\" --settings '{\"fastMode\":true}'";
       ch = "claude-handoff";
       cl = "clear";
       gc = "git commit";

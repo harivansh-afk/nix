@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# OSC 52 relay invoked by the copy-mode bindings in tmux.conf. Reads the
+# current tmux paste buffer and writes `\e]52;c;<base64>\a` directly to the
+# connected client's TTY. This is the path that makes mouse-drag and
+# double/triple-click selections land on the local system clipboard when
+# connected over mosh. Linked at ~/.local/bin/tmux-clip-relay.
+set -euo pipefail
+client_tty="$(tmux display-message -p '#{client_tty}')"
+[ -n "$client_tty" ] || exit 0
+data="$(tmux save-buffer - | base64 -w0)"
+printf '\033]52;c;%s\a' "$data" >"$client_tty"

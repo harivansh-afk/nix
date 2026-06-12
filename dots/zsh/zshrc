@@ -1,0 +1,194 @@
+# Main interactive zsh config. Live-edited: ~/.zshrc is a nix-store shim
+# that sources nix-store plugin paths and then this file, so changes here
+# apply on the next shell without a rebuild.
+
+# --- history ---
+HISTSIZE=50000
+SAVEHIST=50000
+HISTFILE="${XDG_STATE_HOME:-$HOME/.local/state}/zsh_history"
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_ALL_DUPS
+setopt HIST_IGNORE_SPACE
+setopt EXTENDED_HISTORY
+setopt APPEND_HISTORY
+
+# --- vi mode ---
+bindkey -v
+
+# --- completion ---
+autoload -U compinit && compinit -d "${XDG_STATE_HOME:-$HOME/.local/state}/zcompdump" -u
+zmodload zsh/complist
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-za-z}'
+
+# --- aliases ---
+alias ca="cursor-agent"
+alias agent-claude="cursor-agent --model=claude-opus-4-7 --force"
+alias agent-codex="cursor-agent --model=gpt-5.4-xhigh-fast --force"
+alias cc="claude --model 'claude-fable-5' --system-prompt \"$CLAUDE_SYS_PROMPT\""
+alias ccf="claude --model 'claude-opus-4-8' --system-prompt \"$CLAUDE_SYS_PROMPT\" --settings '{\"fastMode\":true}'"
+alias ch="claude-handoff"
+alias cl="clear"
+alias gc="git commit"
+alias gd="git diff"
+alias gk="git checkout"
+alias gp="git push"
+alias gpo="git pull origin"
+alias gs="git status"
+alias ld="lumen diff"
+alias lg="lazygit"
+alias nim="nvim ."
+alias nv="nvim ."
+alias vi="nvim"
+alias vim="nvim"
+alias vimdiff="nvim -d"
+alias ls="eza --icons=auto --git --group-directories-first --header"
+
+if [[ "$OSTYPE" == darwin* ]]; then
+  alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+fi
+
+# --- shell integrations (tools come from the system package set) ---
+eval "$(zoxide init zsh)"
+eval "$(direnv hook zsh)"
+export DIRENV_LOG_FORMAT=""
+if command -v fzf >/dev/null 2>&1; then
+  source <(fzf --zsh)
+fi
+
+# --- secrets ---
+if [[ -f ~/.config/secrets/shell.zsh ]]; then
+  source ~/.config/secrets/shell.zsh
+elif [[ -f ~/.secrets ]]; then
+  source ~/.secrets
+fi
+
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
+
+export BUN_INSTALL="$HOME/.bun"
+typeset -U path PATH
+path=(
+  "$HOME/.amp/bin"
+  "$BUN_INSTALL/bin"
+  "$HOME/.antigravity/antigravity/bin"
+  "$HOME/.opencode/bin"
+  "$(npm prefix -g 2>/dev/null)/bin"
+  "$HOME/.nix-profile/bin"
+  "/run/wrappers/bin"
+  "/etc/profiles/per-user/$USER/bin"
+  "/run/current-system/sw/bin"
+  "/nix/var/nix/profiles/default/bin"
+  $path
+)
+if [[ -d /opt/homebrew/bin ]]; then
+  path=(/opt/homebrew/bin /opt/homebrew/sbin $path)
+fi
+
+# --- theme plumbing ---
+# Mode files are nix-rendered (pure prompt zstyles, ZSH_HIGHLIGHT_STYLES,
+# BAT_THEME) and linked at ~/.config/zsh/themes/{dark,light}.zsh by system
+# activation. The `theme` script flips ~/.local/state/theme/current and the
+# precmd hooks below re-apply without restarting the shell.
+_codex_read_theme_mode() {
+  local mode_file="$HOME/.local/state/theme/current"
+  if [[ -f "$mode_file" ]]; then
+    local mode
+    mode=$(tr -d '[:space:]' <"$mode_file")
+    if [[ "$mode" == light || "$mode" == dark ]]; then
+      printf '%s' "$mode"
+      return
+    fi
+  fi
+  printf 'dark'
+}
+
+_codex_source_theme_file() {
+  local mode="$1"
+  local theme_file="$HOME/.config/zsh/themes/$mode.zsh"
+  [[ -f "$theme_file" ]] && source "$theme_file"
+}
+
+_codex_apply_highlight_styles() {
+  local mode="$(_codex_read_theme_mode)"
+  [[ "$mode" == "${_CODEX_LAST_HIGHLIGHT_THEME:-}" ]] && return
+
+  typeset -gA ZSH_HIGHLIGHT_STYLES
+  _codex_source_theme_file "$mode"
+  typeset -g _CODEX_LAST_HIGHLIGHT_THEME="$mode"
+}
+
+_codex_apply_bat_theme() {
+  local mode="$(_codex_read_theme_mode)"
+  if [[ "$mode" == light ]]; then
+    export BAT_THEME='gruvbox-light'
+  else
+    export BAT_THEME='gruvbox-dark'
+  fi
+}
+
+_codex_trust_target() {
+  local target
+  local common_dir
+  common_dir="$(command git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" && target="$(dirname "$common_dir")" || target="$PWD"
+  builtin cd -q "$target" 2>/dev/null && pwd -P || printf '%s\n' "$target"
+}
+
+_codex_trusted() {
+  local effort="$1"
+  shift
+  local target
+  target="$(_codex_trust_target)"
+  codex --model gpt-5.5 -c "model_reasoning_effort=$effort" -c "projects={\"$target\"={trust_level=\"trusted\"}}" --dangerously-bypass-approvals-and-sandbox "$@"
+}
+
+co() {
+  _codex_trusted low "$@"
+}
+
+com() {
+  _codex_trusted medium "$@"
+}
+
+coh() {
+  _codex_trusted xhigh "$@"
+}
+
+unalias ga 2>/dev/null
+
+git() {
+  command git "$@"
+  local exit_code=$?
+  case "$1" in
+    add | stage | reset | checkout)
+      if command -v critic >/dev/null 2>&1; then
+        (critic review 2>/dev/null &)
+      fi
+      ;;
+  esac
+  return $exit_code
+}
+
+autoload -Uz add-zle-hook-widget
+_codex_cursor() { printf '\e[%s q' "${1:-6}"; }
+_codex_cursor_select() { [[ "$KEYMAP" == vicmd ]] && _codex_cursor 2 || _codex_cursor 6; }
+_codex_cursor_beam() { _codex_cursor 6; }
+add-zle-hook-widget zle-keymap-select _codex_cursor_select
+add-zle-hook-widget zle-line-init _codex_cursor_beam
+add-zle-hook-widget zle-line-finish _codex_cursor_beam
+
+# --- prompt (pure) ---
+source "${DOTS_ZSH_DIR:-$HOME/Documents/Git/nix/dots/zsh}/prompt.zsh"
+
+precmd() {
+  _codex_apply_prompt_theme
+  _codex_apply_highlight_styles
+  _codex_apply_bat_theme
+  _codex_cursor_beam
+}
+preexec() { _codex_cursor_beam; }
+
+_codex_apply_prompt_theme
+_codex_apply_highlight_styles
+_codex_apply_bat_theme
+
+bindkey '^k' forward-char
+bindkey '^j' backward-char

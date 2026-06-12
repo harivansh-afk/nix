@@ -4,7 +4,6 @@
   lib,
   username,
   mkSpecialArgs,
-  mkHomeManagerModule,
   ...
 }:
 let
@@ -18,7 +17,6 @@ let
         { nixpkgs.hostPlatform = host.system; }
         inputs.determinate.darwinModules.default
         ../hosts/${host.name}
-        inputs.home-manager.darwinModules.home-manager
         inputs.nix-homebrew.darwinModules.nix-homebrew
         {
           users.users.${username}.home = host.homeDirectory;
@@ -37,7 +35,6 @@ let
             customSettings = import ../system/nix-settings.nix username;
           };
         }
-        (mkHomeManagerModule host)
       ];
     };
 in

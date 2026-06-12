@@ -27,13 +27,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Per-user config on both hosts, wired in via the platform module in
-    # flake/hosts.nix (darwin) and flake/nixos.nix (spark).
-    home-manager = {
-      url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # `gws` CLI, consumed in packages.nix extras.
     googleworkspace-cli = {
       url = "github:googleworkspace/cli";

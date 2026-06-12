@@ -1,7 +1,7 @@
 # secrets/registry.nix
 #
 # Single source of truth for every sops-nix secret in this flake.
-# Consumed by modules/security/sops.nix and home/zsh.nix.
+# Consumed by modules/security/sops.nix and modules/users/user-config.nix.
 #
 # - `user.<name>`        : per-admin-user secrets. Decrypted on every host the
 #                          admin's SSH key is a sops recipient for (currently

@@ -1,5 +1,12 @@
-{ config, ... }:
+# Theme palette and per-app renderers. Takes the user's home directory
+# instead of a home-manager config: every consumer (scripts/default.nix,
+# modules/users/*) passes the target user's homeDirectory explicitly, and
+# the XDG paths are derived from it (both platforms use the default
+# ~/.config and ~/.local/state locations).
+{ homeDirectory, ... }:
 let
+  configHome = "${homeDirectory}/.config";
+  stateHome = "${homeDirectory}/.local/state";
   defaultMode = "dark";
   sharedPalette = {
     red = "#ea6962";
@@ -63,27 +70,27 @@ let
       };
     };
   wallpapers = {
-    dir = "${config.home.homeDirectory}/Pictures/Screensavers";
-    dark = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper-dark.png";
-    light = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper-light.png";
-    current = "${config.home.homeDirectory}/Pictures/Screensavers/wallpaper.png";
+    dir = "${homeDirectory}/Pictures/Screensavers";
+    dark = "${homeDirectory}/Pictures/Screensavers/wallpaper-dark.png";
+    light = "${homeDirectory}/Pictures/Screensavers/wallpaper-light.png";
+    current = "${homeDirectory}/Pictures/Screensavers/wallpaper.png";
     staticDark = ./wallpapers/topography-dark.png;
     staticLight = ./wallpapers/topography-light.png;
     generation = wallpaperGeneration;
   };
   paths = {
-    stateDir = "${config.xdg.stateHome}/theme";
-    stateFile = "${config.xdg.stateHome}/theme/current";
-    fzfDir = "${config.xdg.configHome}/fzf/themes";
-    fzfCurrentFile = "${config.xdg.configHome}/fzf/themes/theme";
-    ghosttyDir = "${config.xdg.configHome}/ghostty/themes";
-    ghosttyCurrentFile = "${config.xdg.configHome}/ghostty/themes/cozybox-current";
-    tmuxDir = "${config.xdg.configHome}/tmux/theme";
-    tmuxCurrentFile = "${config.xdg.configHome}/tmux/theme/current.conf";
-    lazygitDir = "${config.xdg.configHome}/lazygit";
-    lazygitCurrentFile = "${config.xdg.configHome}/lazygit/config.yml";
-    gitDir = "${config.xdg.configHome}/git";
-    gitThemeCurrentFile = "${config.xdg.configHome}/git/theme.inc";
+    stateDir = "${stateHome}/theme";
+    stateFile = "${stateHome}/theme/current";
+    fzfDir = "${configHome}/fzf/themes";
+    fzfCurrentFile = "${configHome}/fzf/themes/theme";
+    ghosttyDir = "${configHome}/ghostty/themes";
+    ghosttyCurrentFile = "${configHome}/ghostty/themes/cozybox-current";
+    tmuxDir = "${configHome}/tmux/theme";
+    tmuxCurrentFile = "${configHome}/tmux/theme/current.conf";
+    lazygitDir = "${configHome}/lazygit";
+    lazygitCurrentFile = "${configHome}/lazygit/config.yml";
+    gitDir = "${configHome}/git";
+    gitThemeCurrentFile = "${configHome}/git/theme.inc";
   };
 
   themes = {

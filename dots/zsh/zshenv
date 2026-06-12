@@ -1,0 +1,12 @@
+# Environment for all zsh invocations (interactive and not). The nix-store
+# ~/.zshenv shim sources the generated session-vars file first, then this.
+
+if [[ -f "$HOME/.cargo/env" ]]; then
+  . "$HOME/.cargo/env"
+fi
+export NODE_NO_WARNINGS=1
+export MANPAGER="nvim +Man!"
+
+if [[ "$OSTYPE" == darwin* ]]; then
+  export GHOSTTY_RESOURCES_DIR="/Applications/Ghostty.app/Contents/Resources/ghostty"
+fi

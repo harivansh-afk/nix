@@ -14,14 +14,7 @@ let
       specialArgs = mkSpecialArgs host;
       modules = [
         { nixpkgs.hostPlatform = host.system; }
-        inputs.home-manager.nixosModules.home-manager
         ../hosts/${host.name}
-        {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.extraSpecialArgs = mkSpecialArgs host;
-          home-manager.backupCommand = "bash ${../scripts/lib/home-manager-backup.sh}";
-        }
       ];
     };
 in

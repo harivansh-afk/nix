@@ -12,6 +12,7 @@
     ../../system/packages.nix
     inputs.sops-nix.darwinModules.sops
     ../../modules/security/sops.nix
+    ../../modules/users/darwin.nix
     ./macos.nix
   ];
 

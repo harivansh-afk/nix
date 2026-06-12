@@ -1,7 +1,7 @@
 { ... }:
 {
   imports = [
-    ../../../home
+    ./system.nix
     ./forgejo-runners.nix
     ./spark-builds.nix
   ];

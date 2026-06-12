@@ -15,6 +15,7 @@
     inputs.sops-nix.nixosModules.sops
     ../../modules/security/sops.nix
     ../../modules/security/user-isolation.nix
+    ../../modules/users/nixos.nix
     ../../modules/services/caddy.nix
     ../../modules/services/cloudflared.nix
     ../../modules/services/delta.nix
@@ -27,7 +28,7 @@
     ./hardware.nix
     ./networking.nix
     ./pi.nix
-    ./barrett/system.nix
+    ./barrett
     ./users.nix
   ]
   ++ lib.optional (builtins.pathExists ./hardware-configuration.nix) ./hardware-configuration.nix;

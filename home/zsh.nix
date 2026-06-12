@@ -55,6 +55,7 @@ in
       ld = "lumen diff";
       lg = "lazygit";
       nim = "nvim .";
+      nv = "nvim .";
 
     }
     // lib.optionalAttrs hostConfig.isDarwin {

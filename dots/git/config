@@ -1,0 +1,76 @@
+# Main git config, linked at ~/.config/git/config. Live-edited.
+# Machine-generated companions in the same directory:
+#   credentials.inc - forgejo credential helpers (nix-store paths)
+#   theme.inc       - delta theme include flipped by the `theme` script
+
+[user]
+	name = Harivansh Rathi
+	email = rathiharivansh@gmail.com
+	signingKey = ~/.ssh/id_ed25519.pub
+
+[gpg]
+	format = ssh
+
+[commit]
+	gpgSign = true
+
+[tag]
+	gpgSign = true
+
+[advice]
+	detachedHead = false
+
+[core]
+	pager = diff-so-fancy | less --tabs=4 -RFX
+	editor = nvim
+	fsmonitor = true
+	excludesFile = ~/.config/git/ignore
+
+[feature]
+	manyFiles = true
+
+[interactive]
+	diffFilter = diff-so-fancy --patch
+
+[color]
+	ui = true
+
+[color "diff-highlight"]
+	oldNormal = red bold
+	oldHighlight = red bold 52
+	newNormal = green bold
+	newHighlight = green bold 22
+
+[color "diff"]
+	meta = 11
+	frag = magenta bold
+	func = 146 bold
+	commit = yellow bold
+	old = red bold
+	new = green bold
+	whitespace = red reverse
+
+[push]
+	autoSetupRemote = true
+
+[diff-so-fancy]
+	markEmptyLines = true
+	stripLeadingSymbols = true
+	useUnicodeRuler = true
+
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+
+[credential "https://github.com"]
+	helper = !gh auth git-credential
+
+[credential "https://gist.github.com"]
+	helper = !gh auth git-credential
+
+[include]
+	path = ~/.config/git/credentials.inc
+	path = ~/.config/git/theme.inc
+	path = ~/.config/git/delta-themes.inc

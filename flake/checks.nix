@@ -35,7 +35,12 @@
         '';
         # -i 2 matches the repo's two-space shell style; shfmt walks the
         # directories itself and only considers *.sh and shebanged files.
-        shfmt = lint "shfmt" [ pkgs.shfmt ] "shfmt -i 2 -d scripts dots";
+        # dots/zsh is excluded: shfmt cannot parse zsh syntax (the zsh
+        # dotfiles live there since the home-manager removal).
+        shfmt = lint "shfmt" [
+          pkgs.shfmt
+          pkgs.findutils
+        ] "shfmt -i 2 -d scripts $(find dots -mindepth 1 -maxdepth 1 ! -name zsh)";
         # Config lives in dots/nvim/.stylua.toml; stylua discovers it upward
         # from each file.
         stylua = lint "stylua" [ pkgs.stylua ] "stylua --check dots/nvim";

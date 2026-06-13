@@ -9,11 +9,11 @@ Two hosts, one flake:
 | `macbook` | nix-darwin | aarch64-darwin | Dev workstation |
 | `spark` | NixOS | aarch64-linux | NVIDIA DGX Spark server |
 
-Both are declared in `lib/hosts.nix` and assembled in `flake/hosts.nix` (darwin) and `flake/nixos.nix` (nixos). The `flake/args.nix` module wires shared args (`username`, `mkSpecialArgs`, `mkHomeManagerModule`) consumed by both host builders.
+Both are declared in `lib/hosts.nix` and assembled in `flake/hosts.nix` (darwin) and `flake/nixos.nix` (nixos). The `flake/args.nix` module wires shared args (`username`, `mkSpecialArgs`) consumed by both host builders.
 
 ### Host topology
 
-- `macbook`: nix-darwin + home-manager + Homebrew casks + Determinate Nix
+- `macbook`: nix-darwin + Homebrew casks + Determinate Nix
 - `spark`: NixOS + disko + sops-nix + dgx-spark upstream module + Caddy + cloudflared tunnel + Tailscale
 
 ### Service routing on spark
@@ -48,7 +48,8 @@ To add a Barrett-owned secret: drop the file at `secrets/spark/barrett-<name>`; 
 - Install spark from scratch with `just spark-install user@host`.
 - The `tmp/` directory is gitignored local scratch space. Nothing there is tracked or load-bearing.
 - Berkeley Mono is installed out-of-band. The flake only provides nerd-fonts symbol glyphs.
-- Ghostty is installed via Homebrew cask, not nixpkgs. home-manager owns only its config files.
+- There is no home-manager. Per-user config is `modules/users/user-config.nix`: plain dotfiles in `dots/` symlinked into the home directory by an activation script that runs as the user. The repo owner's links point at the live checkout (`~/Documents/Git/nix/dots`), so dotfile edits apply without a rebuild; other users get the nix-store copy. Configs that need store paths (zsh plugins, git credential helpers, theme renders) are store-generated shims that defer to the live dots file.
+- Ghostty is installed via Homebrew cask, not nixpkgs. The flake owns only its config files.
 - Karabiner config is a directory symlink to `dots/karabiner/` so Karabiner can write freely.
 - Cursor-agent, Claude, and Codex are curl-installed binaries. On NixOS they need nix-ld.
 - Devin config is seeded as a mutable copy since Devin rewrites it.
@@ -75,17 +76,6 @@ lib/
 system/
   common.nix           Shared nix settings, overlays, base packages
   packages.nix         Extra packages + fonts
-home/
-  default.nix          Import hub for all home-manager modules
-  common.nix           Platform-conditional imports (darwin: ghostty/aerospace/karabiner/helium)
-  zsh.nix              Shell config, aliases, PATH, theme hooks
-  prompt.nix           Pure prompt with dynamic dark/light theming
-  git.nix              Git config with diff-so-fancy
-  tmux.nix             Tmux config with session-list statusline
-  claude.nix           Claude Code binary + settings + commands
-  codex.nix            Codex CLI + AGENTS.md
-  scripts.nix          Theme activation + wallpaper seeding
-  ...                  One file per tool (bat, fzf, eza, gh, k9s, ssh, etc.)
 hosts/
   macbook/
     default.nix        Homebrew casks, user setup
@@ -95,9 +85,12 @@ hosts/
     hardware.nix       DGX Spark module + disko disk layout
     networking.nix     Wi-Fi (NetworkManager), Tailscale, firewall, zram
     users.nix          User accounts from users/ directory, SSH, sudo
-    rathi/default.nix  Home-manager for rathi on spark
-    barrett/default.nix Home-manager for barrett on spark
+    barrett/           Barrett's forgejo runners + spark-build slice (user units via activation)
 modules/
+  users/
+    user-config.nix    Shared per-user dotfile/symlink/package builder (no home-manager)
+    nixos.nix          NixOS adapter: every user in users/, owner gets live dots
+    darwin.nix         nix-darwin adapter: primary user, live dots
   security/
     sops.nix           sops-nix setup, age key from SSH host key
     user-isolation.nix Per-user cgroup memory caps for shared accounts on spark
@@ -120,7 +113,7 @@ terraform/
 scripts/
   default.nix          Script builder (theme, ga, ghpr, iosrun, wallpaper-gen)
   bin/                 Script sources wired by default.nix
-  lib/                 Helpers (home-manager-backup, wallpaper-gen.py)
+  lib/                 Helpers (wallpaper-gen.py)
   forgejo-mirror/      Mirror reconciliation against /etc/forgejo-mirror/manifest.json (run on demand)
 users/
   default.nix          User registry
@@ -151,8 +144,8 @@ The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A ru
 ## Adding a new user on spark
 
 1. Create `users/<name>.nix` with `sshKeys`, `shell`, and `extraGroups`.
-2. Create `hosts/spark/<name>/default.nix` for their home-manager config.
-3. The user is automatically picked up by `hosts/spark/users.nix`.
+2. The user is automatically picked up by `hosts/spark/users.nix` (account) and `modules/users/nixos.nix` (dotfiles, packages; symlinks point at the nix-store copy of `dots/`).
+3. For user-specific system config (services, slices), add a module under `hosts/spark/<name>/` and import it from `hosts/spark/default.nix`.
 
 ## Forgejo mirroring
 

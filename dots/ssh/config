@@ -1,0 +1,80 @@
+# SSH client config, linked at ~/.ssh/config. Live-edited.
+
+Host aurelius
+  HostName 100.71.160.102
+  User nixos
+  IdentityFile ~/.ssh/id_ed25519
+
+Host spark
+  HostName spark
+  HostKeyAlias spark
+  User rathi
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+  ForwardAgent yes
+  ControlMaster auto
+  ControlPath ~/.ssh/sockets/%r@%h:%p
+  ControlPersist 10m
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+
+Host spark-lan
+  HostName 192.168.0.6
+  HostKeyAlias spark
+  User rathi
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+  ForwardAgent yes
+  ControlMaster auto
+  ControlPath ~/.ssh/sockets/%r@%h:%p
+  ControlPersist 10m
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+
+Host hil-compute-1
+  HostName 15.204.111.75
+  AddKeysToAgent yes
+  ForwardAgent yes
+  IdentitiesOnly yes
+  Port 9999
+  User hari
+
+Host hil-compute-2
+  HostName 15.204.105.165
+  AddKeysToAgent yes
+  ForwardAgent yes
+  IdentitiesOnly yes
+  Port 9999
+  User hari
+
+Host hil-stor-1
+  HostName 15.204.106.118
+  AddKeysToAgent yes
+  ForwardAgent yes
+  IdentitiesOnly yes
+  Port 9999
+  User hari
+
+Host vin-compute-1
+  HostName 40.160.30.136
+  AddKeysToAgent yes
+  ForwardAgent yes
+  IdentitiesOnly yes
+  Port 9999
+  User hari
+
+Host vin-compute-2
+  HostName 40.160.64.85
+  AddKeysToAgent yes
+  ForwardAgent yes
+  IdentitiesOnly yes
+  Port 9999
+  User hari
+
+Host vin-stor-1
+  HostName 15.204.241.32
+  AddKeysToAgent yes
+  ForwardAgent yes
+  IdentitiesOnly yes
+  Port 9999
+  User hari

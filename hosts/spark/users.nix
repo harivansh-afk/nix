@@ -46,8 +46,6 @@ in
       };
     };
 
-  home-manager.users = lib.genAttrs enabledUsers (name: import ./${name});
-
   services.openssh = {
     enable = true;
     settings = {

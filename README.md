@@ -1,6 +1,6 @@
 # nix
 
-**macbook** - MacBook (aarch64-darwin) running nix-darwin + home-manager + nix-homebrew
+**macbook** - MacBook (aarch64-darwin) running nix-darwin + nix-homebrew
 
 **spark** - NVIDIA DGX Spark (aarch64-linux) running NixOS
 
@@ -17,7 +17,7 @@ Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix) and [vaul
 
 Spark is a shared NixOS workstation
 
-Friends who want access get a user definition in `users` and per-user home-manager config under `hosts/spark/<name>`
+Friends who want access get a user definition in `users`; every user gets the shared dotfile setup from `modules/users/` (their symlinks point at the nix-store copy of `dots/`, the owner's at the live checkout)
 
 `spark` resolves on the personal tailnet and is the normal SSH/mosh entry point. It runs two Tailscale identities:
 
@@ -37,11 +37,10 @@ lib/               host metadata, theme palette
 inventory/         typed host inventory via evalModules
 hosts/             per-host config (macbook/, spark/)
 users/             multi-user definitions for spark
-home/              home-manager modules, one file per tool
-dots/              app configs symlinked into XDG
-modules/           reusable NixOS modules (services, security)
+dots/              app configs symlinked into XDG paths (live-editable)
+modules/           reusable modules (services, security, users/dotfiles)
 system/            shared system-level config and packages
-scripts/           runtime scripts wired via home/scripts.nix
+scripts/           runtime scripts wired via modules/users/user-config.nix
 secrets/           sops-encrypted secrets per host
 terraform/         declarative Cloudflare DNS via terranix
 ```

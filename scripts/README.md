@@ -6,8 +6,8 @@ environment via `default.nix`, and scripts run by hand.
 ## Packaged scripts (wired)
 
 `default.nix` builds these with `pkgs.writeShellApplication` and exposes them as
-`commonPackages`. `home/scripts.nix` adds them to `home.packages`, so they land
-on `PATH` on every host. Sources live in `bin/`.
+`commonPackages`. `modules/users/user-config.nix` adds them to each user's
+packages, so they land on `PATH` on every host. Sources live in `bin/`.
 
 | Command        | Source                | Purpose                                      |
 |----------------|-----------------------|----------------------------------------------|
@@ -18,14 +18,12 @@ on `PATH` on every host. Sources live in `bin/`.
 | `wallpaper-gen`| `bin/wallpaper-gen.sh`| Generate themed wallpapers (uses `lib/wallpaper-gen.py`) |
 
 `default.nix` also exports `themeAssetsText` and `tmuxConfigs`, consumed by the
-theme-activation block in `home/scripts.nix`.
+theme-activation block in `modules/users/user-config.nix`.
 
 ## Helpers (`lib/`)
 
 Not standalone commands. Referenced by other config:
 
-- `home-manager-backup.sh` - home-manager `backupCommand`, wired in
-  `flake/args.nix` and `flake/nixos.nix`.
 - `wallpaper-gen.py` - Python backing the `wallpaper-gen` command.
 
 ## Run-by-hand scripts (`forgejo-mirror/`)

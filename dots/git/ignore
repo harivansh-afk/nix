@@ -1,0 +1,26 @@
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.*.local
+.vscode/
+.idea/
+# Track committed .claude content (agents, hooks, settings.json) across all
+# repos; only the per-machine local override stays out of git.
+.claude/settings.local.json
+CLAUDE.md
+node_modules/
+__pycache__/
+*.pyc
+venv/
+.venv/
+build/
+dist/
+out/
+target/
+result
+result-*
+.direnv/

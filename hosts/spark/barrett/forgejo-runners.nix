@@ -1,14 +1,23 @@
+# Forgejo runners for forge.barrettruth.com, running as systemd user units
+# under the barrett account (lingering, so they start at boot).
+#
+# Formerly a home-manager module; now a plain NixOS module. The unit files,
+# runner configs, and wrapper scripts are nix-store files symlinked into
+# barrett's home by an activation script that runs as barrett. Enablement is
+# the same `.wants/` symlinks `systemctl --user enable` would create, and a
+# best-effort daemon-reload/start picks up changes without waiting for a
+# reboot.
 {
-  config,
   lib,
   pkgs,
   ...
 }:
 let
-  homeDir = config.home.homeDirectory;
-  inherit (config.xdg) cacheHome;
-  inherit (config.xdg) configHome;
-  inherit (config.xdg) stateHome;
+  username = "barrett";
+  homeDir = "/home/${username}";
+  cacheHome = "${homeDir}/.cache";
+  configHome = "${homeDir}/.config";
+  stateHome = "${homeDir}/.local/state";
   runnerEnvFile = "/run/secrets/barrett-forgejo-runner-token";
   runnerUrl = "https://forge.barrettruth.com";
   runnerPackages = with pkgs; [
@@ -137,6 +146,24 @@ let
         cd "$INSTANCE_DIR"
         exec "${pkgs.forgejo-runner}/bin/act_runner" daemon --config "${configPath}"
       '';
+      unitFile = pkgs.writeText "forgejo-runner-${name}.service" ''
+        [Unit]
+        Description=Forgejo Runner (${name})
+        Wants=network-online.target
+        After=network-online.target
+
+        [Service]
+        Type=simple
+        Environment=PATH=${runnerPath}:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin
+        WorkingDirectory=${stateDir}
+        ExecStartPre=${registerPath}
+        ExecStart=${daemonPath}
+        Restart=always
+        RestartSec=2
+
+        [Install]
+        WantedBy=default.target
+      '';
       cacheDirs = [
         cacheRoot
         "${cacheRoot}/actcache"
@@ -153,82 +180,96 @@ let
         name
         cacheDirs
         configFile
-        configRelPath
+        configPath
         daemonScript
         daemonPath
-        daemonRelPath
         registerScript
         registerPath
-        registerRelPath
         stateDir
+        unitFile
         ;
+      serviceName = "forgejo-runner-${name}.service";
     };
 
   runners = map mkRunner runnerNames;
+
+  cleanupServiceUnit = pkgs.writeText "forgejo-runner-act-cache-cleanup.service" ''
+    [Unit]
+    Description=Prune Forgejo runner act per-job cache entries older than 7 days
+
+    [Service]
+    Type=oneshot
+    ExecStart=${actCacheCleanupScript}
+  '';
+
+  cleanupTimerUnit = pkgs.writeText "forgejo-runner-act-cache-cleanup.timer" ''
+    [Unit]
+    Description=Daily prune of Forgejo runner act per-job cache entries older than 7 days
+
+    [Timer]
+    OnCalendar=daily
+    Persistent=true
+
+    [Install]
+    WantedBy=timers.target
+  '';
+
+  userUnitDir = "${configHome}/systemd/user";
+
+  setupScript = pkgs.writeShellScript "barrett-forgejo-runners-setup" ''
+    set -eu
+    PATH=${pkgs.coreutils}/bin:$PATH
+
+    mkdir -p \
+      "${userUnitDir}/default.target.wants" \
+      "${userUnitDir}/timers.target.wants" \
+      "${homeDir}/.local/bin" \
+      ${lib.concatMapStringsSep " \\\n  " (
+        runner:
+        lib.concatMapStringsSep " \\\n  " (dir: ''"${dir}"'') (
+          runner.cacheDirs
+          ++ [
+            runner.stateDir
+            (builtins.dirOf runner.configPath)
+          ]
+        )
+      ) runners}
+
+    ${lib.concatMapStringsSep "\n" (runner: ''
+      ln -sfn "${runner.configFile}" "${runner.configPath}"
+      ln -sfn "${runner.registerScript}" "${runner.registerPath}"
+      ln -sfn "${runner.daemonScript}" "${runner.daemonPath}"
+      ln -sfn "${runner.unitFile}" "${userUnitDir}/${runner.serviceName}"
+      ln -sfn "${runner.unitFile}" "${userUnitDir}/default.target.wants/${runner.serviceName}"
+    '') runners}
+
+    ln -sfn "${cleanupServiceUnit}" "${userUnitDir}/forgejo-runner-act-cache-cleanup.service"
+    ln -sfn "${cleanupTimerUnit}" "${userUnitDir}/forgejo-runner-act-cache-cleanup.timer"
+    ln -sfn "${cleanupTimerUnit}" "${userUnitDir}/timers.target.wants/forgejo-runner-act-cache-cleanup.timer"
+
+    # Pick up unit changes in the running user manager (linger keeps it
+    # alive). Best-effort: at boot the units start via the wants symlinks.
+    runtime_dir="/run/user/$(id -u)"
+    if [ -d "$runtime_dir" ]; then
+      export XDG_RUNTIME_DIR="$runtime_dir"
+      export DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime_dir/bus"
+      ${pkgs.systemd}/bin/systemctl --user daemon-reload || true
+      ${lib.concatMapStringsSep "\n  " (
+        runner: ''${pkgs.systemd}/bin/systemctl --user start "${runner.serviceName}" || true''
+      ) runners}
+      ${pkgs.systemd}/bin/systemctl --user start forgejo-runner-act-cache-cleanup.timer || true
+    fi
+  '';
 in
 {
-  xdg.configFile = lib.listToAttrs (
-    map (runner: lib.nameValuePair runner.configRelPath { source = runner.configFile; }) runners
-  );
-
-  home.file = lib.listToAttrs (
-    lib.concatMap (runner: [
-      (lib.nameValuePair runner.registerRelPath { source = runner.registerScript; })
-      (lib.nameValuePair runner.daemonRelPath { source = runner.daemonScript; })
-    ]) runners
-  );
-
-  home.activation.ensureForgejoRunnerDirs = lib.hm.dag.entryAfter [ "writeBoundary" ] (
-    lib.concatLines (
-      lib.concatMap (
-        runner:
-        [ "mkdir -p ${lib.escapeShellArg runner.stateDir}" ]
-        ++ map (dir: "mkdir -p ${lib.escapeShellArg dir}") runner.cacheDirs
-      ) runners
-    )
-  );
-
-  systemd.user.services =
-    lib.listToAttrs (
-      map (
-        runner:
-        lib.nameValuePair "forgejo-runner-${runner.name}" {
-          Unit = {
-            Description = "Forgejo Runner (${runner.name})";
-            Wants = [ "network-online.target" ];
-            After = [ "network-online.target" ];
-          };
-          Service = {
-            Type = "simple";
-            Environment = [
-              "PATH=${runnerPath}:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin"
-            ];
-            WorkingDirectory = runner.stateDir;
-            ExecStartPre = runner.registerPath;
-            ExecStart = runner.daemonPath;
-            Restart = "always";
-            RestartSec = 2;
-          };
-          Install.WantedBy = [ "default.target" ];
-        }
-      ) runners
-    )
-    // {
-      forgejo-runner-act-cache-cleanup = {
-        Unit.Description = "Prune Forgejo runner act per-job cache entries older than 7 days";
-        Service = {
-          Type = "oneshot";
-          ExecStart = "${actCacheCleanupScript}";
-        };
-      };
-    };
-
-  systemd.user.timers.forgejo-runner-act-cache-cleanup = {
-    Unit.Description = "Daily prune of Forgejo runner act per-job cache entries older than 7 days";
-    Timer = {
-      OnCalendar = "daily";
-      Persistent = true;
-    };
-    Install.WantedBy = [ "timers.target" ];
+  system.activationScripts.barrettForgejoRunners = {
+    deps = [
+      "users"
+      "groups"
+    ];
+    text = ''
+      ${pkgs.util-linux}/bin/runuser -u ${username} -- ${setupScript} \
+        || echo "warning: barrett forgejo runner setup failed" >&2
+    '';
   };
 }

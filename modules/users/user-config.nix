@@ -29,8 +29,10 @@
 let
   inherit (user) name homeDirectory;
   configHome = "${homeDirectory}/.config";
+  binHome = "${homeDirectory}/.local/bin";
   dataHome = "${homeDirectory}/.local/share";
   stateHome = "${homeDirectory}/.local/state";
+  cacheHome = "${homeDirectory}/.cache";
 
   theme = import ../../lib/theme.nix { inherit homeDirectory; };
   customScripts = import ../../scripts { inherit homeDirectory lib pkgs; };
@@ -39,6 +41,12 @@ let
 
   # --- session environment (the old home/xdg.nix + sessionVariables) ---
   sessionVars = pkgs.writeText "session-vars.zsh" ''
+    export XDG_BIN_HOME="${binHome}"
+    export XDG_CONFIG_HOME="${configHome}"
+    export XDG_DATA_HOME="${dataHome}"
+    export XDG_STATE_HOME="${stateHome}"
+    export XDG_CACHE_HOME="${cacheHome}"
+
     export LESSHISTFILE="-"
     export WGETRC="${configHome}/wgetrc"
 
@@ -46,7 +54,7 @@ let
     export RUSTUP_HOME="${dataHome}/rustup"
 
     export GOPATH="${dataHome}/go"
-    export GOMODCACHE="${homeDirectory}/.cache/go/mod"
+    export GOMODCACHE="${cacheHome}/go/mod"
 
     export NPM_CONFIG_USERCONFIG="${configHome}/npm/npmrc"
     export NODE_REPL_HISTORY="${stateHome}/node_repl_history"
@@ -55,7 +63,7 @@ let
 
     export PYTHONSTARTUP="${configHome}/python/pythonrc"
     export PYTHON_HISTORY="${stateHome}/python_history"
-    export PYTHONPYCACHEPREFIX="${homeDirectory}/.cache/python"
+    export PYTHONPYCACHEPREFIX="${cacheHome}/python"
     export PYTHONUSERBASE="${dataHome}/python"
 
     export DOCKER_CONFIG="${configHome}/docker"
@@ -68,7 +76,15 @@ let
 
     export FZF_DEFAULT_OPTS_FILE="${theme.paths.fzfCurrentFile}"
 
-    export PATH="${homeDirectory}/.local/bin:${dataHome}/cargo/bin:${dataHome}/go/bin:${dataHome}/npm/bin:${dataHome}/pnpm:$PATH"
+    export PATH="${binHome}:${dataHome}/cargo/bin:${dataHome}/go/bin:${dataHome}/npm/bin:${dataHome}/pnpm:$PATH"
+  '';
+
+  environmentD = pkgs.writeText "user-environment.conf" ''
+    XDG_BIN_HOME=${binHome}
+    XDG_CACHE_HOME=${cacheHome}
+    XDG_CONFIG_HOME=${configHome}
+    XDG_DATA_HOME=${dataHome}
+    XDG_STATE_HOME=${stateHome}
   '';
 
   # --- zsh shims: store paths first, then the live dots file ---
@@ -109,6 +125,14 @@ let
     dark = mkZshTheme "dark";
     light = mkZshTheme "light";
   };
+
+  nvimAliases = pkgs.runCommand "nvim-command-aliases" { } ''
+    mkdir -p "$out/bin"
+    ln -s ${pkgs.neovim}/bin/nvim "$out/bin/vi"
+    ln -s ${pkgs.neovim}/bin/nvim "$out/bin/vim"
+    ln -s ${pkgs.neovim}/bin/nvim "$out/bin/view"
+    ln -s ${pkgs.neovim}/bin/nvim "$out/bin/vimdiff"
+  '';
 
   # --- git: credential helpers and delta themes need nix rendering ---
   forgejoCredentialHelper = pkgs.writeShellScript "git-credential-forgejo" ''
@@ -322,6 +346,7 @@ let
       gh
       k9s
       neovim
+      nvimAliases
       tea
       tmux
     ])
@@ -347,6 +372,7 @@ let
     # --- directories ---
     mkdir -p \
       "${configHome}/zsh/themes" \
+      "${configHome}/environment.d" \
       "${configHome}/git" \
       "${configHome}/fzf/themes" \
       "${configHome}/ghostty/themes" \
@@ -375,6 +401,7 @@ let
     mkSymlink "${zshenvShim}" "${homeDirectory}/.zshenv"
     mkSymlink "${zshThemes.dark}" "${configHome}/zsh/themes/dark.zsh"
     mkSymlink "${zshThemes.light}" "${configHome}/zsh/themes/light.zsh"
+    mkSymlink "${environmentD}" "${configHome}/environment.d/10-user-config.conf"
 
     # --- git ---
     mkSymlink "${dotsRoot}/git/config" "${configHome}/git/config"

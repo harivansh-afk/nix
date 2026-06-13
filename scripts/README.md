@@ -33,6 +33,7 @@ Not wired into any package or unit. Run manually as documented in `AGENTS.md`:
 - `reconcile.sh` - reconcile forgejo push-mirrors against
   `/etc/forgejo-mirror/manifest.json`. Run as root.
 - `github-ux.sh` - apply GitHub-side metadata/banners to push-mirrors. Run on demand.
+- `avatar-backfill.sh` - backfill Forgejo mirror-owner org avatars from GitHub. Dry-run by default; use `--apply` to write through the Forgejo API.
 
 ## Adding a packaged script
 

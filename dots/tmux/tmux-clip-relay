@@ -7,5 +7,5 @@
 set -euo pipefail
 client_tty="$(tmux display-message -p '#{client_tty}')"
 [ -n "$client_tty" ] || exit 0
-data="$(tmux save-buffer - | base64 -w0)"
+data="$(tmux save-buffer - | base64 | tr -d '\n')"
 printf '\033]52;c;%s\a' "$data" >"$client_tty"

@@ -41,7 +41,12 @@ alias nv="nvim ."
 alias vi="nvim"
 alias vim="nvim"
 alias vimdiff="nvim -d"
-alias ls="eza --icons=auto --git --group-directories-first --header"
+alias eza="eza --icons=auto --git --group-directories-first --header"
+alias ls="eza"
+alias ll="eza -l"
+alias la="eza -a"
+alias lt="eza --tree"
+alias lla="eza -la"
 
 if [[ "$OSTYPE" == darwin* ]]; then
   alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
@@ -51,7 +56,7 @@ fi
 eval "$(zoxide init zsh)"
 eval "$(direnv hook zsh)"
 export DIRENV_LOG_FORMAT=""
-if command -v fzf >/dev/null 2>&1; then
+if [[ $options[zle] = on ]] && command -v fzf >/dev/null 2>&1; then
   source <(fzf --zsh)
 fi
 

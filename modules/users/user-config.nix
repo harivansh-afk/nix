@@ -29,6 +29,7 @@
 let
   inherit (user) name homeDirectory;
   configHome = "${homeDirectory}/.config";
+  binHome = "${homeDirectory}/.local/bin";
   dataHome = "${homeDirectory}/.local/share";
   stateHome = "${homeDirectory}/.local/state";
   cacheHome = "${homeDirectory}/.cache";
@@ -40,6 +41,7 @@ let
 
   # --- session environment (the old home/xdg.nix + sessionVariables) ---
   sessionVars = pkgs.writeText "session-vars.zsh" ''
+    export XDG_BIN_HOME="${binHome}"
     export XDG_CONFIG_HOME="${configHome}"
     export XDG_DATA_HOME="${dataHome}"
     export XDG_STATE_HOME="${stateHome}"
@@ -74,7 +76,15 @@ let
 
     export FZF_DEFAULT_OPTS_FILE="${theme.paths.fzfCurrentFile}"
 
-    export PATH="${homeDirectory}/.local/bin:${dataHome}/cargo/bin:${dataHome}/go/bin:${dataHome}/npm/bin:${dataHome}/pnpm:$PATH"
+    export PATH="${binHome}:${dataHome}/cargo/bin:${dataHome}/go/bin:${dataHome}/npm/bin:${dataHome}/pnpm:$PATH"
+  '';
+
+  environmentD = pkgs.writeText "user-environment.conf" ''
+    XDG_BIN_HOME=${binHome}
+    XDG_CACHE_HOME=${cacheHome}
+    XDG_CONFIG_HOME=${configHome}
+    XDG_DATA_HOME=${dataHome}
+    XDG_STATE_HOME=${stateHome}
   '';
 
   # --- zsh shims: store paths first, then the live dots file ---
@@ -362,6 +372,7 @@ let
     # --- directories ---
     mkdir -p \
       "${configHome}/zsh/themes" \
+      "${configHome}/environment.d" \
       "${configHome}/git" \
       "${configHome}/fzf/themes" \
       "${configHome}/ghostty/themes" \
@@ -390,6 +401,7 @@ let
     mkSymlink "${zshenvShim}" "${homeDirectory}/.zshenv"
     mkSymlink "${zshThemes.dark}" "${configHome}/zsh/themes/dark.zsh"
     mkSymlink "${zshThemes.light}" "${configHome}/zsh/themes/light.zsh"
+    mkSymlink "${environmentD}" "${configHome}/environment.d/10-user-config.conf"
 
     # --- git ---
     mkSymlink "${dotsRoot}/git/config" "${configHome}/git/config"

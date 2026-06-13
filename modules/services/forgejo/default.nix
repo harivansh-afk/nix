@@ -132,7 +132,6 @@ let
         rsvg-convert -w 192 -h 192 ${forgejoIconSvg} > $out/favicon.png
         rsvg-convert -w 180 -h 180 ${forgejoIconSvg} > $out/apple-touch-icon.png
         rsvg-convert -w 512 -h 512 ${forgejoIconSvg} > $out/logo.png
-        rsvg-convert -w 1024 -h 1024 ${forgejoIconSvg} > $out/avatar_default.png
       '';
 
   forgejoCozyboxDarkCss = pkgs.writeText "theme-cozybox-dark.css" ''
@@ -590,9 +589,6 @@ in
           @forgejoFonts path /assets/fonts/*
           header @forgejoFonts Cache-Control "public, max-age=31536000, immutable"
 
-          @forgejoAvatars path /avatars/*
-          header @forgejoAvatars Cache-Control "public, max-age=31536000, immutable"
-
           reverse_proxy 127.0.0.1:${toString backendPort}
         '';
       };
@@ -738,8 +734,16 @@ in
         DEFAULT_THEME = "cozybox-auto";
         THEMES = "cozybox-auto,cozybox-light,cozybox-dark,forgejo-auto,forgejo-dark,forgejo-light";
       };
+      picture = {
+        DISABLE_GRAVATAR = false;
+        ENABLE_FEDERATED_AVATAR = true;
+        GRAVATAR_SOURCE = "gravatar";
+      };
+      oauth2_client = {
+        UPDATE_AVATAR = true;
+      };
       "ui.meta" = {
-        AUTHOR = "Harivansh Rathi";
+        AUTHOR = forgejoDomain;
         DESCRIPTION = "Personal code, experiments, and project history.";
         KEYWORDS = "git,code,harivansh,rathi,nix";
       };
@@ -864,7 +868,7 @@ in
     "L+ /var/lib/forgejo/custom/public/assets/img/logo.svg - - - - ${forgejoBrandingAssets}/logo.svg"
     "L+ /var/lib/forgejo/custom/public/assets/img/logo.png - - - - ${forgejoBrandingAssets}/logo.png"
     "L+ /var/lib/forgejo/custom/public/assets/img/apple-touch-icon.png - - - - ${forgejoBrandingAssets}/apple-touch-icon.png"
-    "L+ /var/lib/forgejo/custom/public/assets/img/avatar_default.png - - - - ${forgejoBrandingAssets}/avatar_default.png"
+    "L+ /var/lib/forgejo/custom/public/assets/img/avatar_default.png - - - - ${forgejoPackage.data}/public/assets/img/avatar_default.png"
 
     "d /var/lib/forgejo/custom/templates 0750 git git -"
     "d /var/lib/forgejo/custom/templates/custom 0750 git git -"

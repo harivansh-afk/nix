@@ -31,6 +31,7 @@ let
   configHome = "${homeDirectory}/.config";
   dataHome = "${homeDirectory}/.local/share";
   stateHome = "${homeDirectory}/.local/state";
+  cacheHome = "${homeDirectory}/.cache";
 
   theme = import ../../lib/theme.nix { inherit homeDirectory; };
   customScripts = import ../../scripts { inherit homeDirectory lib pkgs; };
@@ -39,6 +40,11 @@ let
 
   # --- session environment (the old home/xdg.nix + sessionVariables) ---
   sessionVars = pkgs.writeText "session-vars.zsh" ''
+    export XDG_CONFIG_HOME="${configHome}"
+    export XDG_DATA_HOME="${dataHome}"
+    export XDG_STATE_HOME="${stateHome}"
+    export XDG_CACHE_HOME="${cacheHome}"
+
     export LESSHISTFILE="-"
     export WGETRC="${configHome}/wgetrc"
 
@@ -46,7 +52,7 @@ let
     export RUSTUP_HOME="${dataHome}/rustup"
 
     export GOPATH="${dataHome}/go"
-    export GOMODCACHE="${homeDirectory}/.cache/go/mod"
+    export GOMODCACHE="${cacheHome}/go/mod"
 
     export NPM_CONFIG_USERCONFIG="${configHome}/npm/npmrc"
     export NODE_REPL_HISTORY="${stateHome}/node_repl_history"
@@ -55,7 +61,7 @@ let
 
     export PYTHONSTARTUP="${configHome}/python/pythonrc"
     export PYTHON_HISTORY="${stateHome}/python_history"
-    export PYTHONPYCACHEPREFIX="${homeDirectory}/.cache/python"
+    export PYTHONPYCACHEPREFIX="${cacheHome}/python"
     export PYTHONUSERBASE="${dataHome}/python"
 
     export DOCKER_CONFIG="${configHome}/docker"
@@ -109,6 +115,14 @@ let
     dark = mkZshTheme "dark";
     light = mkZshTheme "light";
   };
+
+  nvimAliases = pkgs.runCommand "nvim-command-aliases" { } ''
+    mkdir -p "$out/bin"
+    ln -s ${pkgs.neovim}/bin/nvim "$out/bin/vi"
+    ln -s ${pkgs.neovim}/bin/nvim "$out/bin/vim"
+    ln -s ${pkgs.neovim}/bin/nvim "$out/bin/view"
+    ln -s ${pkgs.neovim}/bin/nvim "$out/bin/vimdiff"
+  '';
 
   # --- git: credential helpers and delta themes need nix rendering ---
   forgejoCredentialHelper = pkgs.writeShellScript "git-credential-forgejo" ''
@@ -322,6 +336,7 @@ let
       gh
       k9s
       neovim
+      nvimAliases
       tea
       tmux
     ])

@@ -1,63 +1,93 @@
 #!/usr/bin/env bash
 # pasteimg - pull the Mac's clipboard image over Tailscale into a file on this
-# host and print the saved path. Mirrors the OSC 52 text relay but in reverse:
-# instead of pushing a remote selection to the local clipboard, it pulls the
-# local (Mac) clipboard image down to the remote box so it can be handed to
-# Claude Code, nvim, etc. Uses only built-in macOS tools (osascript + sips) over
-# a plain SSH call - no daemon, no extra server. Linked at ~/.local/bin/pasteimg.
+# host and print the saved path. Reverse of the OSC 52 text relay: instead of
+# pushing a remote selection to the local clipboard, it pulls the local (Mac)
+# clipboard image down to the remote box so it can be handed to Claude Code,
+# nvim, etc. No daemon: a single SSH call runs `pngpaste` (preferred) or a
+# multi-flavor osascript fallback on the Mac. Linked at ~/.local/bin/pasteimg.
 #
 # Usage:
 #   pasteimg [dest]        # save to dest (or a temp file) and print the path
-#   pasteimg | cat         # stream raw PNG to stdout when dest is "-"
+#   pasteimg -            # stream raw PNG to stdout
 #
 # Env:
 #   PASTEIMG_HOST   ssh host/alias of the Mac (default: macbook)
 #   PASTEIMG_DIR    directory for temp files when no dest given (default: TMPDIR)
+#
+# Exit codes: 0 ok, 2 cannot reach Mac, 3 no image on clipboard, 1 other.
 set -euo pipefail
 
 mac="${PASTEIMG_HOST:-macbook}"
 dest="${1:-}"
 
-# Remote extraction: prefer the clipboard's PNG flavor; fall back to TIFF (many
-# apps, including whiteboards, put TIFF) and convert with sips. Stream the bytes
-# to stdout. Runs in the Mac login shell; stray stderr (e.g. zshenv notices)
-# does not corrupt stdout.
+# Remote extraction, run in the Mac shell. Streams PNG bytes to stdout; any
+# diagnostics go to stderr (harmless to the binary stream). Tries pngpaste
+# first, then osascript across common image flavors, converting to PNG via sips.
 remote='
-set -e
-src="$(mktemp -t clipimg)"
+set -u
 out="$(mktemp -t clipimg).png"
-trap "rm -f \"$src\" \"$out\"" EXIT
-if osascript -e "set f to (open for access POSIX file \"$src\" with write permission)" \
-             -e "write (the clipboard as «class PNGf») to f" \
-             -e "close access f" >/dev/null 2>&1 && [ -s "$src" ]; then
-  mv "$src" "$out"
-elif osascript -e "set f to (open for access POSIX file \"$src\" with write permission)" \
-               -e "write (the clipboard as «class TIFF») to f" \
-               -e "close access f" >/dev/null 2>&1 && [ -s "$src" ]; then
-  sips -s format png "$src" --out "$out" >/dev/null 2>&1
-else
-  echo "pasteimg: no image in Mac clipboard" >&2
-  exit 3
+cleanup() { rm -f "$out" "${src:-}"; }
+trap cleanup EXIT
+
+# 1) pngpaste: fast and reliable, writes PNG directly.
+if command -v pngpaste >/dev/null 2>&1; then
+  if pngpaste "$out" >/dev/null 2>&1 && [ -s "$out" ]; then
+    cat "$out"; exit 0
+  fi
 fi
-cat "$out"
+
+# 2) osascript fallback across clipboard image flavors.
+src="$(mktemp -t clipimg)"
+for flavor in "«class PNGf»" "TIFF picture" "GIF picture" "JPEG picture"; do
+  if osascript -e "set f to (open for access POSIX file \"$src\" with write permission)" \
+               -e "write (the clipboard as $flavor) to f" \
+               -e "close access f" >/dev/null 2>&1 && [ -s "$src" ]; then
+    if sips -s format png "$src" --out "$out" >/dev/null 2>&1 && [ -s "$out" ]; then
+      cat "$out"; exit 0
+    fi
+  fi
+  : > "$src"
+done
+
+echo "NO_IMAGE" >&2
+exit 3
 '
 
+run() {
+  # -n: do not read stdin (keeps it safe inside other pipelines/editors).
+  ssh -n -o BatchMode=yes -o ConnectTimeout=8 "$mac" "$remote"
+}
+
+# Stream mode.
 if [ "$dest" = "-" ]; then
-  ssh -o BatchMode=yes "$mac" "$remote"
+  run
   exit $?
 fi
 
+# File mode.
 if [ -z "$dest" ]; then
   dir="${PASTEIMG_DIR:-${TMPDIR:-/tmp}}"
-  dest="$(mktemp "${dir%/}/clip-XXXXXX")"
-  mv "$dest" "$dest.png"
-  dest="$dest.png"
+  dir="${dir%/}"
+  base="$(mktemp "$dir/clip-XXXXXX")"
+  dest="$base.png"
+  mv "$base" "$dest"
 fi
 
-if ssh -o BatchMode=yes "$mac" "$remote" > "$dest" && [ -s "$dest" ]; then
+err="$(mktemp)"
+if run >"$dest" 2>"$err" && [ -s "$dest" ]; then
+  rm -f "$err"
   echo "$dest"
-else
-  rm -f "$dest"
-  echo "pasteimg: failed to grab image from $mac clipboard" >&2
-  exit 1
+  exit 0
 fi
+
+# Failure: classify for a clear message.
+rc=$?
+rm -f "$dest"
+if grep -q NO_IMAGE "$err" 2>/dev/null; then
+  echo "pasteimg: no image on the Mac clipboard (copy an image first)" >&2
+  rm -f "$err"; exit 3
+fi
+echo "pasteimg: could not reach $mac (is it awake / on Tailscale?)" >&2
+echo "  ssh said:" >&2; sed 's/^/  /' "$err" >&2
+rm -f "$err"
+exit 2

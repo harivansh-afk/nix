@@ -41,6 +41,12 @@
       "humanlayer/humanlayer"
     ];
 
+    # CLI formulae. pngpaste is used by the `pasteimg` helper (dots/bin/pasteimg)
+    # to reliably dump the clipboard image as PNG for the spark -> mac pull.
+    brews = [
+      "pngpaste"
+    ];
+
     casks = [
       "cap"
       "ghostty"

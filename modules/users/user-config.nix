@@ -409,6 +409,9 @@ let
     # --- ssh ---
     mkSymlink "${dotsRoot}/ssh/config" "${homeDirectory}/.ssh/config"
 
+    # --- bin: standalone helper scripts ---
+    mkSymlink "${dotsRoot}/bin/pasteimg" "${homeDirectory}/.local/bin/pasteimg"
+
     # --- tmux ---
     mkSymlink "${dotsRoot}/tmux/tmux.conf" "${configHome}/tmux/tmux.conf"
     mkSymlink "${dotsRoot}/tmux/session-list.sh" "${configHome}/tmux/session-list.sh"

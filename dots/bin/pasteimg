@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# pasteimg - pull the Mac's clipboard image over Tailscale into a file on this
+# host and print the saved path. Mirrors the OSC 52 text relay but in reverse:
+# instead of pushing a remote selection to the local clipboard, it pulls the
+# local (Mac) clipboard image down to the remote box so it can be handed to
+# Claude Code, nvim, etc. Uses only built-in macOS tools (osascript + sips) over
+# a plain SSH call - no daemon, no extra server. Linked at ~/.local/bin/pasteimg.
+#
+# Usage:
+#   pasteimg [dest]        # save to dest (or a temp file) and print the path
+#   pasteimg | cat         # stream raw PNG to stdout when dest is "-"
+#
+# Env:
+#   PASTEIMG_HOST   ssh host/alias of the Mac (default: macbook)
+#   PASTEIMG_DIR    directory for temp files when no dest given (default: TMPDIR)
+set -euo pipefail
+
+mac="${PASTEIMG_HOST:-macbook}"
+dest="${1:-}"
+
+# Remote extraction: prefer the clipboard's PNG flavor; fall back to TIFF (many
+# apps, including whiteboards, put TIFF) and convert with sips. Stream the bytes
+# to stdout. Runs in the Mac login shell; stray stderr (e.g. zshenv notices)
+# does not corrupt stdout.
+remote='
+set -e
+src="$(mktemp -t clipimg)"
+out="$(mktemp -t clipimg).png"
+trap "rm -f \"$src\" \"$out\"" EXIT
+if osascript -e "set f to (open for access POSIX file \"$src\" with write permission)" \
+             -e "write (the clipboard as «class PNGf») to f" \
+             -e "close access f" >/dev/null 2>&1 && [ -s "$src" ]; then
+  mv "$src" "$out"
+elif osascript -e "set f to (open for access POSIX file \"$src\" with write permission)" \
+               -e "write (the clipboard as «class TIFF») to f" \
+               -e "close access f" >/dev/null 2>&1 && [ -s "$src" ]; then
+  sips -s format png "$src" --out "$out" >/dev/null 2>&1
+else
+  echo "pasteimg: no image in Mac clipboard" >&2
+  exit 3
+fi
+cat "$out"
+'
+
+if [ "$dest" = "-" ]; then
+  ssh -o BatchMode=yes "$mac" "$remote"
+  exit $?
+fi
+
+if [ -z "$dest" ]; then
+  dir="${PASTEIMG_DIR:-${TMPDIR:-/tmp}}"
+  dest="$(mktemp "${dir%/}/clip-XXXXXX")"
+  mv "$dest" "$dest.png"
+  dest="$dest.png"
+fi
+
+if ssh -o BatchMode=yes "$mac" "$remote" > "$dest" && [ -s "$dest" ]; then
+  echo "$dest"
+else
+  rm -f "$dest"
+  echo "pasteimg: failed to grab image from $mac clipboard" >&2
+  exit 1
+fi

@@ -31,6 +31,16 @@ Host spark-lan
   ServerAliveInterval 60
   ServerAliveCountMax 3
 
+# Reverse reach from spark -> mac over Tailscale, used by `pasteimg` to pull
+# the Mac clipboard image. Harmless on the Mac itself (never dialed there).
+Host macbook
+  HostName 100.96.2.106
+  User rathi
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+
 Host hil-compute-1
   HostName 15.204.111.75
   AddKeysToAgent yes

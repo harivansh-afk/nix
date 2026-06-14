@@ -116,6 +116,7 @@
         ./flake/hosts.nix
         ./flake/nixos.nix
         ./flake/tests.nix
+        ./flake/user-config.nix
       ];
     };
 }

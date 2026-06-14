@@ -85,9 +85,11 @@ rc=$?
 rm -f "$dest"
 if grep -q NO_IMAGE "$err" 2>/dev/null; then
   echo "pasteimg: no image on the Mac clipboard (copy an image first)" >&2
-  rm -f "$err"; exit 3
+  rm -f "$err"
+  exit 3
 fi
 echo "pasteimg: could not reach $mac (is it awake / on Tailscale?)" >&2
-echo "  ssh said:" >&2; sed 's/^/  /' "$err" >&2
+echo "  ssh said:" >&2
+sed 's/^/  /' "$err" >&2
 rm -f "$err"
 exit 2

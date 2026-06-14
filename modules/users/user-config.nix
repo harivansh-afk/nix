@@ -305,10 +305,6 @@ let
     builtins.toJSON { external_update_url = "https://clients2.google.com/service/update2/crx"; }
   );
 
-  pythonWrapper = pkgs.writeShellScriptBin "python" ''
-    exec ${pkgs.python3}/bin/python3 "$@"
-  '';
-
   # The old programs.neovim extraPackages: LSPs and tools nvim expects on PATH.
   nvimPackages = with pkgs; [
     bat
@@ -324,7 +320,6 @@ let
     gopls
     lua-language-server
     pyright
-    pythonWrapper
     python3
     ripgrep
     stylua

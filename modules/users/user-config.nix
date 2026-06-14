@@ -25,6 +25,7 @@
   dotsRoot,
   hostname,
   isDarwin,
+  extraPackages ? [ ],
 }:
 let
   inherit (user) name homeDirectory;
@@ -351,6 +352,7 @@ let
       tmux
     ])
     ++ nvimPackages
+    ++ extraPackages
     ++ builtins.attrValues customScripts.commonPackages
     ++ lib.optionals isDarwin (builtins.attrValues customScripts.darwinPackages ++ [ pkgs.aerospace ]);
 

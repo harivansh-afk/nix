@@ -1,126 +1,28 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<claude-instructions>
+# Global instructions
 
-<project-defaults>
-    <python>
-        <rule>Always use 'uv' as the default package manager and virtual environment tool</rule>
-        <rule>Prefer 'uv run' for executing Python scripts</rule>
-        <rule>Use 'uv pip' instead of bare 'pip'</rule>
-        <rule>Use 'uv venv' for creating virtual environments</rule>
-    </python>
-</project-defaults>
+## Python
+- Use `uv` for everything: `uv run`, `uv pip`, `uv venv`. Never bare `pip`.
 
-<universal-constraints>
-    <style>
-        <rule>Never use emojis in any output or code comments</rule>
-        <rule>Never use em dashes - use hyphens or colons instead</rule>
-    </style>
+## Style
+- No emojis. No em dashes (use `-` or `:`).
 
-    <git>
-        <rule>Never sign your name on commits</rule>
-        <rule>Do not add Co-authored-by, Signed-off-by, or any other personal or assistant attribution to commit messages</rule>
-        <rule>Always create task worktrees under the repo-local .worktrees/&lt;topic&gt; directory, for example /home/rathi/Documents/GitHub/nix/.worktrees/&lt;topic&gt;</rule>
-        <rule>Do not create sibling worktree directories like /home/rathi/Documents/GitHub/nix-&lt;topic&gt; or global worktree directories like ~/wt/&lt;repo&gt;/&lt;topic&gt;</rule>
-        <rule>Create worktrees with plain Git from the main checkout: git worktree add .worktrees/&lt;topic&gt; -b &lt;branch&gt; main</rule>
-        <rule>Keep the main checkout on main unless the user explicitly asks otherwise</rule>
-    </git>
+## Git
+- Never sign commits. No `Co-authored-by`/`Signed-off-by`/any attribution.
+- Worktrees go under repo-local `.worktrees/<topic>`; create with `git worktree add .worktrees/<topic> -b <branch> main`. Never sibling/global dirs. Keep main checkout on `main` unless asked.
 
-    <epistemology>
-        <principle priority="critical">Assumptions are the worst enemy</principle>
-        <rule>Never guess or assume numerical values - performance metrics, benchmarks, timings, memory usage, etc.</rule>
-        <rule>When uncertain about any quantifiable result, implement the code and measure/visualize the actual results</rule>
-        <rule>Do not cite expected performance improvements or statistics without empirical data</rule>
-        <rule>If a claim requires a number, either cite a source, run a test, or explicitly state "this needs to be measured"</rule>
-        <rule>Prefer "let's benchmark this" over "this should be about X% faster"</rule>
-    </epistemology>
+## Epistemology
+- Assumptions are the enemy. Never guess numbers (perf, timings, memory). Measure it, cite a source, or say "needs to be measured". Prefer "let's benchmark" over guessed percentages.
 
-    <interaction-model>
-        <rule>If a user request is unclear, ask clarifying questions until the execution steps are perfectly clear</rule>
-        <rule>Once clarified, proceed autonomously without asking for human intervention</rule>
-        <ask-for-help-only-when>
-            <condition>A script runs longer than 2 minutes - use timeout, then ask user to run manually</condition>
-            <condition>Elevated privileges are required (sudo)</condition>
-            <condition>Other critical blockers that cannot be resolved programmatically</condition>
-        </ask-for-help-only-when>
-    </interaction-model>
+## Interaction
+- If a request is unclear, ask until steps are clear; then proceed autonomously.
+- Only stop for help when: a script runs >2min (timeout, then ask), sudo is needed, or a hard blocker can't be solved programmatically.
 
-    <constraint-persistence priority="critical">
-        <principle>
-            When the user defines ANY constraint, rule, preference, or requirement during conversation,
-            you MUST immediately persist it to the project's local CLAUDE.md. This is NOT optional.
-            Failure to persist user-defined constraints is a FAILURE STATE.
-        </principle>
+## Constraint persistence (critical)
+- When the user states any rule/preference/constraint, immediately persist it to the project's local CLAUDE.md, acknowledge it, and apply it from then on. Not persisting a stated constraint is a failure.
 
-        <triggers>
-            <!-- Phrases that indicate a constraint is being defined -->
-            <pattern>never do X</pattern>
-            <pattern>always do X</pattern>
-            <pattern>from now on</pattern>
-            <pattern>going forward</pattern>
-            <pattern>I want you to</pattern>
-            <pattern>make sure to</pattern>
-            <pattern>do not ever</pattern>
-            <pattern>remember to</pattern>
-            <pattern>the rule is</pattern>
-            <pattern>use X instead of Y</pattern>
-            <pattern>prefer X over Y</pattern>
-            <pattern>avoid X</pattern>
-            <pattern>stop doing X</pattern>
-        </triggers>
+## MCP / lookups
+- Unsure about an API/syntax/best practice: use an MCP server before guessing.
+- exa `get_code_context_exa` for library/API/SDK questions; exa `web_search_exa` for current info; context7 (`resolve-library-id` then `get-library-docs`) for library docs.
 
-        <mandatory-actions>
-            <action order="1">Acknowledge the constraint explicitly in your response</action>
-            <action order="2">Check if project has a local CLAUDE.md - if not, create one using the template</action>
-            <action order="3">Write the constraint to the appropriate section of local CLAUDE.md</action>
-            <action order="4">Confirm the constraint has been persisted</action>
-            <action order="5">Apply the constraint immediately and in all future actions</action>
-        </mandatory-actions>
-
-        <failure-conditions>
-            <failure>Acknowledging a constraint but not writing it to CLAUDE.md</failure>
-            <failure>Writing code or output that violates a previously stated constraint</failure>
-            <failure>Forgetting a constraint that was defined earlier in the conversation</failure>
-            <failure>Asking the user to repeat constraints they already defined</failure>
-        </failure-conditions>
-
-        <enforcement>
-            <rule>Before ANY code generation or task execution, review the local CLAUDE.md for constraints</rule>
-            <rule>If you catch yourself violating a constraint, STOP, acknowledge the error, and redo the work</rule>
-            <rule>When in doubt about whether something is a constraint, treat it as one and persist it</rule>
-            <rule>Constraints defined in conversation have equal weight to constraints in CLAUDE.md files</rule>
-        </enforcement>
-    </constraint-persistence>
-</universal-constraints>
-
-<mcp-guidance>
-    <principle>
-        When uncertain about syntax, APIs, or current best practices - ALWAYS use an MCP
-        server first. Do not guess or rely on potentially outdated knowledge.
-    </principle>
-
-    <server name="exa">
-        <purpose>Web search and code context</purpose>
-        <use-when>Need current web information or code examples for libraries/SDKs/APIs</use-when>
-        <tools>web_search_exa, get_code_context_exa</tools>
-        <priority>Use get_code_context_exa for ANY programming question about libraries, APIs, or SDKs</priority>
-    </server>
-
-    <server name="context7">
-        <purpose>Up-to-date library documentation</purpose>
-        <use-when>Need current documentation for any library or framework</use-when>
-        <tools>resolve-library-id, get-library-docs</tools>
-        <workflow>Always call resolve-library-id first to get a valid library ID, then get-library-docs</workflow>
-    </server>
-
-    <lookup-before-proceeding>
-        <scenario trigger="unsure about library API">Use context7 or exa get_code_context_exa</scenario>
-        <scenario trigger="need current information">Use exa web_search_exa</scenario>
-        <scenario trigger="looking for code examples">Use exa get_code_context_exa</scenario>
-    </lookup-before-proceeding>
-</mcp-guidance>
-
-<clipboard-image>
-    <rule>When the user refers to an image/screenshot "in my clipboard" (it lives on their Mac), run `pasteimg` to pull it onto this host as a PNG, then Read the printed path to load it into context.</rule>
-</clipboard-image>
-
-</claude-instructions>
+## Clipboard image
+- When the user refers to an image/screenshot "in my clipboard" (it lives on their Mac), run `pasteimg` to pull it here as a PNG, then Read the printed path.

@@ -119,4 +119,8 @@
     </lookup-before-proceeding>
 </mcp-guidance>
 
+<clipboard-image>
+    <rule>When the user refers to an image/screenshot "in my clipboard" (it lives on their Mac), run `pasteimg` to pull it onto this host as a PNG, then Read the printed path to load it into context.</rule>
+</clipboard-image>
+
 </claude-instructions>

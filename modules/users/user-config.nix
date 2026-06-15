@@ -379,6 +379,7 @@ let
       "${configHome}/direnv/lib" \
       "${configHome}/k9s" \
       "${configHome}/gh" \
+      "${configHome}/graphite" \
       "${configHome}/npm" \
       "${configHome}/python" \
       "${configHome}/btop" \
@@ -502,6 +503,26 @@ let
     install -Dm644 /dev/null "${configHome}/gcloud/configurations/config_default"
     printf '[core]\naccount=rathiharivansh@gmail.com\nproject=hari-gc\n' \
       > "${configHome}/gcloud/configurations/config_default"
+
+    graphiteToken=
+    graphiteEnvFile=/run/secrets/graphite.env
+    if [ -r "$graphiteEnvFile" ]; then
+      graphiteToken=$(
+        set -a
+        . "$graphiteEnvFile"
+        printf '%s' "''${GRAPHITE_AUTH_TOKEN:-}"
+      )
+    fi
+
+    if [ -n "$graphiteToken" ]; then
+      umask 077
+      tmp="${configHome}/graphite/auth.tmp"
+      printf '%s' "$graphiteToken" | \
+        ${pkgs.python3}/bin/python3 -c 'import json, sys; print(json.dumps({"authToken": sys.stdin.read()}), end="")' \
+        > "$tmp"
+      mv "$tmp" "${configHome}/graphite/auth"
+      umask 022
+    fi
 
     # --- tea logins from sops secrets (skipped when unreadable) ---
     harivanTokenFile=/run/secrets/forgejo-token.env

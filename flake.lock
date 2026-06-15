@@ -1097,11 +1097,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781494158,
-        "narHash": "sha256-qwyW0FvFhcUUZ7O14VziBi72fa4zfOk/7D/dLeSkdf8=",
-        "ref": "main",
-        "rev": "136830c1d90f41d92c6df6ca3fe350d66d816d0d",
-        "revCount": 35,
+        "lastModified": 1781495721,
+        "narHash": "sha256-IPi4qnPfk4bIIlhUDTyUrMgNb2yTuIREtBvu44Gj+Lw=",
+        "ref": "fix-pierre-file-tree-icons-stability",
+        "rev": "4ad6c82e1ab4b11dba73bde45233970d63b7b64b",
+        "revCount": 36,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/pierrejo.git"
       },

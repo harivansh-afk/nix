@@ -7,7 +7,7 @@ let
   ixMcpBridge = pkgs.buildNpmPackage {
     pname = "ix-mcp-bridge";
     version = "0.1.0";
-    src = inputs.index + "/packages/pi-harness/extension";
+    src = inputs.index + "/packages/pi-harnesses/engine/extension";
     npmDepsHash = "sha256-Nis7wQLp7wASaEu4n/Cp3pthB3z+9FsTJs5pK3oq77M=";
     dontNpmBuild = true;
     doCheck = true;

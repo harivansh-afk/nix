@@ -304,15 +304,27 @@ function fileNameFromLink(link) {
   return link?.textContent?.trim()?.split("/").pop() || "";
 }
 
-function replaceFileIcon(icon, filename, isDirectory) {
-  if (!icon || icon.dataset.harivanNonicon === "1") return;
+function makeNoniconSpan(filename, isDirectory) {
   const name = resolveNoniconName(filename, isDirectory);
   const span = document.createElement("span");
   span.className = `harivan-nonicon${isDirectory ? " harivan-nonicon-folder" : ""}`;
   span.dataset.harivanNonicon = "1";
   span.setAttribute("aria-hidden", "true");
   span.textContent = noniconChar(name);
-  icon.replaceWith(span);
+  return span;
+}
+
+function replaceFileIcon(icon, filename, isDirectory) {
+  if (!icon || icon.dataset.harivanNonicon === "1") return;
+  icon.replaceWith(makeNoniconSpan(filename, isDirectory));
+}
+
+function noniconNameFromItem(item) {
+  const raw =
+    item.getAttribute("title") ||
+    item.querySelector(".gt-ellipsis")?.textContent ||
+    "";
+  return raw.trim().split("/").pop();
 }
 
 export function replaceRepositoryFileIcons() {
@@ -335,5 +347,37 @@ export function replaceRepositoryFileIcons() {
       icon.classList.contains("octicon-file-directory-fill");
     replaceFileIcon(icon, filename, isDirectory);
     row.dataset.harivanNonicons = "1";
+  }
+}
+
+// The diff file tree (the PR/commit "Files changed" sidebar) is Forgejo's
+// native Vue component, which re-renders on scroll/selection. Replacing the
+// octicon nodes would make Vue re-insert them and flicker, so instead we hide
+// the native icon and insert a sibling nonicon span; Vue leaves DOM nodes it
+// did not create untouched. Callers re-run this from a MutationObserver to pick
+// up lazily loaded ("show more files") items.
+export function replaceDiffFileTreeIcons() {
+  const tree = document.getElementById("diff-file-tree");
+  if (!tree) return;
+
+  for (const item of tree.querySelectorAll(".item-file")) {
+    if (item.querySelector(":scope > .harivan-nonicon")) continue;
+    const icon = item.querySelector(":scope > svg.octicon-file");
+    if (!icon) continue;
+    const filename = noniconNameFromItem(item);
+    if (!filename) continue;
+    icon.style.display = "none";
+    icon.insertAdjacentElement("beforebegin", makeNoniconSpan(filename, false));
+  }
+
+  for (const item of tree.querySelectorAll(".item-directory")) {
+    if (item.querySelector(":scope > .harivan-nonicon")) continue;
+    const icon = item.querySelector(":scope > svg.octicon-file-directory-fill");
+    if (!icon) continue;
+    icon.style.display = "none";
+    icon.insertAdjacentElement(
+      "beforebegin",
+      makeNoniconSpan(noniconNameFromItem(item), true),
+    );
   }
 }

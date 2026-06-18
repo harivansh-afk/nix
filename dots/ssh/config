@@ -91,3 +91,18 @@ Host vin-stor-1
   IdentitiesOnly yes
   Port 9999
   User hari
+
+# Reached over Tailscale only (no public port). Mirrors the `spark` block so
+# mosh behaves the same: MagicDNS name + agent/control/keepalive options.
+Host hari-compute-1
+  HostName hari-compute-1
+  HostKeyAlias hari-compute-1
+  User hari
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+  ForwardAgent yes
+  ControlMaster auto
+  ControlPath ~/.ssh/sockets/%r@%h:%p
+  ControlPersist 10m
+  ServerAliveInterval 60
+  ServerAliveCountMax 3

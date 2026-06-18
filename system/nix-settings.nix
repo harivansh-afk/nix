@@ -21,4 +21,14 @@ username: {
   use-xdg-base-directories = true;
   max-jobs = "auto";
   cores = 0;
+
+  # Pull prebuilt binaries (incl. neovim-nightly) from the nix-community
+  # Cachix. Without this, uncached source builds of Rust packages run the
+  # cargo-vendor fetcher, which crates.io now 403s for default User-Agents,
+  # breaking `switch`. The vendored deps for those builds are already cached
+  # here, so this skips the failing fetch entirely.
+  extra-substituters = [ "https://nix-community.cachix.org" ];
+  extra-trusted-public-keys = [
+    "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+  ];
 }

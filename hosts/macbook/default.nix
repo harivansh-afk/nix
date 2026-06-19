@@ -14,6 +14,7 @@
     ../../modules/security/sops.nix
     ../../modules/users/darwin.nix
     ../../modules/apps/voiceink.nix
+    ../../modules/apps/voiceink-dictionary.nix
     ./macos.nix
   ];
 

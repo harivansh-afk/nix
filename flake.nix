@@ -43,6 +43,15 @@
       url = "github:zhaofengli-wip/nix-homebrew";
     };
 
+    # VoiceInk dictation app, built from source on macbook (GPLv3). The
+    # prebuilt cask is the paid path; building from source with `make local`
+    # (ad-hoc signing, no Apple Developer account) is the free path. Pinned
+    # source only: it is an Xcode app, not a flake. See modules/apps/voiceink.nix.
+    voiceink-src = {
+      url = "github:Beingpax/VoiceInk";
+      flake = false;
+    };
+
     # Neovim nightly overlay, applied on darwin only: there is no binary
     # cache for aarch64-linux, so spark stays on the nixpkgs neovim.
     neovim-nightly = {

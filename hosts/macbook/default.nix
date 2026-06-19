@@ -13,6 +13,7 @@
     inputs.sops-nix.darwinModules.sops
     ../../modules/security/sops.nix
     ../../modules/users/darwin.nix
+    ../../modules/apps/voiceink.nix
     ./macos.nix
   ];
 
@@ -54,7 +55,8 @@
       "karabiner-elements"
       "raycast"
       "riptide-beta"
-      "voiceink"
+      # voiceink: built from source instead (free path); see
+      # modules/apps/voiceink.nix. The cask is the paid distribution.
     ];
   };
 }

@@ -1,0 +1,16 @@
+# Denylist for KB ingestion - one pattern per line.
+# Any file whose absolute path contains any of these segments is SKIPPED.
+# Fail-safe: when in doubt, skip.
+#
+# Security / credentials
+security
+recovery-codes-keys
+# Finance / legal / identity
+finance-tax
+travel-identity
+legal-business
+# Version control and package dirs
+.git
+node_modules
+# Dotfiles and hidden dirs (leading dot in path segment)
+# Enforced programmatically in ingest.py - any path segment starting with '.'

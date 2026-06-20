@@ -21,6 +21,9 @@
     ../../modules/services/delta.nix
     ../../modules/services/forgejo
     ../../modules/services/inference.nix
+    ../../modules/services/hermes.nix
+    ../../modules/services/knowledge-base.nix
+    ../../modules/services/kb-ingest.nix
     ../../modules/services/mosh.nix
     ../../modules/services/parakeet.nix
     ../../modules/services/vaultwarden.nix

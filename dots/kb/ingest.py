@@ -41,6 +41,14 @@ CORPUS_DIRS: list[Path] = [
     Path("/home/rathi/Documents/Downloads/documents/school-career"),
 ]
 
+# Connector staging area: API connectors (gmail, calendar, plaid, ...) drop
+# normalized markdown under <source>/ subdirs here, and it is indexed like any
+# other corpus dir (denylist + incremental state still apply). Overridable via
+# KB_STAGING_DIR; only added when present so local-only runs are unaffected.
+_STAGING = Path(os.environ.get("KB_STAGING_DIR", "/var/lib/kb/staging"))
+if _STAGING.is_dir():
+    CORPUS_DIRS.append(_STAGING)
+
 ALLOWED_EXTENSIONS: set[str] = {".md", ".markdown", ".txt", ".pdf"}
 
 DEFAULT_STATE_FILE = Path("/var/lib/cognee/ingest-state.json")

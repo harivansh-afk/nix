@@ -24,6 +24,7 @@
     ../../modules/services/hermes.nix
     ../../modules/services/knowledge-base.nix
     ../../modules/services/kb-ingest.nix
+    ../../modules/services/kb-ingestion.nix
     ../../modules/services/mosh.nix
     ../../modules/services/parakeet.nix
     ../../modules/services/vaultwarden.nix

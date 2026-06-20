@@ -59,6 +59,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Nous Research Hermes Agent: the always-on personal agent runtime
+    # (modules/services/hermes.nix). Pinned to the same ref already present
+    # transitively via index. No nixpkgs follows: it builds via uv2nix
+    # against its own pinned set, like dgx-spark.
+    hermes-agent = {
+      url = "github:NousResearch/hermes-agent/v2026.5.16";
+    };
+
     # Upstream NixOS module for the DGX Spark hardware. Deliberately no
     # nixpkgs follows: upstream pins a known-good revision for the NVIDIA
     # kernel build, and overriding it invalidates that hash.

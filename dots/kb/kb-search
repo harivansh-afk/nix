@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+"""
+kb-search: query the personal knowledge base via Cognee.
+
+Usage:
+    kb-search <query string>
+    kb-search "what does the neovim wiki say about LSP?"
+
+Run via the cognee venv wrapper:
+    cognee-env python kb-search "your query"
+or, if installed via kb-ingest.nix, the wrapper script on PATH handles this:
+    kb-search "your query"
+
+Output format (plain text, parseable):
+    RESULT <n>
+    SOURCE: <source document / path>
+    TEXT:
+    <result text>
+    ---
+
+# INTEGRATION SEAM: this script is invoked via the kb-search wrapper defined
+# in modules/services/kb-ingest.nix.  That wrapper prepends the cognee-env
+# invocation.  Only kb-ingest.nix needs updating when the venv path changes.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import sys
+
+
+# Cognee dataset / search parameters
+DATASET_NAME = "personal-kb-slice1"
+
+# Maximum number of results to print
+MAX_RESULTS = 10
+
+
+async def search(query: str) -> int:
+    """
+    Run cognee.search and print results.
+
+    # VERIFY API: cognee.search() signature varies by version.
+    # Current assumption:
+    #   results = await cognee.search(query_type=QueryType.INSIGHTS, query_text=query)
+    # where results is a list of objects/dicts with at least a text field and
+    # optionally a source/metadata field.
+    #
+    # Fallback: if QueryType is unavailable or the above fails, try:
+    #   results = await cognee.search(query, query_type="GRAPH_COMPLETION")
+    #
+    # Adjust the result-field access below (result.get("text") vs result.text
+    # vs result["payload"]["text"]) to match what the installed version returns.
+    """
+    try:
+        import cognee  # type: ignore  # provided by cognee-env
+    except ImportError:
+        print("ERROR: cognee not importable. Run this script via cognee-env.", file=sys.stderr)
+        return 1
+
+    # VERIFY API: import QueryType if available; fall back gracefully.
+    try:
+        from cognee.api.v1.search import SearchType  # type: ignore
+
+        query_type = SearchType.INSIGHTS
+    except ImportError:
+        try:
+            from cognee.modules.search.types import SearchType  # type: ignore
+
+            query_type = SearchType.INSIGHTS
+        except ImportError:
+            # VERIFY API: use string form as last resort; adjust to whatever
+            # the installed version accepts.
+            query_type = "INSIGHTS"
+
+    try:
+        # VERIFY API: keyword argument names (query_type vs queryType, etc.)
+        results = await cognee.search(query_type=query_type, query_text=query)
+    except TypeError:
+        # Fallback: positional invocation if keyword names differ
+        # VERIFY API: adjust if the signature is different
+        results = await cognee.search(query_type, query)  # type: ignore
+
+    if not results:
+        print("No results found.")
+        return 0
+
+    for i, result in enumerate(results[:MAX_RESULTS], start=1):
+        # VERIFY API: field extraction - Cognee results may be dicts, dataclasses,
+        # or Pydantic models.  The code below tries common shapes; add/remove
+        # branches based on the installed version's actual return type.
+        if isinstance(result, dict):
+            text = (
+                result.get("text")
+                or result.get("content")
+                or result.get("payload", {}).get("text")
+                or str(result)
+            )
+            source = (
+                result.get("source")
+                or result.get("document_id")
+                or result.get("metadata", {}).get("source")
+                or "unknown"
+            )
+        else:
+            # Dataclass / Pydantic model
+            text = getattr(result, "text", None) or getattr(result, "content", None) or str(result)
+            source = (
+                getattr(result, "source", None)
+                or getattr(result, "document_id", None)
+                or "unknown"
+            )
+
+        print(f"RESULT {i}")
+        print(f"SOURCE: {source}")
+        print("TEXT:")
+        print(str(text).strip())
+        print("---")
+
+    return 0
+
+
+def main() -> int:
+    if len(sys.argv) < 2:
+        print("Usage: kb-search <query>", file=sys.stderr)
+        return 2
+
+    query = " ".join(sys.argv[1:])
+    return asyncio.run(search(query))
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -25,11 +25,56 @@ let
     pkgs.jq
     pkgs.coreutils
     pkgs.gnused
+    pkgs.curl
   ];
+
+  # gws needs the OAuth client (from the gws.env sops secret, exposed under the
+  # GOOGLE_WORKSPACE_CLI_* names this gws build expects) plus the user token. The
+  # token is exported to a sops-managed credentials file for deterministic, keyring-
+  # free use under systemd. Sourced at the top of each gws connector.
+  gwsEnvSetup = ''
+    set -a
+    . /run/secrets/gws.env 2>/dev/null || true
+    set +a
+    export GOOGLE_WORKSPACE_CLI_CLIENT_ID="''${GWS_CLIENT_ID:-}"
+    export GOOGLE_WORKSPACE_CLI_CLIENT_SECRET="''${GWS_CLIENT_SECRET:-}"
+    [ -r /run/secrets/gws-credentials.json ] \
+      && export GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE=/run/secrets/gws-credentials.json
+  '';
+
+  # forgejo connector: own repos -> staging/forgejo/ (READMEs + open issues).
+  # Token comes from the existing forgejo-token sops secret (loopback-safe).
+  forgejoConnector = pkgs.writeShellScript "kb-connector-forgejo" ''
+    set -uo pipefail
+    out="${stagingDir}/forgejo"
+    mkdir -p "$out"
+    base="https://git.harivan.sh/api/v1"
+    tok=$(cat /run/secrets/forgejo-token.env 2>/dev/null) || {
+      echo "no forgejo token; skipping"; exit 0
+    }
+    auth="Authorization: token $tok"
+    repos=$(curl -fsS -H "$auth" "$base/user/repos?limit=50" 2>/dev/null \
+      | jq -r '.[].full_name' 2>/dev/null) || {
+      echo "forgejo API unreachable; skipping"; exit 0
+    }
+    n=0
+    for r in $repos; do
+      safe=$(printf '%s' "$r" | tr '/' '_')
+      readme=$(curl -fsS -H "$auth" "$base/repos/$r/contents/README.md" 2>/dev/null \
+        | jq -r '.content // empty' 2>/dev/null | base64 -d 2>/dev/null) || readme=""
+      [ -n "$readme" ] && printf '# %s (README)\n\n%s\n' "$r" "$readme" > "$out/''${safe}_README.md"
+      issues=$(curl -fsS -H "$auth" "$base/repos/$r/issues?state=open&limit=50&type=issues" 2>/dev/null \
+        | jq -r '.[] | "## #\(.number) \(.title)\n\n\(.body // "")\n"' 2>/dev/null) || issues=""
+      [ -n "$issues" ] && printf '# %s (open issues)\n\n%s\n' "$r" "$issues" > "$out/''${safe}_issues.md"
+      n=$((n + 1))
+    done
+    echo "forgejo: synced $n repo(s) to $out"
+  '';
 
   # gmail connector: recent messages -> staging/gmail/<id>.md (headers + snippet).
   gmailConnector = pkgs.writeShellScript "kb-connector-gmail" ''
     set -uo pipefail
+    ${gwsEnvSetup}
     out="${stagingDir}/gmail"
     mkdir -p "$out"
     if ! ${gws} gmail users getProfile --params '{"userId":"me"}' >/dev/null 2>&1; then
@@ -60,6 +105,7 @@ let
   # calendar connector: next 90 days of events -> staging/calendar/<id>.md.
   calendarConnector = pkgs.writeShellScript "kb-connector-calendar" ''
     set -uo pipefail
+    ${gwsEnvSetup}
     out="${stagingDir}/calendar"
     mkdir -p "$out"
     now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -124,6 +170,7 @@ in
     "d ${stagingDir} 0755 ${user} ${group} -"
     "d ${stagingDir}/gmail 0755 ${user} ${group} -"
     "d ${stagingDir}/calendar 0755 ${user} ${group} -"
+    "d ${stagingDir}/forgejo 0755 ${user} ${group} -"
   ];
 
   # Connectors (run as rathi), plus point the existing kb-ingest service at the
@@ -132,14 +179,16 @@ in
   systemd.services =
     (mkConnector "gmail" gmailConnector)
     // (mkConnector "calendar" calendarConnector)
+    // (mkConnector "forgejo" forgejoConnector)
     // {
       kb-ingest.environment.KB_STAGING_DIR = stagingDir;
     };
 
   systemd.timers =
-    # Connectors refresh hourly (light, gws API).
+    # Connectors refresh hourly (light API calls).
     (mkTimer "gmail" "hourly")
     // (mkTimer "calendar" "hourly")
+    // (mkTimer "forgejo" "hourly")
     # Indexer runs nightly (cognify on the 120B is slow; keep it off the
     # daytime GPU). Incremental, so steady-state nights are cheap.
     // {

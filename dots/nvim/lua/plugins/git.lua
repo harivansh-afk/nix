@@ -39,6 +39,13 @@ return {
   {
     "barrettruth/forge.nvim",
     cmd = "Forge",
+    before = function()
+      vim.g.forge = {
+        sources = {
+          forgejo = { hosts = { "git.harivan.sh" } },
+        },
+      }
+    end,
     after = function() pcall(vim.cmd.packadd, "fzf-lua") end,
     keys = {
       { "<c-t>", [[<cmd>lua require('forge').open()<cr>]], desc = "forge" },

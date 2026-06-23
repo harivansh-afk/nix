@@ -49,8 +49,9 @@ in
       "1"
       "-ngl"
       "99"
-      "--sleep-idle-seconds"
-      "600"
+      # No idle sleep: this is an always-on chat brain. Sleeping unloads the
+      # 77GB model after 10 min idle, so the next text hits an ~8 min cold
+      # reload from disk. Keep it resident (the 128GB box exists for this).
       # NVIDIA's universal recommendation for Nemotron 3 Super across reasoning,
       # tool calling and chat: temperature 1.0, top-p 0.95.
       "--temp"

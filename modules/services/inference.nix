@@ -49,6 +49,13 @@ in
       "1"
       "-ngl"
       "99"
+      # DGX Spark / GB10: the default mmap loads the 76GB model lazily one page
+      # fault at a time (~5-8 min) AND duplicates ~60GB into the page cache,
+      # feeding OOM. NVIDIA staff and the llama.cpp maintainer both run --no-mmap
+      # on GB10: load drops to ~20-90s and memory pressure drops. --mlock pins
+      # the model resident so it is never paged/compressed (no reloads).
+      "--no-mmap"
+      "--mlock"
       # No idle sleep: this is an always-on chat brain. Sleeping unloads the
       # 77GB model after 10 min idle, so the next text hits an ~8 min cold
       # reload from disk. Keep it resident (the 128GB box exists for this).
@@ -70,6 +77,10 @@ in
     "d /var/lib/llama-cpp/models 0755 root root -"
     "d ${modelDir} 0755 root root -"
     "d /var/lib/llama-cpp/huggingface 0755 root root -"
+    # NVMe read-ahead 8192 KiB: cuts large-model load time materially on the
+    # DGX Spark's kernel 6.17 (NVIDIA forum guidance). Harmless if the device
+    # name differs (tmpfiles just warns).
+    "w /sys/block/nvme0n1/queue/read_ahead_kb - - - - 8192"
   ];
 
   systemd.services.llama-cpp-nemotron-download = {
@@ -89,6 +100,8 @@ in
     requires = [ "llama-cpp-nemotron-download.service" ];
     serviceConfig = {
       OOMScoreAdjust = 1000;
+      # --mlock pins ~76GB resident; raise the memlock rlimit so it is allowed.
+      LimitMEMLOCK = "infinity";
       # CRITICAL on DGX Spark / GB10 unified memory: llama.cpp reads
       # /proc/meminfo to size its unified-memory (UMA) allocations. The
       # upstream services.llama-cpp module sets ProcSubset=pid, which hides

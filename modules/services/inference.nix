@@ -58,8 +58,10 @@ in
       "1.0"
       "--top-p"
       "0.95"
-      # <think>/</think> are distinct tokens; keep them in the stream.
-      "--special"
+      # NOTE: do NOT pass --special. It renders control tokens (e.g. the
+      # <|im_end|> turn terminator) as literal text in the reply. Reasoning is
+      # already split into reasoning_content by llama.cpp's reasoning parser,
+      # so nothing useful is lost by hiding control tokens.
     ];
   };
 

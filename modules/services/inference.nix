@@ -31,45 +31,34 @@ in
 
   services.llama-cpp = {
     enable = true;
-    host = "127.0.0.1";
-    # Keep inference off well-known/high-value ports (no 8080); loopback only.
-    port = 18080;
     package = llamaCpp;
-    extraFlags = [
-      "-m"
-      modelPath
-      "--alias"
-      "nemotron-3-super-120b"
+    # nixpkgs replaced `extraFlags` with a freeform `settings` attrset rendered
+    # via lib.cli.toCommandLine (multi-char key -> --key value, bool -> bare
+    # flag). Keep loopback-only, off well-known ports.
+    settings = {
+      host = "127.0.0.1";
+      port = 18080;
+      model = modelPath;
+      alias = "nemotron-3-super-120b";
       # Hermes Agent requires >= 64k context. Single slot at 64k keeps KV cache
-      # modest while satisfying that minimum (32k was below it). The brain is a
-      # single-user agent backend, so one slot is fine.
-      "-c"
-      "65536"
-      "--parallel"
-      "1"
-      "-ngl"
-      "99"
-      # DGX Spark / GB10: the default mmap loads the 76GB model lazily one page
-      # fault at a time (~5-8 min) AND duplicates ~60GB into the page cache,
-      # feeding OOM. NVIDIA staff and the llama.cpp maintainer both run --no-mmap
-      # on GB10: load drops to ~20-90s and memory pressure drops. --mlock pins
-      # the model resident so it is never paged/compressed (no reloads).
-      "--no-mmap"
-      "--mlock"
-      # No idle sleep: this is an always-on chat brain. Sleeping unloads the
-      # 77GB model after 10 min idle, so the next text hits an ~8 min cold
-      # reload from disk. Keep it resident (the 128GB box exists for this).
-      # NVIDIA's universal recommendation for Nemotron 3 Super across reasoning,
-      # tool calling and chat: temperature 1.0, top-p 0.95.
-      "--temp"
-      "1.0"
-      "--top-p"
-      "0.95"
-      # NOTE: do NOT pass --special. It renders control tokens (e.g. the
-      # <|im_end|> turn terminator) as literal text in the reply. Reasoning is
-      # already split into reasoning_content by llama.cpp's reasoning parser,
-      # so nothing useful is lost by hiding control tokens.
-    ];
+      # modest (32k was below Hermes's floor). Single-user backend, one slot.
+      "ctx-size" = 65536;
+      parallel = 1;
+      "n-gpu-layers" = 99;
+      # DGX Spark / GB10: default mmap loads the 76GB model lazily one page fault
+      # at a time (~5-8 min) AND duplicates ~60GB into the page cache, feeding
+      # OOM. NVIDIA staff and the llama.cpp maintainer run --no-mmap on GB10:
+      # load drops to ~20-90s and memory pressure drops. --mlock pins it resident.
+      "no-mmap" = true;
+      mlock = true;
+      # NVIDIA's recommendation for Nemotron 3 Super: temp 1.0, top-p 0.95.
+      temp = "1.0";
+      "top-p" = "0.95";
+      # NOTE: deliberately NO `special`. It renders control tokens (e.g. the
+      # <|im_end|> turn terminator) as literal text; reasoning is already split
+      # into reasoning_content by the reasoning parser.
+      # NOTE: deliberately NO idle sleep - this is an always-on resident brain.
+    };
   };
 
   systemd.tmpfiles.rules = [

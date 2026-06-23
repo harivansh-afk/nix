@@ -130,6 +130,29 @@ _codex_apply_bat_theme() {
   fi
 }
 
+# Make the terminal background detectable inside tmux. We reach spark over
+# mosh, and mosh-server keeps no model of the terminal's default colors, so it
+# never answers OSC 10/11/12 color queries; tmux, querying its mosh client,
+# gets nothing to report either. Programs that probe the background that way
+# (Codex's TUI) then time out and render with no background fill. Emitting the
+# cozybox colors as an OSC *set* makes tmux record them, so it answers the
+# query from any program launched afterwards in this pane. Colors mirror
+# lib/theme.nix (dark/light); keep them in sync. Verified: tmux 3.6a echoes the
+# set values back on query. No-op outside tmux.
+_codex_apply_terminal_osc_colors() {
+  [[ -n "$TMUX" ]] || return
+  local mode="$(_codex_read_theme_mode)"
+  [[ "$mode" == "${_CODEX_LAST_OSC_THEME:-}" ]] && return
+  local bg fg cursor
+  if [[ "$mode" == light ]]; then
+    fg=3c3836; bg=e7e7e7; cursor=282828
+  else
+    fg=ebdbb2; bg=101010; cursor=ddc7a1
+  fi
+  printf '\e]10;#%s\e\\\e]11;#%s\e\\\e]12;#%s\e\\' "$fg" "$bg" "$cursor"
+  typeset -g _CODEX_LAST_OSC_THEME="$mode"
+}
+
 _codex_trust_target() {
   local target
   local common_dir
@@ -187,6 +210,7 @@ precmd() {
   _codex_apply_prompt_theme
   _codex_apply_highlight_styles
   _codex_apply_bat_theme
+  _codex_apply_terminal_osc_colors
   _codex_cursor_beam
 }
 preexec() { _codex_cursor_beam; }
@@ -194,6 +218,7 @@ preexec() { _codex_cursor_beam; }
 _codex_apply_prompt_theme
 _codex_apply_highlight_styles
 _codex_apply_bat_theme
+_codex_apply_terminal_osc_colors
 
 bindkey '^k' forward-char
 bindkey '^j' backward-char

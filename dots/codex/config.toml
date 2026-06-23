@@ -6,41 +6,36 @@ web_search = "live"
 plan_mode_reasoning_effort = "xhigh"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
-commit_attribution = ""
 service_tier = "fast"
 
+# Only non-default feature toggles are listed. Stable defaults (shell_tool,
+# unified_exec, shell_snapshot, personality, hooks, goals, guardian_approval,
+# fast_mode, enable_request_compression, skill_mcp_dependency_install) are
+# already on and were dropped. Removed/dead no-op keys were dropped too:
+# apply_patch_freeform, skill_env_var_dependency_prompt, codex_git_commit,
+# plugin_hooks, external_migration, remote_control, child_agents_md, and the
+# top-level commit_attribution (attribution now lives in an extension).
 [features]
-shell_tool = true
-unified_exec = true
-shell_snapshot = true
-apply_patch_freeform = true
-apply_patch_streaming_events = true
+# Opt-out from a stable on-by-default feature.
+apps = false
+
+# Experimental (also exposed in /experimental).
+memories = true
+prevent_idle_sleep = true
+
+# Under development; off by default. The warning banner is silenced via
+# suppress_unstable_features_warning above.
 code_mode = true
 code_mode_only = true
-personality = true
-memories = true
+apply_patch_streaming_events = true
 runtime_metrics = true
-child_agents_md = true
-enable_request_compression = true
-skill_mcp_dependency_install = true
-skill_env_var_dependency_prompt = true
-apps = false
-codex_git_commit = false
-prevent_idle_sleep = true
 exec_permission_approvals = true
 request_permissions_tool = true
 enable_fanout = true
-hooks = true
-plugin_hooks = true
-guardian_approval = true
-goals = true
-external_migration = false
-fast_mode = true
-artifact = true
 default_mode_request_user_input = true
 chronicle = true
 realtime_conversation = true
-remote_control = false
+artifact = true
 
 # gpt-5.5 is not enabled for encrypted tool use, and multi_agent_v2 encrypts
 # the spawn_agent/send_message/followup_task `message` params unconditionally

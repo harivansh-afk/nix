@@ -1,0 +1,45 @@
+diff --git a/src/terminal/terminalfunctions.cc b/src/terminal/terminalfunctions.cc
+index ca141dd..db1c132 100644
+--- a/src/terminal/terminalfunctions.cc
++++ b/src/terminal/terminalfunctions.cc
+@@ -34,6 +34,7 @@
+ #include <algorithm>
+ #include <string>
+ #include <stdio.h>
++#include <stdlib.h>
+ 
+ #include "terminaldispatcher.h"
+ #include "terminalframebuffer.h"
+@@ -598,6 +599,32 @@ void Dispatcher::OSC_dispatch( const Parser::OSC_End *act __attribute((unused)),
+       Terminal::Framebuffer::title_type clipboard(
+               OSC_string.begin() + 5, OSC_string.end() );
+       fb->set_clipboard( clipboard );
++  /* handle OSC 10/11/12 default color queries (foreground / background /
++     cursor). Mosh keeps no model of the real terminal's default colors, so a
++     program running over mosh (e.g. Codex inside tmux) that asks "what is your
++     background?" via "\033]11;?\033\\" gets no answer and times out, losing its
++     background. Report colors from the environment (MOSH_OSC_FG / MOSH_OSC_BG /
++     MOSH_OSC_CURSOR as "rrggbb") or fall back to the cozybox dark palette,
++     mirroring how CSI_DA / CSI_DSR reply via terminal_to_host. Only "?" queries
++     are answered; OSC 10/11/12 color *sets* remain ignored as before. */
++  } else if ( OSC_string.size() == 4 && OSC_string[ 0 ] == L'1' &&
++              ( OSC_string[ 1 ] == L'0' || OSC_string[ 1 ] == L'1' || OSC_string[ 1 ] == L'2' ) &&
++              OSC_string[ 2 ] == L';' && OSC_string[ 3 ] == L'?' ) {
++    long cmd_num = 10 + ( OSC_string[ 1 ] - L'0' );
++    const char *hex = NULL;
++    switch ( cmd_num ) {
++    case 10: hex = getenv( "MOSH_OSC_FG" );     if ( !hex ) { hex = "ebdbb2"; } break;
++    case 11: hex = getenv( "MOSH_OSC_BG" );     if ( !hex ) { hex = "101010"; } break;
++    case 12: hex = getenv( "MOSH_OSC_CURSOR" ); if ( !hex ) { hex = "ddc7a1"; } break;
++    }
++    unsigned int r = 0, g = 0, b = 0;
++    if ( hex && sscanf( hex, "%2x%2x%2x", &r, &g, &b ) == 3 ) {
++      char reply[ 64 ];
++      /* widen 8-bit components to 16-bit (0x10 -> 0x1010) per xterm reply format */
++      snprintf( reply, sizeof reply, "\033]%ld;rgb:%04x/%04x/%04x\033\\",
++                cmd_num, r * 0x101, g * 0x101, b * 0x101 );
++      terminal_to_host.append( reply );
++    }
+   /* handle osc terminal title sequence */
+   } else if ( OSC_string.size() >= 1 ) {
+     long cmd_num = -1;

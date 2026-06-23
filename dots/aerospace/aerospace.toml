@@ -11,6 +11,14 @@ accordion-padding = 30
 
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 
+# Force every detected window into the tiling layer, then fall through to the
+# app-specific workspace-routing rules below (check-further-callbacks = true).
+# Without this, some apps (e.g. Linear) open as floating and overlap tiled
+# windows instead of splitting space. Must stay above the routing rules.
+[[on-window-detected]]
+check-further-callbacks = true
+run = 'layout tiling'
+
 [gaps]
 inner.horizontal = 0
 inner.vertical = 0

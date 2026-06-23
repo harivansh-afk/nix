@@ -89,6 +89,14 @@ in
     requires = [ "llama-cpp-nemotron-download.service" ];
     serviceConfig = {
       OOMScoreAdjust = 1000;
+      # CRITICAL on DGX Spark / GB10 unified memory: llama.cpp reads
+      # /proc/meminfo to size its unified-memory (UMA) allocations. The
+      # upstream services.llama-cpp module sets ProcSubset=pid, which hides
+      # /proc/meminfo, so llama.cpp falls back to cudaMemGetInfo (wrong on
+      # GB10) and mis-manages memory -> OOM and stalled/slow model loads.
+      # Allow the full /proc so UMA detection works.
+      ProcSubset = lib.mkForce "all";
+      ProtectProc = lib.mkForce "default";
     };
   };
 }

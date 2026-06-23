@@ -40,8 +40,13 @@ in
       modelPath
       "--alias"
       "nemotron-3-super-120b"
+      # Hermes Agent requires >= 64k context. Single slot at 64k keeps KV cache
+      # modest while satisfying that minimum (32k was below it). The brain is a
+      # single-user agent backend, so one slot is fine.
       "-c"
-      "32768"
+      "65536"
+      "--parallel"
+      "1"
       "-ngl"
       "99"
       "--sleep-idle-seconds"

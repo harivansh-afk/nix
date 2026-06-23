@@ -64,6 +64,16 @@
       neededForUsers = true;
     };
 
+    # gws OAuth token (authorized_user creds incl. refresh token). Read by the
+    # gmail/calendar KB connectors via GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE for
+    # deterministic, keyring-free auth. Owned by rathi (the connectors run as
+    # rathi). Not a KEY=value file, so keep it out of the shell-sourced bucket.
+    "gws-credentials.json" = {
+      owner = username;
+      group = "users";
+      mode = "0400";
+    };
+
     "wifi.env" = {
       restartUnits = [ "NetworkManager-ensure-profiles.service" ];
     };

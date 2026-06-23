@@ -100,6 +100,10 @@ let
     EMBEDDING_API_KEY = ".";
     EMBEDDING_DIMENSIONS = toString embedDimensions;
     EMBEDDING_MAX_TOKENS = "8192";
+    # litellm rejects the `dimensions` param for openai/-prefixed embedding
+    # models (it assumes text-embedding-3+) and 422s. Tell it to drop unsupported
+    # params instead; llama.cpp returns its native 1024-dim vectors regardless.
+    LITELLM_DROP_PARAMS = "True";
 
     # Relational store = local Postgres (pgvector reuses this connection).
     DB_PROVIDER = "postgres";
@@ -109,8 +113,17 @@ let
     DB_USERNAME = pgUser;
     DB_PASSWORD = pgPassword;
 
-    # Vector store = pgvector (no separate URL/key; reuses DB_* above).
+    # Vector store = pgvector. Cognee 1.x defaults multi-user access control ON,
+    # and that code path REQUIRES explicit VECTOR_DB_* creds (it will not fall
+    # back to DB_*). This is a single-user personal KB, so turn access control
+    # off and set the pgvector creds explicitly (works either way).
+    ENABLE_BACKEND_ACCESS_CONTROL = "false";
     VECTOR_DB_PROVIDER = "pgvector";
+    VECTOR_DB_HOST = pgHost;
+    VECTOR_DB_PORT = toString pgPort;
+    VECTOR_DB_NAME = pgDb;
+    VECTOR_DB_USERNAME = pgUser;
+    VECTOR_DB_PASSWORD = pgPassword;
 
     # Graph store = kuzu (file-based, fully local, no extra service).
     GRAPH_DATABASE_PROVIDER = "kuzu";
@@ -120,6 +133,11 @@ let
     SYSTEM_ROOT_DIRECTORY = "${cogneeStateDir}/.cognee_system/";
     HF_HOME = "${cogneeStateDir}/hf";
     ENV = "local";
+    # Skip Cognee's 30s embedding/LLM pre-flight test: the endpoints are local
+    # and verified, and the test loses a race under GB10 GPU contention (the
+    # 120B and the embed server share one GPU), which cancels the cognify task
+    # group. Real calls during cognify still run normally.
+    COGNEE_SKIP_CONNECTION_TEST = "true";
     # Driver libcuda + manylinux libs for any native deps pulled in by cognee.
     LD_LIBRARY_PATH = "/run/opengl-driver/lib:${cogneeRuntimeLibs}";
   };

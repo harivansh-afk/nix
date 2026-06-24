@@ -25,9 +25,10 @@ let
   # so both the root ingest service and the rathi-run kb-search can exec them).
   kbDotsDir = "${../../dots/kb}";
 
-  # The cognee environment wrapper from knowledge-base.nix is installed into
-  # environment.systemPackages, so it lands on the system PATH here.
-  cogneeEnv = "/run/current-system/sw/bin/cognee-env";
+  # Dedicated python for kb_vec.py (only needs psycopg2 + stdlib urllib). Avoids
+  # the root-only cognee venv (/var/lib/cognee/venv is 0750), so kb-search works
+  # for the rathi user / Hermes too, not just root.
+  kbPython = pkgs.python3.withPackages (ps: [ ps.psycopg2 ]);
 
   # State file for incremental ingestion tracking.
   ingestStateFile = "/var/lib/cognee/ingest-state.json";
@@ -42,7 +43,7 @@ let
       echo "Usage: kb-search <query>" >&2
       exit 2
     fi
-    exec ${cogneeEnv} "${kbDotsDir}/kb_vec.py" search "$@"
+    exec ${kbPython}/bin/python "${kbDotsDir}/kb_vec.py" search "$@"
   '';
 
 in
@@ -82,7 +83,7 @@ in
 
       # Vector reindex: embed all staged + corpus docs into pgvector. Fast (no
       # LLM), so a full reindex each run is fine and keeps it simple/idempotent.
-      ExecStart = "${pkgs.bash}/bin/bash -c 'exec ${cogneeEnv} ${kbDotsDir}/kb_vec.py ingest'";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'exec ${kbPython}/bin/python ${kbDotsDir}/kb_vec.py ingest'";
 
       # Safety: do not allow writes outside the state dir.
       ReadWritePaths = [ "/var/lib/cognee" ];

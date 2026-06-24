@@ -189,21 +189,17 @@ in
     (mkTimer "gmail" "hourly")
     // (mkTimer "calendar" "hourly")
     // (mkTimer "forgejo" "hourly")
-    # Indexer runs nightly (cognify on the 120B is slow; keep it off the
-    # daytime GPU). Incremental, so steady-state nights are cheap.
+    # Indexer runs hourly: the vector reindex (embeddings -> pgvector, no LLM)
+    # is ~15s for a few hundred docs, so it is cheap to run often and keeps the
+    # KB fresh shortly after the connectors collect new docs.
     // {
-      # Indexer timer is DEFINED but NOT auto-enabled (wantedBy = []): cognify
-      # extraction on the 120B is currently slow and can stall, so we do not run
-      # it unattended yet. Connectors still populate staging cheaply. Run the
-      # indexer manually (`systemctl start kb-ingest`), and once a fast cognify
-      # model is wired, flip wantedBy to [ "timers.target" ].
       kb-ingest = {
-        description = "Schedule nightly KB indexing";
-        wantedBy = [ ];
+        description = "Schedule hourly KB vector reindex";
+        wantedBy = [ "timers.target" ];
         timerConfig = {
-          OnCalendar = "*-*-* 04:00:00";
+          OnCalendar = "hourly";
           Persistent = true;
-          RandomizedDelaySec = "30min";
+          RandomizedDelaySec = "5min";
         };
       };
     };

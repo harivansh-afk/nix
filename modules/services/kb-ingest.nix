@@ -32,17 +32,17 @@ let
   # State file for incremental ingestion tracking.
   ingestStateFile = "/var/lib/cognee/ingest-state.json";
 
-  # kb-search wrapper: a shell script that execs cognee-env with the kb-search
-  # python script.  Arguments are forwarded as the query string.
+  # kb-search wrapper: plain vector search over pgvector using the local
+  # embedding model (no LLM, no knowledge graph). cognee-env is reused only for
+  # its venv python (psycopg2 + libs); the script hardcodes the embed endpoint
+  # and pg creds. Arguments are the query string.
   kbSearchBin = pkgs.writeShellScriptBin "kb-search" ''
     set -euo pipefail
     if [ $# -eq 0 ]; then
       echo "Usage: kb-search <query>" >&2
       exit 2
     fi
-    # TODO: INTEGRATION - if cognee-env is not on PATH, replace the command
-    # below with its absolute path.
-    exec ${cogneeEnv} "${kbDotsDir}/kb-search" "$@"
+    exec ${cogneeEnv} "${kbDotsDir}/kb_vec.py" search "$@"
   '';
 
 in
@@ -56,9 +56,10 @@ in
   # (b) kb-ingest systemd oneshot service
   # ---------------------------------------------------------------------------
   systemd.services.kb-ingest = {
-    description = "Personal KB ingestion (Slice 1) into Cognee";
+    description = "Personal KB vector index (embeddings -> pgvector)";
 
-    # Manual-trigger only - never auto-starts.
+    # Started by kb-ingest.timer (hourly, enabled in kb-ingestion.nix). The
+    # vector reindex is fast (~15s for a few hundred docs), so hourly is cheap.
     wantedBy = [ ];
     # Manual trigger; ordering only applies if these are up when it runs.
     after = [
@@ -79,9 +80,9 @@ in
       # Working directory; script locates denylist.txt relative to itself.
       WorkingDirectory = kbDotsDir;
 
-      # TODO: INTEGRATION - replace "cognee-env" with the absolute path to the
-      # wrapper binary once the KB backend module finalises its venv layout.
-      ExecStart = "${pkgs.bash}/bin/bash -c 'exec ${cogneeEnv} ${kbDotsDir}/ingest.py --state-file ${ingestStateFile}'";
+      # Vector reindex: embed all staged + corpus docs into pgvector. Fast (no
+      # LLM), so a full reindex each run is fine and keeps it simple/idempotent.
+      ExecStart = "${pkgs.bash}/bin/bash -c 'exec ${cogneeEnv} ${kbDotsDir}/kb_vec.py ingest'";
 
       # Safety: do not allow writes outside the state dir.
       ReadWritePaths = [ "/var/lib/cognee" ];

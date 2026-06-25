@@ -1,4 +1,5 @@
 {
+  config,
   inputs,
   pkgs,
   ...
@@ -65,12 +66,14 @@
 #   endpoint and Restart=on-failure covers a cold start race.
 # - Loopback only. The gateway itself talks out to messaging platforms; it does
 #   not bind a public listener here. No 0.0.0.0 bind.
-# - Secrets/TODOs for the orchestrator: messaging platform tokens
-#   (TELEGRAM_BOT_TOKEN, DISCORD_BOT_TOKEN, SLACK_*, etc.) and any gateway auth
-#   are NOT provided here. Hermes reads them from $HERMES_HOME/.env at startup;
-#   wire them via sops/agenix into /home/rathi/.hermes/.env. The local brain
-#   needs no API key. Without at least one platform token the gateway starts but
-#   has nothing to listen on.
+# - Messaging-platform secrets: the Telegram bot token (and an optional
+#   TELEGRAM_ALLOWED_USERS allowlist) are provided via the sops secret
+#   `hermes-telegram.env`, loaded as the unit's EnvironmentFile below. The
+#   gateway reads them from its process environment, so no plaintext token
+#   lives in the repo, the nix store, or ~/.hermes/.env. Other platforms
+#   (Discord, Slack, ...) can be added the same way. The local brain needs no
+#   API key. The gateway is fail-closed: with no allowlist configured it denies
+#   all users until one is added to the secret or approved via pairing.
 let
   hermes = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
@@ -202,6 +205,13 @@ in
       # but without HERMES_MANAGED, so config set is permitted.
       ExecStartPre = pinModelConfig;
       ExecStart = "${hermes}/bin/hermes gateway";
+
+      # Messaging-platform secrets (sops-encrypted, decrypted to /run/secrets).
+      # Holds TELEGRAM_BOT_TOKEN (+ optional TELEGRAM_ALLOWED_USERS). The gateway
+      # reads these from its process environment, so an EnvironmentFile is enough
+      # - no plaintext token in the repo or nix store. The gateway is fail-closed:
+      # with no allowlist it denies all users until one is added or paired.
+      EnvironmentFile = config.sops.secrets."hermes-telegram.env".path;
 
       Restart = "on-failure";
       RestartSec = 5;

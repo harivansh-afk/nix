@@ -96,6 +96,18 @@
       restartUnits = [ "delta.service" ];
     };
 
+    # Telegram bot token (+ optional TELEGRAM_ALLOWED_USERS allowlist) for the
+    # Hermes gateway. KEY=value dotenv, loaded as the gateway unit's
+    # EnvironmentFile (modules/services/hermes.nix). Owned by rathi (the gateway
+    # runs as rathi). The gateway is fail-closed: with no allowlist set, all
+    # users are denied until added here or approved via pairing.
+    "hermes-telegram.env" = {
+      owner = username;
+      group = "users";
+      mode = "0400";
+      restartUnits = [ "hermes-gateway.service" ];
+    };
+
     "vaultwarden.env" = {
       owner = "vaultwarden";
       group = "vaultwarden";

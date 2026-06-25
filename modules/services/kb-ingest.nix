@@ -30,9 +30,6 @@ let
   # for the rathi user / Hermes too, not just root.
   kbPython = pkgs.python3.withPackages (ps: [ ps.psycopg2 ]);
 
-  # State file for incremental ingestion tracking.
-  ingestStateFile = "/var/lib/cognee/ingest-state.json";
-
   # kb-search wrapper: plain vector search over pgvector using the local
   # embedding model (no LLM, no knowledge graph). cognee-env is reused only for
   # its venv python (psycopg2 + libs); the script hardcodes the embed endpoint

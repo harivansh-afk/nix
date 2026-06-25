@@ -44,9 +44,12 @@
 # ~/.hermes/config.yaml is MUTABLE runtime state (it carries `_config_version`
 # and is rewritten by the app, e.g. when you run `/model`). We therefore do NOT
 # manage/overwrite it declaratively. Instead an idempotent ExecStartPre patches
-# ONLY the three keys above, and only when they differ, using Hermes' own
-# `hermes config set` (which preserves `_config_version` and every other key via
-# an atomic partial write). Tradeoff: a manual `/model` switch to a different
+# only a small set of pinned keys - model.provider/base_url/default, the CLI
+# toolset (platform_toolsets.cli), and built-in-only memory (reverting any
+# external provider) - and only when they differ, using Hermes' own
+# `hermes config set` / `hermes tools` / `hermes memory off` (which preserve
+# `_config_version` and every other key via atomic partial writes).
+# Tradeoff: a manual `/model` switch to a different
 # provider/base_url is reverted on the next service (re)start, which is the
 # intended behaviour for an always-on gateway pinned to the local brain. (To
 # point the gateway at a different model name, change the `model` binding in
@@ -83,13 +86,52 @@ let
   baseUrl = "http://127.0.0.1:18080/v1";
   model = "nemotron-3-super-120b";
 
-  # Idempotently pin only model.provider / model.base_url / model.default in the
-  # mutable config.yaml, leaving _config_version and every other key intact.
-  # Hermes has no `config get`, so we read the current values with yq (read-only)
-  # and only call `hermes config set` (an atomic partial write) when a value
-  # actually differs - so a steady-state restart is a no-op. yq prints the
-  # string "null" for a missing key, which never matches a wanted value.
-  pinModelConfig = pkgs.writeShellScript "hermes-pin-model-config" ''
+  # The curated lean CLI toolset. Stored by `hermes tools` as the allow-list
+  # `platform_toolsets.cli`. Everything not listed here is disabled for the CLI
+  # platform, trimming the model's tool surface from ~30 tools to this set.
+  cliToolsets = [
+    "clarify"
+    "code_execution"
+    "file"
+    "memory"
+    "messaging"
+    "session_search"
+    "skills"
+    "terminal"
+    "web"
+  ];
+  # Toolsets we explicitly turn off (the complement of cliToolsets among the
+  # built-in toolsets). Listed so the pin is self-documenting and idempotent.
+  cliToolsetsOff = [
+    "browser"
+    "vision"
+    "image_gen"
+    "tts"
+    "todo"
+    "delegation"
+    "cronjob"
+    "moa"
+    "homeassistant"
+    "rl"
+  ];
+
+  # Memory is deliberately BUILT-IN ONLY (no external provider). We optimize the
+  # local model for low confusion: it has exactly three non-overlapping recall
+  # surfaces - the always-on built-in `memory` (injected identity/prefs, never
+  # queried), `kb-search` (the user's own data), and `session_search` (past
+  # conversations). A second agent-authored store (e.g. the bundled
+  # `holographic`/`fact_store` provider) overlaps `memory` and `kb-search` and
+  # confused the model, so the ExecStartPre reverts any drift back to built-in.
+
+  # Idempotently pin model.* / memory (built-in only) / the CLI toolset in the mutable
+  # config.yaml, leaving _config_version and every other key intact. Hermes has
+  # no `config get`, so we read current values with yq (read-only) and only
+  # write when something actually differs - so a steady-state restart is a
+  # no-op. yq prints "null" for a missing key, which never matches a wanted
+  # value. Tradeoff: a manual `hermes tools`/`hermes config set` change to any
+  # pinned key is reverted on the next gateway restart, which is intended for an
+  # always-on gateway pinned to a known-good configuration.
+  pinModelConfig = pkgs.writeShellScript "hermes-pin-config" ''
     set -euo pipefail
     cfg="${hermesHome}/config.yaml"
 
@@ -107,6 +149,24 @@ let
     set_if_diff model.provider "${provider}"
     set_if_diff model.base_url "${baseUrl}"
     set_if_diff model.default "${model}"
+
+    # Built-in memory only: revert any external memory provider drift. Uses the
+    # blessed `hermes memory off` (not a raw empty config write) and only acts
+    # when a provider is actually set, so steady-state restarts stay no-ops.
+    have_mem="$(${pkgs.yq-go}/bin/yq -r '.memory.provider // ""' "$cfg" 2>/dev/null || echo "")"
+    if [ -n "$have_mem" ]; then
+      ${hermes}/bin/hermes memory off || true
+    fi
+
+    # Pin the CLI toolset. Compare the current allow-list to the wanted one
+    # (order-insensitive); only reconcile via `hermes tools` when they differ.
+    want_tools="${toString cliToolsets}"
+    want_sorted="$(printf '%s\n' $want_tools | sort | tr '\n' ' ' | sed 's/[[:space:]]*$//')"
+    have_sorted="$(${pkgs.yq-go}/bin/yq -r '.platform_toolsets.cli // [] | sort | join(" ")' "$cfg" 2>/dev/null || echo "")"
+    if [ "$have_sorted" != "$want_sorted" ]; then
+      ${hermes}/bin/hermes tools disable ${toString cliToolsetsOff} || true
+      ${hermes}/bin/hermes tools enable $want_tools || true
+    fi
   '';
 in
 {

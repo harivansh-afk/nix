@@ -75,7 +75,16 @@
 #   API key. The gateway is fail-closed: with no allowlist configured it denies
 #   all users until one is added to the secret or approved via pairing.
 let
-  hermes = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  # Build the hermes venv with the `messaging` extra so python-telegram-bot is
+  # baked into the env. Upstream marks the telegram/discord/slack backends as
+  # lazy-install (excluded from the default `all` extra), but runtime
+  # pip-install can't work against a read-only nix store - without this the
+  # gateway logs "Telegram: python-telegram-bot not installed / No adapter
+  # available for telegram" and the bot never connects. The extra also pulls
+  # discord/slack (unused for now, but cheap and harmless).
+  hermes = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+    extraDependencyGroups = [ "messaging" ];
+  };
 
   user = "rathi";
   home = "/home/${user}";

@@ -22,6 +22,7 @@
     ../../modules/services/forgejo
     ../../modules/services/inference.nix
     ../../modules/services/hermes.nix
+    ../../modules/services/hermes-briefing.nix
     ../../modules/services/knowledge-base.nix
     ../../modules/services/kb-ingest.nix
     ../../modules/services/kb-ingestion.nix

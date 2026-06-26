@@ -8,21 +8,24 @@ let
     pythonPackages.huggingface-hub
     pythonPackages.hf-transfer
   ]);
-  # Nemotron 3 Super (120B-A12B MoE). Ultra (550B) does not fit this box's
-  # 128 GB of unified memory; Super is the largest Nemotron 3 that does and is
-  # the variant NVIDIA officially ships a DGX Spark deployment guide for.
+  # Qwen3.6-35B-A3B (MoE, 35B total / ~3B active per token). Swapped in from the
+  # Nemotron 3 Super 120B-A12B: that 120B at 12B-active ran ~19 tok/s and pinned
+  # the 128 GB box, so large-context sessions were painful. Qwen3.6-35B-A3B is
+  # the community/Unsloth pick for local Hermes agents (consistently strong,
+  # low-overhead tool calling); 3B-active and a ~22 GB Q4 weight set make
+  # generation far faster and leave huge headroom for context. The old Nemotron
+  # GGUFs are left on disk for a manual A/B if ever wanted.
   #
-  # Unsloth dynamic Q4_K_M: ~82 GB of weights split into three GGUF parts.
-  # llama.cpp loads the whole set from the first ("00001-of-00003") shard.
-  hfRepo = "unsloth/NVIDIA-Nemotron-3-Super-120B-A12B-GGUF";
-  quant = "UD-Q4_K_M";
-  modelDir = "/var/lib/llama-cpp/models/nemotron-3-super-120b";
-  modelFile = "${quant}/NVIDIA-Nemotron-3-Super-120B-A12B-${quant}-00001-of-00003.gguf";
+  # Unsloth dynamic UD-Q4_K_XL: a single ~22 GB GGUF at the repo root (no shards).
+  hfRepo = "unsloth/Qwen3.6-35B-A3B-GGUF";
+  quant = "UD-Q4_K_XL";
+  modelDir = "/var/lib/llama-cpp/models/qwen3.6-35b-a3b";
+  modelFile = "Qwen3.6-35B-A3B-${quant}.gguf";
   modelPath = "${modelDir}/${modelFile}";
-  downloadModel = pkgs.writeShellScript "download-nemotron-3-super-120b-gguf" ''
+  downloadModel = pkgs.writeShellScript "download-qwen3.6-35b-a3b-gguf" ''
     set -euo pipefail
     if [ ! -s "${modelPath}" ]; then
-      ${huggingfaceCli}/bin/hf download ${hfRepo} --include "${quant}/*" --local-dir "${modelDir}"
+      ${huggingfaceCli}/bin/hf download ${hfRepo} --include "${modelFile}" --local-dir "${modelDir}"
     fi
   '';
 in
@@ -39,24 +42,38 @@ in
       host = "127.0.0.1";
       port = 18080;
       model = modelPath;
-      alias = "nemotron-3-super-120b";
+      alias = "qwen3.6-35b-a3b";
       # Hermes Agent requires >= 64k context. Single slot at 64k keeps KV cache
-      # modest (32k was below Hermes's floor). Single-user backend, one slot.
+      # modest. Single-user backend, one slot. With only ~22 GB of weights there
+      # is ample headroom to raise ctx-size later if needed.
       "ctx-size" = 65536;
       parallel = 1;
       "n-gpu-layers" = 99;
-      # DGX Spark / GB10: default mmap loads the 76GB model lazily one page fault
-      # at a time (~5-8 min) AND duplicates ~60GB into the page cache, feeding
-      # OOM. NVIDIA staff and the llama.cpp maintainer run --no-mmap on GB10:
-      # load drops to ~20-90s and memory pressure drops. --mlock pins it resident.
+      # GB10 unified memory: --no-mmap avoids the lazy page-fault load + page
+      # cache duplication; --mlock pins weights resident. (Far less critical at
+      # 22 GB than it was at 76 GB, but still the correct GB10 default.)
       "no-mmap" = true;
       mlock = true;
-      # NVIDIA's recommendation for Nemotron 3 Super: temp 1.0, top-p 0.95.
-      temp = "1.0";
-      "top-p" = "0.95";
-      # NOTE: deliberately NO `special`. It renders control tokens (e.g. the
-      # <|im_end|> turn terminator) as literal text; reasoning is already split
-      # into reasoning_content by the reasoning parser.
+      # Tool calling: --jinja is enabled by default in this llama.cpp, but pin it
+      # explicitly since reliable structured tool calls are load-bearing for the
+      # Hermes agent loop. Flash attention speeds prefill.
+      jinja = true;
+      "flash-attn" = "on";
+      # Run the hybrid-thinking model in NON-thinking mode: the agent loop does
+      # not need long internal reasoning chains, and skipping them is the single
+      # biggest latency win (the 120B's slowness was mostly reasoning tokens).
+      # `--reasoning off` is the first-class llama.cpp toggle (env LLAMA_ARG_
+      # REASONING); we avoid `--chat-template-kwargs '{"enable_thinking":false}'`
+      # because the embedded quotes get mangled by systemd ExecStart parsing.
+      # `--reasoning-budget 0` hard-caps any residual thinking to immediate end.
+      reasoning = "off";
+      "reasoning-budget" = 0;
+      # Sampling follows Unsloth's non-thinking recipe for Qwen3.6.
+      temp = "0.7";
+      "top-p" = "0.8";
+      "top-k" = 20;
+      "presence-penalty" = "1.5";
+      "min-p" = "0.0";
       # NOTE: deliberately NO idle sleep - this is an always-on resident brain.
     };
   };
@@ -72,7 +89,7 @@ in
     "w /sys/block/nvme0n1/queue/read_ahead_kb - - - - 8192"
   ];
 
-  systemd.services.llama-cpp-nemotron-download = {
+  systemd.services.llama-cpp-model-download = {
     before = [ "llama-cpp.service" ];
     environment = {
       HF_HOME = "/var/lib/llama-cpp/huggingface";
@@ -85,11 +102,11 @@ in
   };
 
   systemd.services.llama-cpp = {
-    after = [ "llama-cpp-nemotron-download.service" ];
-    requires = [ "llama-cpp-nemotron-download.service" ];
+    after = [ "llama-cpp-model-download.service" ];
+    requires = [ "llama-cpp-model-download.service" ];
     serviceConfig = {
       OOMScoreAdjust = 1000;
-      # --mlock pins ~76GB resident; raise the memlock rlimit so it is allowed.
+      # --mlock pins the ~22GB weights resident; raise memlock so it is allowed.
       LimitMEMLOCK = "infinity";
       # CRITICAL on DGX Spark / GB10 unified memory: llama.cpp reads
       # /proc/meminfo to size its unified-memory (UMA) allocations. The

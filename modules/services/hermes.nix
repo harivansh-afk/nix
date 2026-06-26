@@ -254,11 +254,20 @@ in
   #   SOUL.md, AGENTS.md, TOOLS.md, HEARTBEAT.md
   # and deliberately leave USER.md, MEMORY.md and ~/.hermes/memories/ alone -
   # those are agent-curated runtime state.
+  #
+  # We also ship version-controlled skills from dots/hermes/skills the same way:
+  # each lands as a live symlink under ~/.hermes/skills/<category>/<name>, so the
+  # agent's skills tool discovers it and edits to its SKILL.md apply with no
+  # rebuild. We `d` the parent category dir (not `L+`) so the symlink sits
+  # alongside the agent's other runtime skills in that category without
+  # clobbering them.
   systemd.user.tmpfiles.users.${user}.rules = [
     "d ${hermesHome} 0700 - - -"
     "L+ ${hermesHome}/SOUL.md - - - - ${repoHermesDir}/SOUL.md"
     "L+ ${hermesHome}/AGENTS.md - - - - ${repoHermesDir}/AGENTS.md"
     "L+ ${hermesHome}/TOOLS.md - - - - ${repoHermesDir}/TOOLS.md"
     "L+ ${hermesHome}/HEARTBEAT.md - - - - ${repoHermesDir}/HEARTBEAT.md"
+    "d ${hermesHome}/skills/note-taking - - - - -"
+    "L+ ${hermesHome}/skills/note-taking/read-it-later - - - - ${repoHermesDir}/skills/note-taking/read-it-later"
   ];
 }

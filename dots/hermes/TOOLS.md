@@ -21,6 +21,21 @@ said in an earlier chat -> `session_search`.
 
 ---
 
+# Read It Later (save links to the second brain)
+
+When Hari sends a URL to save - an article, YouTube video, tweet, paper, or repo
+(bare link, or with "save this" / "read later" / "remember this") - do this
+proactively: fetch it, distill a high-signal summary (gist, 3-7 substantive key
+points, entities, tags), and file a normalized markdown note into
+`/var/lib/kb/staging/saved/`, then confirm in one line. The hourly KB reindex
+makes it searchable via `kb-search` afterwards, so his shares compound into
+recall. This is an internal organize action: no permission needed, and the note
+never leaves the machine. Don't save denylisted/sensitive links (finance, legal,
+identity, credentials) - stop and ask. Full workflow + note template: the
+`read-it-later` skill.
+
+---
+
 # Google Workspace (gws)
 
 ## Permissions

@@ -11,7 +11,7 @@
 # Runs `hermes gateway` (the standalone messaging-platform gateway, the proper
 # entry point for a long-lived service) as a systemd service for user `rathi`,
 # pointed at the local llama.cpp brain from inference.nix
-# (OpenAI-compatible, 127.0.0.1:18080, model alias "nemotron-3-super-120b").
+# (OpenAI-compatible, 127.0.0.1:18080, model alias "qwen3.6-35b-a3b").
 #
 # State lives in HERMES_HOME = /home/rathi/.hermes (Hermes' default is ~/.hermes;
 # we set it explicitly so the systemd unit and interactive `hermes` invocations
@@ -36,7 +36,7 @@
 # vllm, llamacpp, ...). It reads three things for routing:
 #   - model.provider  (config.yaml)  -> "custom"
 #   - model.base_url  (config.yaml)  -> http://127.0.0.1:18080/v1
-#   - model.default   (config.yaml)  -> "nemotron-3-super-120b"  (model name)
+#   - model.default   (config.yaml)  -> "qwen3.6-35b-a3b"  (model name)
 # Env vars HERMES_INFERENCE_PROVIDER and CUSTOM_BASE_URL also influence
 # provider/base_url resolution, but the *model name* the gateway uses comes from
 # config.yaml `model.default` (runtime_provider.py reads model_cfg["default"]);
@@ -97,7 +97,8 @@ let
 
   provider = "custom";
   baseUrl = "http://127.0.0.1:18080/v1";
-  model = "nemotron-3-super-120b";
+  # Must match services.llama-cpp `alias` in inference.nix (the local brain).
+  model = "qwen3.6-35b-a3b";
 
   # The curated lean CLI toolset. Stored by `hermes tools` as the allow-list
   # `platform_toolsets.cli`. Everything not listed here is disabled for the CLI

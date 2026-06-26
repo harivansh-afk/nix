@@ -46,8 +46,9 @@
 # and is rewritten by the app, e.g. when you run `/model`). We therefore do NOT
 # manage/overwrite it declaratively. Instead an idempotent ExecStartPre patches
 # only a small set of pinned keys - model.provider/base_url/default, the CLI
-# toolset (platform_toolsets.cli), and built-in-only memory (reverting any
-# external provider) - and only when they differ, using Hermes' own
+# toolset (platform_toolsets.cli), built-in-only memory (reverting any external
+# provider), and the busy-input mode (display.busy_input_mode = steer) - and
+# only when they differ, using Hermes' own
 # `hermes config set` / `hermes tools` / `hermes memory off` (which preserve
 # `_config_version` and every other key via atomic partial writes).
 # Tradeoff: a manual `/model` switch to a different
@@ -161,6 +162,12 @@ let
     set_if_diff model.provider "${provider}"
     set_if_diff model.base_url "${baseUrl}"
     set_if_diff model.default "${model}"
+
+    # A message sent while the agent is mid-reply steers the in-flight run
+    # (running_agent.steer()) instead of killing and restarting it, falling
+    # back to queue if it cannot steer. Default was "interrupt", which dropped
+    # the partial answer. The gateway reads the same display.busy_input_mode key.
+    set_if_diff display.busy_input_mode "steer"
 
     # Built-in memory only: revert any external memory provider drift. Uses the
     # blessed `hermes memory off` (not a raw empty config write) and only acts

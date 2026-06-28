@@ -15,6 +15,7 @@ per loop). Spec shape (see modules/services/mini-loops.nix):
     "gather": "x-feed-scan",        # shell command; stdout = gathered items (text)
     "seeds": ["my projects ...", "local AI ...", ...],
     "judge": "<the consequence-judging prompt>",
+    "gate": "active-project",       # or "anomaly" (finance); default active-project
     "telegram": true,
     "kb": true
   }
@@ -25,13 +26,20 @@ Steps:
                on (GitHub public repos sorted by push + local git repos with a
                recent commit). Falls back to kb-search of the static seeds if both
                project sources fail.
-  c. judge   - POST items + context + judge prompt to the local brain; parse a
-               JSON list of {item, relevant, why, headline, project}. Robust to
-               chatter/fences and bare {...} object streams.
-  d. act     - terse Telegram (top 3 relevant items, one project-anchored
-               sentence each; silence if nothing connects) and/or a KB note that
-               keeps the full record (every surfaced item + its why).
-  e. log     - one line to runlog.log (OK/FAIL/SKIP) + a per-run detail JSON.
+  c. gate    - a TWO-STAGE interestingness gate (precision over recall; few,
+               excellent pings). Stage A scores each item on 5 independent boolean
+               signals via the brain; an item survives only if it clears the
+               threshold (>= MINI_LOOP_MIN_SIGNALS, and - for the active-project
+               gate - the project-tie signal is required). Stage B is an
+               adversarial skeptic brain call that defaults to DROP and keeps only
+               genuinely notable survivors. The gate is loop-aware: "active-project"
+               (x/hn/dep loops) requires a concrete tie to a current project;
+               "anomaly" (finance) keys on "real, novel money anomaly" instead.
+  d. act     - terse Telegram (top 3 surviving items, one anchored sentence each;
+               silence if nothing survives the gate) and/or a KB note that keeps
+               the full record (every surfaced item + its signals + why).
+  e. log     - one line to runlog.log (OK/FAIL/SKIP) + a per-run detail JSON
+               (includes the per-item signal scores so the gate is inspectable).
 
 Everything is loopback-only (brain at 127.0.0.1:18080). Telegram uses the Bot
 API with the token+allowlist from /run/secrets/hermes-telegram.env. Failures
@@ -69,6 +77,10 @@ LOCAL_GIT_DAYS = int(os.environ.get("MINI_LOOP_LOCAL_GIT_DAYS", "21") or "21")
 ACTIVE_PROJECTS_CAP = int(os.environ.get("MINI_LOOP_ACTIVE_PROJECTS_CAP", "15") or "15")
 # At most this many surfaced items go to Telegram (one sentence each).
 TELEGRAM_MAX_ITEMS = int(os.environ.get("MINI_LOOP_TELEGRAM_MAX", "3") or "3")
+# Stage-A gate: minimum number of the 5 signals an item must score to survive.
+# The bar is HIGH on purpose (precision over recall). For the active-project gate
+# the project-tie signal is ALSO required regardless of this count.
+MIN_SIGNALS = int(os.environ.get("MINI_LOOP_MIN_SIGNALS", "4") or "4")
 
 
 def _now_iso() -> str:
@@ -318,27 +330,11 @@ def _extract_json_array(text: str):
     return objs
 
 
-def judge(items: str, context: str, judge_prompt: str) -> list[dict]:
-    """Ask the local brain which items concretely matter for an active project."""
-    system = (
-        judge_prompt
-        + "\n\nYou are given (1) a CONTEXT block listing the projects Hari is "
-        "ACTIVELY working on right now and (2) a list of ITEMS. Mark an item "
-        "relevant=true ONLY if it has a concrete, specific consequence for one of "
-        "those active projects, and the connection genuinely makes sense - no "
-        "stretchy or generic links. When in doubt, mark it relevant=false. "
-        "Respond with ONLY a JSON array, one object per item you considered, each: "
-        '{"item": "<short identifier or the item text/url>", "relevant": '
-        'true|false, "project": "<the active project it ties to, or empty>", '
-        '"headline": "<for relevant items: ONE concise sentence, anchored to the '
-        'project, suitable to send as-is; empty otherwise>", "why": "<one '
-        "sentence: the concrete connection, or why it is noise>\"}. Surface only "
-        "items with a real consequence for an active project; skip generic noise."
-    )
-    user = f"CONTEXT (Hari's active projects):\n{context}\n\nITEMS:\n{items}"
+def _brain_call(system: str, user: str, temperature: float = 0.2) -> str:
+    """POST one chat completion to the local brain; return content or '' on error."""
     payload = {
         "model": BRAIN_MODEL,
-        "temperature": 0.3,
+        "temperature": temperature,
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
@@ -351,25 +347,169 @@ def judge(items: str, context: str, judge_prompt: str) -> list[dict]:
     try:
         with urllib.request.urlopen(req, timeout=300) as resp:
             data = json.load(resp)
-        content = data["choices"][0]["message"]["content"]
+        return data["choices"][0]["message"]["content"]
     except Exception as exc:
         print(f"mini_loop: brain unreachable: {exc}", file=sys.stderr)
+        return ""
+
+
+# The five independent signals scored in Stage A. SIG_PROJECT is index 0 and is
+# REQUIRED for the active-project gate (an item with no concrete project tie is
+# dropped no matter how it scores elsewhere).
+_SIGNAL_KEYS = ["s_project", "s_novel", "s_actionable", "s_magnitude", "s_rare"]
+
+
+def _signal_count(entry: dict) -> int:
+    return sum(1 for k in _SIGNAL_KEYS if bool(entry.get(k)))
+
+
+def judge_signals(
+    items: str, context: str, judge_prompt: str, gate: str
+) -> list[dict]:
+    """Stage A - score each gathered item on 5 independent boolean signals.
+
+    The brain rates, per item: (1) ties to a CURRENTLY-ACTIVE project, (2) novel /
+    non-obvious, (3) actionable / decision-relevant, (4) notable magnitude (a major
+    launch/release/finding, not incremental), (5) rare (does not show up often).
+    Returns one dict per item with the five booleans plus project/headline/why.
+    The keep decision is made by the caller (gate-aware threshold)."""
+    if gate == "anomaly":
+        signal_doc = (
+            "Score these five INDEPENDENT booleans for each item (an item here is a "
+            "candidate money anomaly already computed deterministically):\n"
+            '  "s_project": this anomaly clearly concerns Hari\'s own money/accounts '
+            "(true for every real anomaly; reserve false only for obvious parsing "
+            "junk),\n"
+            '  "s_novel": this is new information, not something already obvious or '
+            "previously flagged,\n"
+            '  "s_actionable": Hari could act on it (cancel a sub, dispute a charge, '
+            "investigate),\n"
+            '  "s_magnitude": the dollar impact is meaningful, not trivial,\n'
+            '  "s_rare": this is an unusual event, not normal recurring spend.\n'
+        )
+        anchor = "the account/merchant"
+    else:
+        signal_doc = (
+            "Score these five INDEPENDENT booleans for each item:\n"
+            '  "s_project": it has a concrete, specific tie to a CURRENTLY-ACTIVE '
+            "project in the CONTEXT (no stretchy or generic links),\n"
+            '  "s_novel": it is novel / non-obvious, not common knowledge,\n'
+            '  "s_actionable": it is actionable / decision-relevant for that '
+            "project,\n"
+            '  "s_magnitude": it is notable magnitude - a major launch, release, or '
+            "finding, NOT an incremental update,\n"
+            '  "s_rare": it is rare - the kind of thing that does not show up often.\n'
+        )
+        anchor = "the active project"
+    system = (
+        judge_prompt
+        + "\n\nYou are the first stage of a HIGH-BAR interestingness gate that "
+        "protects Hari's attention: precision over recall, few excellent items. "
+        "You are given (1) a CONTEXT block and (2) a list of ITEMS. For EACH item "
+        "score five booleans honestly - do not inflate them. " + signal_doc
+        + "Respond with ONLY a JSON array, one object per item you considered, each:"
+        ' {"item": "<short identifier or the item text/url>", '
+        '"s_project": true|false, "s_novel": true|false, "s_actionable": '
+        'true|false, "s_magnitude": true|false, "s_rare": true|false, '
+        '"project": "<' + anchor + ' it ties to, or empty>", '
+        '"headline": "<ONE concise sentence anchored to ' + anchor + ", suitable "
+        'to send as-is>", "why": "<one sentence: the concrete reason it matters, '
+        'or why it is noise>"}.'
+    )
+    user = f"CONTEXT:\n{context}\n\nITEMS:\n{items}"
+    content = _brain_call(system, user, temperature=0.2)
+    if not content:
         return []
     parsed = _extract_json_array(content)
     out = []
     for entry in parsed:
         if not isinstance(entry, dict):
             continue
-        out.append(
-            {
-                "item": str(entry.get("item", "")).strip(),
-                "relevant": bool(entry.get("relevant", False)),
-                "project": str(entry.get("project", "")).strip(),
-                "headline": str(entry.get("headline", "")).strip(),
-                "why": str(entry.get("why", "")).strip(),
-            }
-        )
+        rec = {
+            "item": str(entry.get("item", "")).strip(),
+            "project": str(entry.get("project", "")).strip(),
+            "headline": str(entry.get("headline", "")).strip(),
+            "why": str(entry.get("why", "")).strip(),
+        }
+        for k in _SIGNAL_KEYS:
+            rec[k] = bool(entry.get(k, False))
+        rec["signals"] = _signal_count(rec)
+        out.append(rec)
     return out
+
+
+def _passes_stage_a(entry: dict, gate: str) -> bool:
+    """Threshold check: total signals >= MIN_SIGNALS, and (active-project gate
+    only) the project-tie signal must be true."""
+    if gate != "anomaly" and not entry.get("s_project"):
+        return False
+    return entry.get("signals", 0) >= MIN_SIGNALS
+
+
+def skeptic_filter(
+    survivors: list[dict], context: str, gate: str
+) -> list[dict]:
+    """Stage B - one adversarial brain call that tries to REJECT the survivors.
+
+    Defaults to DROP; keeps an item only if it is genuinely notable. Returns the
+    kept subset (matched back to the Stage-A records by item identifier)."""
+    if not survivors:
+        return []
+    if gate == "anomaly":
+        mission = (
+            "You are a skeptic protecting Hari's attention about his money. Default "
+            "to DROP. Keep a candidate ONLY if it is a REAL, novel money anomaly "
+            "genuinely worth interrupting him for (a new recurring subscription, a "
+            "real price hike, an unusually large or duplicate charge). Reject "
+            "anything that is normal spending, trivially small, ambiguous, or "
+            "likely a parsing artifact."
+        )
+    else:
+        mission = (
+            "You are a skeptic protecting Hari's attention. Default to DROP. Keep an "
+            "item ONLY if it is genuinely notable AND concretely tied to an active "
+            "project he is working on right now. Reject anything generic, "
+            "incremental, or a stretch."
+        )
+    candidates = "\n".join(
+        f'{i}. item="{s.get("item", "")}" project="{s.get("project", "")}" '
+        f'headline="{s.get("headline", "")}" why="{s.get("why", "")}"'
+        for i, s in enumerate(survivors)
+    )
+    system = (
+        mission
+        + " You are given the CONTEXT and a numbered list of CANDIDATES that passed "
+        "a first filter. Respond with ONLY a JSON array of the integer indices you "
+        'KEEP (e.g. [0, 2]); return [] to keep none. Be ruthless: when in doubt, '
+        "drop it."
+    )
+    user = f"CONTEXT:\n{context}\n\nCANDIDATES:\n{candidates}"
+    content = _brain_call(system, user, temperature=0.0)
+    if not content:
+        # If the skeptic is unreachable, fail CLOSED: surface nothing rather than
+        # ping on items that never cleared the second stage.
+        print("mini_loop: skeptic unreachable; dropping all (fail closed)", file=sys.stderr)
+        return []
+    parsed = _extract_json_array(content)
+    keep_idx: set[int] = set()
+    for v in parsed:
+        try:
+            keep_idx.add(int(v))
+        except (TypeError, ValueError):
+            continue
+    return [s for i, s in enumerate(survivors) if i in keep_idx]
+
+
+def gate_items(
+    items: str, context: str, judge_prompt: str, gate: str
+) -> tuple[list[dict], list[dict]]:
+    """Run the full two-stage gate. Returns (all_scored, surfaced) where
+    all_scored is every Stage-A record (for the inspectable run JSON) and surfaced
+    is the Stage-B skeptic survivors."""
+    scored = judge_signals(items, context, judge_prompt, gate)
+    stage_a = [e for e in scored if _passes_stage_a(e, gate)]
+    surfaced = skeptic_filter(stage_a, context, gate)
+    return scored, surfaced
 
 
 # --- d. act ------------------------------------------------------------------
@@ -428,12 +568,21 @@ def send_telegram(name: str, surfaced: list[dict]) -> bool:
     sent = False
     for chat_id in users:
         payload = json.dumps({"chat_id": chat_id, "text": text, "disable_web_page_preview": False}).encode()
-        req = urllib.request.Request(url, payload, {"Content-Type": "application/json"})
-        try:
-            urllib.request.urlopen(req, timeout=30).read()
-            sent = True
-        except Exception as exc:
-            print(f"mini_loop: telegram send failed for {chat_id}: {exc}", file=sys.stderr)
+        # Retry once on a transient error: two loops can fire near-simultaneously
+        # and a send can time out, which would log a false "silent". A genuinely
+        # surfaced item must reliably ping.
+        for attempt in range(2):
+            req = urllib.request.Request(url, payload, {"Content-Type": "application/json"})
+            try:
+                urllib.request.urlopen(req, timeout=30).read()
+                sent = True
+                break
+            except Exception as exc:
+                if attempt == 0:
+                    print(f"mini_loop: telegram send retry for {chat_id}: {exc}", file=sys.stderr)
+                    time.sleep(2)
+                    continue
+                print(f"mini_loop: telegram send failed for {chat_id}: {exc}", file=sys.stderr)
     return sent
 
 
@@ -457,6 +606,9 @@ def write_kb_note(name: str, surfaced: list[dict]) -> None:
                     fh.write(f"Project: {s['project']}\n\n")
                 if s.get("headline"):
                     fh.write(f"Headline: {s['headline']}\n\n")
+                if "signals" in s:
+                    flags = ", ".join(k for k in _SIGNAL_KEYS if s.get(k))
+                    fh.write(f"Signals: {s['signals']}/5 ({flags})\n\n")
                 fh.write(f"Why: {s['why']}\n\n")
     except Exception as exc:
         print(f"mini_loop: kb note write failed: {exc}", file=sys.stderr)
@@ -497,36 +649,42 @@ def main() -> int:
         context = ground(spec.get("seeds", []))
         grounding = "seeds-fallback"
 
-    judged = judge(items, context, spec.get("judge", ""))
-    if not judged:
+    # Loop-aware gate: "active-project" (x/hn/dep) requires a project tie;
+    # "anomaly" (finance) keys on a real, novel money anomaly instead.
+    gate = spec.get("gate", "active-project")
+
+    scored, surfaced = gate_items(items, context, spec.get("judge", ""), gate)
+    if not scored:
         dur = time.monotonic() - t0
         _write_run_detail(
             name,
-            {"run": _now_iso(), "grounding": grounding, "context": context,
-             "gathered": items, "judged": [], "surfaced": []},
+            {"run": _now_iso(), "grounding": grounding, "gate": gate,
+             "context": context, "gathered": items, "scored": [], "surfaced": []},
         )
         _log_line(name, "FAIL", f"gathered={n_gathered} judge returned nothing dur={dur:.1f}s")
         return 1
 
-    surfaced = [j for j in judged if j.get("relevant")]
-
     sent = False
     if surfaced:
         # KB keeps the full record; Telegram stays terse (and silent if nothing
-        # ties to an active project).
+        # survives the gate).
         if spec.get("kb"):
             write_kb_note(name, surfaced)
         if spec.get("telegram"):
             sent = send_telegram(name, surfaced)
 
+    stage_a = sum(1 for e in scored if _passes_stage_a(e, gate))
     _write_run_detail(
         name,
         {
             "run": _now_iso(),
             "grounding": grounding,
+            "gate": gate,
+            "min_signals": MIN_SIGNALS,
             "context": context,
             "gathered": items,
-            "judged": judged,
+            "scored": scored,
+            "stage_a_survivors": stage_a,
             "surfaced": surfaced,
         },
     )
@@ -536,7 +694,8 @@ def main() -> int:
     _log_line(
         name,
         "OK",
-        f"gathered={n_gathered} surfaced={len(surfaced)} {tg} ground={grounding} dur={dur:.1f}s",
+        f"gathered={n_gathered} stageA={stage_a} surfaced={len(surfaced)} {tg} "
+        f"gate={gate} ground={grounding} dur={dur:.1f}s",
     )
     return 0
 

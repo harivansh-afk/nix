@@ -16,6 +16,7 @@
     ../../modules/security/sops.nix
     ../../modules/security/user-isolation.nix
     ../../modules/users/nixos.nix
+    ../../modules/services/browser-use.nix
     ../../modules/services/caddy.nix
     ../../modules/services/cloudflared.nix
     ../../modules/services/delta.nix

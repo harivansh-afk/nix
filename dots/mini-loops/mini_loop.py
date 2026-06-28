@@ -35,7 +35,8 @@ Steps:
                genuinely notable survivors. The gate is loop-aware: "active-project"
                (x/hn/dep loops) requires a concrete tie to a current project;
                "anomaly" (finance) keys on "real, novel money anomaly" instead.
-  d. act     - terse Telegram (top 3 surviving items, one anchored sentence each;
+  d. act     - terse Telegram (top 3 surviving items, one anchored sentence each,
+               each line carrying provenance: a "[<loop>]" label + the source URL;
                silence if nothing survives the gate) and/or a KB note that keeps
                the full record (every surfaced item + its signals + why).
   e. log     - one line to runlog.log (OK/FAIL/SKIP) + a per-run detail JSON
@@ -534,19 +535,46 @@ def _telegram_config() -> tuple[str | None, list[str]]:
     return token, users
 
 
-def _telegram_line(s: dict) -> str:
-    """One terse, project-anchored sentence for a surfaced item.
+_URL_RE = re.compile(r"https?://\S+")
 
-    Prefer the judge's `headline` (already one project-anchored sentence). Fall
-    back to "<project>: <why>" / the why alone if the headline is missing."""
+
+def _source_url(s: dict) -> str:
+    """Extract the item's source URL (X post / HN / release) if present.
+
+    The URL lives in the surfaced record's `item` (the gather line is shaped like
+    '... | <url> | ...') or sometimes the `headline`/`why`. Returns '' for items
+    with no URL (e.g. finance anomalies, whose provenance is merchant+date carried
+    in the headline itself). Strips trailing punctuation a model may append."""
+    for field in ("item", "headline", "why"):
+        m = _URL_RE.search(s.get(field, "") or "")
+        if m:
+            return m.group(0).rstrip(").,;|>\"'")
+    return ""
+
+
+def _telegram_line(s: dict, loop_name: str) -> str:
+    """One terse, provenance-carrying line for a surfaced item.
+
+    Format: "[<loop>] <one-sentence headline> -> <source url>". Prefer the judge's
+    `headline`; fall back to "<project>: <why>" / the why alone. The loop label and
+    source URL make provenance unambiguous so the assistant never confabulates the
+    source. The URL is omitted only when the item genuinely has none (e.g. finance,
+    where the headline already names the merchant and date)."""
     headline = s.get("headline", "").strip()
     if headline:
-        return headline
-    why = s.get("why", "").strip()
-    project = s.get("project", "").strip()
-    if project and why:
-        return f"{project}: {why}"
-    return why or s.get("item", "").strip()
+        body = headline
+    else:
+        why = s.get("why", "").strip()
+        project = s.get("project", "").strip()
+        body = f"{project}: {why}" if (project and why) else (why or s.get("item", "").strip())
+    if not body:
+        return ""
+    line = f"[{loop_name}] {body}"
+    url = _source_url(s)
+    # Avoid a duplicate URL if the headline already ends with it.
+    if url and url not in line:
+        line += f" -> {url}"
+    return line
 
 
 def send_telegram(name: str, surfaced: list[dict]) -> bool:
@@ -560,7 +588,7 @@ def send_telegram(name: str, surfaced: list[dict]) -> bool:
         print("mini_loop: no telegram token/allowlist; skipping telegram", file=sys.stderr)
         return False
     top = surfaced[:TELEGRAM_MAX_ITEMS]
-    sentences = [ln for ln in (_telegram_line(s) for s in top) if ln]
+    sentences = [ln for ln in (_telegram_line(s, name) for s in top) if ln]
     if not sentences:
         return False
     text = "\n".join(f"- {ln}" for ln in sentences)

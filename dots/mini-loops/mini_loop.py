@@ -82,7 +82,11 @@ TELEGRAM_MAX_ITEMS = int(os.environ.get("MINI_LOOP_TELEGRAM_MAX", "3") or "3")
 # Stage-A gate: minimum number of the 5 signals an item must score to survive.
 # The bar is HIGH on purpose (precision over recall). For the active-project gate
 # the project-tie signal is ALSO required regardless of this count.
-MIN_SIGNALS = int(os.environ.get("MINI_LOOP_MIN_SIGNALS", "4") or "4")
+# Active-project gate threshold: the project-tie signal is required (see
+# _passes_stage_a) PLUS this many total signals. 3 = project-tie + 2 quality
+# signals, then the adversarial skeptic does final pruning. 4 was too strict
+# (surfaced nothing); the skeptic is the real precision guard, not this count.
+MIN_SIGNALS = int(os.environ.get("MINI_LOOP_MIN_SIGNALS", "3") or "3")
 
 
 def _now_iso() -> str:
@@ -441,9 +445,20 @@ def judge_signals(
 
 
 def _passes_stage_a(entry: dict, gate: str) -> bool:
-    """Threshold check: total signals >= MIN_SIGNALS, and (active-project gate
-    only) the project-tie signal must be true."""
-    if gate != "anomaly" and not entry.get("s_project"):
+    """Threshold check.
+
+    Anomaly gate (finance): the deterministic scanner ALREADY did the filtering
+    (it only emits real subscriptions / large / duplicate charges), so the 5
+    feed-signals (novel/rare/project-tie/...) do not apply - a recurring sub is
+    not "novel" or "project-tied". Pass everything through to the skeptic, which
+    is the real finance filter. Re-scoring on feed-signals here wrongly dropped
+    every subscription.
+
+    Active-project gate (x/hn/dep): require the project-tie signal AND at least
+    MIN_SIGNALS total."""
+    if gate == "anomaly":
+        return True
+    if not entry.get("s_project"):
         return False
     return entry.get("signals", 0) >= MIN_SIGNALS
 
@@ -507,7 +522,23 @@ def gate_items(
 ) -> tuple[list[dict], list[dict]]:
     """Run the full two-stage gate. Returns (all_scored, surfaced) where
     all_scored is every Stage-A record (for the inspectable run JSON) and surfaced
-    is the Stage-B skeptic survivors."""
+    is the Stage-B skeptic survivors.
+
+    Anomaly gate (finance): the deterministic scanner already did the filtering
+    (it emits ONLY real subscriptions / large / duplicate charges, excludes
+    income/transfers/noise, and dedups via its own state so each is reported
+    once). So surface its candidate lines DIRECTLY - no feed-signal scoring, no
+    ruthless skeptic. The skeptic was dropping legitimate subscriptions (OpenAI,
+    Claude, etc.) as "normal spending", which is exactly what Hari wants to see."""
+    if gate == "anomaly":
+        records = []
+        for ln in items.splitlines():
+            ln = ln.strip()
+            if ln:
+                records.append(
+                    {"item": ln, "headline": ln, "project": "", "why": ln, "signals": 0}
+                )
+        return records, records
     scored = judge_signals(items, context, judge_prompt, gate)
     stage_a = [e for e in scored if _passes_stage_a(e, gate)]
     surfaced = skeptic_filter(stage_a, context, gate)
@@ -599,17 +630,21 @@ def _telegram_line(s: dict, loop_name: str) -> str:
     return line
 
 
-def send_telegram(name: str, surfaced: list[dict]) -> bool:
-    """Send the top few project-anchored items, one sentence each.
+def send_telegram(name: str, surfaced: list[dict], gate: str = "active-project") -> bool:
+    """Send the surfaced items, one sentence each.
 
     Returns True if a message was actually sent. Stays SILENT (sends nothing,
-    returns False) when nothing connects to an active project - silence is fine.
-    """
+    returns False) when nothing survived the gate - silence is fine.
+
+    Feed loops (active-project) cap at TELEGRAM_MAX_ITEMS to stay terse. The
+    anomaly (finance) loop sends ALL surfaced items: the scanner dedups via its
+    own state, so this is a one-time subscription/anomaly digest on first run,
+    then only newly-detected items - capping it would hide subs Hari wants."""
     token, users = _telegram_config()
     if not token or not users:
         print("mini_loop: no telegram token/allowlist; skipping telegram", file=sys.stderr)
         return False
-    top = surfaced[:TELEGRAM_MAX_ITEMS]
+    top = surfaced if gate == "anomaly" else surfaced[:TELEGRAM_MAX_ITEMS]
     sentences = [ln for ln in (_telegram_line(s, name) for s in top) if ln]
     if not sentences:
         return False
@@ -721,7 +756,7 @@ def main() -> int:
         if spec.get("kb"):
             write_kb_note(name, surfaced)
         if spec.get("telegram"):
-            sent = send_telegram(name, surfaced)
+            sent = send_telegram(name, surfaced, gate)
 
     stage_a = sum(1 for e in scored if _passes_stage_a(e, gate))
     _write_run_detail(

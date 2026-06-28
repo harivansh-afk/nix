@@ -35,7 +35,9 @@ Steps:
                genuinely notable survivors. The gate is loop-aware: "active-project"
                (x/hn/dep loops) requires a concrete tie to a current project;
                "anomaly" (finance) keys on "real, novel money anomaly" instead.
-  d. act     - terse Telegram (top 3 surviving items, one anchored sentence each;
+  d. act     - terse Telegram (top 3 surviving items, one anchored sentence each,
+               each line carrying provenance: a "[<loop>]" label + the source ref
+               (a URL for x/hn/dep, merchant+date for finance which has no URL);
                silence if nothing survives the gate) and/or a KB note that keeps
                the full record (every surfaced item + its signals + why).
   e. log     - one line to runlog.log (OK/FAIL/SKIP) + a per-run detail JSON
@@ -534,19 +536,67 @@ def _telegram_config() -> tuple[str | None, list[str]]:
     return token, users
 
 
-def _telegram_line(s: dict) -> str:
-    """One terse, project-anchored sentence for a surfaced item.
+_URL_RE = re.compile(r"https?://\S+")
+_DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
-    Prefer the judge's `headline` (already one project-anchored sentence). Fall
-    back to "<project>: <why>" / the why alone if the headline is missing."""
+
+def _source_ref(s: dict) -> str:
+    """The item's source identifier, used as the "-> <source>" provenance suffix.
+
+    Prefer a real URL (X post / HN / dep release): it lives in the surfaced
+    record's `item` (the gather line is shaped like '... | <url> | ...') or
+    sometimes the `headline`/`why`. URL wins because it is unambiguous.
+
+    For URL-less items (finance anomalies have no URL) fall back to merchant+date:
+    the gate keeps the original candidate text in `item` (e.g. "DUPLICATE CHARGE:
+    Companion Inc charged 20.00 5 times on 2026-04-16"), which already names the
+    merchant and carries a YYYY-MM-DD. Returning that as the source ref makes the
+    finance provenance explicit even when the model's headline paraphrases it."""
+    for field in ("item", "headline", "why"):
+        m = _URL_RE.search(s.get(field, "") or "")
+        if m:
+            return m.group(0).rstrip(").,;|>\"'")
+    # No URL: build a merchant+date ref from the original candidate text in `item`.
+    item = (s.get("item", "") or "").strip()
+    if not item:
+        return ""
+    # Strip the leading "KIND:" tag (SUBSCRIPTION/LARGE CHARGE/DUPLICATE CHARGE)
+    # so the ref reads as "<merchant ...>, <date>".
+    ref = re.sub(r"^[A-Z][A-Z ]+:\s*", "", item).strip()
+    date = ""
+    m = _DATE_RE.search(item)
+    if m:
+        date = m.group(0)
+    # Keep the ref short: take up to the merchant + amount portion, append the date.
+    ref = ref.split(" charged ")[0].split(" ~")[0].strip().rstrip(".,;")
+    if date and date not in ref:
+        ref = f"{ref}, {date}" if ref else date
+    return ref
+
+
+def _telegram_line(s: dict, loop_name: str) -> str:
+    """One terse, provenance-carrying line for a surfaced item.
+
+    Format: "[<loop>] <one-sentence headline> -> <source>". Prefer the judge's
+    `headline`; fall back to "<project>: <why>" / the why alone. The loop label
+    makes it unambiguous that the line is a surfacing from <loop>, and the source
+    ref (URL for x/hn/dep, merchant+date for finance) makes provenance explicit so
+    the assistant never confabulates where a ping came from."""
     headline = s.get("headline", "").strip()
     if headline:
-        return headline
-    why = s.get("why", "").strip()
-    project = s.get("project", "").strip()
-    if project and why:
-        return f"{project}: {why}"
-    return why or s.get("item", "").strip()
+        body = headline
+    else:
+        why = s.get("why", "").strip()
+        project = s.get("project", "").strip()
+        body = f"{project}: {why}" if (project and why) else (why or s.get("item", "").strip())
+    if not body:
+        return ""
+    line = f"[{loop_name}] {body}"
+    ref = _source_ref(s)
+    # Avoid a duplicate suffix if the body already contains it.
+    if ref and ref not in line:
+        line += f" -> {ref}"
+    return line
 
 
 def send_telegram(name: str, surfaced: list[dict]) -> bool:
@@ -560,7 +610,7 @@ def send_telegram(name: str, surfaced: list[dict]) -> bool:
         print("mini_loop: no telegram token/allowlist; skipping telegram", file=sys.stderr)
         return False
     top = surfaced[:TELEGRAM_MAX_ITEMS]
-    sentences = [ln for ln in (_telegram_line(s) for s in top) if ln]
+    sentences = [ln for ln in (_telegram_line(s, name) for s in top) if ln]
     if not sentences:
         return False
     text = "\n".join(f"- {ln}" for ln in sentences)

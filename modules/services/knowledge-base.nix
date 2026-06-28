@@ -87,9 +87,9 @@ let
   # and docs.cognee.ai (see notes at bottom of file). LiteLLM routes LLM and
   # embedding calls, so model names carry an "openai/" provider prefix.
   cogneeEnv = {
-    # LLM -> the local brain at inference.nix (nemotron) over OpenAI-compatible.
+    # LLM -> the local brain at inference.nix (Qwen3.6) over OpenAI-compatible.
     LLM_PROVIDER = "custom";
-    LLM_MODEL = "openai/nemotron-3-super-120b";
+    LLM_MODEL = "openai/qwen3.6-35b-a3b";
     LLM_ENDPOINT = "http://127.0.0.1:18080/v1";
     LLM_API_KEY = ".";
 

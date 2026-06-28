@@ -26,6 +26,7 @@
     ../../modules/services/kb-ingest.nix
     ../../modules/services/kb-ingestion.nix
     ../../modules/services/kb-graph.nix
+    ../../modules/services/kb-research.nix
     ../../modules/services/mosh.nix
     ../../modules/services/parakeet.nix
     ../../modules/services/vaultwarden.nix

@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   ...
@@ -50,8 +51,10 @@ let
   runner = ../../dots/mini-loops/mini_loop.py;
 
   # The runner shells out to these at runtime; put them on the unit PATH.
-  # kb-search (kb-ingest.nix) and x-feed-scan (below) are on the system PATH via
-  # environment.systemPackages; systemd units also see /run/current-system/sw.
+  # IMPORTANT: setting systemd `path` REPLACES the default, so units do NOT get
+  # /run/current-system/sw/bin. The gather/ground steps call `x-feed-scan` and
+  # `kb-search` (system packages), so we add `config.system.path` in mkService
+  # below; without it the gather is not found and every run SKIPs.
   loopPath = [
     pkgs.coreutils
     pkgs.bash
@@ -203,7 +206,7 @@ let
         "browser-use-setup.service"
       ];
       wants = [ "network-online.target" ];
-      path = loopPath;
+      path = loopPath ++ [ config.system.path ];
       environment = {
         MINI_LOOP_SPEC = "${specFile loop}";
         MINI_LOOPS_DIR = stateDir;

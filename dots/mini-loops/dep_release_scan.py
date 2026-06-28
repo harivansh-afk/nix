@@ -23,20 +23,26 @@ Env:
 import json
 import os
 import sys
+import urllib.error
 import urllib.request
 
 # ---------------------------------------------------------------------------
 # WATCHLIST - the dependency repos to watch for major releases.
 # EDIT THIS LIST: add "owner/repo" lines for dependencies of your active
 # projects. Keep it small and curated; the gate only pings on MAJOR releases.
+#
+# NOTE: every repo here MUST publish GitHub *Releases* - this scan hits
+# /repos/{owner}/{repo}/releases/latest. Repos that ship via git TAGS only
+# (no Releases) always 404 and are useless here, so do not add them. Examples
+# that were removed for exactly this reason: NixOS/nix and QwenLM/Qwen3 (both
+# tag-only, zero GitHub releases). A bad repo is skipped silently (no crash),
+# but it will never surface anything.
 # ---------------------------------------------------------------------------
 WATCHLIST = [
     "ggml-org/llama.cpp",
     "browser-use/browser-use",
     "topoteretes/cognee",
     "microsoft/playwright",
-    "QwenLM/Qwen3",
-    "NixOS/nix",
 ]
 
 STATE_DIR = os.path.join(
@@ -76,6 +82,13 @@ def _latest_release(repo: str) -> dict | None:
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             data = json.load(resp)
+    except urllib.error.HTTPError as exc:
+        # 404 = the repo publishes no GitHub Releases (tag-only). Expected for a
+        # misconfigured watchlist entry; skip it silently instead of logging on
+        # every run. Other HTTP errors (rate limit etc.) are worth a note.
+        if exc.code != 404:
+            print(f"dep-release: {repo} fetch failed: {exc}", file=sys.stderr)
+        return None
     except Exception as exc:
         print(f"dep-release: {repo} fetch failed: {exc}", file=sys.stderr)
         return None

@@ -13,7 +13,7 @@ def ingest():
     cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
     cur.execute("CREATE TABLE IF NOT EXISTS kb_vec(id bigserial primary key, source text, path text, chunk int, txt text, emb vector(1024))")
     cur.execute("TRUNCATE kb_vec"); con.commit()
-    files=glob.glob("/var/lib/kb/staging/*/*.md")
+    files=glob.glob("/var/lib/kb/staging/**/*.md",recursive=True)
     t0=time.time(); n=0; batch=[]; meta=[]
     def flush():
         nonlocal n
@@ -24,7 +24,7 @@ def ingest():
             n+=1
         con.commit(); batch.clear(); meta.clear()
     for f in files:
-        src=f.split("/")[-2]; txt=open(f,errors="ignore").read()
+        src=f.split("/var/lib/kb/staging/")[-1].split("/")[0]; txt=open(f,errors="ignore").read()
         for ci,c in enumerate(chunks(txt)):
             batch.append(c); meta.append((src,f,ci,c))
             if len(batch)>=32: flush()

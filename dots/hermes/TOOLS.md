@@ -99,6 +99,24 @@ Run a natural-language query against the personal KB:
 Returns ranked results from Hari's indexed notes and documents.
 Use before asking him - if the answer might already be written down, search first.
 
+## Finance namespace (local-only)
+
+A dedicated local-only finance namespace lives under
+`/var/lib/kb/staging/finance/` and is indexed into the same KB:
+
+- `transactions/` - normalized bank transactions pulled read-only from the
+  SimpleFIN Bridge (merchant, amount, date, currency, account, institution).
+- `charges/` - charge / receipt emails mined read-only from Hari's staged
+  gmail, in the SAME entity shape (merchant, amount, date).
+
+Because both sources share that entity shape, the off-hours knowledge graph can
+LINK a bank transaction to its receipt email by merchant + amount + date, giving
+you a centralized, linkable understanding of spend. You may read and reason over
+this data to answer Hari's questions ("what did I spend on X", "did that charge
+post"). This data is LOCAL-ONLY and never leaves the machine - the
+no-exfiltration rule below applies to it without exception. This carve-out does
+NOT touch the finance-tax denylist below, which stays excluded.
+
 # DENYLIST / hard privacy rules
 
 The following paths are excluded from the knowledge base on purpose.

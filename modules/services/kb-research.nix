@@ -15,8 +15,9 @@
 #      pgvector - this module does NOT touch the kb-ingest hot path.
 #
 # Missions run as rathi (staging is rathi-owned). The brain runs locally with no
-# auth, so the HN mission is fully self-contained. The X mission needs a
-# browser-use API key and no-ops cleanly until BROWSER_USE_API_KEY is set
+# auth, so the HN mission is fully self-contained. The X mission drives the
+# native local `browse` CLI (browser-use.nix: headless Chromium + local brain,
+# DOM mode) and no-ops cleanly until a logged-in X session is supplied
 # (mirroring how the gws connectors no-op when unauthenticated).
 let
   user = "rathi";
@@ -30,6 +31,9 @@ let
     pkgs.coreutils
     pkgs.gnused
     pkgs.curl
+    # The x mission shells out to the native `browse` CLI (browser-use.nix),
+    # which is also installed system-wide via environment.systemPackages.
+    pkgs.gnugrep
   ];
 
   # Shared helper sourced at the top of every mission script. Provides:
@@ -108,55 +112,41 @@ let
   '';
 
   # ---------------------------------------------------------------------------
-  # Mission: x (X / Twitter) - GATED on BROWSER_USE_API_KEY.
-  # X has no free read API, so this mission drives the browser-use cloud API to
-  # gather candidate posts, then distills them with the brain.
+  # Mission: x (X / Twitter) - GATED on a logged-in X session.
+  # X has no free read API, so this mission drives the NATIVE local `browse` CLI
+  # (browser-use.nix: headless Chromium + local brain, DOM mode) to gather
+  # candidate posts, then distills them with the brain. No cloud API.
   #
-  # To enable: set BROWSER_USE_API_KEY in the service environment (e.g. via a
-  # sops secret exported into the unit, mirroring forgejo-token), then this job
-  # becomes productive with no rebuild of the script needed. Until then it
-  # no-ops (logs + exit 0), exactly like the gws connectors when unauthenticated.
-  #
-  # browser-use API (see dots/hermes/TOOLS.md):
-  #   POST https://api.browser-use.com/api/v3/tasks  with header
-  #   X-Browser-Use-API-Key: $BROWSER_USE_API_KEY  and a task describing what to
-  #   collect from X (e.g. top posts on a topic), then poll the task for output.
+  # X requires a logged-in browser session. Supply one of:
+  #   - a persistent profile: log in once with a headful browse against the
+  #     browser-use profile dir (/var/lib/browser-use/profile); or
+  #   - a cookies/storage_state json at the sops secret "x-session.json",
+  #     exported here as BROWSER_USE_STORAGE_STATE.
+  # Until a session marker file exists at $X_SESSION_MARKER (default
+  # /var/lib/browser-use/x-session-ok) OR BROWSER_USE_STORAGE_STATE is set, the
+  # mission no-ops (logs + exit 0), exactly like the gws connectors when
+  # unauthenticated. The `browse` wrapper handles Chromium + the local brain.
   # ---------------------------------------------------------------------------
   xMission = pkgs.writeShellScript "kb-research-x" ''
     ${brainHelpers "x"}
-    if [ -z "''${BROWSER_USE_API_KEY:-}" ]; then
-      echo "x: skipping: BROWSER_USE_API_KEY not set"; exit 0
+
+    marker="''${X_SESSION_MARKER:-/var/lib/browser-use/x-session-ok}"
+    if [ ! -e "$marker" ] && [ -z "''${BROWSER_USE_STORAGE_STATE:-}" ]; then
+      echo "x: skipping, no X session (no $marker and BROWSER_USE_STORAGE_STATE unset)"; exit 0
+    fi
+    if ! command -v browse >/dev/null 2>&1; then
+      echo "x: skipping, browse CLI not available"; exit 0
     fi
 
-    # --- Gather candidate posts via the browser-use cloud API. ---------------
-    # Create a task asking browser-use to collect the most interesting recent
-    # posts (return a plain text list of "<gist> | <url>" lines), then poll for
-    # the finished output. Any failure no-ops cleanly.
-    api="https://api.browser-use.com/api/v3"
-    auth="X-Browser-Use-API-Key: ''${BROWSER_USE_API_KEY}"
-    task='Open x.com, find the ~20 most interesting recent posts about AI, systems, and technology from the home/explore timeline, and return them as a plain text list, one per line, formatted "<one-line gist> | <post url>".'
-    created=$(curl -fsS --max-time 60 -H "$auth" -H 'Content-Type: application/json' \
-      -d "$(jq -n --arg t "$task" '{task:$t}')" "$api/tasks" 2>/dev/null) || {
-      echo "x: browser-use API unreachable; skipping"; exit 0
+    # --- Gather candidate posts via the native local `browse` agent. ---------
+    # Ask the agent to return a plain text list of "<gist> | <url>" lines. Any
+    # failure (no login, agent error, timeout) no-ops cleanly.
+    task='Open x.com (you are already logged in), read the home/following or explore timeline, and find the ~20 most interesting recent posts about AI, systems, and technology. Return ONLY a plain text list, one post per line, formatted "<one-line gist> | <post url>". Do not add commentary.'
+    cands=$(browse "$task" 2>/dev/null) || {
+      echo "x: browse agent failed; skipping"; exit 0
     }
-    task_id=$(printf '%s' "$created" | jq -r '.id // empty' 2>/dev/null)
-    if [ -z "$task_id" ]; then
-      echo "x: browser-use did not return a task id; skipping"; exit 0
-    fi
-    # Poll up to ~5 minutes for completion.
-    cands=""; i=0
-    while [ "$i" -lt 30 ]; do
-      st=$(curl -fsS --max-time 30 -H "$auth" "$api/tasks/$task_id" 2>/dev/null) || break
-      status=$(printf '%s' "$st" | jq -r '.status // empty' 2>/dev/null)
-      case "$status" in
-        finished|completed) cands=$(printf '%s' "$st" | jq -r '.output // empty' 2>/dev/null); break ;;
-        failed|stopped) echo "x: browser-use task $status; skipping"; exit 0 ;;
-      esac
-      sleep 10
-      i=$((i + 1))
-    done
     if [ -z "$cands" ]; then
-      echo "x: no candidate posts from browser-use; skipping"; exit 0
+      echo "x: no candidate posts from browse; skipping"; exit 0
     fi
 
     # --- Distill with the brain. ---------------------------------------------
@@ -174,11 +164,12 @@ let
 
   # A mission service + timer (runs as the user; staging is rathi-owned).
   # `passEnv` lists env vars to inherit from the manager (for browser-use gating).
-  mkMission = name: exec: passEnv: {
+  # `afterUnits` lists extra units to order after / want (e.g. browser-use-setup).
+  mkMission = name: exec: passEnv: afterUnits: {
     "kb-research-${name}" = {
       description = "KB research mission: ${name} -> staging";
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
+      after = [ "network-online.target" ] ++ afterUnits;
+      wants = [ "network-online.target" ] ++ afterUnits;
       path = missionPath;
       serviceConfig = {
         Type = "oneshot";
@@ -211,8 +202,9 @@ in
   ];
 
   systemd.services =
-    (mkMission "hackernews" hackernewsMission [ ])
-    // (mkMission "x" xMission [ "BROWSER_USE_API_KEY" ]);
+    (mkMission "hackernews" hackernewsMission [ ] [ ])
+    # The x mission shells out to `browse`; ensure its venv is built first.
+    // (mkMission "x" xMission [ "BROWSER_USE_STORAGE_STATE" ] [ "browser-use-setup.service" ]);
 
   systemd.timers =
     # Daily distillation runs; cheap (a handful of brain calls).

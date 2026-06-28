@@ -66,14 +66,28 @@ Gmail:
 Calendar:
   gws calendar events list --params '{"calendarId": "primary", "timeMin": "<RFC3339>", "timeMax": "<RFC3339>", "singleEvents": true, "orderBy": "startTime"}'
 
-## Browser Use
+## Browser Use (native, local)
 
-Requires BROWSER_USE_API_KEY to be set in the environment (not currently set).
-Until it is set, browser-use tools and the `x` KB research mission no-op.
-Endpoint: POST https://api.browser-use.com/api/v3/sessions
-Auth header: X-Browser-Use-API-Key
+Web automation runs fully locally - a real headless Chromium driven by the local
+brain. No cloud API, no key. Run it from the terminal:
 
-Use for web tasks that need a real browser (login flows, scraping, form filling).
+  browse "<task>"
+
+It opens a headless browser, reasons over the page, performs the steps, and
+prints the final result text to stdout. Because the local brain is text-only, it
+runs in DOM-extraction mode (no screenshots/vision). Use it for on-demand web
+tasks that need a real browser: reading a page that blocks plain fetches, multi
+step navigation, scraping, simple form filling.
+
+Examples:
+  browse "Go to news.ycombinator.com and list the top 5 story titles and links."
+  browse "Find the latest release version of <project> on its GitHub releases page."
+
+Logged-in sites (e.g. X): `browse` reuses a persistent profile at
+/var/lib/browser-use/profile. Log in there once (a headful session), or supply a
+cookies/storage_state json via BROWSER_USE_STORAGE_STATE. Without a session,
+logged-in tasks (and the `x` KB research mission) no-op cleanly.
+
 Always ask before using on sites that require the user's credentials.
 
 # Knowledge Base (kb-search)

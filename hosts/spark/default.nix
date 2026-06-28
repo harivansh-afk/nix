@@ -29,6 +29,7 @@
     ../../modules/services/kb-graph.nix
     ../../modules/services/kb-research.nix
     ../../modules/services/kb-finance.nix
+    ../../modules/services/mini-loops.nix
     ../../modules/services/mosh.nix
     ../../modules/services/parakeet.nix
     ../../modules/services/vaultwarden.nix

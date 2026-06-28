@@ -33,7 +33,10 @@ let
 
   stateDir = "/var/lib/mini-loops";
   runsDir = "${stateDir}/runs";
+  # Per-loop persistent state (dep-release last-seen tags, finance flagged set).
+  loopStateDir = "${stateDir}/state";
   kbLoopsDir = "/var/lib/kb/staging/loops";
+  financeDir = "/var/lib/kb/staging/finance";
 
   # browser-use state (owned by browser-use.nix); the X session lives here.
   browserUseDir = "/var/lib/browser-use";
@@ -97,6 +100,8 @@ let
         changes how he should build, a tool/dependency he uses, or a result he can
         act on. The connection must genuinely make sense - no stretchy links. Skip
         generic noise, hot takes, and engagement bait.'';
+      # Gate requires a concrete tie to a currently-active project.
+      gate = "active-project";
       telegram = true;
       kb = true;
     }
@@ -117,6 +122,48 @@ let
         technique, or result he could directly use or that changes a decision in
         one of those projects. The connection must genuinely make sense - no
         stretchy links. Skip generic tech news, hype, and drama.'';
+      gate = "active-project";
+      telegram = true;
+      kb = true;
+    }
+    {
+      name = "dep-release-watch";
+      # Daily, early morning.
+      schedule = "*-*-* 07:00:00";
+      # Check the curated dependency watchlist for NEW releases (one line each).
+      # Edit the watchlist in dots/mini-loops/dep_release_scan.py (WATCHLIST).
+      gather = "dep-release-scan";
+      seeds = [
+        "my projects spark nixos hermes agent"
+        "local AI inference llama.cpp"
+        "dependencies libraries I use"
+      ];
+      judge = ''
+        You are scanning NEW releases of dependencies Hari's projects rely on.
+        Surface a release ONLY if it is genuinely MAJOR for one of his active
+        projects: a breaking change, a major new capability, a significant
+        performance win, or a security fix that affects him. Treat patch bumps,
+        docs/CI changes, and routine incremental releases as noise.'';
+      gate = "active-project";
+      telegram = true;
+      kb = true;
+    }
+    {
+      name = "finance-anomaly-watch";
+      # Daily, morning.
+      schedule = "*-*-* 08:00:00";
+      # Deterministic anomaly candidates from the locally-ingested finance notes.
+      gather = "finance-anomaly-scan";
+      # Finance does not use the project signal; seeds are an unused fallback.
+      seeds = [ "personal finance spending subscriptions" ];
+      judge = ''
+        You are reviewing CANDIDATE spending anomalies in Hari's own accounts
+        (already computed deterministically): new recurring subscriptions, price
+        hikes on existing subscriptions, unusually large charges, and duplicate
+        charges. Surface only ones that are real and worth his attention; ignore
+        normal recurring spend and trivial amounts.'';
+      # Money loop: the gate keys on a real, novel anomaly, NOT a project tie.
+      gate = "anomaly";
       telegram = true;
       kb = true;
     }
@@ -134,6 +181,7 @@ let
           gather
           seeds
           judge
+          gate
           telegram
           kb
           ;
@@ -165,6 +213,27 @@ let
   # ---------------------------------------------------------------------------
   hnFeedScan = pkgs.writeShellScriptBin "hn-feed-scan" ''
     exec ${runnerPython}/bin/python ${../../dots/mini-loops/hn_feed_scan.py}
+  '';
+
+  # ---------------------------------------------------------------------------
+  # dep-release-scan: gather NEW releases of the curated dependency watchlist.
+  # Stdlib-only python; GitHub public API, no key. State (last-seen tags) lives
+  # under ${loopStateDir}. Edit the watchlist in dep_release_scan.py (WATCHLIST).
+  # ---------------------------------------------------------------------------
+  depReleaseScan = pkgs.writeShellScriptBin "dep-release-scan" ''
+    export MINI_LOOPS_DIR="''${MINI_LOOPS_DIR:-${stateDir}}"
+    exec ${runnerPython}/bin/python ${../../dots/mini-loops/dep_release_scan.py}
+  '';
+
+  # ---------------------------------------------------------------------------
+  # finance-anomaly-scan: gather deterministic spending anomaly candidates from
+  # the locally-ingested finance notes. Stdlib-only python; NO network. State
+  # (already-flagged anomalies) lives under ${loopStateDir}.
+  # ---------------------------------------------------------------------------
+  financeAnomalyScan = pkgs.writeShellScriptBin "finance-anomaly-scan" ''
+    export MINI_LOOPS_DIR="''${MINI_LOOPS_DIR:-${stateDir}}"
+    export FINANCE_KB_DIR="''${FINANCE_KB_DIR:-${financeDir}}"
+    exec ${runnerPython}/bin/python ${../../dots/mini-loops/finance_anomaly_scan.py}
   '';
 
   # ---------------------------------------------------------------------------
@@ -276,6 +345,7 @@ in
   systemd.tmpfiles.rules = [
     "d ${stateDir} 0755 ${user} ${group} -"
     "d ${runsDir} 0755 ${user} ${group} -"
+    "d ${loopStateDir} 0755 ${user} ${group} -"
     "d ${kbLoopsDir} 0755 ${user} ${group} -"
     # X session dir (rathi-owned; storage_state.json is written 0600 by the CLI).
     "d ${xSessionDir} 0700 ${user} ${group} -"
@@ -285,6 +355,8 @@ in
   environment.systemPackages = [
     xFeedScan
     hnFeedScan
+    depReleaseScan
+    financeAnomalyScan
     browseXLogin
     loopsCli
   ];

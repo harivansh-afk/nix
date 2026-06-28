@@ -78,6 +78,17 @@
       restartUnits = [ "NetworkManager-ensure-profiles.service" ];
     };
 
+    # SimpleFIN Bridge read-only access URL for the local-only finance KB
+    # namespace. KEY=value dotenv with SIMPLEFIN_ACCESS_URL=https://<creds>@... ;
+    # the URL carries HTTP Basic credentials inline. Read by the kb-finance
+    # SimpleFIN connector (modules/services/kb-finance.nix), which runs as rathi.
+    # The connector no-ops cleanly when this secret is absent.
+    "simplefin.env" = {
+      owner = username;
+      group = "users";
+      mode = "0400";
+    };
+
     "tailscale-ix-authkey" = {
       owner = "root";
       mode = "0400";

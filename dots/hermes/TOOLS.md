@@ -68,7 +68,8 @@ Calendar:
 
 ## Browser Use
 
-API key stored in ~/.bashrc as BROWSER_USE_API_KEY
+Requires BROWSER_USE_API_KEY to be set in the environment (not currently set).
+Until it is set, browser-use tools and the `x` KB research mission no-op.
 Endpoint: POST https://api.browser-use.com/api/v3/sessions
 Auth header: X-Browser-Use-API-Key
 

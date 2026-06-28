@@ -40,7 +40,7 @@
         shfmt = lint "shfmt" [
           pkgs.shfmt
           pkgs.findutils
-        ] "shfmt -i 2 -d scripts $(find dots -mindepth 1 -maxdepth 1 ! -name zsh)";
+        ] "shfmt -i 2 -d scripts packages $(find dots -mindepth 1 -maxdepth 1 ! -name zsh)";
         # Config lives in dots/nvim/.stylua.toml; stylua discovers it upward
         # from each file.
         stylua = lint "stylua" [ pkgs.stylua ] "stylua --check dots/nvim";

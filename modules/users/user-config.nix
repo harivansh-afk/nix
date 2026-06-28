@@ -37,6 +37,7 @@ let
 
   theme = import ../../lib/theme.nix { inherit homeDirectory; };
   customScripts = import ../../scripts { inherit homeDirectory lib pkgs; };
+  customPackages = import ../../packages { inherit pkgs lib; };
 
   coreutilsBin = "${pkgs.coreutils}/bin";
 
@@ -348,6 +349,7 @@ let
     ])
     ++ nvimPackages
     ++ extraPackages
+    ++ [ customPackages.bash-macros ]
     ++ builtins.attrValues customScripts.commonPackages
     ++ lib.optionals isDarwin (builtins.attrValues customScripts.darwinPackages ++ [ pkgs.aerospace ]);
 

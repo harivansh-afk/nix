@@ -12,13 +12,14 @@ packages, so they land on `PATH` on every host. Sources live in `bin/`.
 | Command        | Source                | Purpose                                      |
 |----------------|-----------------------|----------------------------------------------|
 | `theme`        | `bin/theme.sh`        | Switch cozybox dark/light, relink theme assets |
-| `ga`           | `bin/ga.sh`           | Git add helper                               |
-| `ghpr`         | `bin/ghpr.sh`         | Open/create GitHub PR                        |
-| `iosrun`       | `bin/iosrun.sh`       | iOS simulator run helper                     |
 | `wallpaper-gen`| `bin/wallpaper-gen.sh`| Generate themed wallpapers (uses `lib/wallpaper-gen.py`) |
 
 `default.nix` also exports `themeAssetsText` and `tmuxConfigs`, consumed by the
 theme-activation block in `modules/users/user-config.nix`.
+
+> `ga`, `ghpr`, and `iosrun` moved to `packages/bash-macros/` (the registry).
+> `theme` and `wallpaper-gen` stay here until the theme-activation coupling is
+> untangled in a later pass.
 
 ## Helpers (`lib/`)
 

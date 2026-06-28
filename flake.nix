@@ -128,10 +128,10 @@
       imports = [
         ./flake/args.nix
         ./flake/checks.nix
-        ./flake/cloudflare.nix
         ./flake/devshell.nix
         ./flake/hosts.nix
         ./flake/nixos.nix
+        ./flake/packages.nix
         ./flake/tests.nix
         ./flake/user-config.nix
       ];

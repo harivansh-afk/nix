@@ -100,35 +100,11 @@ let
       );
     };
 
+  # ga / ghpr / iosrun moved to packages/bash-macros/. The theme and
+  # wallpaper-gen scripts stay here for now: they are wired into the user-config
+  # activation (themeAssetsText, theme.nix path replacements) and migrate with a
+  # dedicated theme package in a later pass.
   commonPackages = {
-    ga = mkScript {
-      name = "ga";
-      file = ./bin/ga.sh;
-      runtimeInputs = with pkgs; [ git ];
-    };
-
-    ghpr = mkScript {
-      name = "ghpr";
-      file = ./bin/ghpr.sh;
-      runtimeInputs = with pkgs; [
-        gh
-        git
-        gnugrep
-        gnused
-        coreutils
-      ];
-    };
-
-    iosrun = mkScript {
-      name = "iosrun";
-      file = ./bin/iosrun.sh;
-      runtimeInputs = with pkgs; [
-        findutils
-        gnugrep
-        coreutils
-      ];
-    };
-
     wallpaper-gen = mkScript {
       name = "wallpaper-gen";
       file = ./bin/wallpaper-gen.sh;

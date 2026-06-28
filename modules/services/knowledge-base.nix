@@ -9,7 +9,7 @@ let
   #   3. Cognee (uv venv)        -> GraphRAG, configured FULLY LOCAL
   #
   # The brain LLM is already served by inference.nix at 127.0.0.1:18080/v1
-  # (alias "nemotron-3-super-120b"); this module never starts another LLM.
+  # (alias "qwen3.6-35b-a3b"); this module never starts another LLM.
   #
   # Ports (all 127.0.0.1, off well-known ports per CLAUDE.md):
   #   embeddings = 18200, (reranker reserved 18210), cognee-api reserved 18300,

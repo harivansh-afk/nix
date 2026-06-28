@@ -9,19 +9,21 @@
 # A mini-loop runs on a timer and does five things (see dots/mini-loops/mini_loop.py):
 #   gather -> ground -> judge -> act -> log
 #     gather  run a shell command; its stdout is the gathered items (text).
-#     ground  kb-search each seed -> a compact "about Hari" context block.
+#     ground  build an "ACTIVE PROJECTS" block (Hari's recently-pushed GitHub
+#             repos + local git repos with a recent commit); falls back to
+#             kb-search of the static seeds only if both signals are unreachable.
 #     judge   ask the local brain (127.0.0.1:18080, qwen3.6-35b-a3b) which items
-#             have an interesting CONSEQUENCE for Hari; returns JSON
-#             [{item, relevant, why}].
-#     act     for each relevant item: Telegram ping (with the why) and/or a
-#             timestamped KB note under staging/loops/<name>/.
+#             have a concrete CONSEQUENCE for an active project; returns JSON
+#             [{item, relevant, project, headline, why}].
+#     act     KB note keeps the full record; Telegram is terse (top 3 items, one
+#             project-anchored sentence each) and stays silent if nothing ties to
+#             an active project. Notes land under staging/loops/<name>/.
 #     log     one line to runlog.log (OK/SKIP/FAIL) + a per-run detail JSON.
 #
 # Loops are declared as the `loops` list below. Each spec generates a oneshot
 # systemd service (runs as rathi) + a timer. Everything is loopback-only; no
-# ports, no network exposure. This mirrors the kb-research "missions" skeleton
-# (modules/services/kb-research.nix) and evolves it: grounding + judging +
-# Telegram action + first-class observability.
+# ports, no network exposure (the only outbound calls are the public GitHub API
+# for active-projects grounding and each loop's gather source).
 #
 # The flagship loop, x-life-scan, reads the logged-in X home feed. X needs a
 # browser session, captured once with `browse-x-login` (see below).
@@ -62,12 +64,17 @@ let
     pkgs.curl
     pkgs.gnugrep
     pkgs.gnused
+    # The runner shells out to `git` for the local active-projects signal.
+    pkgs.git
   ];
 
   # ---------------------------------------------------------------------------
-  # Loop specs. EDIT the `seeds` to match what you care about - they are the
-  # niches the judge grounds against. `gather` is any shell command whose stdout
-  # is the items text. `judge` is the consequence-judging prompt.
+  # Loop specs. The runner grounds each loop against Hari's ACTIVE PROJECTS (his
+  # recently-pushed GitHub repos + local git repos with a recent commit), not the
+  # static seeds - the judge surfaces an item only if it has a concrete
+  # consequence for one of those active projects. `seeds` is now only the kb-search
+  # FALLBACK grounding (used if both project signals are unreachable). `gather` is
+  # any shell command whose stdout is the items text; `judge` is the prompt.
   # ---------------------------------------------------------------------------
   loops = [
     {
@@ -77,7 +84,7 @@ let
       # Read the logged-in X home feed: ~30 latest posts as text. No-ops (empty
       # stdout -> SKIP) until an X session is captured with `browse-x-login`.
       gather = "x-feed-scan";
-      # EDIT THESE: the niches the loop grounds against (kb-search each).
+      # Fallback grounding only (the runner prefers the active-projects signal).
       seeds = [
         "my projects spark nixos hermes agent"
         "local AI inference llama.cpp"
@@ -85,11 +92,31 @@ let
         "people I know"
       ];
       judge = ''
-        You are scanning Hari's X (Twitter) home feed. Surface only posts with an
-        interesting CONSEQUENCE for Hari given the context about him: things that
-        affect his projects, tools he uses, people he knows, or his interests.
-        Skip generic noise, hot takes, and engagement bait. For each surfaced
-        post, the "why" must state the concrete connection to Hari.'';
+        You are scanning Hari's X (Twitter) home feed. Surface only posts with a
+        concrete CONSEQUENCE for one of Hari's active projects: something that
+        changes how he should build, a tool/dependency he uses, or a result he can
+        act on. The connection must genuinely make sense - no stretchy links. Skip
+        generic noise, hot takes, and engagement bait.'';
+      telegram = true;
+      kb = true;
+    }
+    {
+      name = "hn-life-scan";
+      # Every 6 hours.
+      schedule = "*-*-* 00/6:00:00";
+      # Hacker News front page (~40 stories) via the Algolia API; no key/browser.
+      gather = "hn-feed-scan";
+      seeds = [
+        "my projects spark nixos hermes agent"
+        "local AI inference llama.cpp"
+        "developer tools self-hosting"
+      ];
+      judge = ''
+        You are scanning the Hacker News front page. Surface only stories with a
+        concrete CONSEQUENCE for one of Hari's active projects: a tool, library,
+        technique, or result he could directly use or that changes a decision in
+        one of those projects. The connection must genuinely make sense - no
+        stretchy links. Skip generic tech news, hype, and drama.'';
       telegram = true;
       kb = true;
     }
@@ -130,6 +157,14 @@ let
     export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
     export HOME="''${HOME:-${browserUseDir}}"
     exec ${playwrightPython}/bin/python ${../../dots/browser-use/x_feed_scan.py}
+  '';
+
+  # ---------------------------------------------------------------------------
+  # hn-feed-scan: gather the Hacker News front page as text (Algolia API).
+  # Stdlib-only python; no key, no browser. One story per line.
+  # ---------------------------------------------------------------------------
+  hnFeedScan = pkgs.writeShellScriptBin "hn-feed-scan" ''
+    exec ${runnerPython}/bin/python ${../../dots/mini-loops/hn_feed_scan.py}
   '';
 
   # ---------------------------------------------------------------------------
@@ -249,6 +284,7 @@ in
 
   environment.systemPackages = [
     xFeedScan
+    hnFeedScan
     browseXLogin
     loopsCli
   ];

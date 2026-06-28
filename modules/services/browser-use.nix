@@ -109,11 +109,11 @@ in
     "d ${profileDir} 0755 root root -"
   ];
 
-  # Expose the CLI for the user and for the kb-research `x` mission.
+  # Expose the CLI for the user (browse-x-login uses this venv too).
   environment.systemPackages = [ browse ];
 
   # Build the venv once at boot so the first `browse` call is fast. Oneshot so
-  # consumers (kb-research-x) can depend on it.
+  # consumers (e.g. browse-x-login) can depend on it.
   systemd.services.browser-use-setup = {
     description = "Bootstrap the browser-use uv venv";
     after = [ "network-online.target" ];

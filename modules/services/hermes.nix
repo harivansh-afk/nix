@@ -110,13 +110,18 @@ let
     "memory"
     "messaging"
     "session_search"
-    "skills"
     "terminal"
     "web"
   ];
   # Toolsets we explicitly turn off (the complement of cliToolsets among the
   # built-in toolsets). Listed so the pin is self-documenting and idempotent.
+  # NOTE: `skills` is OFF on purpose. The bundled/curator skill library (obsidian,
+  # llm-wiki, smart-home, gaming, ...) made the model confabulate capabilities it
+  # does not have (e.g. claiming a non-existent Obsidian vault). Per the lean
+  # "reduce model confusion" principle we disable the whole skills surface; real
+  # capabilities live as wired tools (kb-search, browse, finance), not skills.
   cliToolsetsOff = [
+    "skills"
     "browser"
     "vision"
     "image_gen"
@@ -187,6 +192,17 @@ let
       ${hermes}/bin/hermes tools disable ${toString cliToolsetsOff} || true
       ${hermes}/bin/hermes tools enable $want_tools || true
     fi
+
+    # Skills are disabled (skills toolset is OFF). Wipe every bundled and
+    # curator-installed skill plus the injected prompt snapshot + curator state,
+    # so the model cannot discover or advertise phantom capabilities (this is the
+    # fix for it claiming a non-existent Obsidian vault). Also stop the skills
+    # curator from auto-installing more.
+    rm -rf "${hermesHome}/skills" \
+      "${hermesHome}/.bundled_manifest" \
+      "${hermesHome}/.curator_state" \
+      "${hermesHome}/.curator_backups" \
+      "${hermesHome}/.skills_prompt_snapshot.json" 2>/dev/null || true
   '';
 in
 {
@@ -263,19 +279,14 @@ in
   # and deliberately leave USER.md, MEMORY.md and ~/.hermes/memories/ alone -
   # those are agent-curated runtime state.
   #
-  # We also ship version-controlled skills from dots/hermes/skills the same way:
-  # each lands as a live symlink under ~/.hermes/skills/<category>/<name>, so the
-  # agent's skills tool discovers it and edits to its SKILL.md apply with no
-  # rebuild. We `d` the parent category dir (not `L+`) so the symlink sits
-  # alongside the agent's other runtime skills in that category without
-  # clobbering them.
+  # Skills are deliberately disabled (see cliToolsetsOff): we ship NO skills and
+  # wipe any bundled/curator-installed ones (see the ExecStartPre above), so only
+  # the persona files are symlinked here.
   systemd.user.tmpfiles.users.${user}.rules = [
     "d ${hermesHome} 0700 - - -"
     "L+ ${hermesHome}/SOUL.md - - - - ${repoHermesDir}/SOUL.md"
     "L+ ${hermesHome}/AGENTS.md - - - - ${repoHermesDir}/AGENTS.md"
     "L+ ${hermesHome}/TOOLS.md - - - - ${repoHermesDir}/TOOLS.md"
     "L+ ${hermesHome}/HEARTBEAT.md - - - - ${repoHermesDir}/HEARTBEAT.md"
-    "d ${hermesHome}/skills/note-taking - - - - -"
-    "L+ ${hermesHome}/skills/note-taking/read-it-later - - - - ${repoHermesDir}/skills/note-taking/read-it-later"
   ];
 }

@@ -28,6 +28,24 @@ let
     pkgs.curl
   ];
 
+  # Python with the document-extraction libs the downloads connector needs:
+  # pymupdf (fitz) for pdf, python-docx for docx, openpyxl for xlsx, stdlib for
+  # txt. Attr names verified against nixpkgs python3Packages.
+  downloadsPython = pkgs.python3.withPackages (ps: [
+    ps.pymupdf
+    ps.python-docx
+    ps.openpyxl
+  ]);
+
+  # downloads connector: extract text from ~/Documents/Downloads personal docs
+  # -> staging/downloads/*.md (frontmatter + body, content-hash dedupe). The
+  # extractor (dots/kb/downloads_connector.py) enforces the hard privacy
+  # denylist in code; see that file and CLAUDE.md.
+  downloadsConnector = pkgs.writeShellScript "kb-connector-downloads" ''
+    set -uo pipefail
+    exec ${downloadsPython}/bin/python ${../../dots/kb/downloads_connector.py}
+  '';
+
   # gws needs the OAuth client (from the gws.env sops secret, exposed under the
   # GOOGLE_WORKSPACE_CLI_* names this gws build expects) plus the user token. The
   # token is exported to a sops-managed credentials file for deterministic, keyring-
@@ -171,6 +189,7 @@ in
     "d ${stagingDir}/gmail 0755 ${user} ${group} -"
     "d ${stagingDir}/calendar 0755 ${user} ${group} -"
     "d ${stagingDir}/forgejo 0755 ${user} ${group} -"
+    "d ${stagingDir}/downloads 0755 ${user} ${group} -"
   ];
 
   # Connectors (run as rathi), plus point the existing kb-ingest service at the
@@ -180,6 +199,7 @@ in
     (mkConnector "gmail" gmailConnector)
     // (mkConnector "calendar" calendarConnector)
     // (mkConnector "forgejo" forgejoConnector)
+    // (mkConnector "downloads" downloadsConnector)
     // {
       kb-ingest.environment.KB_STAGING_DIR = stagingDir;
     };
@@ -189,6 +209,8 @@ in
     (mkTimer "gmail" "hourly")
     // (mkTimer "calendar" "hourly")
     // (mkTimer "forgejo" "hourly")
+    # Downloads change slowly; daily is plenty (and extraction is heavier).
+    // (mkTimer "downloads" "daily")
     # Indexer runs hourly: the vector reindex (embeddings -> pgvector, no LLM)
     # is ~15s for a few hundred docs, so it is cheap to run often and keeps the
     # KB fresh shortly after the connectors collect new docs.

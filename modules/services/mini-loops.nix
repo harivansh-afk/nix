@@ -39,6 +39,12 @@ let
   browserUseVenv = "${browserUseDir}/venv";
   chromiumBin = "${pkgs.chromium}/bin/chromium";
 
+  # Deterministic X feed scrape uses Playwright (NOT browser-use's agentic loop,
+  # which made an LLM call per navigation step and timed out on the local brain).
+  # Playwright drives the nix-store chromium directly via executable_path, so we
+  # do not need (or use) browser-use's browser bundle here.
+  playwrightPython = pkgs.python3.withPackages (ps: [ ps.playwright ]);
+
   # Plain python for the runner: stdlib only (json, urllib, subprocess).
   runnerPython = pkgs.python3;
   runner = ../../dots/mini-loops/mini_loop.py;
@@ -110,17 +116,17 @@ let
   # ---------------------------------------------------------------------------
   xFeedScan = pkgs.writeShellScriptBin "x-feed-scan" ''
     set -uo pipefail
-    if [ ! -x ${browserUseVenv}/bin/python ]; then
-      echo "x-feed-scan: browser-use venv missing; run browser-use-setup" >&2
+    if [ ! -s ${xStorageState} ]; then
+      echo "x-feed-scan: no X session (run browse-x-login)" >&2
       exit 0
     fi
     export BROWSER_USE_CHROMIUM=${chromiumBin}
-    export BROWSER_USE_BRAIN_URL=http://127.0.0.1:18080/v1
-    export BROWSER_USE_BRAIN_MODEL=qwen3.6-35b-a3b
     export BROWSER_USE_STORAGE_STATE=${xStorageState}
+    # Playwright uses chromium via executable_path; skip its own browser download.
+    export PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers}
+    export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
     export HOME="''${HOME:-${browserUseDir}}"
-    export BROWSER_USE_SETUP_LOGGING=false
-    exec ${browserUseVenv}/bin/python ${../../dots/browser-use/x_feed_scan.py}
+    exec ${playwrightPython}/bin/python ${../../dots/browser-use/x_feed_scan.py}
   '';
 
   # ---------------------------------------------------------------------------
@@ -165,7 +171,9 @@ let
       run)
         name="''${2:-}"
         if [ -z "$name" ]; then echo "usage: loops run <name>" >&2; exit 2; fi
-        ${pkgs.systemd}/bin/systemctl start "mini-loop-$name.service"
+        # System unit: starting it manually needs root (the timer fires it
+        # automatically without sudo). Use the sudo wrapper.
+        /run/wrappers/bin/sudo ${pkgs.systemd}/bin/systemctl start "mini-loop-$name.service"
         echo "triggered mini-loop-$name.service"
         ;;
       log)

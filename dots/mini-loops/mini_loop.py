@@ -150,7 +150,42 @@ def _extract_json_array(text: str):
                 return val
         except Exception:
             pass
-    return []
+    # Last resort: the model often emits a BARE STREAM of objects with no array
+    # brackets or commas ("{...}\n{...}\n..."). Brace-match each top-level {...}
+    # and json.loads it individually. This also recovers objects from inside a
+    # malformed array.
+    objs = []
+    depth = 0
+    obj_start = None
+    in_str = False
+    esc = False
+    for i, ch in enumerate(text):
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+        elif ch == "{":
+            if depth == 0:
+                obj_start = i
+            depth += 1
+        elif ch == "}":
+            if depth > 0:
+                depth -= 1
+                if depth == 0 and obj_start is not None:
+                    try:
+                        o = json.loads(text[obj_start : i + 1])
+                        if isinstance(o, dict):
+                            objs.append(o)
+                    except Exception:
+                        pass
+                    obj_start = None
+    return objs
 
 
 def judge(items: str, context: str, judge_prompt: str) -> list[dict]:

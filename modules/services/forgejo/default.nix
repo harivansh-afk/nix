@@ -15,6 +15,7 @@ let
   mirrorEnvFile = config.sops.secrets."forgejo-mirror.env".path;
   runnerTokenFile = config.sops.secrets."forgejo-runner-token".path;
   runnerCacheRoot = "/var/cache/forgejo-runner";
+
   forgejoOauthSources = {
     github = {
       provider = "github";
@@ -22,6 +23,7 @@ let
       clientIdVariable = "GITHUB_OAUTH_CLIENT_ID";
       clientSecretVariable = "GITHUB_OAUTH_CLIENT_SECRET";
     };
+
     google = {
       provider = "gplus";
       secretName = "forgejo-google-oauth.env";
@@ -29,15 +31,18 @@ let
       clientSecretVariable = "GOOGLE_OAUTH_CLIENT_SECRET";
     };
   };
+
   forgejoOauthSourceList = lib.mapAttrsToList (
     name: source: source // { inherit name; }
   ) forgejoOauthSources;
+
   forgejoOauthCredentials = lib.listToAttrs (
     map (source: {
       name = "oauth-${source.name}";
       value = config.sops.secrets.${source.secretName}.path;
     }) forgejoOauthSourceList
   );
+
   forgejoOauthSyncCases = lib.concatMapStringsSep "\n" (source: ''
     sync_oauth_source \
       ${lib.escapeShellArg source.name} \
@@ -46,79 +51,151 @@ let
       ${lib.escapeShellArg source.clientIdVariable} \
       ${lib.escapeShellArg source.clientSecretVariable}
   '') forgejoOauthSourceList;
+
   mirrorIntervalSeconds = 15 * 60;
   mirrorIntervalNanos = toString (mirrorIntervalSeconds * 1000000000);
+
   # Reads /etc/forgejo-mirror/manifest.json, scans the forgejo SQLite db for
   # repos with the Actions unit enabled (repo_unit.type=10), and disables it
   # via the API on anything not in actions_enabled_repos. This is the policy
   # backstop: even if a mirror is created with actions on (e.g. via the UI),
   # the next tick of this service will turn it back off.
-  enforceForgejoActionsAllowlist = pkgs.writeShellScript "forgejo-actions-enforce" ''
-    set -eu
-    MANIFEST=/etc/forgejo-mirror/manifest.json
-    DB=/var/lib/forgejo/data/forgejo.db
-    [ -r "$MANIFEST" ] || { echo "manifest not readable"; exit 0; }
-    [ -r "$DB" ]       || { echo "forgejo db not readable"; exit 0; }
-    . ${mirrorEnvFile}
-    : "''${FORGEJO_TOKEN:?missing FORGEJO_TOKEN in EnvironmentFile}"
-    JQ=${pkgs.jq}/bin/jq
-    SQLITE=${pkgs.sqlite}/bin/sqlite3
-    CURL=${pkgs.curl}/bin/curl
-    API="https://${forgejoDomain}/api/v1"
+  # Instead of bare bash, use a Python3 script for enforceForgejoActionsAllowlist.
+  enforceForgejoActionsAllowlist = pkgs.writeTextFile {
+    name = "forgejo-actions-enforce.py";
+    text = ''
+      #!/usr/bin/env ${pkgs.python3}/bin/python3
+      import os
+      import json
+      import sqlite3
+      import subprocess
+      import sys
 
-    allowlist=$(mktemp); trap 'rm -f "$allowlist" "$on"' EXIT
-    "$JQ" -r '.actions_enabled_repos[]' "$MANIFEST" | sort -u > "$allowlist"
+      MANIFEST = "/etc/forgejo-mirror/manifest.json"
+      DB = "/var/lib/forgejo/data/forgejo.db"
+      API = f"https://${forgejoDomain}/api/v1"
+      MIRROR_ENV_PATH = "${mirrorEnvFile}"
 
-    on=$(mktemp)
-    "$SQLITE" -bail "$DB" \
-      "SELECT u.lower_name||'/'||r.lower_name
-       FROM repo_unit ru
-       JOIN repository r ON r.id=ru.repo_id
-       JOIN user u       ON u.id=r.owner_id
-       WHERE ru.type=10;" | sort -u > "$on"
+      # Source env file (bash style, only supports key=value, no quotes)
+      def source_env(env_path):
+          env = {}
+          with open(env_path) as f:
+              for line in f:
+                  line = line.strip()
+                  if not line or line.startswith('#'):
+                      continue
+                  if '=' in line:
+                      k, v = line.split('=', 1)
+                      env[k.strip()] = v.strip()
+          return env
 
-    # Repos that have actions on but should not (= violations)
-    comm -23 "$on" "$allowlist" | while IFS= read -r repo; do
-      [ -z "$repo" ] && continue
-      echo "  disabling actions: $repo"
-      "$CURL" -fsS -X PATCH \
-        -H "Authorization: token $FORGEJO_TOKEN" \
-        -H "Content-Type: application/json" \
-        -d '{"has_actions": false}' \
-        "$API/repos/$repo" >/dev/null || echo "    PATCH failed for $repo"
-    done
+      def exit_with_notice(msg):
+          print(msg)
+          sys.exit(0)
 
-    # Repos that should have actions but do not (= re-enable)
-    comm -13 "$on" "$allowlist" | while IFS= read -r repo; do
-      [ -z "$repo" ] && continue
-      echo "  enabling actions: $repo"
-      "$CURL" -fsS -X PATCH \
-        -H "Authorization: token $FORGEJO_TOKEN" \
-        -H "Content-Type: application/json" \
-        -d '{"has_actions": true}' \
-        "$API/repos/$repo" >/dev/null || echo "    PATCH failed for $repo"
-    done
-  '';
+      if not os.path.isfile(MANIFEST):
+          exit_with_notice("manifest not readable")
+      if not os.path.isfile(DB):
+          exit_with_notice("forgejo db not readable")
+      if not os.path.isfile(MIRROR_ENV_PATH):
+          exit_with_notice(f"missing mirror env: {MIRROR_ENV_PATH}")
 
-  normalizeForgejoMirrorSchedule = pkgs.writeShellScript "forgejo-normalize-mirror-schedule" ''
-    set -eu
-    DB=/var/lib/forgejo/data/forgejo.db
-    [ -f "$DB" ] || exit 0
-    SQLITE=${pkgs.sqlite}/bin/sqlite3
-    "$SQLITE" "$DB" "
-      PRAGMA journal_mode=WAL;
-      PRAGMA busy_timeout=10000;
-      UPDATE mirror
-      SET interval = ${mirrorIntervalNanos},
-          next_update_unix = CAST(strftime('%s','now') AS INTEGER)
-                             + (repo_id % ${toString mirrorIntervalSeconds});
-      DELETE FROM action_task
-      WHERE status IN (6)
-        AND updated < CAST(strftime('%s','now','-1 day') AS INTEGER);
-      PRAGMA optimize;
-    "
-  '';
+      # Load env vars, especially FORGEJO_TOKEN
+      env = os.environ.copy()
+      env.update(source_env(MIRROR_ENV_PATH))
+      token = env.get("FORGEJO_TOKEN")
+      if not token:
+          print("missing FORGEJO_TOKEN in EnvironmentFile")
+          sys.exit(1)
 
+      # Parse allowlist from manifest
+      with open(MANIFEST) as f:
+          manifest = json.load(f)
+      allowlist = sorted(set(manifest.get("actions_enabled_repos", [])))
+
+      # Query repo list with actions enabled (repo_unit.type == 10)
+      conn = sqlite3.connect(DB)
+      c = conn.cursor()
+      c.execute("""
+          SELECT u.lower_name||'/'||r.lower_name
+          FROM repo_unit ru
+          JOIN repository r ON r.id=ru.repo_id
+          JOIN user u ON u.id=r.owner_id
+          WHERE ru.type=10
+      """)
+      rows = c.fetchall()
+      actions_on = sorted(set(str(row[0]) for row in rows))
+      conn.close()
+
+      def api_patch_repo(repo, enable):
+          url = f"{API}/repos/{repo}"
+          data = {"has_actions": bool(enable)}
+          try:
+              result = subprocess.run([
+                  "${pkgs.curl}/bin/curl", "-fsS", "-X", "PATCH",
+                  "-H", f"Authorization: token {token}",
+                  "-H", "Content-Type: application/json",
+                  "-d", json.dumps(data),
+                  url
+              ], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+              if result.returncode != 0:
+                  print(f"    PATCH failed for {repo}: {result.stderr.decode().strip()}")
+          except Exception as e:
+              print(f"    PATCH exception for {repo}: {e}")
+
+      # Disable actions for repos that have it on but shouldn't
+      disabled = sorted(set(actions_on) - set(allowlist))
+      for repo in disabled:
+          if repo:
+              print(f"  disabling actions: {repo}")
+              api_patch_repo(repo, False)
+
+      # Enable actions for repos that should have it but don't
+      enabled = sorted(set(allowlist) - set(actions_on))
+      for repo in enabled:
+          if repo:
+              print(f"  enabling actions: {repo}")
+              api_patch_repo(repo, True)
+    '';
+    executable = true;
+  };
+
+  normalizeForgejoMirrorSchedule = pkgs.writeTextFile {
+    name = "forgejo-normalize-mirror-schedule.py";
+    text = ''
+      #!/usr/bin/env ${pkgs.python3}/bin/python3
+      import os
+      import sqlite3
+      import sys
+
+      DB = "/var/lib/forgejo/data/forgejo.db"
+
+      if not os.path.isfile(DB):
+          sys.exit(0)
+
+      conn = sqlite3.connect(DB)
+      c = conn.cursor()
+      try:
+          c.execute("PRAGMA journal_mode=WAL;")
+          c.execute("PRAGMA busy_timeout=10000;")
+          c.execute(f"""
+            UPDATE mirror
+            SET interval = {mirrorIntervalNanos},
+                next_update_unix = CAST(strftime('%s','now') AS INTEGER)
+                                   + (repo_id % {mirrorIntervalSeconds});
+          """)
+          c.execute("""
+            DELETE FROM action_task
+            WHERE status IN (6)
+              AND updated < CAST(strftime('%s','now','-1 day') AS INTEGER);
+          """)
+          c.execute("PRAGMA optimize;")
+          conn.commit()
+      finally:
+          conn.close()
+    '';
+    executable = true;
+  };
   forgejoIconSvg = ./icon.svg;
   forgejoBrandingAssets =
     pkgs.runCommand "forgejo-branding-assets"

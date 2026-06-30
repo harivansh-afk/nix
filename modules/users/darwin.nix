@@ -1,7 +1,3 @@
-# nix-darwin adapter for modules/users/user-config.nix: the primary user
-# gets the shared user config, applied as a postActivation step running as
-# that user. Symlinks point at the live checkout so dotfile edits apply
-# without a rebuild.
 {
   lib,
   pkgs,
@@ -21,8 +17,6 @@ let
   };
 in
 {
-  # nix-darwin has no per-user package sets; these are the old
-  # home-manager-installed user packages.
   environment.systemPackages = userConfig.packages;
 
   system.activationScripts.postActivation.text = lib.mkAfter ''

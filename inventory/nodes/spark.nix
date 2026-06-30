@@ -1,5 +1,5 @@
 {
   kind = "nixos";
   system = "aarch64-linux";
-  roles = [ "workstation" ];
+  roles = [ "node" ];
 }

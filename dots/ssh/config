@@ -95,7 +95,7 @@ Host vin-stor-1
 # Reached over Tailscale only (no public port). Mirrors the `spark` block so
 # mosh behaves the same: MagicDNS name + agent/control/keepalive options.
 Host hari-compute-1
-  HostName hari-compute-1
+  HostName 100.76.23.116
   HostKeyAlias hari-compute-1
   User hari
   IdentityFile ~/.ssh/id_ed25519

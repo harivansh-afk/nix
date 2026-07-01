@@ -27,7 +27,7 @@ in
   services.llama-cpp = {
     enable = true;
     package = llamaCpp;
-    
+
     settings = {
       host = "127.0.0.1";
       port = 18080;

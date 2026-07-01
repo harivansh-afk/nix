@@ -52,9 +52,6 @@ let
       ${lib.escapeShellArg source.clientSecretVariable}
   '') forgejoOauthSourceList;
 
-  mirrorIntervalSeconds = 15 * 60;
-  mirrorIntervalNanos = toString (mirrorIntervalSeconds * 1000000000);
-
   # Reads /etc/forgejo-mirror/manifest.json, scans the forgejo SQLite db for
   # repos with the Actions unit enabled (repo_unit.type=10), and disables it
   # via the API on anything not in actions_enabled_repos. This is the policy

@@ -66,6 +66,7 @@ in
       minikube
       mgrep
       mosh
+      eternal-terminal
       ngrok
       phpPackages.composer
       postgresql_17

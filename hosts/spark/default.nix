@@ -20,6 +20,7 @@
     ../../modules/services/caddy.nix
     ../../modules/services/cloudflared.nix
     ../../modules/services/delta.nix
+    ../../modules/services/et.nix
     ../../modules/services/forgejo
     ../../modules/services/inference.nix
     ../../modules/services/hermes.nix

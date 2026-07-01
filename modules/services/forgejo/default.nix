@@ -177,9 +177,9 @@ let
           c.execute("PRAGMA busy_timeout=10000;")
           c.execute(f"""
             UPDATE mirror
-            SET interval = {mirrorIntervalNanos},
+            SET interval = ${toString (15 * 60 * 1000000000)},
                 next_update_unix = CAST(strftime('%s','now') AS INTEGER)
-                                   + (repo_id % {mirrorIntervalSeconds});
+                                   + (repo_id % ${toString (15 * 60)});
           """)
           c.execute("""
             DELETE FROM action_task

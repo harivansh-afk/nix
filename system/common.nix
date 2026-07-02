@@ -62,10 +62,42 @@ in
     command = "$HOME/.claude/hooks/session-id.sh"
     timeout = 5
 
+    [[hooks.SessionStart]]
+    [[hooks.SessionStart.hooks]]
+    type = "command"
+    command = "$HOME/.claude/hooks/agent-session-state.sh"
+    timeout = 5
+
     [[hooks.PreToolUse]]
     matcher = "^Bash$"
     [[hooks.PreToolUse.hooks]]
     type = "command"
     command = "$HOME/.claude/hooks/enforce-modern-tools.sh"
+
+    [[hooks.PreToolUse]]
+    matcher = "^(Edit|Write|NotebookEdit)$"
+    [[hooks.PreToolUse.hooks]]
+    type = "command"
+    command = "$HOME/.claude/hooks/enforce-worktrees.sh"
+
+    # No matcher: fires on every tool call so the session state file tracks
+    # cwd/worktree as the agent moves.
+    [[hooks.PostToolUse]]
+    [[hooks.PostToolUse.hooks]]
+    type = "command"
+    command = "$HOME/.claude/hooks/agent-session-state.sh"
+    timeout = 5
+
+    [[hooks.Stop]]
+    [[hooks.Stop.hooks]]
+    type = "command"
+    command = "$HOME/.claude/hooks/agent-session-state.sh"
+    timeout = 5
+
+    [[hooks.SessionEnd]]
+    [[hooks.SessionEnd.hooks]]
+    type = "command"
+    command = "$HOME/.claude/hooks/agent-session-state.sh"
+    timeout = 5
   '';
 }

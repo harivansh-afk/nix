@@ -53,6 +53,15 @@ in
             }
           ];
         }
+        {
+          hooks = [
+            {
+              type = "command";
+              command = hookCommand "agent-session-state.sh";
+              timeout = 5;
+            }
+          ];
+        }
       ];
       PreToolUse = [
         {
@@ -61,6 +70,50 @@ in
             {
               type = "command";
               command = hookCommand "enforce-modern-tools.sh";
+            }
+          ];
+        }
+        {
+          matcher = "Edit|Write|NotebookEdit";
+          hooks = [
+            {
+              type = "command";
+              command = hookCommand "enforce-worktrees.sh";
+            }
+          ];
+        }
+      ];
+      # No matcher: fires on every tool call so the session state file tracks
+      # cwd/worktree as the agent moves (worktree creation, cd, edits).
+      PostToolUse = [
+        {
+          hooks = [
+            {
+              type = "command";
+              command = hookCommand "agent-session-state.sh";
+              timeout = 5;
+            }
+          ];
+        }
+      ];
+      Stop = [
+        {
+          hooks = [
+            {
+              type = "command";
+              command = hookCommand "agent-session-state.sh";
+              timeout = 5;
+            }
+          ];
+        }
+      ];
+      SessionEnd = [
+        {
+          hooks = [
+            {
+              type = "command";
+              command = hookCommand "agent-session-state.sh";
+              timeout = 5;
             }
           ];
         }

@@ -40,6 +40,8 @@ if [[ -n "$model_id" ]]; then
     model="Sonnet"
   elif [[ "$model_id" =~ haiku ]]; then
     model="Haiku"
+  elif [[ "$model_id" =~ fable ]]; then
+    model="Fable"
   else
     model="Claude"
   fi

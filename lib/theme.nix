@@ -370,11 +370,6 @@ let
 
   batTheme = mode: if mode == "light" then "gruvbox-light" else "gruvbox-dark";
 
-  # omp (oh-my-pi) theme: "sharp minimal" cozybox. No painted backgrounds
-  # anywhere (every *Bg token is "" = terminal default), square corners via
-  # boxRound overrides, cream/yellow accents instead of the default blue.
-  # Returns the attrset for the omp theme JSON schema; all `colors` tokens
-  # are mandatory (docs/theme.md upstream).
   ompTheme =
     mode:
     let
@@ -406,12 +401,14 @@ let
             border = "#504945";
             borderMuted = "#3c3836";
             selectedBg = "#504945";
-            green = sharedPalette.green;
-            red = sharedPalette.red;
-            yellow = sharedPalette.yellow;
-            yellowBright = sharedPalette.yellowBright;
-            blue = sharedPalette.blue;
-            aqua = sharedPalette.aqua;
+            inherit (sharedPalette)
+              aqua
+              blue
+              green
+              red
+              yellow
+              yellowBright
+              ;
             aquaSoft = sharedPalette.aquaNeutral;
             purpleTone = sharedPalette.purple;
             muted = sharedPalette.gray;
@@ -421,19 +418,21 @@ let
     {
       name = "cozybox-${mode}";
       colors = {
-        accent = c.accent;
-        border = c.border;
-        borderAccent = c.borderAccent;
-        borderMuted = c.borderMuted;
+        inherit (c)
+          accent
+          border
+          borderAccent
+          borderMuted
+          dim
+          muted
+          selectedBg
+          ;
         success = c.green;
         error = c.red;
         warning = c.yellow;
-        muted = c.muted;
-        dim = c.dim;
         text = "";
         thinkingText = c.dim;
 
-        selectedBg = c.selectedBg;
         userMessageBg = "";
         userMessageText = c.bright;
         customMessageBg = "";
@@ -495,12 +494,10 @@ let
         statusLineSubagents = c.purpleTone;
       };
       symbols.overrides = {
-        # Sharp corners everywhere omp draws a frame.
         "boxRound.topLeft" = "┌";
         "boxRound.topRight" = "┐";
         "boxRound.bottomLeft" = "└";
         "boxRound.bottomRight" = "┘";
-        # No pictographic icons: segment text carries the meaning.
         "icon.model" = "";
         "icon.folder" = "";
         "icon.file" = "";
@@ -515,7 +512,6 @@ let
         "icon.search" = "";
         "format.bracketLeft" = "[";
         "format.bracketRight" = "]";
-        # Plain thinking-level labels instead of pie glyphs.
         "thinking.minimal" = "min";
         "thinking.low" = "low";
         "thinking.medium" = "med";

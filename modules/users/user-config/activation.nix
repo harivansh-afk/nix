@@ -178,11 +178,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     ${writeXattr}
   fi
 
-  # --- omp: cozybox themes symlinked (omp only reads/hot-reloads them),
-  # config.yml seeded as a writable copy. omp rewrites ~/.omp/agent/config.yml
-  # at runtime (/settings, `omp config set`, startup migrations), so it
-  # cannot be a read-only nix-store symlink; reseed only when the managed
-  # source changes, same xattr pattern as codex above. ---
   mkSymlink "${ompThemes.dark}" "${homeDirectory}/.omp/agent/themes/cozybox-dark.json"
   mkSymlink "${ompThemes.light}" "${homeDirectory}/.omp/agent/themes/cozybox-light.json"
 
@@ -371,11 +366,15 @@ pkgs.writeShellScript "user-config-${name}" ''
     ${pkgs.findutils}/bin/find "${homeDirectory}/.gnupg" -type f -exec chmod 600 {} +
   fi
 
-  # --- omp (oh-my-pi) via the official installer. Deliberately NOT a nix
-  # package: omp releases several times a day and self-updates in place,
-  # which a read-only store path blocks. The binary lives writable in
-  # ~/.local/bin; the reproducible parts (themes, config seed) stay in nix
-  # above. On spark the downloaded binary runs via programs.nix-ld. ---
+  export PATH="${
+    lib.makeBinPath [
+      pkgs.bash
+      pkgs.coreutils
+      pkgs.curl
+      pkgs.gnugrep
+      pkgs.gnused
+    ]
+  }:$PATH"
   if [ ! -x "${homeDirectory}/.local/bin/omp" ]; then
     if ! "${pkgs.curl}/bin/curl" -fsSL https://omp.sh/install \
       | PI_INSTALL_DIR="${homeDirectory}/.local/bin" "${pkgs.bash}/bin/bash"; then

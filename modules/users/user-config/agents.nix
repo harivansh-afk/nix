@@ -93,7 +93,8 @@ in
       light = "cozybox-light";
     };
     startup.quiet = true;
-    symbolPreset = "ascii";
+    symbolPreset = "nerd";
+    display.shimmer = "disabled";
     statusLine = {
       preset = "custom";
       leftSegments = [

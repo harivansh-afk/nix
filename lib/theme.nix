@@ -373,10 +373,12 @@ let
   ompTheme =
     mode:
     let
+      # nonicons codepoints (matches nonicons.nvim glyphs used in neovim)
+      nonicon = hex: builtins.fromJSON ''"\u${hex}"'';
       c =
         if mode == "light" then
           {
-            accent = "#b57614";
+            accent = "#665c54";
             borderAccent = "#3c3836";
             bright = "#282828";
             border = "#928374";
@@ -386,12 +388,16 @@ let
             red = "#c5524a";
             yellow = "#b57614";
             yellowBright = "#d79921";
-            blue = "#4261a5";
             aqua = "#076678";
-            aquaSoft = sharedPalette.aquaNeutral;
             purpleTone = "#8f3f71";
             muted = "#665c54";
             dim = sharedPalette.gray;
+            # monotone ramp: faint -> bright (darker = stronger on light bg)
+            monoFaint = "#a89984";
+            mono = "#7c6f64";
+            monoMid = "#665c54";
+            monoHigh = "#504945";
+            monoBright = "#3c3836";
           }
         else
           {
@@ -403,16 +409,20 @@ let
             selectedBg = "#504945";
             inherit (sharedPalette)
               aqua
-              blue
               green
               red
               yellow
               yellowBright
               ;
-            aquaSoft = sharedPalette.aquaNeutral;
             purpleTone = sharedPalette.purple;
             muted = sharedPalette.gray;
             dim = "#7c6f64";
+            # monotone ramp: faint -> bright
+            monoFaint = "#665c54";
+            mono = sharedPalette.gray;
+            monoMid = "#a89984";
+            monoHigh = "#bdae93";
+            monoBright = "#d4be98";
           };
     in
     {
@@ -437,15 +447,15 @@ let
         userMessageText = c.bright;
         customMessageBg = "";
         customMessageText = "";
-        customMessageLabel = c.accent;
+        customMessageLabel = c.monoMid;
         toolPendingBg = "";
         toolSuccessBg = "";
         toolErrorBg = "";
-        toolTitle = c.yellow;
+        toolTitle = c.bright;
         toolOutput = c.muted;
 
-        mdHeading = c.yellow;
-        mdLink = c.blue;
+        mdHeading = c.monoBright;
+        mdLink = c.accent;
         mdLinkUrl = c.dim;
         mdCode = c.bright;
         mdCodeBlock = c.bright;
@@ -453,7 +463,7 @@ let
         mdQuote = c.muted;
         mdQuoteBorder = c.border;
         mdHr = c.borderMuted;
-        mdListBullet = c.yellow;
+        mdListBullet = c.mono;
 
         toolDiffAdded = c.green;
         toolDiffRemoved = c.red;
@@ -469,32 +479,46 @@ let
         syntaxOperator = c.aqua;
         syntaxPunctuation = c.muted;
 
-        thinkingOff = c.dim;
-        thinkingMinimal = c.muted;
-        thinkingLow = c.aquaSoft;
-        thinkingMedium = c.yellow;
-        thinkingHigh = c.yellowBright;
-        thinkingXhigh = c.red;
-        bashMode = c.aqua;
-        pythonMode = c.blue;
+        # monotone brightness ramp instead of per-level hues
+        thinkingOff = c.monoFaint;
+        thinkingMinimal = c.dim;
+        thinkingLow = c.mono;
+        thinkingMedium = c.monoMid;
+        thinkingHigh = c.monoHigh;
+        thinkingXhigh = c.monoBright;
+        bashMode = c.mono;
+        pythonMode = c.mono;
 
         statusLineBg = "";
         statusLineSep = c.border;
         statusLineModel = c.bright;
         statusLinePath = c.muted;
-        statusLineGitClean = c.green;
-        statusLineGitDirty = c.yellow;
+        statusLineGitClean = c.mono;
+        statusLineGitDirty = c.monoMid;
         statusLineContext = c.muted;
         statusLineSpend = c.dim;
-        statusLineStaged = c.green;
-        statusLineDirty = c.yellow;
-        statusLineUntracked = c.red;
+        statusLineStaged = c.mono;
+        statusLineDirty = c.monoMid;
+        statusLineUntracked = c.dim;
         statusLineOutput = "";
         statusLineCost = c.dim;
-        statusLineSubagents = c.purpleTone;
+        statusLineSubagents = c.monoMid;
       };
       symbols = {
-        preset = "ascii";
+        preset = "nerd";
+        # plain single-color braille spinner (no shimmer, no fancy frames)
+        spinnerFrames = [
+          "⠋"
+          "⠙"
+          "⠹"
+          "⠸"
+          "⠼"
+          "⠴"
+          "⠦"
+          "⠧"
+          "⠇"
+          "⠏"
+        ];
         overrides = {
           "boxRound.topLeft" = "┌";
           "boxRound.topRight" = "┐";
@@ -513,18 +537,18 @@ let
           "boxSharp.teeUp" = "┴";
           "boxSharp.teeRight" = "├";
           "boxSharp.teeLeft" = "┤";
-          "icon.model" = "";
-          "icon.folder" = "";
-          "icon.file" = "";
-          "icon.git" = "";
-          "icon.branch" = "";
-          "icon.context" = "";
-          "icon.tokens" = "";
+          "icon.model" = nonicon "f281"; # ai-model
+          "icon.folder" = nonicon "f14b"; # file-directory
+          "icon.file" = nonicon "f146"; # file
+          "icon.git" = nonicon "f157"; # git-branch
+          "icon.branch" = nonicon "f157"; # git-branch
+          "icon.context" = nonicon "f188"; # meter
+          "icon.tokens" = nonicon "f245"; # stack
           "icon.cost" = "$";
-          "icon.auto" = "";
-          "icon.time" = "";
-          "icon.worktree" = "";
-          "icon.search" = "";
+          "icon.auto" = nonicon "f2b0"; # sparkle
+          "icon.time" = nonicon "f125"; # clock
+          "icon.worktree" = nonicon "f14d"; # file-submodule
+          "icon.search" = nonicon "f1bd"; # search
           "format.bracketLeft" = "[";
           "format.bracketRight" = "]";
           "thinking.minimal" = "min";
@@ -532,42 +556,42 @@ let
           "thinking.medium" = "med";
           "thinking.high" = "high";
           "thinking.xhigh" = "xhigh";
-          "lang.archive" = "";
-          "lang.binary" = "";
-          "lang.c" = "";
-          "lang.conf" = "";
-          "lang.cpp" = "";
-          "lang.csharp" = "";
-          "lang.css" = "";
-          "lang.csv" = "";
-          "lang.default" = "";
-          "lang.docker" = "";
-          "lang.env" = "";
-          "lang.go" = "";
-          "lang.html" = "";
-          "lang.image" = "";
-          "lang.ini" = "";
-          "lang.java" = "";
-          "lang.javascript" = "";
-          "lang.json" = "";
-          "lang.kotlin" = "";
-          "lang.log" = "";
-          "lang.lua" = "";
-          "lang.markdown" = "";
-          "lang.pdf" = "";
-          "lang.php" = "";
-          "lang.python" = "";
-          "lang.ruby" = "";
-          "lang.rust" = "";
-          "lang.shell" = "";
-          "lang.sql" = "";
-          "lang.swift" = "";
-          "lang.text" = "";
-          "lang.toml" = "";
-          "lang.tsv" = "";
-          "lang.typescript" = "";
-          "lang.xml" = "";
-          "lang.yaml" = "";
+          "lang.archive" = nonicon "f14f"; # file-zip
+          "lang.binary" = nonicon "f148"; # file-binary
+          "lang.c" = nonicon "f116";
+          "lang.conf" = nonicon "f155"; # gear
+          "lang.cpp" = nonicon "f117"; # c-plusplus
+          "lang.csharp" = nonicon "f118"; # c-sharp
+          "lang.css" = nonicon "f12f";
+          "lang.csv" = nonicon "f212"; # table
+          "lang.default" = nonicon "f146"; # file
+          "lang.docker" = nonicon "f13e";
+          "lang.env" = nonicon "f175"; # key
+          "lang.go" = nonicon "f15d";
+          "lang.html" = nonicon "f167";
+          "lang.image" = nonicon "f169";
+          "lang.ini" = nonicon "f155"; # gear
+          "lang.java" = nonicon "f171";
+          "lang.javascript" = nonicon "f172";
+          "lang.json" = nonicon "f173";
+          "lang.kotlin" = nonicon "f176";
+          "lang.log" = nonicon "f23f";
+          "lang.lua" = nonicon "f182";
+          "lang.markdown" = nonicon "f185";
+          "lang.pdf" = nonicon "f10f"; # book
+          "lang.php" = nonicon "f19f";
+          "lang.python" = nonicon "f1a7";
+          "lang.ruby" = nonicon "f1b8";
+          "lang.rust" = nonicon "f1b9";
+          "lang.shell" = nonicon "f1d7"; # terminal
+          "lang.sql" = nonicon "f132"; # database
+          "lang.swift" = nonicon "f1d2";
+          "lang.text" = nonicon "f146"; # file
+          "lang.toml" = nonicon "f1dc";
+          "lang.tsv" = nonicon "f212"; # table
+          "lang.typescript" = nonicon "f1e3";
+          "lang.xml" = nonicon "f126"; # code
+          "lang.yaml" = nonicon "f1f9";
         };
       };
     };

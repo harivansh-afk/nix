@@ -28,6 +28,10 @@
   codexConfigSource,
   readXattr,
   writeXattr,
+  ompThemes,
+  ompConfigSource,
+  ompReadXattr,
+  ompWriteXattr,
   teaLoginYaml,
   heliumExtJson,
   heliumExtensions,
@@ -71,6 +75,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${configHome}/tea" \
     "${homeDirectory}/.claude/hooks" \
     "${homeDirectory}/.codex" \
+    "${homeDirectory}/.omp/agent/themes" \
     "${homeDirectory}/.local/bin" \
     "${homeDirectory}/.ssh/sockets" \
     "${stateHome}" \
@@ -171,6 +176,33 @@ pkgs.writeShellScript "user-config-${name}" ''
     chmod u+w "$tmp"
     mv "$tmp" "$target"
     ${writeXattr}
+  fi
+
+  # --- omp: cozybox themes symlinked (omp only reads/hot-reloads them),
+  # config.yml seeded as a writable copy. omp rewrites ~/.omp/agent/config.yml
+  # at runtime (/settings, `omp config set`, startup migrations), so it
+  # cannot be a read-only nix-store symlink; reseed only when the managed
+  # source changes, same xattr pattern as codex above. ---
+  mkSymlink "${ompThemes.dark}" "${homeDirectory}/.omp/agent/themes/cozybox-dark.json"
+  mkSymlink "${ompThemes.light}" "${homeDirectory}/.omp/agent/themes/cozybox-light.json"
+
+  target="${homeDirectory}/.omp/agent/config.yml"
+  source="${ompConfigSource}"
+  current=""
+
+  if [ -e "$target" ] && [ ! -L "$target" ]; then
+    if xattr_value="$(${ompReadXattr})"; then
+      current="$xattr_value"
+    fi
+  fi
+
+  if [ ! -e "$target" ] || [ -L "$target" ] || [ "$current" != "$source" ]; then
+    tmp="$target.seed-tmp"
+    rm -f "$target" "$tmp"
+    cp "$source" "$tmp"
+    chmod u+w "$tmp"
+    mv "$tmp" "$target"
+    ${ompWriteXattr}
   fi
 
   # --- devin config: managed copy with backup of local divergence ---
@@ -337,6 +369,18 @@ pkgs.writeShellScript "user-config-${name}" ''
   if [ -d "${homeDirectory}/.gnupg" ]; then
     ${pkgs.findutils}/bin/find "${homeDirectory}/.gnupg" -type d -exec chmod 700 {} +
     ${pkgs.findutils}/bin/find "${homeDirectory}/.gnupg" -type f -exec chmod 600 {} +
+  fi
+
+  # --- omp (oh-my-pi) via the official installer. Deliberately NOT a nix
+  # package: omp releases several times a day and self-updates in place,
+  # which a read-only store path blocks. The binary lives writable in
+  # ~/.local/bin; the reproducible parts (themes, config seed) stay in nix
+  # above. On spark the downloaded binary runs via programs.nix-ld. ---
+  if [ ! -x "${homeDirectory}/.local/bin/omp" ]; then
+    if ! "${pkgs.curl}/bin/curl" -fsSL https://omp.sh/install \
+      | PI_INSTALL_DIR="${homeDirectory}/.local/bin" "${pkgs.bash}/bin/bash"; then
+      echo "warning: omp install failed; will retry on next switch" >&2
+    fi
   fi
 
   # --- cursor-agent via the official installer ---

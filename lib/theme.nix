@@ -370,6 +370,160 @@ let
 
   batTheme = mode: if mode == "light" then "gruvbox-light" else "gruvbox-dark";
 
+  # omp (oh-my-pi) theme: "sharp minimal" cozybox. No painted backgrounds
+  # anywhere (every *Bg token is "" = terminal default), square corners via
+  # boxRound overrides, cream/yellow accents instead of the default blue.
+  # Returns the attrset for the omp theme JSON schema; all `colors` tokens
+  # are mandatory (docs/theme.md upstream).
+  ompTheme =
+    mode:
+    let
+      c =
+        if mode == "light" then
+          {
+            accent = "#b57614";
+            borderAccent = "#3c3836";
+            bright = "#282828";
+            border = "#928374";
+            borderMuted = "#c3c7c9";
+            selectedBg = "#c3c7c9";
+            green = "#427b58";
+            red = "#c5524a";
+            yellow = "#b57614";
+            yellowBright = "#d79921";
+            blue = "#4261a5";
+            aqua = "#076678";
+            aquaSoft = sharedPalette.aquaNeutral;
+            purpleTone = "#8f3f71";
+            muted = "#665c54";
+            dim = sharedPalette.gray;
+          }
+        else
+          {
+            accent = "#d4be98";
+            borderAccent = "#d4be98";
+            bright = "#ebdbb2";
+            border = "#504945";
+            borderMuted = "#3c3836";
+            selectedBg = "#504945";
+            green = sharedPalette.green;
+            red = sharedPalette.red;
+            yellow = sharedPalette.yellow;
+            yellowBright = sharedPalette.yellowBright;
+            blue = sharedPalette.blue;
+            aqua = sharedPalette.aqua;
+            aquaSoft = sharedPalette.aquaNeutral;
+            purpleTone = sharedPalette.purple;
+            muted = sharedPalette.gray;
+            dim = "#7c6f64";
+          };
+    in
+    {
+      name = "cozybox-${mode}";
+      colors = {
+        accent = c.accent;
+        border = c.border;
+        borderAccent = c.borderAccent;
+        borderMuted = c.borderMuted;
+        success = c.green;
+        error = c.red;
+        warning = c.yellow;
+        muted = c.muted;
+        dim = c.dim;
+        text = "";
+        thinkingText = c.dim;
+
+        selectedBg = c.selectedBg;
+        userMessageBg = "";
+        userMessageText = c.bright;
+        customMessageBg = "";
+        customMessageText = "";
+        customMessageLabel = c.accent;
+        toolPendingBg = "";
+        toolSuccessBg = "";
+        toolErrorBg = "";
+        toolTitle = c.yellow;
+        toolOutput = c.muted;
+
+        mdHeading = c.yellow;
+        mdLink = c.blue;
+        mdLinkUrl = c.dim;
+        mdCode = c.bright;
+        mdCodeBlock = c.bright;
+        mdCodeBlockBorder = c.borderMuted;
+        mdQuote = c.muted;
+        mdQuoteBorder = c.border;
+        mdHr = c.borderMuted;
+        mdListBullet = c.yellow;
+
+        toolDiffAdded = c.green;
+        toolDiffRemoved = c.red;
+        toolDiffContext = c.muted;
+
+        syntaxComment = c.dim;
+        syntaxKeyword = c.red;
+        syntaxFunction = c.yellowBright;
+        syntaxVariable = "";
+        syntaxString = c.green;
+        syntaxNumber = c.purpleTone;
+        syntaxType = c.yellow;
+        syntaxOperator = c.aqua;
+        syntaxPunctuation = c.muted;
+
+        thinkingOff = c.dim;
+        thinkingMinimal = c.muted;
+        thinkingLow = c.aquaSoft;
+        thinkingMedium = c.yellow;
+        thinkingHigh = c.yellowBright;
+        thinkingXhigh = c.red;
+        bashMode = c.aqua;
+        pythonMode = c.blue;
+
+        statusLineBg = "";
+        statusLineSep = c.border;
+        statusLineModel = c.bright;
+        statusLinePath = c.muted;
+        statusLineGitClean = c.green;
+        statusLineGitDirty = c.yellow;
+        statusLineContext = c.muted;
+        statusLineSpend = c.dim;
+        statusLineStaged = c.green;
+        statusLineDirty = c.yellow;
+        statusLineUntracked = c.red;
+        statusLineOutput = "";
+        statusLineCost = c.dim;
+        statusLineSubagents = c.purpleTone;
+      };
+      symbols.overrides = {
+        # Sharp corners everywhere omp draws a frame.
+        "boxRound.topLeft" = "┌";
+        "boxRound.topRight" = "┐";
+        "boxRound.bottomLeft" = "└";
+        "boxRound.bottomRight" = "┘";
+        # No pictographic icons: segment text carries the meaning.
+        "icon.model" = "";
+        "icon.folder" = "";
+        "icon.file" = "";
+        "icon.git" = "";
+        "icon.branch" = "";
+        "icon.context" = "";
+        "icon.tokens" = "";
+        "icon.cost" = "$";
+        "icon.auto" = "";
+        "icon.time" = "";
+        "icon.worktree" = "";
+        "icon.search" = "";
+        "format.bracketLeft" = "[";
+        "format.bracketRight" = "]";
+        # Plain thinking-level labels instead of pie glyphs.
+        "thinking.minimal" = "min";
+        "thinking.low" = "low";
+        "thinking.medium" = "med";
+        "thinking.high" = "high";
+        "thinking.xhigh" = "xhigh";
+      };
+    };
+
   renderZshHighlights =
     mode:
     let
@@ -433,6 +587,7 @@ in
     batTheme
     defaultMode
     deltaTheme
+    ompTheme
     paths
     renderFzf
     renderGitThemeInclude

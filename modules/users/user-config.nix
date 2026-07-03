@@ -78,6 +78,10 @@ let
         codexConfigSource
         readXattr
         writeXattr
+        ompThemes
+        ompConfigSource
+        ompReadXattr
+        ompWriteXattr
         ;
       inherit (apps)
         btopConf

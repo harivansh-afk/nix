@@ -1,20 +1,40 @@
-# AI agent configs: claude settings (rendered) and the codex seed metadata.
+# AI agent configs: claude settings (rendered), the codex seed metadata,
+# and omp (oh-my-pi) themes + seed config.
 #
 # claude settings interpolate the home directory into hook paths. The codex
-# config.toml cannot be a read-only store symlink (codex rewrites it at
-# runtime), so it is seeded as a writable copy and reseeded only when the
-# managed source changes, tracked via an extended attribute.
+# config.toml and omp config.yml cannot be read-only store symlinks (both
+# tools rewrite them at runtime), so each is seeded as a writable copy and
+# reseeded only when the managed source changes, tracked via an extended
+# attribute.
 {
   pkgs,
   homeDirectory,
   dotsRoot,
   isDarwin,
+  theme,
   ...
 }:
 let
   jsonFormat = pkgs.formats.json { };
+  yamlFormat = pkgs.formats.yaml { };
   hookCommand = hook: "${homeDirectory}/.claude/hooks/${hook}";
-  xattrName = "user.hari.codex-seed-source";
+
+  mkReadXattr =
+    xattrName:
+    if isDarwin then
+      ''/usr/bin/xattr -p "${xattrName}" "$target" 2>/dev/null''
+    else
+      ''${pkgs.attr}/bin/getfattr --only-values -n "${xattrName}" "$target" 2>/dev/null'';
+
+  mkWriteXattr =
+    xattrName:
+    if isDarwin then
+      ''/usr/bin/xattr -w "${xattrName}" "$source" "$target"''
+    else
+      ''${pkgs.attr}/bin/setfattr -n "${xattrName}" -v "$source" "$target"'';
+
+  codexXattr = "user.hari.codex-seed-source";
+  ompXattr = "user.hari.omp-seed-source";
 in
 {
   claudeSettings = jsonFormat.generate "claude-settings.json" {
@@ -70,15 +90,56 @@ in
 
   codexConfigSource = "${dotsRoot}/codex/config.toml";
 
-  readXattr =
-    if isDarwin then
-      ''/usr/bin/xattr -p "${xattrName}" "$target" 2>/dev/null''
-    else
-      ''${pkgs.attr}/bin/getfattr --only-values -n "${xattrName}" "$target" 2>/dev/null'';
+  readXattr = mkReadXattr codexXattr;
+  writeXattr = mkWriteXattr codexXattr;
 
-  writeXattr =
-    if isDarwin then
-      ''/usr/bin/xattr -w "${xattrName}" "$source" "$target"''
-    else
-      ''${pkgs.attr}/bin/setfattr -n "${xattrName}" -v "$source" "$target"'';
+  # --- omp (oh-my-pi) ---
+  # Themes are pure reads for omp (watched + hot-reloaded), so store
+  # symlinks are fine. config.yml is rewritten at runtime (/settings,
+  # `omp config set`, startup migrations), so it gets the codex seed
+  # treatment with its own xattr.
+  ompThemes = {
+    dark = jsonFormat.generate "omp-cozybox-dark.json" (theme.ompTheme "dark");
+    light = jsonFormat.generate "omp-cozybox-light.json" (theme.ompTheme "light");
+  };
+
+  ompConfigSource = yamlFormat.generate "omp-config.yml" {
+    theme = {
+      dark = "cozybox-dark";
+      light = "cozybox-light";
+    };
+    # No splash / startup chrome: the pi logo is not rebrandable in this
+    # fork, only removable.
+    startup.quiet = true;
+    # Custom status line: the built-in `minimal` preset drops the model
+    # segment entirely, so compose the segments explicitly.
+    statusLine = {
+      preset = "custom";
+      leftSegments = [
+        "model"
+        "path"
+        "git"
+      ];
+      rightSegments = [ "context_pct" ];
+      segmentOptions = {
+        model.showThinkingLevel = true;
+        path = {
+          abbreviate = true;
+          maxLength = 40;
+          stripWorkPrefix = true;
+        };
+        git = {
+          showBranch = true;
+          showStaged = true;
+          showUnstaged = true;
+          showUntracked = false;
+        };
+      };
+      separator = "pipe";
+      transparent = true;
+    };
+  };
+
+  ompReadXattr = mkReadXattr ompXattr;
+  ompWriteXattr = mkWriteXattr ompXattr;
 }

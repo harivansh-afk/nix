@@ -27,6 +27,21 @@ let
 
   codexXattr = "user.hari.codex-seed-source";
   ompXattr = "user.hari.omp-seed-source";
+
+  # Named model-role bundles for the /mode command
+  # (dots/omp/extensions/modes.ts). Each bundle REPLACES modelRoles wholesale
+  # when applied. Role syntax: provider/model[:thinking][,fallback...].
+  # `default` drives the main session model; `task` is what subagents resolve
+  # at spawn time (the task agent's model is `pi/task`).
+  ompModes = {
+    default = {
+      description = "fable-5 high main, gpt-5.5 low subagents";
+      roles = {
+        default = "anthropic/claude-fable-5:high";
+        task = "openai-codex/gpt-5.5:low";
+      };
+    };
+  };
 in
 {
   claudeSettings = jsonFormat.generate "claude-settings.json" {
@@ -87,6 +102,8 @@ in
     light = jsonFormat.generate "omp-cozybox-light.json" (theme.ompTheme "light");
   };
 
+  ompModesSource = jsonFormat.generate "omp-modes.json" ompModes;
+
   ompConfigSource = yamlFormat.generate "omp-config.yml" {
     theme = {
       dark = "cozybox-dark";
@@ -103,6 +120,8 @@ in
     };
     symbolPreset = "nerd";
     display.shimmer = "disabled";
+    # Seed matches the `default` mode so a config reseed lands on it.
+    modelRoles = ompModes.default.roles;
     statusLine = {
       preset = "custom";
       leftSegments = [

@@ -30,6 +30,7 @@
   writeXattr,
   ompThemes,
   ompConfigSource,
+  ompModesSource,
   ompReadXattr,
   ompWriteXattr,
   teaLoginYaml,
@@ -76,6 +77,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${homeDirectory}/.claude/hooks" \
     "${homeDirectory}/.codex" \
     "${homeDirectory}/.omp/agent/themes" \
+    "${homeDirectory}/.omp/agent/extensions" \
     "${homeDirectory}/.local/bin" \
     "${homeDirectory}/.ssh/sockets" \
     "${stateHome}" \
@@ -180,6 +182,8 @@ pkgs.writeShellScript "user-config-${name}" ''
 
   mkSymlink "${ompThemes.dark}" "${homeDirectory}/.omp/agent/themes/cozybox-dark.json"
   mkSymlink "${ompThemes.light}" "${homeDirectory}/.omp/agent/themes/cozybox-light.json"
+  mkSymlink "${ompModesSource}" "${homeDirectory}/.omp/agent/modes.json"
+  mkSymlink "${dotsRoot}/omp/extensions/modes.ts" "${homeDirectory}/.omp/agent/extensions/modes.ts"
 
   target="${homeDirectory}/.omp/agent/config.yml"
   source="${ompConfigSource}"

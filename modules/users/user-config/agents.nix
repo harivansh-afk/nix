@@ -93,6 +93,7 @@ in
       light = "cozybox-light";
     };
     startup.quiet = true;
+    symbolPreset = "ascii";
     statusLine = {
       preset = "custom";
       leftSegments = [

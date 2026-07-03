@@ -44,7 +44,8 @@ To add a Barrett-owned secret: drop the file at `secrets/spark/barrett-<name>`; 
 - No comments in `.nix` files. The code is the documentation. Agent guidance lives here.
 - Use `just switch` for macbook rebuilds, `just switch-spark` for spark rebuilds.
 - `just fmt` runs `nix fmt` (nixfmt-tree).
-- For GitHub PR bodies with multiple lines, use `gh pr create/edit --body-file -` or a real temporary body file. Do not pass escaped `\\n` text through `--body`; it renders as literal backslash-n text. After creating or editing a PR, verify the rendered body with `gh pr view --json body` or the PR page before calling it done.
+- Pull requests for this repo go to Forgejo (`origin`, git.harivan.sh), never GitHub. The `github` remote is a push-mirror target only; its redirect-pr workflow auto-closes PRs opened there. Create PRs with `tea pr create --login harivan --repo harivansh-afk/nix --base main --head <branch>`.
+- For multiline PR bodies, pass a real file's contents to `tea pr create --description` (or `gh --body-file -` when working on actual GitHub repos). Do not pass escaped `\\n` text; it renders as literal backslash-n. After creating or editing a PR, verify the rendered body before calling it done.
 - Install spark from scratch with `just spark-install user@host`.
 - The `tmp/` directory is gitignored local scratch space. Nothing there is tracked or load-bearing.
 - Berkeley Mono is installed out-of-band. The flake only provides nerd-fonts symbol glyphs.

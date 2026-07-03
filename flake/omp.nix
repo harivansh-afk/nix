@@ -10,8 +10,7 @@
 # Runtime notes: the binary extracts its native addon to ~/.omp/natives/<v>/ on
 # first run and self-update (`omp update`) fails harmlessly against the
 # read-only store — update by bumping this file instead.
-{ ... }:
-{
+_: {
   perSystem =
     {
       lib,

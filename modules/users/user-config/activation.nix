@@ -54,6 +54,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${configHome}/environment.d" \
     "${configHome}/git" \
     "${configHome}/fzf/themes" \
+    "${configHome}/ghostty/shaders" \
     "${configHome}/ghostty/themes" \
     "${configHome}/tmux/theme" \
     "${configHome}/tmux/plugins" \
@@ -123,6 +124,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${dotsRoot}/npm/npmrc" "${configHome}/npm/npmrc"
   mkSymlink "${dotsRoot}/python/pythonrc" "${configHome}/python/pythonrc"
   mkSymlink "${dotsRoot}/ghostty/config" "${configHome}/ghostty/config"
+  mkSymlink "${dotsRoot}/ghostty/shaders" "${configHome}/ghostty/shaders"
   mkSymlink "${ghosttyThemes.dark}" "${configHome}/ghostty/themes/cozybox-dark"
   mkSymlink "${ghosttyThemes.light}" "${configHome}/ghostty/themes/cozybox-light"
   mkSymlink "${fzfThemes.dark}" "${configHome}/fzf/themes/cozybox-dark"
@@ -295,6 +297,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     ghostty_appsupport="${homeDirectory}/Library/Application Support/com.mitchellh.ghostty"
     mkdir -p "$ghostty_appsupport"
     mkSymlink "${dotsRoot}/ghostty/config" "$ghostty_appsupport/config"
+    mkSymlink "${dotsRoot}/ghostty/shaders" "$ghostty_appsupport/shaders"
 
     lg_darwin="${homeDirectory}/Library/Application Support/lazygit"
     mkdir -p "$lg_darwin"

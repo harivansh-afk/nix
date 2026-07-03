@@ -13,6 +13,8 @@ mouse-scroll-multiplier = 1
 keybind = global:alt+space=toggle_visibility
 keybind = shift+enter=text:\x0a
 mouse-hide-while-typing = true
+custom-shader = shaders/cursor-trail.glsl
+custom-shader-animation = true
 macos-titlebar-style = hidden
 macos-option-as-alt = true
 confirm-close-surface = true

@@ -1,6 +1,3 @@
-# Ghostty config, linked at ~/.config/ghostty/config (and the macOS
-# Application Support location). Live-edited. The macos-* keys are ignored
-# on other platforms; ghostty only ships on the macbook anyway.
 theme = "cozybox-current"
 font-family = Berkeley Mono
 font-codepoint-map = U+f101-U+f25c=nonicons

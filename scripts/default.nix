@@ -100,6 +100,22 @@ let
       );
     };
 
+  remotes = import ../lib/remotes.nix;
+
+  remotePackages = lib.mapAttrs (
+    name: remote:
+    mkScript {
+      inherit name;
+      file = ./bin/mux.sh;
+      runtimeInputs = [ pkgs.mosh ];
+      replacements = {
+        "@NAME@" = name;
+        "@HOST@" = remote.host;
+        "@SESSION@" = remote.session;
+      };
+    }
+  ) remotes;
+
   commonPackages = {
     ga = mkScript {
       name = "ga";
@@ -172,7 +188,8 @@ let
         "@THEME_ASSETS_TEXT@" = themeAssetsText;
       };
     };
-  };
+  }
+  // remotePackages;
 
   darwinPackages = { };
 

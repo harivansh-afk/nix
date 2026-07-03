@@ -3,7 +3,7 @@ vec4 TRAIL_COLOR = iCurrentCursorColor; // can change to eg: vec4(0.2, 0.6, 1.0,
 
 // === MASTER ANIMATION PARAMETERS ===
 const float SMEAR_ENABLED = 1.0;        // 1.0 = enable smear trail, 0.0 = disable
-const float ANIMATION_LENGTH = 0.12;    // MASTER: total animation duration per leg
+const float ANIMATION_LENGTH = 0.1;    // MASTER: total animation duration per leg
 const float TRAIL_SIZE = 1.0;           // 0.0 = no trail, 1.0 = maximum trail length
 
 // === EDGE LAG PARAMETERS ===
@@ -22,7 +22,7 @@ const float TRAIL_EDGE_ALPHA = 0.0;     // Alpha at trailing edge (lagging end) 
 
 // === LEG COMPLETION (TOUR QUEUING SIMULATION) ===
 // Maximize persistence so multiple legs remain visible (creates "tour" illusion)
-const float SEGMENT_FADE_HOLD = 0.95;   // Start fade at 95% (slightly earlier for smoother transition)
+const float SEGMENT_FADE_HOLD = 0.85;   // Start fade at 95% (slightly earlier for smoother transition)
 const float LEG_PERSISTENCE = 0;     // Extra seconds leg remains visible after completion
 
 // === MOVEMENT VALIDATION ===

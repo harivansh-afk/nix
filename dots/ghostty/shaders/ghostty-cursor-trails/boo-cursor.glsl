@@ -3,7 +3,7 @@ vec4 TRAIL_COLOR = iCurrentCursorColor; // can change to eg: vec4(0.2, 0.6, 1.0,
 
 // === MASTER ANIMATION PARAMETERS ===
 const float SMEAR_ENABLED = 1.0;        // 1.0 = enable smear trail, 0.0 = disable
-const float ANIMATION_LENGTH = 0.16;    // MASTER: total animation duration per leg
+const float ANIMATION_LENGTH = 0.12;    // MASTER: total animation duration per leg
 const float TRAIL_SIZE = 1.0;           // 0.0 = no trail, 1.0 = maximum trail length
 
 // === EDGE LAG PARAMETERS ===
@@ -23,7 +23,7 @@ const float TRAIL_EDGE_ALPHA = 0.0;     // Alpha at trailing edge (lagging end) 
 // === LEG COMPLETION (TOUR QUEUING SIMULATION) ===
 // Maximize persistence so multiple legs remain visible (creates "tour" illusion)
 const float SEGMENT_FADE_HOLD = 0.95;   // Start fade at 95% (slightly earlier for smoother transition)
-const float LEG_PERSISTENCE = 0.24;     // Extra seconds leg remains visible after completion
+const float LEG_PERSISTENCE = 0;     // Extra seconds leg remains visible after completion
 
 // === MOVEMENT VALIDATION ===
 // REVERTED: Allow all legitimate movements; scroll glitch is engine-level limitation
@@ -32,7 +32,7 @@ const float MIN_MOVE_DISTANCE = 0.0;          // Minimum movement to trigger sme
 
 // === RENDERING PARAMETERS ===
 const float BLUR = 2.0;
-const float DURATION = 0.16;
+const float DURATION = 0.1;
 const float THRESHOLD_MIN_DISTANCE = 0.0;
 
 // Original warp trail parameters (fallback)

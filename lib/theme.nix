@@ -537,15 +537,17 @@ let
           "boxSharp.teeUp" = "┴";
           "boxSharp.teeRight" = "├";
           "boxSharp.teeLeft" = "┤";
-          "icon.model" = nonicon "f281"; # ai-model
+          # No icon next to the model name (renders as FA reddit-alien: f281 is
+          # outside the ghostty nonicons map U+f101-U+f25c).
+          "icon.model" = "";
           "icon.folder" = nonicon "f14b"; # file-directory
           "icon.file" = nonicon "f146"; # file
           "icon.git" = nonicon "f157"; # git-branch
           "icon.branch" = nonicon "f157"; # git-branch
-          "icon.context" = nonicon "f188"; # meter
+          "icon.context" = ""; # no glyph next to context % (f188 rendered as junk)
           "icon.tokens" = nonicon "f245"; # stack
           "icon.cost" = "$";
-          "icon.auto" = nonicon "f2b0"; # sparkle
+          "icon.auto" = ""; # f2b0 is outside the nonicons map; rendered as junk
           "icon.time" = nonicon "f125"; # clock
           "icon.worktree" = nonicon "f14d"; # file-submodule
           "icon.search" = nonicon "f1bd"; # search
@@ -556,42 +558,46 @@ let
           "thinking.medium" = "med";
           "thinking.high" = "high";
           "thinking.xhigh" = "xhigh";
-          "lang.archive" = nonicon "f14f"; # file-zip
-          "lang.binary" = nonicon "f148"; # file-binary
-          "lang.c" = nonicon "f116";
-          "lang.conf" = nonicon "f155"; # gear
-          "lang.cpp" = nonicon "f117"; # c-plusplus
-          "lang.csharp" = nonicon "f118"; # c-sharp
-          "lang.css" = nonicon "f12f";
-          "lang.csv" = nonicon "f212"; # table
-          "lang.default" = nonicon "f146"; # file
-          "lang.docker" = nonicon "f13e";
-          "lang.env" = nonicon "f175"; # key
-          "lang.go" = nonicon "f15d";
-          "lang.html" = nonicon "f167";
-          "lang.image" = nonicon "f169";
-          "lang.ini" = nonicon "f155"; # gear
-          "lang.java" = nonicon "f171";
-          "lang.javascript" = nonicon "f172";
-          "lang.json" = nonicon "f173";
-          "lang.kotlin" = nonicon "f176";
-          "lang.log" = nonicon "f23f";
-          "lang.lua" = nonicon "f182";
-          "lang.markdown" = nonicon "f185";
-          "lang.pdf" = nonicon "f10f"; # book
-          "lang.php" = nonicon "f19f";
-          "lang.python" = nonicon "f1a7";
-          "lang.ruby" = nonicon "f1b8";
-          "lang.rust" = nonicon "f1b9";
-          "lang.shell" = nonicon "f1d7"; # terminal
-          "lang.sql" = nonicon "f132"; # database
-          "lang.swift" = nonicon "f1d2";
-          "lang.text" = nonicon "f146"; # file
-          "lang.toml" = nonicon "f1dc";
-          "lang.tsv" = nonicon "f212"; # table
-          "lang.typescript" = nonicon "f1e3";
-          "lang.xml" = nonicon "f126"; # code
-          "lang.yaml" = nonicon "f1f9";
+          # File-type icons in tool-call headers: blanked. The guessed nonicons
+          # codepoints rendered as random glyphs (github/bitbucket/car...), and
+          # deleting the overrides would fall back to nerd-preset codepoints that
+          # the ghostty nonicons map (U+f101-U+f25c) intercepts just as randomly.
+          "lang.archive" = "";
+          "lang.binary" = "";
+          "lang.c" = "";
+          "lang.conf" = "";
+          "lang.cpp" = "";
+          "lang.csharp" = "";
+          "lang.css" = "";
+          "lang.csv" = "";
+          "lang.default" = "";
+          "lang.docker" = "";
+          "lang.env" = "";
+          "lang.go" = "";
+          "lang.html" = "";
+          "lang.image" = "";
+          "lang.ini" = "";
+          "lang.java" = "";
+          "lang.javascript" = "";
+          "lang.json" = "";
+          "lang.kotlin" = "";
+          "lang.log" = "";
+          "lang.lua" = "";
+          "lang.markdown" = "";
+          "lang.pdf" = "";
+          "lang.php" = "";
+          "lang.python" = "";
+          "lang.ruby" = "";
+          "lang.rust" = "";
+          "lang.shell" = "";
+          "lang.sql" = "";
+          "lang.swift" = "";
+          "lang.text" = "";
+          "lang.toml" = "";
+          "lang.tsv" = "";
+          "lang.typescript" = "";
+          "lang.xml" = "";
+          "lang.yaml" = "";
         };
       };
     };

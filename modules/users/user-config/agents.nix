@@ -92,7 +92,15 @@ in
       dark = "cozybox-dark";
       light = "cozybox-light";
     };
-    startup.quiet = true;
+    # The activation script reseeds config.yml whenever this generated file
+    # changes; without a pinned setupVersion each reseed resets it to 0 and the
+    # onboarding wizard re-fires on next launch. Pin it and disable the wizard
+    # outright so omp updates (which bump CURRENT_SETUP_VERSION) stay quiet too.
+    setupVersion = 1;
+    startup = {
+      quiet = true;
+      setupWizard = false;
+    };
     symbolPreset = "nerd";
     display.shimmer = "disabled";
     statusLine = {

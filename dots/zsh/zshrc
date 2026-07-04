@@ -2,17 +2,6 @@
 # that sources nix-store plugin paths and then this file, so changes here
 # apply on the next shell without a rebuild.
 
-# --- auto-attach tmux on remote login ---
-# Any interactive SSH/mosh session (spark, etc.) lands in the shared `main`
-# tmux session, matching the `spark`/`hari1` connector commands. Guards: only
-# interactive shells, only over SSH (never a local terminal), never when
-# already inside tmux, and only when tmux exists. `mosh host -- tmux ...`
-# connectors run non-interactively so this is skipped for them. Detaching
-# (prefix-d) returns 0 and exits the login shell, closing the connection.
-if [[ -o interactive && -n "$SSH_CONNECTION" && -z "$TMUX" ]] && command -v tmux >/dev/null 2>&1; then
-  tmux new-session -A -s 1 && exit
-fi
-
 # --- history ---
 HISTSIZE=50000
 SAVEHIST=50000

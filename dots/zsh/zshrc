@@ -53,11 +53,33 @@ if [[ "$OSTYPE" == darwin* ]]; then
 fi
 
 # --- bare `ssh <host>` / `mosh <host>` auto-attach tmux `main` (client-side) ---
-# Fires only for a single host arg (no remote command, no flags): `ssh spark`,
-# `mosh hari-compute-1`. Anything else (`ssh host cmd`, flags, scp, git) is
-# untouched. Works on any remote with tmux, no server config needed.
-ssh()  { if [[ $# -eq 1 && "$1" != -* ]]; then command ssh -t "$1" 'tmux new-session -A -s main'; else command ssh "$@"; fi }
-mosh() { if [[ $# -eq 1 && "$1" != -* ]]; then command mosh "$1" -- tmux new-session -A -s main; else command mosh "$@"; fi }
+# When the only argument is a plain hostname (no remote command, no flags), run
+# tmux directly as the remote command: you land in the shared `main` session and
+# detaching closes the connection. Every other form (`ssh host cmd`, any flag,
+# scp, git) passes through to the real binary untouched. Works on any remote
+# with tmux; no server-side config required.
+
+# True only for a single bare-hostname argument, e.g. `spark` but not `-p` or
+# `host cmd`.
+_is_bare_host() {
+  [[ $# -eq 1 && "$1" != -* ]]
+}
+
+ssh() {
+  if _is_bare_host "$@"; then
+    command ssh -t "$1" 'tmux new-session -A -s main'
+  else
+    command ssh "$@"
+  fi
+}
+
+mosh() {
+  if _is_bare_host "$@"; then
+    command mosh "$1" -- tmux new-session -A -s main
+  else
+    command mosh "$@"
+  fi
+}
 
 # --- shell integrations (tools come from the system package set) ---
 eval "$(zoxide init zsh)"

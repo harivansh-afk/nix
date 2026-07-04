@@ -6,6 +6,7 @@
   lib,
   pkgs,
   theme,
+  hostname,
   ...
 }:
 let
@@ -34,15 +35,27 @@ let
     "[${sectionName}]\n" + lib.concatStringsSep "\n" lines;
 in
 {
-  gitCredentialsInc = pkgs.writeText "git-credentials.inc" ''
-    [credential "https://git.harivan.sh"]
-    	helper = !${forgejoCredentialHelper}
-    	username = harivansh-afk
+  gitCredentialsInc = pkgs.writeText "git-credentials.inc" (
+    ''
+      [credential "https://git.harivan.sh"]
+      	helper = !${forgejoCredentialHelper}
+      	username = harivansh-afk
 
-    [credential "https://git.ix.dev"]
-    	helper = !${ixForgejoCredentialHelper}
-    	username = harivansh-afk
-  '';
+      [credential "https://git.ix.dev"]
+      	helper = !${ixForgejoCredentialHelper}
+      	username = harivansh-afk
+    ''
+    # spark hosts git.harivan.sh itself: rewrite git ops to loopback SSH so
+    # they skip the WAN round-trip through the Cloudflare tunnel (latency +
+    # 100 MB request-body cap on pushes). forgejo serv still runs all hooks,
+    # so Actions and webhooks fire as usual.
+    + lib.optionalString (hostname == "spark") ''
+
+      [url "git@localhost:"]
+      	insteadOf = https://git.harivan.sh/
+      	insteadOf = git@git.harivan.sh:
+    ''
+  );
 
   gitDeltaThemesInc = pkgs.writeText "git-delta-themes.inc" ''
     ${renderGitSection ''delta "cozybox-dark"'' (theme.deltaTheme "dark")}

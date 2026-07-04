@@ -6,7 +6,7 @@ Host aurelius
   IdentityFile ~/.ssh/id_ed25519
 
 Host spark
-  HostName spark
+  HostName spark-ix
   HostKeyAlias spark
   User rathi
   IdentityFile ~/.ssh/id_ed25519

@@ -184,6 +184,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${ompThemes.light}" "${homeDirectory}/.omp/agent/themes/cozybox-light.json"
   mkSymlink "${ompModesSource}" "${homeDirectory}/.omp/agent/modes.json"
   mkSymlink "${dotsRoot}/omp/extensions/modes.ts" "${homeDirectory}/.omp/agent/extensions/modes.ts"
+  mkSymlink "${dotsRoot}/omp/extensions/claude-hooks.ts" "${homeDirectory}/.omp/agent/extensions/claude-hooks.ts"
 
   target="${homeDirectory}/.omp/agent/config.yml"
   source="${ompConfigSource}"

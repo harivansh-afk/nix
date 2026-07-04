@@ -3,9 +3,11 @@
 # CI-verifies exactly these artifacts; a from-source build under nix needs
 # network inside the sandbox at three stages (bun dependency install, the
 # cross-target bun runtime download, the napi addon pipeline), so the release
-# asset is the packaging boundary. Bumping: update `version`, then refresh each
+# asset is the packaging boundary. Bumping: update `version`, refresh each
 # hash from the per-asset sha256 digests on the release page
-# (`gh release view v<version> --repo can1357/oh-my-pi --json assets`).
+# (`gh release view v<version> --repo can1357/oh-my-pi --json assets`), then
+# run scripts/omp/claude-hooks-smoke.sh to catch extension-API drift in the
+# Claude hook bridge (dots/omp/extensions/claude-hooks.ts).
 #
 # Runtime notes: the binary extracts its native addon to ~/.omp/natives/<v>/ on
 # first run and self-update (`omp update`) fails harmlessly against the

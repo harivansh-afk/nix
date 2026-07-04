@@ -1,6 +1,7 @@
 # Main git config, linked at ~/.config/git/config. Live-edited.
 # Machine-generated companions in the same directory:
-#   credentials.inc - forgejo credential helpers (nix-store paths)
+#   credentials.inc - forgejo credential helpers; on spark also rewrites
+#                     git.harivan.sh to loopback SSH (skips the CF tunnel)
 #   theme.inc       - delta theme include flipped by the `theme` script
 
 [user]

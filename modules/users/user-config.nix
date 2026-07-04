@@ -80,6 +80,7 @@ let
         writeXattr
         ompThemes
         ompConfigSource
+        ompModesSource
         ompReadXattr
         ompWriteXattr
         ;

@@ -445,6 +445,33 @@ interface FireOptions {
 	extra?: Record<string, unknown>;
 }
 
+/**
+ * Main-vs-subagent detection. omp subagents re-bind every extension against a
+ * fresh module instance (the loader imports with a `?mtime` cache-buster), so
+ * module state cannot distinguish bindings. A globalThis slot survives across
+ * instances: the first session to claim it is the main session; a binding
+ * seeing a foreign id is a subagent. Claude Code parity: session-level hooks
+ * (SessionStart, UserPromptSubmit, Stop, SessionEnd, PreCompact) run only in
+ * the main session; PreToolUse/PostToolUse guard the whole agent tree.
+ */
+interface MainSlot {
+	id?: string;
+}
+
+const MAIN_SLOT_KEY = "__ompClaudeHooksMainSession";
+
+function mainSlot(): MainSlot {
+	// Unchecked cast: globalThis is the only store surviving the loader's
+	// per-binding module cache-busting; the key is namespaced and owned here.
+	const g = globalThis as unknown as Record<string, MainSlot | undefined>;
+	let slot = g[MAIN_SLOT_KEY];
+	if (slot === undefined) {
+		slot = {};
+		g[MAIN_SLOT_KEY] = slot;
+	}
+	return slot;
+}
+
 const CONTEXT_MESSAGE_TYPE = "claude-hook-context";
 const MAX_RECENT_RUNS = 50;
 
@@ -454,7 +481,22 @@ export default function claudeHooksBridge(pi: ExtensionAPI) {
 	let config: BridgeConfig | undefined;
 	let pendingContext: string[] = [];
 	let startupRun: Promise<void> = Promise.resolve();
+	let role: "main" | "subagent" | undefined;
 	const recentRuns: HookRunResult[] = [];
+
+	/** Claim or confirm the main slot; classify this binding once. */
+	const resolveRole = (ctx: BridgeCtx): "main" | "subagent" => {
+		if (role !== undefined) return role;
+		const slot = mainSlot();
+		const sid = ctx.sessionManager.getSessionId();
+		if (slot.id === undefined || slot.id === sid) {
+			slot.id = sid;
+			role = "main";
+		} else {
+			role = "subagent";
+		}
+		return role;
+	};
 
 	const getConfig = (cwd: string): BridgeConfig => {
 		if (!config || config.cwd !== cwd) config = loadConfig(cwd);
@@ -513,14 +555,18 @@ export default function claudeHooksBridge(pi: ExtensionAPI) {
 	}
 
 	pi.on("session_start", async (_event: unknown, ctx: BridgeCtx) => {
+		if (resolveRole(ctx) === "subagent") return; // Claude parity: no SessionStart in subagents
 		runSessionStart(ctx, "startup");
 	});
 
 	pi.on("session_switch", async (_event: unknown, ctx: BridgeCtx) => {
+		if (resolveRole(ctx) === "subagent") return;
+		mainSlot().id = ctx.sessionManager.getSessionId(); // follow the main session across /new
 		runSessionStart(ctx, "resume");
 	});
 
 	pi.on("before_agent_start", async (event: PromptEvent, ctx: BridgeCtx) => {
+		if (resolveRole(ctx) === "subagent") return undefined; // Claude parity: no UserPromptSubmit in subagents
 		await startupRun;
 		const submit = await fire("UserPromptSubmit", ctx, { extra: { prompt: event.prompt } });
 		if (submit.block) {
@@ -603,6 +649,7 @@ export default function claudeHooksBridge(pi: ExtensionAPI) {
 	});
 
 	pi.on("session_stop", async (_event: unknown, ctx: BridgeCtx) => {
+		if (resolveRole(ctx) === "subagent") return undefined; // Stop is a main-agent concept; SubagentStop maps via task tool_result
 		const outcome = await fire("Stop", ctx, { extra: { stop_hook_active: false } });
 		if (outcome.block) {
 			return { decision: "block" as const, reason: outcome.reason ?? "stop blocked by Claude hook" };
@@ -611,10 +658,12 @@ export default function claudeHooksBridge(pi: ExtensionAPI) {
 	});
 
 	pi.on("session_shutdown", async (_event: unknown, ctx: BridgeCtx) => {
+		if (resolveRole(ctx) === "subagent") return;
 		await fire("SessionEnd", ctx, { extra: { reason: "exit" } });
 	});
 
 	pi.on("session_before_compact", async (_event: unknown, ctx: BridgeCtx) => {
+		if (resolveRole(ctx) === "subagent") return undefined;
 		await fire("PreCompact", ctx, { extra: { trigger: "manual", custom_instructions: "" } });
 		return undefined;
 	});

@@ -7,7 +7,7 @@
 # hash from the per-asset sha256 digests on the release page
 # (`gh release view v<version> --repo can1357/oh-my-pi --json assets`), then
 # run scripts/omp/claude-hooks-smoke.sh to catch extension-API drift in the
-# Claude hook bridge (dots/omp/extensions/claude-hooks.ts).
+# Claude bridges (dots/omp/extensions/claude-hooks.ts, claude-agents.ts).
 #
 # Runtime notes: the binary extracts its native addon to ~/.omp/natives/<v>/ on
 # first run and self-update (`omp update`) fails harmlessly against the

@@ -9,7 +9,7 @@ Two hosts, one flake:
 | `macbook` | nix-darwin | aarch64-darwin | Dev workstation |
 | `spark` | NixOS | aarch64-linux | NVIDIA DGX Spark server |
 
-Both are declared in `lib/hosts.nix` and assembled in `flake/hosts.nix` (darwin) and `flake/nixos.nix` (nixos). The `flake/args.nix` module wires shared args (`username`, `mkSpecialArgs`) consumed by both host builders.
+Both are declared in `inventory/nodes/` and assembled in `flake/hosts.nix` (darwin) and `flake/nixos.nix` (nixos). The `flake/args.nix` module wires shared args (`username`, `mkSpecialArgs`) consumed by both host builders.
 
 ### Host topology
 
@@ -72,7 +72,7 @@ flake/
   hosts.nix            macbook darwin configuration
   nixos.nix            spark NixOS configuration
 lib/
-  hosts.nix            Host records (name, system, features)
+  remotes.nix          Remote server registry: per-server tmux session settings for the connector commands
   theme.nix            Cozybox theme: colors, renderers for ghostty/tmux/fzf/lazygit/pure-prompt/bat/zsh-highlights
 system/
   common.nix           Shared nix settings, overlays, base packages
@@ -126,6 +126,10 @@ dots/                  Dotfile sources (nvim, karabiner, lazygit, claude command
 ## Theme system
 
 The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, tmux, lazygit, and the wallpaper, then reloading tmux. Shell hooks in `zsh.nix` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
+
+## Remote sessions
+
+`lib/remotes.nix` maps a command name to `{ host, session }` per server. `scripts/default.nix` renders each entry into a connector command (via `scripts/bin/mux.sh`) that lands in every user's profile: `spark` or `hari1` runs `mosh <host> -- tmux new-session -A -s <session>`; `--ssh` forces `ssh -t` for UDP-hostile networks. Transport config (hostnames, keys, ControlMaster) stays in the live-edited `dots/ssh/config`; plain `ssh <host>`, scp, and git are never wrapped. To add a server: one entry in `lib/remotes.nix` plus its `Host` block in `dots/ssh/config`.
 
 ## Key dependencies
 

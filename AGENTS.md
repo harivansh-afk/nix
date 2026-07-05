@@ -127,6 +127,8 @@ dots/                  Dotfile sources (nvim, karabiner, lazygit, claude command
 
 The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, tmux, lazygit, and the wallpaper, then reloading tmux. Shell hooks in `zsh.nix` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
 
+Accent constraint for agent-facing TUI roles (omp markdown headings/inline code/links): no yellow, green, or pink hues. Stay in the neutral-bright / Claude-coral (`#d97757` dark, `#af3a03` light) / muted-blue (`#5b84de` dark, `#4261a5` light) lane. Status colors (success/error/warning, diffs) keep their conventional hues.
+
 ## Remote sessions
 
 `lib/remotes.nix` maps a command name to `{ host, session }` per server. `scripts/default.nix` renders each entry into a connector command (via `scripts/bin/mux.sh`) that lands in every user's profile: `spark` or `hari1` runs `mosh <host> -- tmux new-session -A -s <session>`; `--ssh` forces `ssh -t` for UDP-hostile networks. Transport config (hostnames, keys, ControlMaster) stays in the live-edited `dots/ssh/config`; plain `ssh <host>`, scp, and git are never wrapped. To add a server: one entry in `lib/remotes.nix` plus its `Host` block in `dots/ssh/config`.

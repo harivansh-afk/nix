@@ -5,9 +5,29 @@
   ...
 }:
 let
-  hermes = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+  hermesBase = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
     extraDependencyGroups = [ "messaging" ];
   };
+
+  photonSidecarSrc = "${inputs.hermes-agent}/plugins/platforms/photon/sidecar";
+
+  photonSidecarDeps = pkgs.importNpmLock.buildNodeModules {
+    npmRoot = photonSidecarSrc;
+    nodejs = pkgs.nodejs_22;
+    derivationArgs = {
+      postPatch = ''
+        cp ${photonSidecarSrc}/patch-spectrum-mixed-attachments.mjs .
+      '';
+    };
+  };
+
+  hermes = hermesBase.overrideAttrs (prev: {
+    postInstall = (prev.postInstall or "") + ''
+      sidecar=$out/share/hermes-agent/plugins/platforms/photon/sidecar
+      chmod u+w "$sidecar"
+      ln -s ${photonSidecarDeps}/node_modules "$sidecar/node_modules"
+    '';
+  });
 
   user = "rathi";
   home = "/home/${user}";
@@ -22,9 +42,9 @@ let
   cliToolsets = [
     "clarify"
     "code_execution"
+    "cronjob"
     "file"
     "memory"
-    "messaging"
     "session_search"
     "terminal"
     "web"
@@ -33,14 +53,18 @@ let
     "skills"
     "browser"
     "vision"
+    "video"
     "image_gen"
+    "video_gen"
+    "x_search"
     "tts"
     "todo"
     "delegation"
-    "cronjob"
-    "moa"
     "homeassistant"
-    "rl"
+    "spotify"
+    "yuanbao"
+    "computer_use"
+    "context_engine"
   ];
 
   pinModelConfig = pkgs.writeShellScript "hermes-pin-config" ''
@@ -102,6 +126,7 @@ in
       HERMES_HOME = hermesHome;
       HERMES_INFERENCE_PROVIDER = provider;
       CUSTOM_BASE_URL = baseUrl;
+      PHOTON_REACTIONS = "true";
     };
 
     serviceConfig = {
@@ -112,7 +137,7 @@ in
       ExecStartPre = pinModelConfig;
       ExecStart = "${hermes}/bin/hermes gateway";
 
-      EnvironmentFile = config.sops.secrets."hermes-telegram.env".path;
+      EnvironmentFile = config.sops.secrets."hermes-photon.env".path;
 
       Restart = "on-failure";
       RestartSec = 5;

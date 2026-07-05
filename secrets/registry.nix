@@ -107,16 +107,29 @@
       restartUnits = [ "delta.service" ];
     };
 
-    # Telegram bot token (+ optional TELEGRAM_ALLOWED_USERS allowlist) for the
-    # Hermes gateway. KEY=value dotenv, loaded as the gateway unit's
-    # EnvironmentFile (modules/services/hermes.nix). Owned by rathi (the gateway
-    # runs as rathi). The gateway is fail-closed: with no allowlist set, all
-    # users are denied until added here or approved via pairing.
-    "hermes-telegram.env" = {
+    # Photon (Spectrum) credentials for the Hermes gateway's iMessage channel:
+    # PHOTON_PROJECT_ID / PHOTON_PROJECT_SECRET plus the PHOTON_ALLOWED_USERS
+    # allowlist and PHOTON_HOME_CHANNEL (cron/notification DM target).
+    # KEY=value dotenv, loaded as the gateway unit's EnvironmentFile
+    # (modules/services/hermes.nix). Owned by rathi (the gateway runs as
+    # rathi). Fail-closed: only allowlisted numbers (or pairing-approved
+    # senders) can talk to the agent.
+    "hermes-photon.env" = {
       owner = username;
       group = "users";
       mode = "0400";
       restartUnits = [ "hermes-gateway.service" ];
+    };
+
+    # Telegram bot token (+ TELEGRAM_ALLOWED_USERS allowlist). No longer
+    # loaded by the gateway (the agent channel moved to Photon iMessage);
+    # still read directly at run time by the mini-loop timers
+    # (dots/mini-loops/mini_loop.py) for notification delivery, so no
+    # restartUnits are needed.
+    "hermes-telegram.env" = {
+      owner = username;
+      group = "users";
+      mode = "0400";
     };
 
     "vaultwarden.env" = {

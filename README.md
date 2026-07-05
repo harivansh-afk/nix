@@ -28,6 +28,8 @@ Use `ssh spark-lan` only for direct LAN access on shared network
 
 Spark local inference runs Pi against `llama.cpp` on `127.0.0.1:8080`
 
+The Cognee knowledge graph (`modules/services/kb-graph.nix`) rebuilds daily at 04:00 and renders to `/var/lib/kb/graph/index.html`. It is deliberately not served on any network or tailnet - view it from a spark shell with `open kb-graph.html` (the repo-root symlink, spark-only) which streams it to the Mac
+
 ## Structure
 
 ```

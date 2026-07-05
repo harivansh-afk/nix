@@ -38,7 +38,9 @@ in
       zoxide
     ])
     ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+      pkgs.file
       pkgs.gcc
+      pkgs.xdg-utils
     ];
 
   extras =

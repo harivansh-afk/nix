@@ -55,7 +55,7 @@ send_file() {
   [ -n "$safe" ] || safe="file"
   ssh -o BatchMode=yes -o ConnectTimeout=8 "$mac" \
     "d=\$(mktemp -d -t remote-open) && cat > \"\$d/$safe\" && /usr/bin/open \"\$d/$safe\"" \
-    < "$file" || fail $?
+    <"$file" || fail $?
 }
 
 send_path() {
@@ -81,14 +81,14 @@ decode() {
 
 for arg in "$@"; do
   case "$arg" in
-    http://* | https://*)
-      send_url "$arg"
-      ;;
-    file://*)
-      send_path "$(decode "$arg")"
-      ;;
-    *)
-      send_path "$arg"
-      ;;
+  http://* | https://*)
+    send_url "$arg"
+    ;;
+  file://*)
+    send_path "$(decode "$arg")"
+    ;;
+  *)
+    send_path "$arg"
+    ;;
   esac
 done

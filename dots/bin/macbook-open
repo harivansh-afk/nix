@@ -11,7 +11,11 @@
 #   macbook-open <file|url> [...]
 #
 # Env:
-#   OPEN_HOST   ssh host/alias of the Mac (default: macbook)
+#   OPEN_HOST     ssh host/alias of the Mac (default: macbook)
+#   OPEN_MD_APP   macOS app to hand markdown files to (e.g. "Marked 2",
+#                 Typora). Unset: render to HTML on the Mac with pandoc and
+#                 open in the default browser, so .md never falls through to
+#                 whatever editor last claimed the extension in LaunchServices.
 #
 # Exit codes: 0 ok, 2 cannot reach Mac, 1 bad usage / missing file.
 set -euo pipefail
@@ -21,6 +25,10 @@ if [ "$(uname -s)" = "Darwin" ]; then
 fi
 
 mac="${OPEN_HOST:-macbook}"
+
+# nix-darwin systemPackages path (packages.nix darwinExtras); absolute because
+# the non-interactive remote shell has no profile PATH.
+pandoc=/run/current-system/sw/bin/pandoc
 
 if [ "$#" -eq 0 ]; then
   echo "usage: macbook-open <file|url> [...]" >&2
@@ -47,14 +55,41 @@ send_url() {
 
 # Stream a file to a fresh temp dir on the Mac and open it. The basename is
 # kept (sanitized; command substitution strips the newline before tr sees it)
-# so macOS associates the right app by extension.
+# so macOS associates the right app by extension. Markdown is special-cased:
+# macOS ships no renderer, so LaunchServices resolves .md to whatever editor
+# registered it last (Windsurf, Xcode, ...), which is never what a remote
+# `open README.md` wants.
 send_file() {
   local file="$1" safe
   safe="$(basename -- "$file")"
   safe="$(printf '%s' "$safe" | tr -c 'A-Za-z0-9._-' '_')"
   [ -n "$safe" ] || safe="file"
+  case "$safe" in
+  *.md | *.markdown | *.mdown | *.mkdn)
+    send_markdown "$file" "$safe"
+    ;;
+  *)
+    ssh -o BatchMode=yes -o ConnectTimeout=8 "$mac" \
+      "d=\$(mktemp -d -t remote-open) && cat > \"\$d/$safe\" && /usr/bin/open \"\$d/$safe\"" \
+      <"$file" || fail $?
+    ;;
+  esac
+}
+
+# Markdown viewer routing. OPEN_MD_APP set: hand the raw file to that app via
+# `open -a`. Unset: pandoc (gfm) renders a standalone HTML next to the streamed
+# file and the default browser opens it; a missing pandoc is a hard error
+# naming the fix, not a silent fall-through to the LaunchServices default.
+send_markdown() {
+  local file="$1" safe="$2"
+  if [ -n "${OPEN_MD_APP:-}" ]; then
+    ssh -o BatchMode=yes -o ConnectTimeout=8 "$mac" \
+      "d=\$(mktemp -d -t remote-open) && cat > \"\$d/$safe\" && /usr/bin/open -a $(printf '%q' "$OPEN_MD_APP") \"\$d/$safe\"" \
+      <"$file" || fail $?
+    return
+  fi
   ssh -o BatchMode=yes -o ConnectTimeout=8 "$mac" \
-    "d=\$(mktemp -d -t remote-open) && cat > \"\$d/$safe\" && /usr/bin/open \"\$d/$safe\"" \
+    "d=\$(mktemp -d -t remote-open) && cat > \"\$d/$safe\" && if [ -x $pandoc ]; then $pandoc --standalone --from gfm --metadata pagetitle=\"$safe\" --output \"\$d/$safe.html\" \"\$d/$safe\" && /usr/bin/open \"\$d/$safe.html\"; else echo 'macbook-open: pandoc missing on the Mac; darwin-rebuild switch installs it (packages.nix darwinExtras)' >&2; exit 3; fi" \
     <"$file" || fail $?
 }
 

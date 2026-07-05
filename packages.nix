@@ -86,6 +86,7 @@ in
 
   darwinExtras = with pkgs; [
     coreutils-prefixed
+    pandoc
     yt-dlp
   ];
 

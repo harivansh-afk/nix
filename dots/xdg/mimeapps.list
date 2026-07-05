@@ -1,6 +1,7 @@
 [Default Applications]
 text/html=macbook-open.desktop
 application/xhtml+xml=macbook-open.desktop
+text/markdown=macbook-open.desktop
 application/pdf=macbook-open.desktop
 image/png=macbook-open.desktop
 image/jpeg=macbook-open.desktop

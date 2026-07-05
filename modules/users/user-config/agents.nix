@@ -1,5 +1,4 @@
 {
-  lib,
   pkgs,
   homeDirectory,
   dotsRoot,
@@ -41,17 +40,6 @@ let
         default = "anthropic/claude-fable-5:high";
         task = "openai-codex/gpt-5.5:low";
       };
-    };
-  };
-
-  # MCP servers for omp (~/.omp/agent/mcp.json). `index` is ix-mcp, the
-  # indexable Python-kernel MCP server; the `ix-mcp` on PATH is the spark-only
-  # wrapper around the live checkout (hosts/spark/pi.nix), so the entry is
-  # emitted only off-darwin.
-  ompMcpServers = lib.optionalAttrs (!isDarwin) {
-    index = {
-      command = "ix-mcp";
-      args = [ "serve" ];
     };
   };
 in
@@ -115,8 +103,6 @@ in
   };
 
   ompModesSource = jsonFormat.generate "omp-modes.json" ompModes;
-
-  ompMcpSource = jsonFormat.generate "omp-mcp.json" { mcpServers = ompMcpServers; };
 
   ompConfigSource = yamlFormat.generate "omp-config.yml" {
     theme = {

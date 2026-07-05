@@ -102,6 +102,9 @@ pkgs.writeShellScript "user-config-${name}" ''
 
   # --- bin: standalone helper scripts ---
   mkSymlink "${dotsRoot}/bin/pasteimg" "${homeDirectory}/.local/bin/pasteimg"
+  ${lib.optionalString (!isDarwin) ''
+    mkSymlink "${dotsRoot}/bin/open" "${homeDirectory}/.local/bin/open"
+  ''}
 
   # --- tmux ---
   mkSymlink "${dotsRoot}/tmux/tmux.conf" "${configHome}/tmux/tmux.conf"

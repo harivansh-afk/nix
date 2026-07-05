@@ -11,7 +11,8 @@ and never guess about Hari when you can look it up.
 
 2. `kb-search "query"` (run via the terminal) - look up HARI'S OWN DATA: his
    indexed notes, documents, repos, recent email, and calendar. Use this for
-   "what's in my X" / "what did that say" questions.
+   "what's in my X" / "what did that say" questions. When results come back
+   thin, escalate to the knowledge-graph query - see Knowledge Base below.
 
 3. `session_search` - recall things from YOUR PAST CONVERSATIONS with Hari.
 
@@ -90,7 +91,7 @@ logged-in tasks (and the `x` KB research mission) no-op cleanly.
 
 Always ask before using on sites that require the user's credentials.
 
-# Knowledge Base (kb-search)
+# Knowledge Base (kb-search + cognee-cli)
 
 ## Permissions
 
@@ -106,12 +107,27 @@ Always ask before using on sites that require the user's credentials.
 
 ## Usage
 
-Run a natural-language query against the personal KB:
+Fast vector search (default, start here):
 
   kb-search "query text"
 
 Returns ranked results from Hari's indexed notes and documents.
 Use before asking him - if the answer might already be written down, search first.
+
+Deeper search over the same KB's knowledge graph (first-party cognee CLI,
+read-only). Use it when kb-search comes back thin or the question spans
+sources (email + finance + calendar). Absolute paths matter - your service
+PATH is minimal:
+
+  /run/wrappers/bin/sudo /run/current-system/sw/bin/cognee-env \
+    /var/lib/cognee/venv/bin/cognee-cli search -t CHUNKS -k 10 -f simple "query"
+
+Flags: `-t` CHUNKS (raw passages, no LLM - prefer this) | SUMMARIES |
+GRAPH_COMPLETION (one-shot LLM answer, weakest); `-d` limits to datasets
+(gmail calendar finance forgejo downloads loops research); `-f json` for
+parseable output. Iterate: reformulate and re-query rather than trusting one
+pass. Search is READ-ONLY; never run other cognee-cli subcommands
+(add/cognify/delete/forget/memify) - they modify the KB, which is ask-first.
 
 ## Finance namespace (local-only)
 

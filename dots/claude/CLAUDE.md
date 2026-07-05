@@ -24,5 +24,11 @@
 - Unsure about an API/syntax/best practice: use an MCP server before guessing.
 - exa `get_code_context_exa` for library/API/SDK questions; exa `web_search_exa` for current info; context7 (`resolve-library-id` then `get-library-docs`) for library docs.
 
+## Personal KB recall (spark only)
+- Questions about my email, calendar, finances, subscriptions, repos, downloads, or reading: query the Cognee KB before saying you don't know.
+- `kb-search "query"`: fast vector chunk search (no LLM).
+- Graph store via first-party CLI: `sudo cognee-env /var/lib/cognee/venv/bin/cognee-cli search -t CHUNKS -d <dataset> -k 10 -f simple "query"`. Datasets: gmail, calendar, finance, forgejo, downloads, loops, research. Types: CHUNKS (raw retrieval, no LLM: prefer this and synthesize yourself), GRAPH_COMPLETION (default: one-shot answer from the small local brain, misses long-tail facts), RAG_COMPLETION, SUMMARIES. Use `-f json` for parseable output.
+- Iterate: reformulate and re-query rather than trusting one retrieval pass.
+
 ## Clipboard image
 - When the user refers to an image/screenshot "in my clipboard" (it lives on their Mac), run `pasteimg` to pull it here as a PNG, then Read the printed path.

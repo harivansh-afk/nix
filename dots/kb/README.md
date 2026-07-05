@@ -66,24 +66,26 @@ cognee-env python ingest.py --state-file /path/to/state.json
 ## Search
 
 ```sh
-# Via the wrapper on PATH (installed by kb-ingest.nix):
+# Plain pgvector chunk search (kb_vec.py wrapper on PATH from kb-ingest.nix;
+# no LLM, no graph, any user, ~0.4s):
 kb-search "what does the neovim wiki say about LSP configuration?"
 
-# Directly:
-cognee-env python /path/to/dots/kb/kb-search "your query"
+# Cognee knowledge-graph query via the first-party CLI. The venv is
+# root-owned (0750), hence sudo; cognee-env supplies the local-provider env:
+sudo cognee-env /var/lib/cognee/venv/bin/cognee-cli search "who invited me to the party?"
+sudo cognee-env /var/lib/cognee/venv/bin/cognee-cli search -t CHUNKS -d finance -k 5 -f simple "GoDaddy charge"
 ```
 
-Output is plain text, one result per block:
+`cognee-cli search` flags: `-t` GRAPH_COMPLETION (default, one-shot answer
+via the local brain) | RAG_COMPLETION | CHUNKS (raw retrieval, no LLM call) |
+SUMMARIES | CYPHER; `-d` dataset(s): gmail, calendar, finance, forgejo,
+downloads, loops, research; `-k` top-k; `-f json|pretty|simple`.
 
-```
-RESULT 1
-SOURCE: /home/rathi/Documents/Git/nvim-wiki/wiki/...
-TEXT:
-<excerpt>
----
-```
-
-`kb-search` is the tool Hermes calls for knowledge retrieval.
+`kb-search` prints `[dataset] file: excerpt` blocks and is the tool Hermes
+calls for knowledge retrieval. Agent callers should prefer `-t CHUNKS` (fast,
+no local-LLM bottleneck) and iterate with reformulated queries; the default
+GRAPH_COMPLETION is a one-shot summary by the local Qwen brain and misses
+long-tail facts.
 
 ## VERIFY-API seams
 

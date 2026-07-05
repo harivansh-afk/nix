@@ -23,9 +23,10 @@ let
 
   hermes = hermesBase.overrideAttrs (prev: {
     postInstall = (prev.postInstall or "") + ''
-      sidecar=$out/share/hermes-agent/plugins/platforms/photon/sidecar
-      chmod u+w "$sidecar"
-      ln -s ${photonSidecarDeps}/node_modules "$sidecar/node_modules"
+      photon=$out/share/hermes-agent/plugins/platforms/photon
+      chmod u+w "$photon" "$photon/sidecar" "$photon/adapter.py"
+      ln -s ${photonSidecarDeps}/node_modules "$photon/sidecar/node_modules"
+      patch "$photon/adapter.py" ${./photon-multi-bubble.patch}
     '';
   });
 
@@ -87,6 +88,9 @@ let
     set_if_diff model.default "${model}"
 
     set_if_diff display.busy_input_mode "steer"
+
+    set_if_diff display.platforms.photon.tool_progress "false"
+    set_if_diff display.platforms.photon.streaming "false"
 
     have_mem="$(${pkgs.yq-go}/bin/yq -r '.memory.provider // ""' "$cfg" 2>/dev/null || echo "")"
     if [ -n "$have_mem" ]; then

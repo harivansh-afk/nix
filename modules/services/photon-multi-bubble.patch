@@ -1,0 +1,64 @@
+--- a/plugins/platforms/photon/adapter.py
++++ b/plugins/platforms/photon/adapter.py
+@@ -85,6 +85,44 @@
+ 
+ _SIDECAR_DIR = Path(__file__).parent / "sidecar"
+ 
++# Poke-style delivery: a reply is split on blank-line boundaries into
++# separate iMessage bubbles so the agent texts in short bursts instead of
++# one wall of text.  Code fences are never split.  Capped so a runaway
++# reply cannot spam the conversation.
++_MAX_BUBBLES = 5
++
++
++def _split_bubbles(text: str) -> List[str]:
++    blocks: List[str] = []
++    current: List[str] = []
++    fence = False
++    for line in text.split("\n"):
++        if line.lstrip().startswith("```"):
++            fence = not fence
++            current.append(line)
++            continue
++        if not fence and not line.strip():
++            if current:
++                blocks.append("\n".join(current).strip())
++                current = []
++            continue
++        current.append(line)
++    if current:
++        blocks.append("\n".join(current).strip())
++    blocks = [b for b in blocks if b]
++    if not blocks:
++        return [text]
++    if len(blocks) > _MAX_BUBBLES:
++        blocks = blocks[: _MAX_BUBBLES - 1] + [
++            "\n\n".join(blocks[_MAX_BUBBLES - 1 :])
++        ]
++    return blocks
++
++
++def _bubble_delay(part: str) -> float:
++    return min(0.4 + len(part) / 400.0, 1.2)
++
++
+ # Photon / Envoy / spectrum-ts error substrings that indicate a transient
+ # upstream overload rather than a permanent failure.  These are not in the
+ # core _RETRYABLE_ERROR_PATTERNS because they are specific to this adapter.
+@@ -997,7 +1035,15 @@
+         reply_to: Optional[str] = None,
+         metadata: Optional[Dict[str, Any]] = None,
+     ) -> SendResult:
+-        return await self._sidecar_send(chat_id, self.format_message(content))
++        parts = _split_bubbles(self.format_message(content))
++        result = SendResult(success=False, error="empty message")
++        for i, part in enumerate(parts):
++            if i:
++                await asyncio.sleep(_bubble_delay(part))
++            result = await self._sidecar_send(chat_id, part)
++            if not result.success:
++                return result
++        return result
+ 
+     # -- Outbound media (parity with the BlueBubbles iMessage channel) -----
+     #

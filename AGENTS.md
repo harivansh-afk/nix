@@ -24,20 +24,20 @@ Services: Forgejo (`git.harivan.sh`), Vaultwarden (`vault.harivan.sh`), Delta (`
 
 ### Secrets
 
-sops-nix with age encryption derived from each host's ed25519 SSH key. Secret files live under `secrets/<hostname>/`. Edit with `just sops-edit secrets/spark/<file>`.
+sops-nix with age encryption derived from each host's ed25519 SSH key. Secret files live under `secrets/hosts/<hostname>/` (plus per-admin secrets under `secrets/user/`). Edit with `just sops-edit secrets/hosts/spark/<file>`.
 
 `.sops.yaml` recipient anchors are derived via `ssh-to-age`:
 
 - `admin_macbook` — Hari's macbook SSH pubkey, edits everything.
-- `admin_laptop_barrett` — Barrett's laptop SSH pubkey, edits only `secrets/spark/barrett-*`.
+- `admin_laptop_barrett` — Barrett's laptop SSH pubkey, edits only `secrets/hosts/spark/barrett-*`.
 - `host_spark` — Spark's `/etc/ssh/ssh_host_ed25519_key.pub`, decrypts at activation.
 
 Path-regex split:
 
-- `secrets/spark/barrett-[^/]+$` → `admin_macbook` + `admin_laptop_barrett` + `host_spark`. Used for secrets Barrett owns and rotates from his side (currently `barrett-forgejo-runner-token`).
-- `secrets/spark/[^/]+$` → `admin_macbook` + `host_spark`. Default for everything else.
+- `secrets/hosts/spark/barrett-[^/]+$` → `admin_macbook` + `admin_laptop_barrett` + `host_spark`. Used for secrets Barrett owns and rotates from his side (currently `barrett-forgejo-runner-token`).
+- `secrets/hosts/spark/[^/]+$` → `admin_macbook` + `host_spark`. Default for everything else.
 
-To add a Barrett-owned secret: drop the file at `secrets/spark/barrett-<name>`; the `barrett-` prefix routes it through the 3-recipient rule automatically. No `.sops.yaml` edit needed.
+To add a Barrett-owned secret: drop the file at `secrets/hosts/spark/barrett-<name>`; the `barrett-` prefix routes it through the 3-recipient rule automatically. No `.sops.yaml` edit needed.
 
 ## Conventions
 
@@ -143,7 +143,7 @@ Accent constraint for agent-facing TUI roles (omp markdown headings/inline code/
 ## Adding a new service on spark
 
 1. Create `modules/services/<name>.nix`.
-2. Add the sops secret: create `secrets/spark/<name>.env`, encrypt with `just sops-edit`.
+2. Add the sops secret: create `secrets/hosts/spark/<name>.env`, encrypt with `just sops-edit`, and register it in `secrets/registry.nix`.
 3. Use `loopbackVhost` from caddy.nix: `services.caddy.virtualHosts."http://<domain>" = loopbackVhost <port>;`.
 4. Import the new module in `hosts/spark/default.nix`.
 5. Add the DNS record in Cloudflare pointing to the tunnel.

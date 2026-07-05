@@ -1,79 +1,26 @@
 #!/usr/bin/env bash
-# open - open files and URLs from a remote host on the Mac. Mirror of
-# pasteimg: instead of pulling the Mac clipboard down, it pushes a file up.
-# One SSH call over Tailscale streams the file into a temp dir on the Mac and
-# hands it to /usr/bin/open, so the default app opens it there (html -> the
-# browser, pdf/png -> Preview, ...). URLs skip the copy and open directly in
-# the default browser. No daemon, and it dials out itself, so it works from
-# mosh sessions too. Linked at ~/.local/bin/open on Linux hosts only; if it
-# ever runs on macOS it just execs the native /usr/bin/open.
-#
-# Usage:
-#   open <file|url> [...]
-#
-# Env:
-#   OPEN_HOST   ssh host/alias of the Mac (default: macbook)
-#
-# Exit codes: 0 ok, 2 cannot reach Mac, 1 bad usage / missing file.
+# open - macOS-style `open <file|url>` for Linux hosts. Thin shim: the real
+# routing lives in the xdg mime database (dots/xdg/mimeapps.list ->
+# macbook-open.desktop), so anything that calls xdg-open gets the same
+# behavior. Headless xdg-open skips the mime lookup (it is gated on $DISPLAY)
+# and honors $BROWSER instead, so default it to macbook-open; hosts without
+# xdg-utils at all fall back to macbook-open directly.
+# Linked at ~/.local/bin/open on Linux only; macOS keeps /usr/bin/open.
 set -euo pipefail
 
 if [ "$(uname -s)" = "Darwin" ]; then
   exec /usr/bin/open "$@"
 fi
 
-mac="${OPEN_HOST:-macbook}"
-
 if [ "$#" -eq 0 ]; then
   echo "usage: open <file|url> [...]" >&2
   exit 1
 fi
 
-# ssh exits 255 on transport failure; anything else is the remote command's
-# own status (e.g. macOS open finding no app for the file).
-fail() {
-  if [ "$1" -eq 255 ]; then
-    echo "open: could not reach $mac (is it awake / on Tailscale?)" >&2
-    exit 2
-  fi
-  echo "open: the Mac failed to open it (ssh said above)" >&2
-  exit "$1"
-}
-
-# Open a URL in the Mac's default browser. printf %q keeps query strings and
-# ampersands intact through the remote shell.
-send_url() {
-  ssh -n -o BatchMode=yes -o ConnectTimeout=8 "$mac" \
-    "/usr/bin/open $(printf '%q' "$1")" || fail $?
-}
-
-# Stream a file to a fresh temp dir on the Mac and open it. The basename is
-# kept (sanitized; command substitution strips the newline before tr sees it)
-# so macOS associates the right app by extension.
-send_file() {
-  local file="$1" safe
-  safe="$(basename -- "$file")"
-  safe="$(printf '%s' "$safe" | tr -c 'A-Za-z0-9._-' '_')"
-  [ -n "$safe" ] || safe="file"
-  ssh -o BatchMode=yes -o ConnectTimeout=8 "$mac" \
-    "d=\$(mktemp -d -t remote-open) && cat > \"\$d/$safe\" && /usr/bin/open \"\$d/$safe\"" \
-    < "$file" || fail $?
-}
+if ! command -v xdg-open >/dev/null 2>&1; then
+  exec macbook-open "$@"
+fi
 
 for arg in "$@"; do
-  case "$arg" in
-    http://* | https://*)
-      send_url "$arg"
-      ;;
-    *)
-      if [ -d "$arg" ]; then
-        echo "open: $arg is a directory (only files and URLs)" >&2
-        exit 1
-      fi
-      if [ ! -f "$arg" ]; then
-        echo "open: $arg: no such file" >&2
-        exit 1
-      fi
-      send_file "$arg"
-      ;;
-  esac
+  BROWSER="${BROWSER:-macbook-open}" xdg-open "$arg"
 done

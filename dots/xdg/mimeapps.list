@@ -1,0 +1,23 @@
+[Default Applications]
+text/html=macbook-open.desktop
+application/xhtml+xml=macbook-open.desktop
+application/pdf=macbook-open.desktop
+image/png=macbook-open.desktop
+image/jpeg=macbook-open.desktop
+image/gif=macbook-open.desktop
+image/webp=macbook-open.desktop
+image/svg+xml=macbook-open.desktop
+image/bmp=macbook-open.desktop
+image/tiff=macbook-open.desktop
+image/avif=macbook-open.desktop
+video/mp4=macbook-open.desktop
+video/webm=macbook-open.desktop
+video/quicktime=macbook-open.desktop
+video/x-matroska=macbook-open.desktop
+audio/mpeg=macbook-open.desktop
+audio/flac=macbook-open.desktop
+audio/wav=macbook-open.desktop
+audio/x-wav=macbook-open.desktop
+audio/ogg=macbook-open.desktop
+x-scheme-handler/http=macbook-open.desktop
+x-scheme-handler/https=macbook-open.desktop

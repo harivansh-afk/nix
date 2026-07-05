@@ -10,3 +10,7 @@ export MANPAGER="nvim +Man!"
 if [[ "$OSTYPE" == darwin* ]]; then
   export GHOSTTY_RESOURCES_DIR="/Applications/Ghostty.app/Contents/Resources/ghostty"
 fi
+
+if [[ "$OSTYPE" == linux* ]]; then
+  export BROWSER=macbook-open
+fi

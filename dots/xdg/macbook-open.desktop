@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Open on Macbook
+Comment=Stream files to the Mac over Tailscale and open them there
+Exec=macbook-open %u
+Terminal=false
+NoDisplay=true
+MimeType=text/html;application/xhtml+xml;application/pdf;image/png;image/jpeg;image/gif;image/webp;image/svg+xml;image/bmp;image/tiff;image/avif;video/mp4;video/webm;video/quicktime;video/x-matroska;audio/mpeg;audio/flac;audio/wav;audio/x-wav;audio/ogg;x-scheme-handler/http;x-scheme-handler/https;

@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# macbook-open - stream a file (or hand a URL) to the Mac and open it there.
+# The xdg handler side of the house: macbook-open.desktop declares this as the
+# handler command and ~/.config/mimeapps.list (dots/xdg/mimeapps.list) routes
+# browserable mimetypes to it, so xdg-open - and everything that shells out to
+# it - lands on the Mac. Mirror of pasteimg: one SSH call over Tailscale, no
+# daemon, dials out itself so it works from mosh sessions too. Linked at
+# ~/.local/bin/macbook-open on Linux hosts.
+#
+# Usage:
+#   macbook-open <file|url> [...]
+#
+# Env:
+#   OPEN_HOST   ssh host/alias of the Mac (default: macbook)
+#
+# Exit codes: 0 ok, 2 cannot reach Mac, 1 bad usage / missing file.
+set -euo pipefail
+
+if [ "$(uname -s)" = "Darwin" ]; then
+  exec /usr/bin/open "$@"
+fi
+
+mac="${OPEN_HOST:-macbook}"
+
+if [ "$#" -eq 0 ]; then
+  echo "usage: macbook-open <file|url> [...]" >&2
+  exit 1
+fi
+
+# ssh exits 255 on transport failure; anything else is the remote command's
+# own status (e.g. macOS open finding no app for the file).
+fail() {
+  if [ "$1" -eq 255 ]; then
+    echo "macbook-open: could not reach $mac (is it awake / on Tailscale?)" >&2
+    exit 2
+  fi
+  echo "macbook-open: the Mac failed to open it (ssh said above)" >&2
+  exit "$1"
+}
+
+# Open a URL in the Mac's default browser. printf %q keeps query strings and
+# ampersands intact through the remote shell.
+send_url() {
+  ssh -n -o BatchMode=yes -o ConnectTimeout=8 "$mac" \
+    "/usr/bin/open $(printf '%q' "$1")" || fail $?
+}
+
+# Stream a file to a fresh temp dir on the Mac and open it. The basename is
+# kept (sanitized; command substitution strips the newline before tr sees it)
+# so macOS associates the right app by extension.
+send_file() {
+  local file="$1" safe
+  safe="$(basename -- "$file")"
+  safe="$(printf '%s' "$safe" | tr -c 'A-Za-z0-9._-' '_')"
+  [ -n "$safe" ] || safe="file"
+  ssh -o BatchMode=yes -o ConnectTimeout=8 "$mac" \
+    "d=\$(mktemp -d -t remote-open) && cat > \"\$d/$safe\" && /usr/bin/open \"\$d/$safe\"" \
+    <"$file" || fail $?
+}
+
+send_path() {
+  local file="$1"
+  if [ -d "$file" ]; then
+    echo "macbook-open: $file is a directory (only files and URLs)" >&2
+    exit 1
+  fi
+  if [ ! -f "$file" ]; then
+    echo "macbook-open: $file: no such file" >&2
+    exit 1
+  fi
+  send_file "$file"
+}
+
+# Percent-decode a file:// URI into a plain path; desktop Exec fields get %u,
+# so callers may hand over URIs rather than paths.
+decode() {
+  local s="${1#file://localhost}"
+  s="${s#file://}"
+  printf '%b' "${s//%/\\x}"
+}
+
+for arg in "$@"; do
+  case "$arg" in
+  http://* | https://*)
+    send_url "$arg"
+    ;;
+  file://*)
+    send_path "$(decode "$arg")"
+    ;;
+  *)
+    send_path "$arg"
+    ;;
+  esac
+done

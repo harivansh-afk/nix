@@ -390,6 +390,7 @@ let
             yellowBright = "#d79921";
             aqua = "#076678";
             purpleTone = "#8f3f71";
+            headingAccent = "#b57614";
             muted = "#665c54";
             dim = sharedPalette.gray;
             # monotone ramp: faint -> bright (darker = stronger on light bg)
@@ -415,6 +416,7 @@ let
               yellowBright
               ;
             purpleTone = sharedPalette.purple;
+            headingAccent = sharedPalette.yellowBright;
             muted = sharedPalette.gray;
             dim = "#7c6f64";
             # monotone ramp: faint -> bright
@@ -451,13 +453,13 @@ let
         toolPendingBg = "";
         toolSuccessBg = "";
         toolErrorBg = "";
-        toolTitle = c.bright;
+        toolTitle = c.monoHigh;
         toolOutput = c.muted;
 
-        mdHeading = c.monoBright;
-        mdLink = c.accent;
+        mdHeading = c.headingAccent;
+        mdLink = c.purpleTone;
         mdLinkUrl = c.dim;
-        mdCode = c.bright;
+        mdCode = c.green;
         mdCodeBlock = c.bright;
         mdCodeBlockBorder = c.borderMuted;
         mdQuote = c.muted;

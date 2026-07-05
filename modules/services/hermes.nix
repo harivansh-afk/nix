@@ -126,7 +126,6 @@ in
       HERMES_HOME = hermesHome;
       HERMES_INFERENCE_PROVIDER = provider;
       CUSTOM_BASE_URL = baseUrl;
-      PHOTON_REACTIONS = "true";
     };
 
     serviceConfig = {

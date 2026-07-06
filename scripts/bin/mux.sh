@@ -519,9 +519,13 @@ list() {
 }
 
 pick() {
-  local choice
-  choice="$(list | awk -F'\t' '$3 != "dead" { print $1 }' | sed "s|^$HOME|~|" | fzf --prompt 'project> ')" || return 0
-  [ -n "$choice" ] || return 0
+  local choice query="${1:-}"
+  choice="$(list | awk -F'\t' '$3 != "dead" { print $1 }' | sed "s|^$HOME|~|" \
+    | fzf --query "$query" --select-1 --exit-0 --prompt 'project> ')" || return 0
+  if [ -z "$choice" ]; then
+    [ -n "$query" ] && printf 'mux: no project matching %s\n' "$query" >&2
+    return 0
+  fi
   open_project "${choice/#\~/$HOME}"
 }
 
@@ -780,7 +784,10 @@ open)
   die "unknown option: $1 (try --help)"
   ;;
 *)
-  [ -d "$1" ] || die "unknown command: $1 (try --help)"
-  open_project "$1"
+  if [ -d "$1" ]; then
+    open_project "$1"
+  else
+    pick "$1"
+  fi
   ;;
 esac

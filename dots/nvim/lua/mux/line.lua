@@ -16,16 +16,16 @@ local refresh_pending = false
 -- tracks `theme` switches. Purple accent + muted separators, matching the old
 -- tmux status bar.
 local PALETTE = {
-  dark = { purple = "#d3869b", text = "#d4be98", muted = "#7c6f64", border = "#3c3836", bg = "#101010" },
-  light = { purple = "#d3869b", text = "#3c3836", muted = "#665c54", border = "#000000", bg = "#e7e7e7" },
+  dark = { purple = "#d3869b", white = "#ebdbb2", muted = "#7c6f64", border = "#3c3836", bg = "#101010" },
+  light = { purple = "#d3869b", white = "#3c3836", muted = "#665c54", border = "#000000", bg = "#e7e7e7" },
 }
 
 function M.setup_hl()
   local c = vim.o.background == "light" and PALETTE.light or PALETTE.dark
   local set = vim.api.nvim_set_hl
   set(0, "MuxFill", { fg = c.muted, bg = c.bg })
-  set(0, "MuxText", { fg = c.text, bg = c.bg })
-  set(0, "MuxTextCur", { fg = c.purple, bg = c.bg, bold = true })
+  set(0, "MuxText", { fg = c.white, bg = c.bg })
+  set(0, "MuxTextCur", { fg = c.white, bg = c.bg, bold = true })
   set(0, "MuxAccent", { fg = c.purple, bg = c.bg })
   set(0, "MuxMark", { fg = c.purple, bg = c.bg, bold = true })
   set(0, "MuxMuted", { fg = c.muted, bg = c.bg })

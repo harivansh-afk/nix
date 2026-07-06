@@ -131,6 +131,11 @@ in
       HERMES_INFERENCE_PROVIDER = provider;
       CUSTOM_BASE_URL = baseUrl;
       HERMES_GATEWAY_BUSY_ACK_ENABLED = "false";
+      # YOLO: bypass every dangerous-command approval prompt for the gateway.
+      # Checked unconditionally in tools/approval.py, so it survives any config
+      # drift (approvals.mode). Without this the gateway falls back to `manual`
+      # and gates each terminal/file action behind a /approve reply.
+      HERMES_YOLO_MODE = "1";
     };
 
     serviceConfig = {

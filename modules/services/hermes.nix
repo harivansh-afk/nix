@@ -130,6 +130,7 @@ in
       HERMES_HOME = hermesHome;
       HERMES_INFERENCE_PROVIDER = provider;
       CUSTOM_BASE_URL = baseUrl;
+      HERMES_GATEWAY_BUSY_ACK_ENABLED = "false";
     };
 
     serviceConfig = {

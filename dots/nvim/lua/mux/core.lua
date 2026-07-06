@@ -21,7 +21,7 @@ M.views = {
     restore = true,
   },
   zsh = {
-    key = "z",
+    key = "g",
     kind = "terminal",
     cmd = { vim.o.shell },
     lifecycle = "ephemeral",

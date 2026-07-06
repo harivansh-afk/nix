@@ -161,6 +161,22 @@ function M.new_window()
   vim.cmd.startinsert()
 end
 
+-- tmux-style pane zoom: maximize the current window within its tab and toggle
+-- back. Stays inside the tabpage (no new tab), so the mux window model and bar
+-- are unaffected.
+function M.toggle_zoom()
+  if vim.t.mux_zoom then
+    local restore = vim.t.mux_zoom
+    vim.t.mux_zoom = nil
+    pcall(vim.cmd, restore)
+  elseif vim.fn.winnr "$" > 1 then
+    vim.t.mux_zoom = vim.fn.winrestcmd()
+    vim.cmd "wincmd _"
+    vim.cmd "wincmd |"
+  end
+  core.restore_terminal_focus()
+end
+
 ---@param name string
 function M.open_view(name)
   local spec = views[name]

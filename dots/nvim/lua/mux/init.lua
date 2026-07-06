@@ -22,6 +22,7 @@ M.last_view = view.last_view
 M.close_view = view.close_view
 M.kill_pane = view.kill_pane
 M.new_window = view.new_window
+M.toggle_zoom = view.toggle_zoom
 
 M._connect = project._connect
 M.pick_project = project.pick_project
@@ -76,8 +77,12 @@ function M.setup()
   muxmap(prefix .. "'", function() vim.cmd "vsplit | terminal" end, "mux: vertical split terminal")
   muxmap(prefix .. "c", M.new_window, "mux: new window")
   muxmap(prefix .. "x", M.kill_pane, "mux: kill pane")
+  muxmap(prefix .. "z", M.toggle_zoom, "mux: zoom pane (toggle fullscreen)")
   muxmap(prefix .. "n", function() vim.cmd "tabnext" end, "mux: next window")
-  muxmap(prefix .. "p", function() vim.cmd "tabprevious" end, "mux: previous window")
+  muxmap(prefix .. "p", function()
+    core.leave_terminal()
+    pcall(vim.cmd, "buffer #")
+  end, "mux: previous buffer (last shell)")
   for i = 1, 9 do
     muxmap(prefix .. i, function()
       local tabs = vim.api.nvim_list_tabpages()

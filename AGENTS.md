@@ -72,8 +72,8 @@ flake/
   hosts.nix            macbook darwin configuration
   nixos.nix            spark NixOS configuration
 lib/
-  remotes.nix          Remote server registry: per-server tmux session settings for the connector commands
-  theme.nix            Cozybox theme: colors, renderers for ghostty/tmux/fzf/lazygit/pure-prompt/bat/zsh-highlights
+  remotes.nix          Remote server registry: hosts for the per-remote connector commands
+  theme.nix            Cozybox theme: colors, renderers for ghostty/fzf/lazygit/pure-prompt/bat/zsh-highlights
 system/
   common.nix           Shared nix settings, overlays, base packages
   packages.nix         Extra packages + fonts
@@ -125,13 +125,15 @@ dots/                  Dotfile sources (nvim, karabiner, lazygit, claude command
 
 ## Theme system
 
-The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, tmux, lazygit, and the wallpaper, then reloading tmux. Shell hooks in `zsh.nix` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
+The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, lazygit, and the wallpaper, then pokes live nvim servers. Shell hooks in `dots/zsh/zshrc` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
 
 Accent constraint for agent-facing TUI roles (omp markdown headings/inline code/links): no yellow, green, or pink hues. Stay in the neutral-bright / Claude-coral (`#d97757` dark, `#af3a03` light) / muted-blue (`#5b84de` dark, `#4261a5` light) lane. Status colors (success/error/warning, diffs) keep their conventional hues.
 
-## Remote sessions
+## Remote sessions (mux)
 
-`lib/remotes.nix` maps a command name to `{ host, session }` per server. `scripts/default.nix` renders each entry into a connector command (via `scripts/bin/mux.sh`) that lands in every user's profile: `spark` or `hari1` runs `mosh <host> -- tmux new-session -A -s <session>`; `--ssh` forces `ssh -t` for UDP-hostile networks. Transport config (hostnames, keys, ControlMaster) stays in the live-edited `dots/ssh/config`; plain `ssh <host>`, scp, and git are never wrapped. To add a server: one entry in `lib/remotes.nix` plus its `Host` block in `dots/ssh/config`.
+tmux is gone. Its three jobs (persistence, panes/windows, session switching) live in Neovim: `scripts/bin/mux.sh` packages the `mux` command, which runs one detached `nvim --headless --listen <socket>` server per project (git/jj root) and attaches thin `nvim --remote-ui` clients to it. The in-editor layer is `dots/nvim/lua/mux/` (activated only when the launcher sets `MUX=1`): tagged view tabpages (edit/vcs/ai/run/build/test/zsh), untagged tabs as plain tmux-style windows, a tabline status bar, mksession snapshots (5-minute autosave + save-on-exit, restored on next start), and `:connect`-based project switching. Bindings mirror the old tmux config: `<c-b>` prefix, `h/j/k/l` panes, `-`/`'` splits, `c` new window, `x` kill pane, `H/J/K/L` session cycling, `f` project picker, `d` detach. `mux stop` keeps a session resumable; `mux kill` deletes it; `mux restore` revives marked sessions after a reboot. Servers on spark need `users.users.<name>.linger = true` so they survive logout.
+
+`lib/remotes.nix` maps a command name to `{ host }` per server. `scripts/default.nix` renders each entry into a connector command (via `scripts/bin/remote.sh`) that lands in every user's profile: `spark` or `hari1` runs `mosh <host> -- mux`; `--ssh` forces `ssh -t` for UDP-hostile networks. Bare `ssh <host>` / `mosh <host>` from zsh also auto-run the remote `mux`. Transport config (hostnames, keys, ControlMaster) stays in the live-edited `dots/ssh/config`; scp and git are never wrapped. To add a server: one entry in `lib/remotes.nix` plus its `Host` block in `dots/ssh/config`.
 
 ## Key dependencies
 

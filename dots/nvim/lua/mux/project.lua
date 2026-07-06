@@ -1,0 +1,399 @@
+local core = require "mux.core"
+local session = require "mux.session"
+
+local views = core.views
+local VIEW_ORDER = core.VIEW_ORDER
+local canon = core.canon
+
+local M = {}
+
+local leave_terminal = core.leave_terminal
+local sessions_dir = core.sessions_dir
+
+local function load_fzf()
+  local ok_lz, lz = pcall(require, "lz.n")
+  if ok_lz then pcall(lz.trigger_load, "ibhagwan/fzf-lua") end
+  if vim.fn.exists ":FzfLua" ~= 2 then pcall(vim.cmd.packadd, "fzf-lua") end
+  return require "fzf-lua"
+end
+
+local function confirm_kill(root, cb)
+  local name = vim.fn.fnamemodify(root, ":~")
+  vim.schedule(function()
+    vim.ui.input({ prompt = "mux: kill session " .. name .. "? [y/N]: " }, function(input)
+      local answer = (input or ""):lower():match "^%s*(.-)%s*$"
+      if answer == "y" or answer == "yes" then cb() end
+    end)
+  end)
+end
+
+---@param pid integer?
+---@return boolean
+local function pid_alive(pid)
+  if not pid then return false end
+  local ok, res = pcall(vim.uv.kill, pid, 0)
+  return ok and res == 0
+end
+
+---@param sock string
+---@return boolean
+local function socket_live(sock)
+  local pidf = (sock:gsub("%.sock$", ".pid"))
+  if vim.fn.filereadable(pidf) == 1 then return pid_alive(tonumber(vim.fn.readfile(pidf)[1])) end
+  local ok, ch = pcall(vim.fn.sockconnect, "pipe", sock, { rpc = true })
+  if ok and type(ch) == "number" and ch > 0 then
+    pcall(vim.fn.chanclose, ch)
+    return true
+  end
+  return false
+end
+
+---@param slug string
+---@return string? root
+local function root_for_slug(slug)
+  local f = sessions_dir() .. "/" .. slug .. ".root"
+  if vim.fn.filereadable(f) == 1 then
+    local root = vim.fn.readfile(f)[1]
+    if root and root ~= "" then return root end
+  end
+  return nil
+end
+
+---@param path string?
+---@return string?, string?
+local function validate_dir(path)
+  local root = canon(vim.trim(path or ""))
+  if root == "" then return nil, "empty path" end
+  if vim.fn.isdirectory(root) ~= 1 then return nil, ("not a directory: %s"):format(vim.fn.fnamemodify(root, ":~")) end
+  return root, nil
+end
+
+---@param err string
+local function notify_path_error(err)
+  vim.notify("mux: " .. err, vim.log.levels.ERROR)
+  core.restore_terminal_focus()
+end
+
+---@return { cwd: string, socket: string, status: string }[]
+local function list_entries()
+  local entries = {}
+  local live = {}
+  local socks = vim.fn.glob(core.runtime_dir() .. "/*.sock", true, true)
+  table.sort(socks)
+  for _, sock in ipairs(socks) do
+    if socket_live(sock) then
+      local slug = vim.fn.fnamemodify(sock, ":t:r")
+      local cwd = root_for_slug(slug)
+      if cwd then
+        live[slug] = true
+        entries[#entries + 1] = { cwd = cwd, socket = sock, status = "live" }
+      end
+    end
+  end
+  local stopped, dead = {}, {}
+  for _, rf in ipairs(vim.fn.glob(sessions_dir() .. "/*.root", true, true)) do
+    local slug = vim.fn.fnamemodify(rf, ":t:r")
+    local root = vim.fn.readfile(rf)[1]
+    if root and root ~= "" and not live[slug] then
+      if vim.fn.isdirectory(root) == 1 then
+        local vimfile = (rf:gsub("%.root$", ".vim"))
+        if vim.fn.filereadable(vimfile) == 1 then stopped[#stopped + 1] = { cwd = root, socket = "", status = "stopped" } end
+      else
+        dead[#dead + 1] = { cwd = root, socket = "", status = "dead" }
+      end
+    end
+  end
+  for _, e in ipairs(stopped) do
+    entries[#entries + 1] = e
+  end
+  for _, e in ipairs(dead) do
+    entries[#entries + 1] = e
+  end
+  return entries
+end
+
+M.list_entries = list_entries
+
+---@param status string
+---@return boolean
+local function known_project_status(status)
+  return status == "live" or status == "stopped" or status == "dead" or status == "dir"
+end
+
+---@param output string?
+---@return { cwd: string, socket: string, status: string }[]
+local function parse_list_output(output)
+  local entries = {}
+  for line in (output or ""):gmatch "[^\n]+" do
+    local cwd, socket, status = line:match "([^\t]*)\t([^\t]*)\t([^\t]*)"
+    if cwd and cwd ~= "" and known_project_status(status) then
+      entries[#entries + 1] = { cwd = cwd, socket = socket, status = status }
+    end
+  end
+  return entries
+end
+
+-- Build and show the project picker from `mux list`, mirroring the CLI's
+-- colored output: [live] (green) and [stopped] (amber) rows, each with the
+-- ~-shortened path and socket. Selecting connects to that project.
+---@param items { cwd: string, socket: string, status: string }[]
+local function show_picker(items)
+  ---@type { path: string, socket: string?, status: string, disp: string }[]
+  local entries = {}
+  local w = 0
+  for _, item in ipairs(items or {}) do
+    local cwd, sock, status = item.cwd, item.socket, item.status
+    if cwd and cwd ~= "" and known_project_status(status) then
+      local path = canon(cwd)
+      local disp = vim.fn.fnamemodify(path, ":~")
+      if #disp > w then w = #disp end
+      entries[#entries + 1] = {
+        path = path,
+        socket = (sock and sock ~= "" and sock) or nil,
+        status = status,
+        disp = disp,
+      }
+    end
+  end
+
+  if #entries == 0 then
+    core.restore_terminal_focus()
+    return
+  end
+
+  -- strip SGR codes so meta lookups work whether fzf hands back the colored
+  -- row or a plain one.
+  local function strip_ansi(s) return (s:gsub("\27%[[%d;]*m", "")) end
+  local fzf = load_fzf()
+  local hl = require("fzf-lua.utils").ansi_from_hl
+  -- status tag -> theme highlight group (picker coloring only)
+  local tag_hl = {
+    live = "DiagnosticOk",
+    stopped = "DiagnosticWarn",
+    dead = "DiagnosticError",
+  }
+
+  local color_lines, meta = {}, {}
+  for _, e in ipairs(entries) do
+    local tag = e.status == "dir" and (" "):rep(9) or ("%-9s"):format(("[%s]"):format(e.status))
+    local rest = (" %-" .. w .. "s  %s"):format(e.disp, e.socket or "")
+    rest = (rest:gsub("%s+$", ""))
+    local group = tag_hl[e.status]
+    color_lines[#color_lines + 1] = (hl and group and hl(group, tag) .. rest) or (tag .. rest)
+    meta[tag .. rest] = { path = e.path, socket = e.socket, status = e.status }
+  end
+
+  local actions = {
+    ["default"] = function(sel)
+      local entry = sel and sel[1] and meta[strip_ansi(sel[1])]
+      if entry and entry.status ~= "dead" then M._connect(entry) end
+    end,
+    ["ctrl-o"] = function(_, opts)
+      local path, err = validate_dir(opts and opts.last_query or nil)
+      if not path then
+        notify_path_error(err or "invalid path")
+        return
+      end
+      M._connect { path = path }
+    end,
+  }
+  local parts = {}
+  for _, name in ipairs(VIEW_ORDER) do
+    local spec = views[name]
+    actions["ctrl-" .. spec.key] = function(sel)
+      local entry = sel and sel[1] and meta[strip_ansi(sel[1])]
+      if entry and entry.status ~= "dead" then M._connect(entry, name) end
+    end
+    parts[#parts + 1] = ("%s %s"):format(hl("FzfLuaHeaderBind", "^" .. spec.key:upper()), hl("FzfLuaHeaderText", name))
+  end
+  parts[#parts + 1] = ("%s %s"):format(hl("FzfLuaHeaderBind", "^O"), hl("FzfLuaHeaderText", "open"))
+  local function lifecycle(verb, sel)
+    local entry = sel and sel[1] and meta[strip_ansi(sel[1])]
+    if entry and entry.status == "dir" then return end
+    if entry and entry.status == "dead" and verb == "stop" then return end
+    if entry and entry.path then
+      if canon(entry.path) == session.root() then
+        if verb == "kill" then
+          confirm_kill(entry.path, session.kill_session)
+        else
+          session.stop_session()
+        end
+        return
+      end
+      local function run()
+        vim.system({ "mux", verb, entry.path }, function() vim.schedule(M.pick_project) end)
+      end
+      if verb == "kill" then
+        confirm_kill(entry.path, run)
+      else
+        run()
+      end
+      return
+    end
+    vim.schedule(M.pick_project)
+  end
+  actions["ctrl-s"] = function(sel) lifecycle("stop", sel) end
+  parts[#parts + 1] = ("%s %s"):format(hl("FzfLuaHeaderBind", "^S"), hl("FzfLuaHeaderText", "stop"))
+  actions["ctrl-x"] = function(sel) lifecycle("kill", sel) end
+  parts[#parts + 1] = ("%s %s"):format(hl("FzfLuaHeaderBind", "^X"), hl("FzfLuaHeaderText", "kill"))
+  fzf.fzf_exec(color_lines, {
+    prompt = "project> ",
+    fzf_args = (vim.env.FZF_DEFAULT_OPTS or ""):gsub("%-%-bind=ctrl%-a:select%-all", ""),
+    keymap = { fzf = { ["ctrl-z"] = false } },
+    fzf_opts = {
+      ["--ansi"] = true,
+      ["--header"] = ":: " .. table.concat(parts, " | "),
+    },
+    winopts = {
+      on_close = function() vim.schedule(core.restore_terminal_focus) end,
+    },
+    actions = actions,
+  })
+end
+
+---@param entry { path: string, socket: string? }
+---@param view string?
+function M._connect(entry, view)
+  if not entry then return end
+  if not entry.socket or entry.socket == "" then
+    local path, err = validate_dir(entry.path)
+    if not path then
+      notify_path_error(err)
+      return
+    end
+    entry.path = path
+  end
+  if entry.socket and entry.socket ~= "" and entry.socket == vim.v.servername then
+    session.record_last(entry.path)
+    if view then
+      require("mux.view").open_view(view)
+    else
+      core.restore_terminal_focus()
+    end
+    return
+  end
+  leave_terminal()
+  local function go(sock)
+    if not sock or sock == "" then
+      core.restore_terminal_focus()
+      return
+    end
+    local function finish()
+      session.record_last(entry.path)
+      vim.cmd("connect " .. vim.fn.fnameescape(sock))
+    end
+    if view then
+      local expr = ("luaeval('(function() require([[mux]]).open_view([[%s]]) return 1 end)()')"):format(view)
+      vim.system({ "nvim", "--server", sock, "--remote-expr", expr }, function() vim.schedule(finish) end)
+    else
+      finish()
+    end
+  end
+  if entry.socket and entry.socket ~= "" then
+    go(entry.socket)
+    return
+  end
+  vim.system({ "mux", "ensure", entry.path }, { text = true }, function(res)
+    local sock = res.code == 0 and res.stdout and res.stdout:match "[^\n]+" or nil
+    vim.schedule(function()
+      if sock then
+        go(sock)
+      else
+        core.restore_terminal_focus()
+      end
+    end)
+  end)
+end
+
+function M.pick_project()
+  leave_terminal()
+  local ok = pcall(vim.system, { "mux", "list" }, { text = true }, function(res)
+    vim.schedule(function()
+      if res.code == 0 then
+        show_picker(parse_list_output(res.stdout))
+      else
+        core.restore_terminal_focus()
+      end
+    end)
+  end)
+  if not ok then core.restore_terminal_focus() end
+end
+
+---@param step integer 1 = next live project, -1 = previous (wraps)
+function M.cycle_project(step)
+  local entries = {}
+  for _, item in ipairs(list_entries()) do
+    if item.status == "live" and item.socket ~= "" then entries[#entries + 1] = { cwd = item.cwd, sock = item.socket } end
+  end
+  vim.schedule(function()
+    if #entries < 2 then return end
+    local cur, idx = vim.v.servername, 1
+    for i, e in ipairs(entries) do
+      if e.sock == cur then
+        idx = i
+        break
+      end
+    end
+    local target = entries[((idx - 1 + step) % #entries) + 1]
+    if not target or target.sock == cur then return end
+    leave_terminal()
+    session.record_last(target.cwd)
+    vim.cmd("connect " .. vim.fn.fnameescape(target.sock))
+  end)
+end
+
+---@param cb fun(root?: string, sock?: string)
+local function with_latest_live_other(cb)
+  local live = {}
+  for _, item in ipairs(list_entries()) do
+    if item.cwd and item.status == "live" and item.socket ~= "" then live[canon(item.cwd)] = item.socket end
+  end
+  vim.schedule(function()
+    local cur = session.root()
+    local hf = core.state_dir() .. "/history"
+    local hist = vim.fn.filereadable(hf) == 1 and vim.fn.readfile(hf) or {}
+    for i = #hist, 1, -1 do
+      local root = canon(hist[i])
+      local sock = root ~= "" and root ~= cur and live[root]
+      if sock then
+        cb(root, sock)
+        return
+      end
+    end
+    cb(nil, nil)
+  end)
+end
+
+function M.last_session()
+  with_latest_live_other(function(root, sock)
+    if sock then M._connect { path = root, socket = sock } end
+  end)
+end
+
+-- Killing the last tabpage: hop the client to the latest live project, then
+-- soft-stop this session so it stays resumable. With no other live project the
+-- stop drops the client to the shell -- like tmux detach-on-destroy=off.
+function M.stop_to_latest()
+  with_latest_live_other(function(root, sock)
+    if sock then
+      session.record_last(root)
+      pcall(vim.cmd, "connect " .. vim.fn.fnameescape(sock))
+    end
+    session.stop_session()
+  end)
+end
+
+function M.kill_to_latest()
+  local current = session.root()
+  confirm_kill(current, function()
+    with_latest_live_other(function(root, sock)
+      if sock then
+        session.record_last(root)
+        pcall(vim.cmd, "connect " .. vim.fn.fnameescape(sock))
+      end
+      session.kill_session()
+    end)
+  end)
+end
+
+return M

@@ -57,3 +57,41 @@ api.nvim_create_autocmd("VimResized", {
     vim.cmd("tabnext " .. tab)
   end,
 })
+
+-- Terminals open ready to type, and panes you were typing in resume
+-- terminal-mode when you navigate back. An explicit <Esc> out of a terminal
+-- sticks until you re-enter it; programmatic leaves (mux view switching, via
+-- b:term_programmatic) preserve the insert intent.
+api.nvim_create_autocmd("TermOpen", {
+  group = augroup,
+  callback = function()
+    vim.b.term_insert = true
+    vim.cmd.startinsert()
+  end,
+})
+
+api.nvim_create_autocmd("TermEnter", {
+  group = augroup,
+  callback = function() vim.b.term_insert = true end,
+})
+
+api.nvim_create_autocmd("TermLeave", {
+  group = augroup,
+  callback = function()
+    if vim.b.term_programmatic then
+      vim.b.term_programmatic = nil
+    else
+      vim.b.term_insert = false
+    end
+  end,
+})
+
+api.nvim_create_autocmd("WinEnter", {
+  group = augroup,
+  callback = function()
+    if vim.bo.buftype ~= "terminal" or not vim.b.term_insert then return end
+    vim.schedule(function()
+      if vim.bo.buftype == "terminal" and vim.b.term_insert then pcall(vim.cmd.startinsert) end
+    end)
+  end,
+})

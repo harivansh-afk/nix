@@ -48,7 +48,6 @@ in
   neovim
   nvimAliases
   tea
-  tmux
 ])
 ++ nvimPackages
 ++ extraPackages

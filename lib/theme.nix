@@ -85,8 +85,6 @@ let
     fzfCurrentFile = "${configHome}/fzf/themes/theme";
     ghosttyDir = "${configHome}/ghostty/themes";
     ghosttyCurrentFile = "${configHome}/ghostty/themes/cozybox-current";
-    tmuxDir = "${configHome}/tmux/theme";
-    tmuxCurrentFile = "${configHome}/tmux/theme/current.conf";
     lazygitDir = "${configHome}/lazygit";
     lazygitCurrentFile = "${configHome}/lazygit/config.yml";
     gitDir = "${configHome}/git";
@@ -181,22 +179,6 @@ let
       selection-background = ${theme.selectionBackground}
       selection-foreground = ${theme.selectionForeground}
       ${paletteLines}
-    '';
-
-  renderTmux =
-    mode:
-    let
-      theme = themes.${mode};
-    in
-    ''
-      set-option -g @cozybox-mode '${mode}'
-      set-option -g @cozybox-accent '${theme.purple}'
-      set-option -g status-style bg=${theme.background},fg=${theme.text}
-      set-option -g window-status-format " #I#[fg=${theme.purple}]:#[fg=default]#W "
-      set-option -g window-status-current-format " #[bold,fg=${theme.purple}]*#[nobold,fg=default]#I#[fg=${theme.purple}]:#[fg=default]#W "
-      set-option -g window-status-separator "#[fg=${theme.mutedText}]|#[fg=default]"
-      set-option -g pane-border-style fg=${theme.border}
-      set-option -g pane-active-border-style fg=${theme.border}
     '';
 
   renderFzf =
@@ -676,7 +658,6 @@ in
     renderGhostty
     renderLazygit
     renderPurePrompt
-    renderTmux
     renderZshHighlights
     themes
     wallpapers

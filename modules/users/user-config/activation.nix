@@ -62,8 +62,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${configHome}/fzf/themes" \
     "${configHome}/ghostty/shaders" \
     "${configHome}/ghostty/themes" \
-    "${configHome}/tmux/theme" \
-    "${configHome}/tmux/plugins" \
     "${configHome}/lazygit" \
     "${configHome}/direnv/lib" \
     "${configHome}/k9s" \
@@ -110,13 +108,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     mkSymlink "${dotsRoot}/xdg/macbook-open.desktop" "${homeDirectory}/.local/share/applications/macbook-open.desktop"
     mkSymlink "${dotsRoot}/xdg/mimeapps.list" "${configHome}/mimeapps.list"
   ''}
-
-  # --- tmux ---
-  mkSymlink "${dotsRoot}/tmux/tmux.conf" "${configHome}/tmux/tmux.conf"
-  mkSymlink "${dotsRoot}/tmux/session-list.sh" "${configHome}/tmux/session-list.sh"
-  mkSymlink "${dotsRoot}/tmux/tmux-clip-relay" "${homeDirectory}/.local/bin/tmux-clip-relay"
-  mkSymlink "${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect" "${configHome}/tmux/plugins/resurrect"
-  mkSymlink "${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum" "${configHome}/tmux/plugins/continuum"
 
   # --- nvim: live directory symlink; salvage lock files from the old
   # home-manager symlink forest before replacing it ---
@@ -304,7 +295,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkdir -p "${theme.paths.stateDir}" \
            "${theme.paths.fzfDir}" \
            "${theme.paths.ghosttyDir}" \
-           "${theme.paths.tmuxDir}" \
            "${theme.paths.lazygitDir}" \
            "${theme.paths.gitDir}" \
            "${theme.wallpapers.dir}"
@@ -321,7 +311,6 @@ pkgs.writeShellScript "user-config-${name}" ''
 
   ln -sfn "$THEME_FZF_TARGET" "${theme.paths.fzfCurrentFile}"
   ln -sfn "$THEME_GHOSTTY_TARGET" "${theme.paths.ghosttyCurrentFile}"
-  ln -sfn "$THEME_TMUX_TARGET" "${theme.paths.tmuxCurrentFile}"
   ln -sfn "$THEME_LAZYGIT_TARGET" "${theme.paths.lazygitCurrentFile}"
   ln -sfn "$THEME_GIT_THEME_TARGET" "${theme.paths.gitThemeCurrentFile}"
 

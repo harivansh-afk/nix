@@ -28,6 +28,7 @@
     ../../modules/services/kb-ingest.nix
     ../../modules/services/kb-ingestion.nix
     ../../modules/services/kb-graph.nix
+    ../../modules/services/kb-graph-query.nix
     ../../modules/services/kb-finance.nix
     ../../modules/services/mini-loops.nix
     ../../modules/services/mosh.nix

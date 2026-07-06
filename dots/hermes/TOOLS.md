@@ -114,20 +114,42 @@ Fast vector search (default, start here):
 Returns ranked results from Hari's indexed notes and documents.
 Use before asking him - if the answer might already be written down, search first.
 
-Deeper search over the same KB's knowledge graph (first-party cognee CLI,
-read-only). Use it when kb-search comes back thin or the question spans
-sources (email + finance + calendar). Absolute paths matter - your service
-PATH is minimal:
+## Knowledge graph (kb-graph)
 
-  /run/wrappers/bin/sudo /run/current-system/sw/bin/cognee-env \
-    /var/lib/cognee/venv/bin/cognee-cli search -t CHUNKS -k 10 -f simple "query"
+When kb-search comes back thin, or the question is about how two things RELATE
+(who is connected to what, does X link to Y, where did a fact come from), use
+`kb-graph`. It walks the knowledge graph Cognee builds nightly from the same
+sources: the entities it extracted and the relations between them. It is
+read-only, runs unprivileged (no sudo - that path is blocked in your sandbox),
+and prints JSON.
 
-Flags: `-t` CHUNKS (raw passages, no LLM - prefer this) | SUMMARIES |
-GRAPH_COMPLETION (one-shot LLM answer, weakest); `-d` limits to datasets
-(gmail calendar finance forgejo downloads loops research); `-f json` for
-parseable output. Iterate: reformulate and re-query rather than trusting one
-pass. Search is READ-ONLY; never run other cognee-cli subcommands
-(add/cognify/delete/forget/memify) - they modify the KB, which is ask-first.
+Four subcommands:
+
+  kb-graph resolve "<mention>"        # fuzzy mention -> ranked real entities
+  kb-graph neighbors "<entity>"       # what an entity connects to
+  kb-graph connect "<A>" "<B>"        # shortest relation path between two entities
+  kb-graph source "<entity>"          # the real source-document chunks behind it
+
+How to use it well - this matters, the graph is powerful but noisy:
+
+1. Start with `resolve` to turn a rough mention into a real entity name (it
+   combines exact, substring, and semantic matching, and reports each match's
+   datasets and degree). Names are lowercased and messy, so two spellings can be
+   separate entities - resolve first, then pass the exact name (or its slug) to
+   the other commands.
+2. `connect` answers "are these two linked" and is reliable: reachability is
+   real even when the edge labels are not.
+3. Trust node existence and connectivity; DISTRUST the edge names. The extractor
+   invents relation names and sometimes reverses direction, so read an edge as
+   "these two are related", never quote it as a fact.
+4. The ground truth is the source text. When you need the actual fact, run
+   `source` and read the returned document chunk - answer from that sentence,
+   with its dataset, not from a relation label.
+
+Datasets in the graph: gmail calendar finance forgejo downloads loops research.
+
+The graph is READ-ONLY here. Never run cognee subcommands that modify it
+(add/cognify/delete/forget/memify); re-indexing is ask-first.
 
 ## Finance namespace (local-only)
 

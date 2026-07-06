@@ -12,6 +12,28 @@ local VIEW_ORDER = core.VIEW_ORDER
 local TABLINE_EXPR = "%!v:lua.require'mux.line'.render()"
 local refresh_pending = false
 
+-- cozybox palette (mirrors lib/theme.nix); keyed by vim.o.background so the bar
+-- tracks `theme` switches. Purple accent + muted separators, matching the old
+-- tmux status bar.
+local PALETTE = {
+  dark = { purple = "#d3869b", text = "#d4be98", muted = "#7c6f64", border = "#3c3836", bg = "#101010" },
+  light = { purple = "#d3869b", text = "#3c3836", muted = "#665c54", border = "#000000", bg = "#e7e7e7" },
+}
+
+function M.setup_hl()
+  local c = vim.o.background == "light" and PALETTE.light or PALETTE.dark
+  local set = vim.api.nvim_set_hl
+  set(0, "MuxFill", { fg = c.muted, bg = c.bg })
+  set(0, "MuxText", { fg = c.text, bg = c.bg })
+  set(0, "MuxTextCur", { fg = c.purple, bg = c.bg, bold = true })
+  set(0, "MuxAccent", { fg = c.purple, bg = c.bg })
+  set(0, "MuxMark", { fg = c.purple, bg = c.bg, bold = true })
+  set(0, "MuxMuted", { fg = c.muted, bg = c.bg })
+  set(0, "TabLineFill", { link = "MuxFill" })
+  -- tmux-style pane borders: single line in the border color.
+  set(0, "WinSeparator", { fg = c.border })
+end
+
 local function visibility_file() return core.runtime_dir() .. "/bar" end
 
 local function visibility_mode()
@@ -36,39 +58,34 @@ local function hl(group, text)
   return ("%%#%s#%s%%*"):format(group, text)
 end
 
----@param current boolean
----@return string
-local function label_group(current) return current and "TabLineSel" or "TabLine" end
-
+-- window/session mark: `*` current (accent), `-` last (muted), else nothing.
 ---@param current boolean
 ---@param last boolean
 ---@return string
 local function mark(current, last)
-  if current then return "*" end
-  if last then return "-" end
+  if current then return hl("MuxMark", "*") end
+  if last then return hl("MuxMuted", "-") end
   return ""
 end
 
----@param m string
 ---@param key string
 ---@param name string
 ---@param current boolean
+---@param last boolean
 ---@return string
-local function view_segment(m, key, name, current)
-  local group = label_group(current)
-  return table.concat {
-    hl("Directory", m),
-    hl(group, key),
-    hl("Directory", ":"),
-    hl(group, name),
-  }
+local function view_segment(key, name, current, last)
+  local body = current and "MuxTextCur" or "MuxText"
+  return mark(current, last) .. hl(body, key) .. hl("MuxAccent", ":") .. hl(body, name)
 end
 
----@param m string
 ---@param name string
 ---@param current boolean
+---@param last boolean
 ---@return string
-local function session_segment(m, name, current) return hl("Directory", m) .. hl(label_group(current), name) end
+local function session_segment(name, current, last)
+  local body = current and "MuxTextCur" or "MuxText"
+  return mark(current, last) .. hl(body, name)
+end
 
 ---@param entries { cwd: string, socket: string, status: string }[]
 ---@param current string
@@ -108,17 +125,13 @@ local function view_segments()
     local tp = find_view(name)
     if tp then
       local spec = views[name]
-      parts[#parts + 1] = view_segment(mark(tp == current, tp == last), spec.key, name, tp == current)
+      parts[#parts + 1] = view_segment(spec.key, name, tp == current, tp == last)
     end
   end
   for _, tp in ipairs(vim.api.nvim_list_tabpages()) do
     if not core.tab_view[tp] then
-      parts[#parts + 1] = view_segment(
-        mark(tp == current, tp == last),
-        tostring(vim.api.nvim_tabpage_get_number(tp)),
-        window_label(tp),
-        tp == current
-      )
+      parts[#parts + 1] =
+        view_segment(tostring(vim.api.nvim_tabpage_get_number(tp)), window_label(tp), tp == current, tp == last)
     end
   end
   return parts
@@ -134,7 +147,7 @@ local function session_segments()
     if entry.status == "live" then
       local root = canon(entry.cwd)
       local name = vim.fn.fnamemodify(root, ":t")
-      if name ~= "" then parts[#parts + 1] = session_segment(mark(root == current, root == last), name, root == current) end
+      if name ~= "" then parts[#parts + 1] = session_segment(name, root == current, root == last) end
     end
   end
   return parts
@@ -149,8 +162,14 @@ end
 ---@return string
 function M.render()
   if vim.env.MUX ~= "1" then return "" end
+  local divider = hl("MuxMuted", " | ")
   local ok, rendered = pcall(
-    function() return (" %s%%=%s "):format(table.concat(view_segments(), " "), table.concat(session_segments(), " ")) end
+    function()
+      return (" %s%%=%s "):format(
+        table.concat(view_segments(), divider),
+        table.concat(session_segments(), "  ")
+      )
+    end
   )
   if ok then return rendered end
   return ""

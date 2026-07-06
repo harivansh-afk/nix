@@ -45,6 +45,7 @@ function M.setup()
   M._did = true
 
   vim.o.sessionoptions = "buffers,curdir,folds,globals,help,tabpages,winsize,winpos"
+  vim.opt.fillchars:append { vert = "│" }
 
   local prefix = "<c-b>"
   local modes = { "n", "i", "t" }
@@ -107,7 +108,12 @@ function M.setup()
   muxmap(prefix .. "B", line.toggle, "mux: toggle mux bar")
 
   local group = vim.api.nvim_create_augroup("mux", { clear = true })
+  line.setup_hl()
   line.apply_visibility()
+  vim.api.nvim_create_autocmd("ColorScheme", {
+    group = group,
+    callback = line.setup_hl,
+  })
   vim.api.nvim_create_autocmd("TabClosed", {
     group = group,
     callback = function()
@@ -129,6 +135,7 @@ function M.setup()
   vim.api.nvim_create_autocmd("UIEnter", {
     group = group,
     callback = function()
+      line.setup_hl()
       line.apply_visibility()
       line.refresh()
     end,

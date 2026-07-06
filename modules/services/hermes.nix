@@ -92,6 +92,8 @@ let
     set_if_diff display.platforms.photon.tool_progress "false"
     set_if_diff display.platforms.photon.streaming "false"
 
+    set_if_diff approvals.cron_mode "approve"
+
     have_mem="$(${pkgs.yq-go}/bin/yq -r '.memory.provider // ""' "$cfg" 2>/dev/null || echo "")"
     if [ -n "$have_mem" ]; then
       ${hermes}/bin/hermes memory off || true
@@ -131,6 +133,7 @@ in
       HERMES_INFERENCE_PROVIDER = provider;
       CUSTOM_BASE_URL = baseUrl;
       HERMES_GATEWAY_BUSY_ACK_ENABLED = "false";
+      HERMES_YOLO_MODE = "1";
     };
 
     serviceConfig = {

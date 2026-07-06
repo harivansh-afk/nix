@@ -422,10 +422,23 @@ list_rows() {
       printf '%s\t%s\t%s\n' "${dcwds[$i]}" "${dsocks[$i]}" "${dstats[$i]}"
     done
   fi
+  # Resolve each zoxide dir to its workspace root with a pure-shell marker walk
+  # (no git/realpath/dirname subprocess per dir); 200+ dirs otherwise cost
+  # seconds of fork+exec on every `mux list` / picker open.
   zoxide query -l 2>/dev/null | while IFS= read -r root; do
     [ -n "$root" ] || continue
-    root="$(workspace_root_for "$root")" || continue
-    printf '%s\t\t%s\n' "$root" dir
+    case "$root" in /*) ;; *) continue ;; esac
+    d="$root"
+    while [ -n "$d" ] && [ "$d" != "/" ]; do
+      if [ -e "$d/.git" ] || [ -e "$d/.jj" ]; then
+        printf '%s\t\t%s\n' "$d" dir
+        break
+      fi
+      p="${d%/*}"
+      [ -n "$p" ] || p="/"
+      [ "$p" != "$d" ] || break
+      d="$p"
+    done
   done || true
 }
 

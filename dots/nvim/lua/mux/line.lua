@@ -165,10 +165,7 @@ function M.render()
   local divider = hl("MuxMuted", " | ")
   local ok, rendered = pcall(
     function()
-      return (" %s%%=%s "):format(
-        table.concat(view_segments(), divider),
-        table.concat(session_segments(), "  ")
-      )
+      return (" %s%%=%s "):format(table.concat(view_segments(), divider), table.concat(session_segments(), "  "))
     end
   )
   if ok then return rendered end
@@ -200,11 +197,7 @@ end
 function M.start_watchers()
   if vim.env.MUX ~= "1" or M._timer then return end
   M._timer = vim.uv.new_timer()
-  M._timer:start(
-    500,
-    500,
-    vim.schedule_wrap(function() M.refresh() end)
-  )
+  M._timer:start(500, 500, vim.schedule_wrap(function() M.refresh() end))
 end
 
 function M.stop_watchers()

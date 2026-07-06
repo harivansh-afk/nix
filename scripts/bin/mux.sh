@@ -532,8 +532,8 @@ list() {
 
 pick() {
   local choice query="${1:-}"
-  choice="$(list | awk -F'\t' '$3 != "dead" { print $1 }' | sed "s|^$HOME|~|" \
-    | fzf --query "$query" --select-1 --exit-0 --prompt 'project> ')" || return 0
+  choice="$(list | awk -F'\t' '$3 != "dead" { print $1 }' | sed "s|^$HOME|~|" |
+    fzf --query "$query" --select-1 --exit-0 --prompt 'project> ')" || return 0
   if [ -z "$choice" ]; then
     [ -n "$query" ] && printf 'mux: no project matching %s\n' "$query" >&2
     return 0

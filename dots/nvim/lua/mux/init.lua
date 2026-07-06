@@ -189,11 +189,7 @@ function M.setup()
   line.refresh()
 
   M._timer = vim.uv.new_timer()
-  M._timer:start(
-    AUTOSAVE_INTERVAL_MS,
-    AUTOSAVE_INTERVAL_MS,
-    vim.schedule_wrap(function() session.save_session() end)
-  )
+  M._timer:start(AUTOSAVE_INTERVAL_MS, AUTOSAVE_INTERVAL_MS, vim.schedule_wrap(function() session.save_session() end))
 end
 
 return M

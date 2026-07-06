@@ -150,9 +150,7 @@ end
 
 function M.reload_all()
   vim.system({ "mux", "reload", "--all" }, function(res)
-    if res.code ~= 0 then
-      vim.schedule(function() vim.notify("mux reload --all failed", vim.log.levels.ERROR) end)
-    end
+    if res.code ~= 0 then vim.schedule(function() vim.notify("mux reload --all failed", vim.log.levels.ERROR) end) end
   end)
 end
 

@@ -97,7 +97,9 @@ local function list_entries()
     if root and root ~= "" and not live[slug] then
       if vim.fn.isdirectory(root) == 1 then
         local vimfile = (rf:gsub("%.root$", ".vim"))
-        if vim.fn.filereadable(vimfile) == 1 then stopped[#stopped + 1] = { cwd = root, socket = "", status = "stopped" } end
+        if vim.fn.filereadable(vimfile) == 1 then
+          stopped[#stopped + 1] = { cwd = root, socket = "", status = "stopped" }
+        end
       else
         dead[#dead + 1] = { cwd = root, socket = "", status = "dead" }
       end
@@ -323,7 +325,9 @@ end
 function M.cycle_project(step)
   local entries = {}
   for _, item in ipairs(list_entries()) do
-    if item.status == "live" and item.socket ~= "" then entries[#entries + 1] = { cwd = item.cwd, sock = item.socket } end
+    if item.status == "live" and item.socket ~= "" then
+      entries[#entries + 1] = { cwd = item.cwd, sock = item.socket }
+    end
   end
   vim.schedule(function()
     if #entries < 2 then return end

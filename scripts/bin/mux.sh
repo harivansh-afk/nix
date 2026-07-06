@@ -355,7 +355,6 @@ open_project() {
   push_history "$root"
   cd "$root" || true
   env MUX=1 "$NVIM" --remote-ui --server "$sock"
-  exec "${SHELL:-/bin/sh}"
 }
 
 resume() {

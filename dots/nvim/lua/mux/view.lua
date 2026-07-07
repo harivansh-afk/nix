@@ -7,6 +7,14 @@ local find_view = core.find_view
 
 local M = {}
 
+---@param cmd string[]
+---@param cwd? string
+local function start_terminal(cmd, cwd)
+  vim.fn.jobstart(cmd, { term = true, cwd = cwd or vim.fn.getcwd() })
+  vim.b.term_insert = true
+  vim.schedule(core.restore_terminal_focus)
+end
+
 ---@param tp integer
 ---@param restoring? boolean true when pruning a stale tab during session restore
 function M.close_view_tab(tp, restoring)
@@ -101,9 +109,7 @@ function M.materialize(name, restoring)
   elseif spec.kind == "vcs" then
     pcall(vim.cmd, "Git|only")
   elseif spec.kind == "terminal" then
-    local cmd = spec.cmd
-    vim.fn.jobstart(cmd, { term = true, cwd = cwd })
-    core.restore_terminal_focus()
+    start_terminal(spec.cmd, cwd)
   end
 end
 
@@ -119,12 +125,20 @@ local function create_view(name, enter)
   return tp
 end
 
+-- tmux split-window: keep terminal insert intent across the prefix transition
+-- and start the new shell ready for input.
+---@param vertical boolean
+function M.split_terminal(vertical)
+  core.leave_terminal()
+  vim.cmd(vertical and "vsplit" or "split")
+  start_terminal { vim.o.shell }
+end
+
 -- tmux new-window: an untagged tabpage holding a fresh shell.
 function M.new_window()
   core.leave_terminal()
   vim.cmd "tabnew"
-  vim.fn.jobstart({ vim.o.shell }, { term = true, cwd = vim.fn.getcwd() })
-  vim.cmd.startinsert()
+  start_terminal { vim.o.shell }
 end
 
 -- tmux-style pane zoom: maximize the current window within its tab and toggle

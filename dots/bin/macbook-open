@@ -30,6 +30,20 @@ mac="${OPEN_HOST:-macbook}"
 # the non-interactive remote shell has no profile PATH.
 pandoc=/run/current-system/sw/bin/pandoc
 
+script_path="${BASH_SOURCE[0]}"
+while [ -L "$script_path" ]; do
+  script_dir="$(cd -P "$(dirname "$script_path")" && pwd)"
+  link="$(readlink "$script_path")"
+  case "$link" in
+  /*) script_path="$link" ;;
+  *) script_path="$script_dir/$link" ;;
+  esac
+done
+script_dir="$(cd -P "$(dirname "$script_path")" && pwd)"
+markdown_viewer_dir="$(cd "$script_dir/../markdown-viewer" && pwd)"
+markdown_css_file="$markdown_viewer_dir/markdown-viewer.css"
+markdown_after_body_file="$markdown_viewer_dir/mermaid.html"
+
 if [ "$#" -eq 0 ]; then
   echo "usage: macbook-open <file|url> [...]" >&2
   exit 1
@@ -81,15 +95,23 @@ send_file() {
 # file and the default browser opens it; a missing pandoc is a hard error
 # naming the fix, not a silent fall-through to the LaunchServices default.
 send_markdown() {
-  local file="$1" safe="$2"
+  local file="$1" safe="$2" markdown_css markdown_after_body
   if [ -n "${OPEN_MD_APP:-}" ]; then
     ssh -o BatchMode=yes -o ConnectTimeout=8 "$mac" \
       "d=\$(mktemp -d -t remote-open) && cat > \"\$d/$safe\" && /usr/bin/open -a $(printf '%q' "$OPEN_MD_APP") \"\$d/$safe\"" \
       <"$file" || fail $?
     return
   fi
+  markdown_css="$(cat "$markdown_css_file")"
+  markdown_after_body="$(cat "$markdown_after_body_file")"
   ssh -o BatchMode=yes -o ConnectTimeout=8 "$mac" \
-    "d=\$(mktemp -d -t remote-open) && cat > \"\$d/$safe\" && if [ -x $pandoc ]; then $pandoc --standalone --from gfm --metadata pagetitle=\"$safe\" --output \"\$d/$safe.html\" \"\$d/$safe\" && /usr/bin/open \"\$d/$safe.html\"; else echo 'macbook-open: pandoc missing on the Mac; darwin-rebuild switch installs it (packages.nix darwinExtras)' >&2; exit 3; fi" \
+    "d=\$(mktemp -d -t remote-open) && cat > \"\$d/$safe\" && cat > \"\$d/markdown-viewer.css\" <<'EOF_CSS'
+$markdown_css
+EOF_CSS
+cat > \"\$d/markdown-mermaid.html\" <<'EOF_JS'
+$markdown_after_body
+EOF_JS
+if [ -x $pandoc ]; then $pandoc --standalone --from gfm --metadata pagetitle=\"$safe\" --css \"\$d/markdown-viewer.css\" --include-after-body \"\$d/markdown-mermaid.html\" --output \"\$d/$safe.html\" \"\$d/$safe\" && /usr/bin/open \"\$d/$safe.html\"; else echo 'macbook-open: pandoc missing on the Mac; darwin-rebuild switch installs it (packages.nix darwinExtras)' >&2; exit 3; fi" \
     <"$file" || fail $?
 }
 

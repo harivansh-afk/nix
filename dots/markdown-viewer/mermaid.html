@@ -11,16 +11,29 @@
     "pre.mermaid, pre > code.language-mermaid, pre > code.mermaid"
   );
 
-  blocks.forEach((block, index) => {
+  const renderDiagram = async (block, index) => {
     const code = block.tagName.toLowerCase() === "code" ? block : block.querySelector("code");
     const source = (code || block).textContent;
     const container = document.createElement("div");
     container.className = "mermaid";
     container.id = "mermaid-" + index;
-    container.textContent = source;
     const pre = block.tagName.toLowerCase() === "pre" ? block : block.closest("pre");
     pre.replaceWith(container);
-  });
 
-  await mermaid.run({ querySelector: ".mermaid" });
+    try {
+      const rendered = await mermaid.render("mermaid-svg-" + index, source, container);
+      container.innerHTML = rendered.svg;
+      rendered.bindFunctions?.(container);
+    } catch {
+      const fallback = document.createElement("pre");
+      const fallbackCode = document.createElement("code");
+      fallback.className = "mermaid-source";
+      fallbackCode.className = "language-mermaid";
+      fallbackCode.textContent = source;
+      fallback.append(fallbackCode);
+      container.replaceWith(fallback);
+    }
+  };
+
+  await Promise.all(Array.from(blocks, renderDiagram));
 </script>

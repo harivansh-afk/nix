@@ -18,5 +18,3 @@ map("n", "<Esc>", "<cmd>nohlsearch<cr>")
 map("n", "<leader>t", "<cmd>setlocal wrap!<cr>")
 
 map("n", "<C-W>]", "<cmd>vert winc ]<cr>")
-
-map("t", "<Esc>", "<C-\\><C-n>")

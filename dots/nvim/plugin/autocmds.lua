@@ -59,13 +59,18 @@ api.nvim_create_autocmd("VimResized", {
 })
 
 -- Terminals open ready to type, and panes you were typing in resume
--- terminal-mode when you navigate back. An explicit <Esc> out of a terminal
--- sticks until you re-enter it; programmatic leaves (mux view switching, via
--- b:term_programmatic) preserve the insert intent.
+-- terminal-mode when you navigate back. <Esc> is never mapped: it always
+-- reaches the program. Leaving terminal-mode and the window in one action
+-- (prefix pane-nav) keeps the insert intent via b:term_leaving; an explicit
+-- copy-mode entry (<c-b>[) sticks until you re-enter it (i, a, or G).
+-- Programmatic leaves (mux view switching, via b:term_programmatic) also
+-- keep the intent. Leaving with intent parks the cursor on the last line so
+-- background panes tail their output.
 api.nvim_create_autocmd("TermOpen", {
   group = augroup,
-  callback = function()
-    vim.b.term_insert = true
+  callback = function(args)
+    vim.b[args.buf].term_insert = true
+    vim.keymap.set("n", "G", "Gi", { buffer = args.buf, desc = "jump to tail, resume terminal" })
     vim.cmd.startinsert()
   end,
 })
@@ -77,12 +82,26 @@ api.nvim_create_autocmd("TermEnter", {
 
 api.nvim_create_autocmd("TermLeave", {
   group = augroup,
-  callback = function()
-    if vim.b.term_programmatic then
-      vim.b.term_programmatic = nil
-    else
-      vim.b.term_insert = false
+  callback = function(args)
+    local buf = args.buf
+    if vim.b[buf].term_programmatic then
+      vim.b[buf].term_programmatic = nil
+      return
     end
+    vim.b[buf].term_insert = false
+    vim.b[buf].term_leaving = true
+    vim.schedule(function()
+      if api.nvim_buf_is_valid(buf) then vim.b[buf].term_leaving = false end
+    end)
+  end,
+})
+
+api.nvim_create_autocmd("WinLeave", {
+  group = augroup,
+  callback = function()
+    if vim.bo.buftype ~= "terminal" then return end
+    if vim.b.term_leaving then vim.b.term_insert = true end
+    if vim.b.term_insert then pcall(api.nvim_win_set_cursor, 0, { api.nvim_buf_line_count(0), 0 }) end
   end,
 })
 

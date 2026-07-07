@@ -2,7 +2,7 @@
 -- tabpages are plain tmux-style windows. Switching projects is `:connect` to
 -- another per-project nvim server (see scripts/bin/mux.sh). Bindings mirror the
 -- old tmux config: <c-b> prefix, h/j/k/l panes, -/' splits, c new window,
--- H/J/K/L session cycling, f picker, d detach.
+-- [ copy mode, H/J/K/L session cycling, f picker, d detach.
 
 local core = require "mux.core"
 local view = require "mux.view"
@@ -71,6 +71,7 @@ function M.setup()
     vim.keymap.set(mode, prefix, rhs, { remap = true, desc = "mux: window command prefix" })
   end
   vim.keymap.set("t", prefix .. prefix, prefix, { desc = "mux: send prefix" })
+  vim.keymap.set("t", prefix .. "[", [[<c-\><c-n>]], { desc = "mux: copy mode" })
 
   -- tmux parity
   muxmap(prefix .. "-", function() vim.cmd "split | terminal" end, "mux: horizontal split terminal")

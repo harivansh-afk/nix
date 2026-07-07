@@ -7,6 +7,53 @@ local active_schemes = {
   ["cozybox-light"] = true,
 }
 
+local terminal_palette = {
+  dark = {
+    "#1d2021",
+    "#ea6962",
+    "#8ec97c",
+    "#d79921",
+    "#5b84de",
+    "#b16286",
+    "#689d6a",
+    "#a89984",
+    "#928374",
+    "#ea6962",
+    "#8ec97c",
+    "#fabd2f",
+    "#5b84de",
+    "#d3869b",
+    "#8ec07c",
+    "#ebdbb2",
+  },
+  light = {
+    "#f9f5d7",
+    "#c5524a",
+    "#427b58",
+    "#d79921",
+    "#4261a5",
+    "#b16286",
+    "#689d6a",
+    "#7c6f64",
+    "#928374",
+    "#c5524a",
+    "#427b58",
+    "#fabd2f",
+    "#4261a5",
+    "#d3869b",
+    "#8ec07c",
+    "#3c3836",
+  },
+}
+
+local function apply_terminal_palette(mode)
+  vim.o.termguicolors = true
+
+  for index, color in ipairs(terminal_palette[mode] or terminal_palette.dark) do
+    vim.g["terminal_color_" .. (index - 1)] = color
+  end
+end
+
 local function ensure_server_socket()
   local socket_path = ("/tmp/nvim-%d.sock"):format(vim.fn.getpid())
   local active_servers = vim.fn.serverlist()
@@ -81,6 +128,7 @@ function M.apply(mode)
   if vim.g.cozybox_theme_mode ~= next_mode or vim.g.colors_name ~= next_scheme then vim.cmd.colorscheme(next_scheme) end
 
   vim.g.cozybox_theme_mode = next_mode
+  apply_terminal_palette(next_mode)
   apply_cozybox_overrides()
   local ok_reload, fzf_reload = pcall(require, "config.fzf_reload")
   if ok_reload then pcall(fzf_reload.reload) end
@@ -95,7 +143,10 @@ function M.setup()
   vim.api.nvim_create_autocmd("ColorScheme", {
     group = group,
     callback = function()
-      if active_schemes[vim.g.colors_name] then apply_cozybox_overrides() end
+      if active_schemes[vim.g.colors_name] then
+        apply_terminal_palette(vim.o.background == "light" and "light" or "dark")
+        apply_cozybox_overrides()
+      end
     end,
   })
 

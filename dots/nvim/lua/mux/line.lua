@@ -1,7 +1,6 @@
 local core = require "mux.core"
 local project = require "mux.project"
 local session = require "mux.session"
-local view = require "mux.view"
 
 local M = {}
 
@@ -59,50 +58,29 @@ local function hl(group, text)
   return ("%%#%s#%s%%*"):format(group, text)
 end
 
--- window/session mark: `*` current (accent), `-` last (muted), else nothing.
+-- window/session mark: `*` current (accent), else nothing.
 ---@param current boolean
----@param last boolean
 ---@return string
-local function mark(current, last)
+local function mark(current)
   if current then return hl("MuxMark", "*") end
-  if last then return hl("MuxMuted", "-") end
   return ""
 end
 
 ---@param key string
 ---@param name string
 ---@param current boolean
----@param last boolean
 ---@return string
-local function view_segment(key, name, current, last)
+local function view_segment(key, name, current)
   local body = current and "MuxTextCur" or "MuxText"
-  return mark(current, last) .. hl(body, key) .. hl("MuxAccent", ":") .. hl(body, name)
+  return mark(current) .. hl(body, key) .. hl("MuxAccent", ":") .. hl(body, name)
 end
 
 ---@param name string
 ---@param current boolean
----@param last boolean
 ---@return string
-local function session_segment(name, current, last)
+local function session_segment(name, current)
   local body = current and "MuxTextCur" or "MuxText"
-  return mark(current, last) .. hl(body, name)
-end
-
----@param entries { cwd: string, socket: string, status: string }[]
----@param current string
----@return string?
-local function last_session(entries, current)
-  local live = {}
-  for _, entry in ipairs(entries) do
-    if entry.status == "live" then live[canon(entry.cwd)] = true end
-  end
-  local history = core.state_dir() .. "/history"
-  if vim.fn.filereadable(history) ~= 1 then return nil end
-  local lines = vim.fn.readfile(history)
-  for i = #lines, 1, -1 do
-    local root = canon(lines[i])
-    if root ~= "" and root ~= current and live[root] then return root end
-  end
+  return mark(current) .. hl(body, name)
 end
 
 ---@param tp integer
@@ -120,19 +98,17 @@ end
 local function view_segments()
   core.prune()
   local current = vim.api.nvim_get_current_tabpage()
-  local last = view._alt
   local parts = {}
   for _, name in ipairs(VIEW_ORDER) do
     local tp = find_view(name)
     if tp then
       local spec = views[name]
-      parts[#parts + 1] = view_segment(spec.key, name, tp == current, tp == last)
+      parts[#parts + 1] = view_segment(spec.key, name, tp == current)
     end
   end
   for _, tp in ipairs(vim.api.nvim_list_tabpages()) do
     if not core.tab_view[tp] then
-      parts[#parts + 1] =
-        view_segment(tostring(vim.api.nvim_tabpage_get_number(tp)), window_label(tp), tp == current, tp == last)
+      parts[#parts + 1] = view_segment(tostring(vim.api.nvim_tabpage_get_number(tp)), window_label(tp), tp == current)
     end
   end
   return parts
@@ -142,13 +118,12 @@ end
 local function session_segments()
   local entries = project.list_entries()
   local current = session.root()
-  local last = last_session(entries, current)
   local parts = {}
   for _, entry in ipairs(entries) do
     if entry.status == "live" then
       local root = canon(entry.cwd)
       local name = vim.fn.fnamemodify(root, ":t")
-      if name ~= "" then parts[#parts + 1] = session_segment(name, root == current, root == last) end
+      if name ~= "" then parts[#parts + 1] = session_segment(name, root == current) end
     end
   end
   return parts

@@ -60,9 +60,7 @@ if not has_clip_tool then
     end
   end
   local function paste(reg)
-    return function()
-      return cache[reg]
-    end
+    return function() return cache[reg] end
   end
   vim.g.clipboard = {
     name = "osc52-write",

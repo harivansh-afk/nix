@@ -143,6 +143,11 @@ video {
   background: var(--subtle);
 }
 
+.mermaid-source {
+  border-color: var(--border);
+  background: var(--code-bg);
+}
+
 @media (max-width: 720px) {
   body {
     padding: 20px 18px 48px;

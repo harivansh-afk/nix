@@ -50,8 +50,20 @@ end
 
 local function mode() return mode_labels[vim.api.nvim_get_mode().mode] or "NORMAL" end
 
+local function terminal_label(name)
+  local command = name:match "//%d+:(.+)$" or name:match "term://.-//(.+)$"
+  if command == nil or command == "" then return "term" end
+
+  command = command:gsub("^%s+", ""):match "^%S+" or command
+  local label = vim.fn.fnamemodify(command, ":t")
+  if label == "" then return "term" end
+
+  return label
+end
+
 local function path()
   local name = vim.api.nvim_buf_get_name(0)
+  if vim.bo.buftype == "terminal" then return terminal_label(name) end
   if name == "" then return "[No Name]" end
   return vim.fn.fnamemodify(name, ":~:.")
 end

@@ -36,20 +36,15 @@ link_mode_assets() {
   theme_load_mode_assets "$mode"
   mode="$THEME_MODE"
 
-  mkdir -p "@STATE_DIR@" "@FZF_DIR@" "@GHOSTTY_DIR@" "@TMUX_DIR@" "@LAZYGIT_DIR@" "@GIT_THEME_DIR@" "@WALLPAPER_DIR@"
+  mkdir -p "@STATE_DIR@" "@FZF_DIR@" "@GHOSTTY_DIR@" "@LAZYGIT_DIR@" "@GIT_THEME_DIR@" "@WALLPAPER_DIR@"
   printf '%s\n' "$mode" >"@STATE_FILE@"
   ln -sfn "$THEME_FZF_TARGET" "@FZF_CURRENT_FILE@"
   ln -sfn "$THEME_GHOSTTY_TARGET" "@GHOSTTY_CURRENT_FILE@"
-  ln -sfn "$THEME_TMUX_TARGET" "@TMUX_CURRENT_FILE@"
   ln -sfn "$THEME_LAZYGIT_TARGET" "@LAZYGIT_CURRENT_FILE@"
   ln -sfn "$THEME_GIT_THEME_TARGET" "@GIT_THEME_CURRENT_FILE@"
 
   if [[ -f "$THEME_WALLPAPER" ]]; then
     ln -sfn "$THEME_WALLPAPER" "@WALLPAPER_CURRENT_FILE@"
-  fi
-
-  if command -v tmux >/dev/null 2>&1 && tmux start-server >/dev/null 2>&1; then
-    tmux source-file "@TMUX_CONFIG@" >/dev/null 2>&1 || true
   fi
 
   if [[ "$(uname -s)" == "Darwin" ]] && command -v osascript >/dev/null 2>&1; then

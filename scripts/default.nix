@@ -6,11 +6,6 @@
 let
   theme = import ../lib/theme.nix { inherit homeDirectory; };
 
-  tmuxConfigs = {
-    dark = pkgs.writeText "tmux-theme-dark.conf" (theme.renderTmux "dark");
-    light = pkgs.writeText "tmux-theme-light.conf" (theme.renderTmux "light");
-  };
-
   gitThemeIncludes = {
     dark = pkgs.writeText "git-theme-dark.inc" (theme.renderGitThemeInclude "dark");
     light = pkgs.writeText "git-theme-light.inc" (theme.renderGitThemeInclude "light");
@@ -28,7 +23,6 @@ let
     dark = {
       fzf = "${theme.paths.fzfDir}/cozybox-dark";
       ghostty = "${theme.paths.ghosttyDir}/cozybox-dark";
-      tmux = "${tmuxConfigs.dark}";
       lazygit = "${theme.paths.lazygitDir}/config-dark.yml";
       gitTheme = "${gitThemeIncludes.dark}";
       darwinLazygit = "${lazygitDarwinDir}/config-dark.yml";
@@ -38,7 +32,6 @@ let
     light = {
       fzf = "${theme.paths.fzfDir}/cozybox-light";
       ghostty = "${theme.paths.ghosttyDir}/cozybox-light";
-      tmux = "${tmuxConfigs.light}";
       lazygit = "${theme.paths.lazygitDir}/config-light.yml";
       gitTheme = "${gitThemeIncludes.light}";
       darwinLazygit = "${lazygitDarwinDir}/config-light.yml";
@@ -64,7 +57,6 @@ let
           THEME_MODE='light'
           THEME_FZF_TARGET='${modeAssets.light.fzf}'
           THEME_GHOSTTY_TARGET='${modeAssets.light.ghostty}'
-          THEME_TMUX_TARGET='${modeAssets.light.tmux}'
           THEME_LAZYGIT_TARGET='${modeAssets.light.lazygit}'
           THEME_GIT_THEME_TARGET='${modeAssets.light.gitTheme}'
           THEME_DARWIN_LAZYGIT_TARGET='${modeAssets.light.darwinLazygit}'
@@ -75,7 +67,6 @@ let
           THEME_MODE='dark'
           THEME_FZF_TARGET='${modeAssets.dark.fzf}'
           THEME_GHOSTTY_TARGET='${modeAssets.dark.ghostty}'
-          THEME_TMUX_TARGET='${modeAssets.dark.tmux}'
           THEME_LAZYGIT_TARGET='${modeAssets.dark.lazygit}'
           THEME_GIT_THEME_TARGET='${modeAssets.dark.gitTheme}'
           THEME_DARWIN_LAZYGIT_TARGET='${modeAssets.dark.darwinLazygit}'
@@ -106,17 +97,32 @@ let
     name: remote:
     mkScript {
       inherit name;
-      file = ./bin/mux.sh;
+      file = ./bin/remote.sh;
       runtimeInputs = [ pkgs.mosh ];
       replacements = {
         "@NAME@" = name;
         "@HOST@" = remote.host;
-        "@SESSION@" = remote.session;
       };
     }
   ) remotes;
 
   commonPackages = {
+    mux = mkScript {
+      name = "mux";
+      file = ./bin/mux.sh;
+      runtimeInputs =
+        with pkgs;
+        [
+          coreutils
+          fzf
+          gawk
+          git
+          gnugrep
+          gnused
+        ]
+        ++ lib.optionals stdenv.isLinux [ util-linux ];
+    };
+
     ga = mkScript {
       name = "ga";
       file = ./bin/ga.sh;
@@ -162,7 +168,6 @@ let
         coreutils
         findutils
         neovim
-        tmux
       ];
       replacements = {
         "@DEFAULT_MODE@" = theme.defaultMode;
@@ -172,9 +177,6 @@ let
         "@FZF_CURRENT_FILE@" = theme.paths.fzfCurrentFile;
         "@GHOSTTY_DIR@" = theme.paths.ghosttyDir;
         "@GHOSTTY_CURRENT_FILE@" = theme.paths.ghosttyCurrentFile;
-        "@TMUX_DIR@" = theme.paths.tmuxDir;
-        "@TMUX_CURRENT_FILE@" = theme.paths.tmuxCurrentFile;
-        "@TMUX_CONFIG@" = "${homeDirectory}/.config/tmux/tmux.conf";
         "@LAZYGIT_DIR@" = theme.paths.lazygitDir;
         "@LAZYGIT_CURRENT_FILE@" = theme.paths.lazygitCurrentFile;
         "@GIT_THEME_DIR@" = theme.paths.gitDir;
@@ -202,6 +204,5 @@ in
     linuxPackages
     theme
     themeAssetsText
-    tmuxConfigs
     ;
 }

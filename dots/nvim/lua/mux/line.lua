@@ -10,7 +10,7 @@ local find_view = core.find_view
 local views = core.views
 local VIEW_ORDER = core.VIEW_ORDER
 local TABLINE_EXPR = "%!v:lua.require'mux.line'.render()"
-local SEPARATOR_WINBAR = "%#MuxTabSeparator#%="
+local SEPARATOR_WINBAR = "%!v:lua.require'mux.line'.separator()"
 local refresh_pending = false
 
 -- cozybox palette (mirrors lib/theme.nix); keyed by vim.o.background so the bar
@@ -30,7 +30,7 @@ function M.setup_hl()
   set(0, "MuxAccent", { fg = c.purple, bg = c.bg })
   set(0, "MuxMark", { fg = c.purple, bg = c.bg, bold = true })
   set(0, "MuxMuted", { fg = c.muted, bg = c.bg })
-  set(0, "MuxTabSeparator", { fg = c.border, bg = c.border })
+  set(0, "MuxTabSeparator", { fg = c.border, bg = c.bg })
   set(0, "TabLineFill", { link = "MuxFill" })
   set(0, "WinSeparator", { fg = c.border })
 end
@@ -176,6 +176,13 @@ local function apply_separator(show)
   end
 end
 
+---@return string
+function M.separator()
+  if vim.env.MUX ~= "1" then return "" end
+  local win = tonumber(vim.g.statusline_winid) or vim.api.nvim_get_current_win()
+  local width = vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_width(win) or 0
+  return hl("MuxTabSeparator", string.rep("─", math.max(width, 1)))
+end
 function M.apply_visibility()
   if vim.env.MUX ~= "1" then return end
   local show = visibility_mode() ~= "hide"

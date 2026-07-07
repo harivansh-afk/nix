@@ -2,10 +2,8 @@ local M = {}
 
 ---@class mux.ViewSpec
 ---@field key string single char appended to the prefix to open this view
----@field kind 'editor'|'vcs'|'terminal'|'task' how the tab's content is built
----@field cmd? string[] terminal command (terminal kind), defaults to `just <recipe>` for tasks
----@field restore_cmd? string[] command used instead of `cmd` when restoring a saved session
----@field recipe? string justfile recipe name (task kind)
+---@field kind 'editor'|'vcs'|'terminal' how the tab's content is built
+---@field cmd? string[] terminal command (terminal kind)
 ---@field lifecycle? 'ephemeral'|'persistent' ephemeral tabs auto-close when their terminal exits
 ---@field restore? boolean re-materialize this view when a saved session is loaded
 
@@ -15,8 +13,7 @@ M.views = {
   ai = {
     key = "a",
     kind = "terminal",
-    cmd = { "claude" },
-    restore_cmd = { "claude", "--continue" },
+    cmd = { "omp" },
     lifecycle = "ephemeral",
     restore = true,
   },
@@ -27,12 +24,9 @@ M.views = {
     lifecycle = "ephemeral",
   },
   vcs = { key = "v", kind = "vcs", restore = true },
-  run = { key = "r", kind = "task", recipe = "run", lifecycle = "ephemeral" },
-  build = { key = "b", kind = "task", recipe = "build", lifecycle = "persistent" },
-  test = { key = "t", kind = "task", recipe = "test", lifecycle = "persistent" },
 }
 
-M.VIEW_ORDER = { "edit", "vcs", "ai", "run", "build", "test", "zsh" }
+M.VIEW_ORDER = { "edit", "vcs", "ai", "zsh" }
 
 -- tabpage handle -> view name
 ---@type table<integer, string>

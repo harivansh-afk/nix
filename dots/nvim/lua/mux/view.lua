@@ -7,40 +7,6 @@ local find_view = core.find_view
 
 local M = {}
 
--- justfile path -> { mtime, recipe-name set }; re-read when the justfile changes.
-local recipe_cache = {}
-
----@param cwd string
----@return string? path of the justfile `just` resolves from `cwd`, if any
-local function justfile(cwd)
-  return vim.fs.find({ "justfile", "Justfile", ".justfile" }, { upward = true, path = cwd, type = "file" })[1]
-end
-
--- Whether `cwd`'s justfile defines `recipe`, caching `just --summary` by mtime.
----@param cwd string
----@param recipe string
----@return boolean
-local function has_recipe(cwd, recipe)
-  if vim.fn.executable "just" ~= 1 then return false end
-  local jf = justfile(cwd)
-  if not jf then return false end
-  local st = vim.uv.fs_stat(jf)
-  local mtime = st and (st.mtime.sec .. ":" .. st.mtime.nsec) or ""
-  local cached = recipe_cache[jf]
-  if not cached or cached.mtime ~= mtime then
-    local set = {}
-    local res = vim.system({ "just", "--summary" }, { text = true, cwd = cwd }):wait()
-    if res.code == 0 and res.stdout then
-      for r in res.stdout:gmatch "%S+" do
-        set[r] = true
-      end
-    end
-    cached = { mtime = mtime, set = set }
-    recipe_cache[jf] = cached
-  end
-  return cached.set[recipe] == true
-end
-
 ---@param tp integer
 ---@param restoring? boolean true when pruning a stale tab during session restore
 function M.close_view_tab(tp, restoring)
@@ -134,8 +100,8 @@ function M.materialize(name, restoring)
     vim.cmd.edit(cwd)
   elseif spec.kind == "vcs" then
     pcall(vim.cmd, "Git|only")
-  elseif spec.kind == "terminal" or spec.kind == "task" then
-    local cmd = (restoring and spec.restore_cmd) or spec.cmd or { "just", spec.recipe }
+  elseif spec.kind == "terminal" then
+    local cmd = spec.cmd
     vim.fn.jobstart(cmd, { term = true, cwd = cwd })
     core.restore_terminal_focus()
   end
@@ -181,17 +147,11 @@ end
 function M.open_view(name)
   local spec = views[name]
   if not spec then return end
-  local terminal = spec.kind == "terminal" or spec.kind == "task"
+  local terminal = spec.kind == "terminal"
   if not terminal then core.leave_terminal() end
   local existing = find_view(name)
   if existing then
     vim.api.nvim_set_current_tabpage(existing)
-    core.restore_terminal_focus()
-    return
-  end
-
-  local cwd = vim.fn.getcwd()
-  if spec.kind == "task" and not has_recipe(cwd, spec.recipe) then
     core.restore_terminal_focus()
     return
   end

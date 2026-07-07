@@ -22,6 +22,7 @@ M.last_view = view.last_view
 M.close_view = view.close_view
 M.kill_pane = view.kill_pane
 M.new_window = view.new_window
+M.split_terminal = view.split_terminal
 M.toggle_zoom = view.toggle_zoom
 
 M._connect = project._connect
@@ -74,8 +75,8 @@ function M.setup()
   vim.keymap.set("t", prefix .. "[", [[<c-\><c-n>]], { desc = "mux: copy mode" })
 
   -- tmux parity
-  muxmap(prefix .. "-", function() vim.cmd "split | terminal" end, "mux: horizontal split terminal")
-  muxmap(prefix .. "'", function() vim.cmd "vsplit | terminal" end, "mux: vertical split terminal")
+  muxmap(prefix .. "-", function() M.split_terminal(false) end, "mux: horizontal split terminal")
+  muxmap(prefix .. "'", function() M.split_terminal(true) end, "mux: vertical split terminal")
   muxmap(prefix .. "c", M.new_window, "mux: new window")
   muxmap(prefix .. "x", M.kill_pane, "mux: kill pane")
   muxmap(prefix .. "z", M.toggle_zoom, "mux: zoom pane (toggle fullscreen)")
@@ -145,6 +146,7 @@ function M.setup()
       line.setup_hl()
       line.apply_visibility()
       line.refresh()
+      vim.schedule(core.restore_terminal_focus)
     end,
   })
 

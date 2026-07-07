@@ -125,18 +125,18 @@ local function create_view(name, enter)
   return tp
 end
 
--- tmux split-window: keep terminal insert intent across the prefix transition
--- and start the new shell ready for input.
+-- tmux split-window / new-window: never leave terminal-mode on the way to a
+-- new terminal. A stopinsert issued inside a t-mode mapping is deferred past
+-- the mapping, cancels every startinsert queued meanwhile (TermOpen,
+-- start_terminal), and its TermLeave lands on the new buffer, clearing
+-- term_insert. Staying in terminal-mode carries insert straight over.
 ---@param vertical boolean
 function M.split_terminal(vertical)
-  core.leave_terminal()
   vim.cmd(vertical and "vsplit" or "split")
   start_terminal { vim.o.shell }
 end
 
--- tmux new-window: an untagged tabpage holding a fresh shell.
 function M.new_window()
-  core.leave_terminal()
   vim.cmd "tabnew"
   start_terminal { vim.o.shell }
 end

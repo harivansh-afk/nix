@@ -10,8 +10,20 @@ local M = {}
 ---@param cmd string[]
 ---@param cwd? string
 local function start_terminal(cmd, cwd)
+  -- jobstart(term=true) converts the current buffer, which a split shares
+  -- with the previous window: a modified file is E5108, an existing terminal
+  -- can't be converted again, and a clean file buffer would be silently
+  -- hijacked. Hand it a fresh scratch buffer instead. The implicit
+  -- terminal-mode exit on the buffer swap is marked programmatic so the
+  -- pane we split from keeps its insert intent (see plugin/autocmds.lua).
+  local prev = vim.api.nvim_get_current_buf()
+  if vim.bo[prev].buftype == "terminal" and vim.fn.mode() == "t" then vim.b[prev].term_programmatic = true end
+  vim.api.nvim_win_set_buf(0, vim.api.nvim_create_buf(false, true))
   vim.fn.jobstart(cmd, { term = true, cwd = cwd or vim.fn.getcwd() })
   vim.b.term_insert = true
+  if #vim.fn.win_findbuf(prev) == 0 and vim.api.nvim_buf_get_name(prev) == "" and not vim.bo[prev].modified then
+    pcall(vim.api.nvim_buf_delete, prev, { force = true })
+  end
   vim.schedule(core.restore_terminal_focus)
 end
 

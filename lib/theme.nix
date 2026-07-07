@@ -457,11 +457,11 @@ let
 
         syntaxComment = c.dim;
         syntaxKeyword = c.red;
-        syntaxFunction = c.yellowBright;
+        syntaxFunction = c.linkBlue;
         syntaxVariable = "";
         syntaxString = c.green;
         syntaxNumber = c.purpleTone;
-        syntaxType = c.yellow;
+        syntaxType = c.coral;
         syntaxOperator = c.aqua;
         syntaxPunctuation = c.muted;
 

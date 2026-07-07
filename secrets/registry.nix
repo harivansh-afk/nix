@@ -28,6 +28,7 @@
 { username }:
 {
   user = {
+    "anthropic.env" = { };
     "antithesis.env" = { };
     "linear.env" = { };
     "graphite.env" = { };

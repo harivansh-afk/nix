@@ -129,7 +129,7 @@ function M.setup()
       line.refresh()
     end,
   })
-  vim.api.nvim_create_autocmd({ "TabNew", "DirChanged" }, {
+  vim.api.nvim_create_autocmd({ "TabNew", "DirChanged", "WinNew", "WinClosed", "WinResized" }, {
     group = group,
     callback = line.refresh,
   })
@@ -190,6 +190,7 @@ function M.setup()
     vim.cmd.edit(vim.fn.getcwd())
     core.tag(vim.api.nvim_get_current_tabpage(), "edit")
   end
+  line.apply_visibility()
   line.refresh()
 
   M._timer = vim.uv.new_timer()

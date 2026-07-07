@@ -134,7 +134,7 @@ in
     };
     symbolPreset = "nerd";
     display.shimmer = "disabled";
-    todo.reminders = false;
+    todo.enabled = false;
     # Seed matches the `default` mode so a config reseed lands on it.
     modelRoles = ompModes.default.roles;
     statusLine = {

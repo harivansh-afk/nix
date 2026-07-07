@@ -572,6 +572,7 @@ mux: per-project neovim server launcher
   mux stop [<path>]   stop the project's server (saved session restored next open)
   mux kill [<path>]   hard-remove the project: stop + delete its saved session
   mux clean           delete unrevivable session junk (orphan snapshots, stale sockets)
+  mux killall         kill every live session and delete ALL saved snapshots
   mux restore         start every session marked for login restore
   mux reload [<path>] reload the project in place (apply edited config)
   mux reload --all    reload every live session
@@ -627,6 +628,37 @@ kill_server() {
   rm -f "$sock" "${sock%.sock}.boot.pid" "$sf" "${sf%.vim}.root" "${sf%.vim}.restore"
   forget_history "$root"
   clear_last "$root"
+}
+
+killall() {
+  local sock pidf pid i n=0
+  if [ -d "$RUNTIME_DIR" ]; then
+    for sock in "$RUNTIME_DIR"/*.sock; do
+      [ -e "$sock" ] || continue
+      if is_live "$sock"; then
+        n=$((n + 1))
+        # graceful hard-kill: sets the in-Neovim no-save guard, deletes the
+        # snapshot, and quits. Fall back to killing the process group if the
+        # server ignores the RPC.
+        rpc "$sock" 'kill_session()'
+        i=0
+        while [ "$i" -lt 40 ] && is_live "$sock"; do
+          sleep 0.05
+          i=$((i + 1))
+        done
+        pidf="${sock%.sock}.pid"
+        if is_live "$sock" && [ -f "$pidf" ]; then
+          pid=""
+          IFS= read -r pid <"$pidf" 2>/dev/null || true
+          [ -n "$pid" ] && terminate_process_group "$pid" "$LOG_DIR/killall.log"
+        fi
+      fi
+      rm -f "$sock" "${sock%.sock}.boot.pid" "${sock%.sock}.pid"
+    done
+  fi
+  rm -rf "$STATE_DIR/sessions"
+  rm -f "$LAST_FILE" "$HISTORY_FILE"
+  printf 'mux: killed %d live session(s), cleared all snapshots\n' "$n" >&2
 }
 
 clean() {
@@ -755,6 +787,9 @@ stop)
 kill)
   shift
   kill_server "${1:-$PWD}"
+  ;;
+killall)
+  killall
   ;;
 clean)
   clean

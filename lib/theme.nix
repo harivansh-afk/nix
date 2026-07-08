@@ -372,6 +372,7 @@ let
             purpleTone = "#8f3f71";
             coral = "#af3a03";
             linkBlue = "#4261a5";
+            claudePurple = "#5769f7";
             muted = "#665c54";
             dim = sharedPalette.gray;
             # monotone ramp: faint -> bright (darker = stronger on light bg)
@@ -399,6 +400,7 @@ let
             purpleTone = sharedPalette.purple;
             coral = "#d97757";
             linkBlue = sharedPalette.blue;
+            claudePurple = "#b1b9f9";
             muted = sharedPalette.gray;
             dim = "#7c6f64";
             # monotone ramp: faint -> bright
@@ -419,7 +421,7 @@ let
           muted
           selectedBg
           ;
-        accent = c.coral;
+        accent = c.claudePurple;
         borderAccent = c.coral;
         success = c.green;
         error = c.red;
@@ -435,7 +437,7 @@ let
         toolPendingBg = "";
         toolSuccessBg = "";
         toolErrorBg = "";
-        toolTitle = c.coral;
+        toolTitle = c.claudePurple;
         toolOutput = c.muted;
 
         mdHeading = c.bright;
@@ -476,7 +478,7 @@ let
         statusLineBg = "";
         statusLineSep = c.border;
         statusLineModel = c.bright;
-        statusLinePath = c.muted;
+        statusLinePath = c.claudePurple;
         statusLineGitClean = c.mono;
         statusLineGitDirty = c.monoMid;
         statusLineContext = c.muted;
@@ -556,7 +558,7 @@ let
           "icon.goal" = "◎";
           "icon.pause" = "‖";
           "icon.loop" = "↻";
-          "icon.folder" = "▸";
+          "icon.folder" = "";
           "icon.worktree" = "⎇";
           "icon.search" = "●";
           "icon.scratchFolder" = "◌";

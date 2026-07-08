@@ -421,7 +421,7 @@ let
           muted
           selectedBg
           ;
-        accent = c.claudePurple;
+        accent = c.coral;
         borderAccent = c.coral;
         success = c.green;
         error = c.red;
@@ -437,7 +437,7 @@ let
         toolPendingBg = "";
         toolSuccessBg = "";
         toolErrorBg = "";
-        toolTitle = c.claudePurple;
+        toolTitle = c.coral;
         toolOutput = c.muted;
 
         mdHeading = c.bright;
@@ -529,10 +529,10 @@ let
           "tree.hook" = "└";
           "status.success" = "✓";
           "status.error" = "✗";
-          "status.warning" = "⚠";
+          "status.warning" = "⊘";
           "status.info" = "ⓘ";
           "status.pending" = "◌";
-          "status.disabled" = "⊘";
+          "status.disabled" = "○";
           "status.enabled" = "●";
           "status.running" = "✻";
           "status.shadowed" = "◐";
@@ -559,12 +559,12 @@ let
           "icon.pause" = "‖";
           "icon.loop" = "↻";
           "icon.folder" = "";
-          "icon.worktree" = "⎇";
+          "icon.worktree" = "";
           "icon.search" = "●";
           "icon.scratchFolder" = "◌";
           "icon.file" = "·";
-          "icon.git" = "⎇";
-          "icon.branch" = "⎇";
+          "icon.git" = "";
+          "icon.branch" = "";
           "icon.pr" = "↗";
           "icon.tokens" = "";
           "icon.context" = "";
@@ -575,14 +575,14 @@ let
           "icon.agents" = "◆";
           "icon.job" = "◆";
           "icon.cache" = "◦";
-          "icon.cacheMiss" = "⊘";
+          "icon.cacheMiss" = "";
           "icon.input" = "↑";
           "icon.output" = "↓";
           "icon.throughput" = "";
           "icon.host" = "";
           "icon.session" = "";
           "icon.package" = "▪";
-          "icon.warning" = "⚠";
+          "icon.warning" = "!";
           "icon.rewind" = "↶";
           "icon.auto" = "";
           "icon.fast" = "»";
@@ -595,8 +595,8 @@ let
           "icon.extensionPrompt" = "✎";
           "icon.extensionContextFile" = "≡";
           "icon.extensionInstruction" = "¶";
-          "icon.mic" = "◉";
-          "icon.camera" = "◈";
+          "icon.mic" = "●";
+          "icon.camera" = "✻";
           "thinking.minimal" = "min";
           "thinking.low" = "low";
           "thinking.medium" = "med";

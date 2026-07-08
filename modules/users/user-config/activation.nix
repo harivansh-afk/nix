@@ -189,6 +189,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${dotsRoot}/omp/extensions/claude-agents.ts" "${homeDirectory}/.omp/agent/extensions/claude-agents.ts"
   rm -f "${homeDirectory}/.omp/agent/extensions/rich-diff.ts"
   mkSymlink "${dotsRoot}/omp/extensions/diffs/diffs.ts" "${homeDirectory}/.omp/agent/extensions/diffs.ts"
+  mkSymlink "${dotsRoot}/omp/extensions/claude-purple/claude-purple.ts" "${homeDirectory}/.omp/agent/extensions/claude-purple.ts"
 
   target="${homeDirectory}/.omp/agent/config.yml"
   source="${ompConfigSource}"

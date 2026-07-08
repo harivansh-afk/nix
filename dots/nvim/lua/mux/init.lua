@@ -133,6 +133,19 @@ function M.setup()
     group = group,
     callback = line.refresh,
   })
+  -- OSC 7 from the shell (see zshrc _mux_osc7): track each terminal's live
+  -- cwd so untagged windows rename like tmux automatic-rename.
+  vim.api.nvim_create_autocmd("TermRequest", {
+    group = group,
+    callback = function(args)
+      local seq = type(args.data) == "table" and args.data.sequence or args.data
+      local dir = type(seq) == "string" and seq:match "^\027]7;file://[^/]*(/.*)$" or nil
+      if not dir then return end
+      dir = dir:gsub("%%(%x%x)", function(hex) return string.char(tonumber(hex, 16)) end)
+      vim.b[args.buf].mux_term_cwd = dir
+      line.refresh()
+    end,
+  })
   vim.api.nvim_create_autocmd("TabEnter", {
     group = group,
     callback = function()

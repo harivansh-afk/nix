@@ -437,7 +437,7 @@ let
         toolPendingBg = "";
         toolSuccessBg = "";
         toolErrorBg = "";
-        toolTitle = c.coral;
+        toolTitle = c.claudePurple;
         toolOutput = c.muted;
 
         mdHeading = c.bright;

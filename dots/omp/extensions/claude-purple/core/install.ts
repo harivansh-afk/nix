@@ -1,16 +1,17 @@
 /**
- * claude-purple: purple tool dots and loader on an otherwise-coral theme.
+ * claude-purple: purple tool dots and loader on an otherwise-coral accent.
  *
- * The theme cannot express this split. Every built-in renderer draws its
- * header dot via theme.styledSymbol("tool.<name>", "accent"), the
- * search-family renderers (grep/glob/ast-grep/tool-discovery) draw theirs
- * via theme.fg(color, theme.symbol("icon.search")), and the working loader
- * paints its spinner with theme.fg("accent", frame) and its message crest
- * with DEFAULT_SHIMMER_PALETTE.high = "accent". That same "accent" token
- * also colors tool titles, header descriptions, and grep's per-file result
- * headers - so a purple accent bleeds purple over whole tool blocks.
- * cozybox keeps accent coral and this extension re-lands only the dot,
- * the spinner, and the shimmer crest on the claude-purple lane.
+ * Tool-call headings already use the separate toolTitle token (claude-purple
+ * in cozybox). Dots and the working loader still go through accent: every
+ * built-in renderer draws its header dot via theme.styledSymbol("tool.<name>",
+ * "accent"), the search-family renderers (grep/glob/ast-grep/tool-discovery)
+ * draw theirs via theme.fg(color, theme.symbol("icon.search")), and the
+ * working loader paints its spinner with theme.fg("accent", frame) and its
+ * message crest with DEFAULT_SHIMMER_PALETTE.high = "accent". That same
+ * accent token also colors header descriptions, paths, and grep's per-file
+ * result headers - so a purple accent bleeds purple over those. cozybox
+ * keeps accent coral; this extension re-lands only the dot, the spinner,
+ * and the shimmer crest on the claude-purple lane.
  *
  * Implementation notes:
  * - Patches the Theme prototype (via Object.getPrototypeOf(theme)), not the

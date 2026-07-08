@@ -355,8 +355,6 @@ let
   ompTheme =
     mode:
     let
-      # nonicons codepoints (matches nonicons.nvim glyphs used in neovim)
-      nonicon = hex: builtins.fromJSON ''"\u${hex}"'';
       c =
         if mode == "light" then
           {
@@ -415,14 +413,14 @@ let
       name = "cozybox-${mode}";
       colors = {
         inherit (c)
-          accent
           border
-          borderAccent
           borderMuted
           dim
           muted
           selectedBg
           ;
+        accent = c.coral;
+        borderAccent = c.coral;
         success = c.green;
         error = c.red;
         warning = c.yellow;
@@ -437,7 +435,7 @@ let
         toolPendingBg = "";
         toolSuccessBg = "";
         toolErrorBg = "";
-        toolTitle = c.monoHigh;
+        toolTitle = c.coral;
         toolOutput = c.muted;
 
         mdHeading = c.bright;
@@ -491,8 +489,7 @@ let
         statusLineSubagents = c.monoMid;
       };
       symbols = {
-        preset = "nerd";
-        # plain single-color braille spinner (no shimmer, no fancy frames)
+        preset = "unicode";
         spinnerFrames = [
           "⠋"
           "⠙"
@@ -523,31 +520,124 @@ let
           "boxSharp.teeUp" = "┴";
           "boxSharp.teeRight" = "├";
           "boxSharp.teeLeft" = "┤";
-          # No icon next to the model name (renders as FA reddit-alien: f281 is
-          # outside the ghostty nonicons map U+f101-U+f25c).
+          "tree.branch" = "├─";
+          "tree.last" = "└─";
+          "tree.vertical" = "│";
+          "tree.horizontal" = "─";
+          "tree.hook" = "└";
+          "status.success" = "✓";
+          "status.error" = "✗";
+          "status.warning" = "⚠";
+          "status.info" = "ⓘ";
+          "status.pending" = "◌";
+          "status.disabled" = "⊘";
+          "status.enabled" = "●";
+          "status.running" = "✻";
+          "status.shadowed" = "◐";
+          "status.aborted" = "■";
+          "status.done" = "•";
+          "nav.cursor" = "❯";
+          "nav.selected" = "❯";
+          "nav.expand" = "▸";
+          "nav.collapse" = "▾";
+          "nav.back" = "←";
+          "sep.powerline" = "│";
+          "sep.powerlineThin" = "│";
+          "sep.powerlineLeft" = "│";
+          "sep.powerlineRight" = "│";
+          "sep.powerlineThinLeft" = "│";
+          "sep.powerlineThinRight" = "│";
+          "sep.block" = "█";
+          "sep.dot" = " · ";
+          "sep.slash" = " / ";
+          "sep.pipe" = " │ ";
           "icon.model" = "";
-          "icon.folder" = nonicon "f14b"; # file-directory
-          "icon.file" = nonicon "f146"; # file
-          "icon.git" = nonicon "f157"; # git-branch
-          "icon.branch" = nonicon "f157"; # git-branch
-          "icon.context" = ""; # no glyph next to context % (f188 rendered as junk)
-          "icon.tokens" = nonicon "f245"; # stack
+          "icon.plan" = "☰";
+          "icon.goal" = "◎";
+          "icon.pause" = "‖";
+          "icon.loop" = "↻";
+          "icon.folder" = "▸";
+          "icon.worktree" = "⎇";
+          "icon.search" = "●";
+          "icon.scratchFolder" = "◌";
+          "icon.file" = "·";
+          "icon.git" = "⎇";
+          "icon.branch" = "⎇";
+          "icon.pr" = "↗";
+          "icon.tokens" = "";
+          "icon.context" = "";
           "icon.cost" = "$";
-          "icon.auto" = ""; # f2b0 is outside the nonicons map; rendered as junk
-          "icon.time" = nonicon "f125"; # clock
-          "icon.worktree" = nonicon "f14d"; # file-submodule
-          "icon.search" = nonicon "f1bd"; # search
-          "format.bracketLeft" = "[";
-          "format.bracketRight" = "]";
+          "icon.time" = "";
+          "icon.pi" = "π";
+          "icon.ghost" = "◌";
+          "icon.agents" = "◆";
+          "icon.job" = "◆";
+          "icon.cache" = "◦";
+          "icon.cacheMiss" = "⊘";
+          "icon.input" = "↑";
+          "icon.output" = "↓";
+          "icon.throughput" = "";
+          "icon.host" = "";
+          "icon.session" = "";
+          "icon.package" = "▪";
+          "icon.warning" = "⚠";
+          "icon.rewind" = "↶";
+          "icon.auto" = "";
+          "icon.fast" = "»";
+          "icon.extensionSkill" = "✦";
+          "icon.extensionTool" = "●";
+          "icon.extensionSlashCommand" = "/";
+          "icon.extensionMcp" = "◇";
+          "icon.extensionRule" = "§";
+          "icon.extensionHook" = "∗";
+          "icon.extensionPrompt" = "✎";
+          "icon.extensionContextFile" = "≡";
+          "icon.extensionInstruction" = "¶";
+          "icon.mic" = "◉";
+          "icon.camera" = "◈";
           "thinking.minimal" = "min";
           "thinking.low" = "low";
           "thinking.medium" = "med";
           "thinking.high" = "high";
           "thinking.xhigh" = "xhigh";
-          # File-type icons in tool-call headers: blanked. The guessed nonicons
-          # codepoints rendered as random glyphs (github/bitbucket/car...), and
-          # deleting the overrides would fall back to nerd-preset codepoints that
-          # the ghostty nonicons map (U+f101-U+f25c) intercepts just as randomly.
+          "thinking.autoPending" = "✻";
+          "checkbox.checked" = "☒";
+          "checkbox.unchecked" = "☐";
+          "radio.selected" = "◉";
+          "radio.unselected" = "○";
+          "format.bullet" = "•";
+          "format.dash" = "–";
+          "format.bracketLeft" = "[";
+          "format.bracketRight" = "]";
+          "md.quoteBorder" = "│";
+          "md.hrChar" = "─";
+          "md.bullet" = "•";
+          "md.colorSwatch" = "■";
+          "advisor.rail" = "▎";
+          "tool.write" = "●";
+          "tool.edit" = "●";
+          "tool.bash" = "●";
+          "tool.ssh" = "●";
+          "tool.lsp" = "●";
+          "tool.gh" = "●";
+          "tool.webSearch" = "●";
+          "tool.exa" = "●";
+          "tool.browser" = "●";
+          "tool.eval" = "●";
+          "tool.debug" = "●";
+          "tool.mcp" = "●";
+          "tool.job" = "●";
+          "tool.task" = "●";
+          "tool.todo" = "●";
+          "tool.memory" = "●";
+          "tool.ask" = "●";
+          "tool.resolve" = "●";
+          "tool.review" = "●";
+          "tool.inspectImage" = "●";
+          "tool.goal" = "●";
+          "tool.irc" = "●";
+          "tool.delete" = "●";
+          "tool.move" = "●";
           "lang.archive" = "";
           "lang.binary" = "";
           "lang.c" = "";
@@ -566,6 +656,7 @@ let
           "lang.java" = "";
           "lang.javascript" = "";
           "lang.json" = "";
+          "lang.julia" = "";
           "lang.kotlin" = "";
           "lang.log" = "";
           "lang.lua" = "";
@@ -584,6 +675,16 @@ let
           "lang.typescript" = "";
           "lang.xml" = "";
           "lang.yaml" = "";
+          "tab.appearance" = "";
+          "tab.model" = "";
+          "tab.interaction" = "";
+          "tab.context" = "";
+          "tab.files" = "";
+          "tab.shell" = "";
+          "tab.tools" = "";
+          "tab.memory" = "";
+          "tab.tasks" = "";
+          "tab.providers" = "";
         };
       };
     };

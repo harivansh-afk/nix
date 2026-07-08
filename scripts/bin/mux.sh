@@ -501,6 +501,58 @@ list_all_pretty() {
   done
 }
 
+# Probe every catalog remote for a working mux. TSV when piped:
+# name<TAB>host<TAB>status (live|dead); [live]/[dead] tags on a tty.
+list_hosts() {
+  local me name host tmpdir line status i=0
+  local names=() hosts=() pids=()
+  me="$(local_name)"
+  tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/mux-hosts.XXXXXX")"
+  # shellcheck disable=SC2064
+  trap "rm -rf '$tmpdir'" RETURN
+  names+=("$me")
+  hosts+=("$me")
+  printf 'live\n' >"$tmpdir/0"
+  i=1
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    name="${line%% *}"
+    host="${line#* }"
+    [ -n "$name" ] && [ -n "$host" ] || continue
+    { [ "$name" = "$me" ] || [ "$host" = "$me" ]; } && continue
+    names+=("$name")
+    hosts+=("$host")
+    (
+      if ssh -o BatchMode=yes -o ConnectTimeout="$MUX_LIST_TIMEOUT" \
+        -o StrictHostKeyChecking=accept-new \
+        "$host" mux list </dev/null >/dev/null 2>&1; then
+        printf 'live\n' >"$tmpdir/$i"
+      else
+        printf 'dead\n' >"$tmpdir/$i"
+      fi
+    ) &
+    pids+=("$!")
+    i=$((i + 1))
+  done < <(remotes_catalog)
+  for pid in "${pids[@]+"${pids[@]}"}"; do
+    wait "$pid" || true
+  done
+  local reset=$'\033[0m' green=$'\033[32m' red=$'\033[31m'
+  for i in "${!names[@]}"; do
+    status=dead
+    [ -f "$tmpdir/$i" ] && IFS= read -r status <"$tmpdir/$i"
+    if [ -t 1 ]; then
+      if [ "$status" = live ]; then
+        printf '%s%-7s%s %s\n' "$green" "[live]" "$reset" "${names[$i]}"
+      else
+        printf '%s%-7s%s %s\n' "$red" "[dead]" "$reset" "${names[$i]}"
+      fi
+    else
+      printf '%s\t%s\t%s\n' "${names[$i]}" "${hosts[$i]}" "$status"
+    fi
+  done
+}
+
 write_hop() {
   local name="$1" host="$2" project="$3"
   mkdir -p "$STATE_DIR"
@@ -723,6 +775,7 @@ mux: per-project neovim server launcher
   mux ensure [<path>] print a live server socket for the project, spawning if needed
   mux list            list projects: live + dir (cwd<TAB>socket<TAB>status)
   mux list --all      list projects across remotes (TSV when piped: host<TAB>cwd<TAB>socket<TAB>status)
+  mux list --hosts    list hosts from the connector catalog with mux reachability
   mux hop <name> [p]  after detach, open project p on remote <name> (used by <c-b>F)
   mux pick            fzf-pick a project from mux list and open it
   mux stop [<path>]   stop the project's server (saved session restored next open)
@@ -932,15 +985,21 @@ ensure)
   ensure "${1:-$PWD}"
   ;;
 list)
-  if [ "${2:-}" = --all ] || [ "${2:-}" = -a ]; then
+  case "${2:-}" in
+  --all | -a)
     if [ -t 1 ]; then
       list_all_pretty
     else
       list_all
     fi
-  else
+    ;;
+  --hosts | -H)
+    list_hosts
+    ;;
+  *)
     list
-  fi
+    ;;
+  esac
   ;;
 hop)
   shift

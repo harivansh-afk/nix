@@ -77,80 +77,11 @@ let
     }
   '';
 
-  mkScript =
-    {
-      file,
-      name,
-      runtimeInputs ? [ ],
-      replacements ? { },
-    }:
-    pkgs.writeShellApplication {
-      inherit name runtimeInputs;
-      text = lib.replaceStrings (builtins.attrNames replacements) (builtins.attrValues replacements) (
-        builtins.readFile file
-      );
-    };
+  portable = import ./portable.nix { inherit lib pkgs; };
 
-  remotes = import ../lib/remotes.nix;
+  inherit (portable) mkScript;
 
-  remotePackages = lib.mapAttrs (
-    name: remote:
-    mkScript {
-      inherit name;
-      file = ./bin/remote.sh;
-      runtimeInputs = [ pkgs.mosh ];
-      replacements = {
-        "@NAME@" = name;
-        "@HOST@" = remote.host;
-      };
-    }
-  ) remotes;
-
-  commonPackages = {
-    mux = mkScript {
-      name = "mux";
-      file = ./bin/mux.sh;
-      runtimeInputs =
-        with pkgs;
-        [
-          coreutils
-          fzf
-          gawk
-          git
-          gnugrep
-          gnused
-        ]
-        ++ lib.optionals stdenv.isLinux [ util-linux ];
-    };
-
-    ga = mkScript {
-      name = "ga";
-      file = ./bin/ga.sh;
-      runtimeInputs = with pkgs; [ git ];
-    };
-
-    ghpr = mkScript {
-      name = "ghpr";
-      file = ./bin/ghpr.sh;
-      runtimeInputs = with pkgs; [
-        gh
-        git
-        gnugrep
-        gnused
-        coreutils
-      ];
-    };
-
-    iosrun = mkScript {
-      name = "iosrun";
-      file = ./bin/iosrun.sh;
-      runtimeInputs = with pkgs; [
-        findutils
-        gnugrep
-        coreutils
-      ];
-    };
-
+  commonPackages = portable.packages // {
     wallpaper-gen = mkScript {
       name = "wallpaper-gen";
       file = ./bin/wallpaper-gen.sh;
@@ -190,8 +121,7 @@ let
         "@THEME_ASSETS_TEXT@" = themeAssetsText;
       };
     };
-  }
-  // remotePackages;
+  };
 
   darwinPackages = { };
 

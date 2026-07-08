@@ -134,6 +134,7 @@
         ./flake/hosts.nix
         ./flake/nixos.nix
         ./flake/omp.nix
+        ./flake/scripts.nix
         ./flake/tests.nix
         ./flake/user-config.nix
       ];

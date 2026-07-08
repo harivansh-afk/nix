@@ -10,7 +10,6 @@ local views = core.views
 local VIEW_ORDER = core.VIEW_ORDER
 local TABLINE_EXPR = "%!v:lua.require'mux.line'.render()"
 local refresh_pending = false
-local peek_active = false
 
 -- cozybox palette (mirrors lib/theme.nix); keyed by vim.o.background so the bar
 -- tracks `theme` switches. Purple accent + muted separators, matching the old
@@ -39,9 +38,9 @@ local function visibility_mode()
   local file = visibility_file()
   if vim.fn.filereadable(file) == 1 then
     local mode = vim.fn.readfile(file)[1]
-    if mode == "show" then return "show" end
+    if mode == "hide" then return "hide" end
   end
-  return "hide"
+  return "show"
 end
 
 local function write_visibility(mode)
@@ -141,21 +140,10 @@ end
 
 function M.apply_visibility()
   if vim.env.MUX ~= "1" then return end
-  local show = visibility_mode() == "show" or peek_active
+  local show = visibility_mode() ~= "hide"
   if vim.o.tabline ~= TABLINE_EXPR then vim.o.tabline = TABLINE_EXPR end
   vim.o.showtabline = show and 2 or 0
   clear_separator()
-end
-
--- Momentarily reveal the bar while a prefix command is pending (tmux-style
--- status peek). Redraws synchronously so the bar is visible during getcharstr.
----@param active boolean
-function M.peek(active)
-  if vim.env.MUX ~= "1" or peek_active == active then return end
-  peek_active = active
-  M.apply_visibility()
-  pcall(vim.cmd.redraw)
-  pcall(vim.cmd.redrawtabline)
 end
 
 ---@return string

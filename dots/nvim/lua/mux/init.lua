@@ -2,9 +2,7 @@
 -- tabpages are plain tmux-style windows. Switching projects is `:connect` to
 -- another per-project nvim server (see scripts/bin/mux.sh). Bindings mirror the
 -- old tmux config: <c-b> prefix, h/j/k/l panes, -/' splits, c new window,
--- [ copy mode, H/J/K/L session cycling, f picker, d detach. The tab bar is
--- hidden by default: it peeks while a prefix command is pending, and <c-b>\
--- pins/unpins it.
+-- [ copy mode, H/J/K/L session cycling, f picker, d detach, \ tab bar toggle.
 
 local core = require "mux.core"
 local view = require "mux.view"
@@ -52,94 +50,70 @@ function M.setup()
   vim.opt.fillchars:append { vert = "│" }
 
   local prefix = "<c-b>"
+  local modes = { "n", "i", "t" }
 
-  ---@type table<string, fun()> key typed after the prefix -> mux command
-  local commands = {}
-
-  ---@param lhs string key typed after the prefix (keycode notation ok)
+  ---@param lhs string
   ---@param rhs fun()
   ---@param desc string
   local function muxmap(lhs, rhs, desc)
-    commands[vim.keycode(lhs)] = function()
+    vim.keymap.set(modes, lhs, function()
       rhs()
       line.refresh()
-    end
+    end, { desc = desc })
   end
 
-  -- Bare prefix peeks the tab bar, then reads one key: a mux command if bound,
-  -- else it falls through to <c-w>, so <c-b>h/j/k/l is pane navigation and any
-  -- unbound <c-b>* keeps its window-command meaning. In terminal mode <c-b><c-b>
-  -- sends a literal <c-b> and <c-b>[ enters copy mode.
-  local fallthrough = {
-    n = vim.keycode "<c-w>",
-    i = vim.keycode "<c-o><c-w>",
-    t = vim.keycode "<c-\\><c-n><c-w>",
-  }
-  local function dispatch()
-    line.peek(true)
-    local ok, key = pcall(vim.fn.getcharstr)
-    line.peek(false)
-    if not ok or key == "" or key == vim.keycode "<esc>" then return end
-    local mode = vim.api.nvim_get_mode().mode:sub(1, 1)
-    if mode == "t" then
-      if key == vim.keycode(prefix) then
-        vim.api.nvim_feedkeys(key, "n", false)
-        return
-      end
-      if key == "[" then
-        vim.api.nvim_feedkeys(vim.keycode [[<c-\><c-n>]], "n", false)
-        return
-      end
-    end
-    local command = commands[key]
-    if command then
-      command()
-      return
-    end
-    vim.api.nvim_feedkeys((fallthrough[mode] or fallthrough.n) .. key, "m", false)
+  -- Prefix falls through to <c-w>, so <c-b>h/j/k/l is pane navigation and any
+  -- unmapped <c-b>* keeps its window-command meaning.
+  for mode, rhs in pairs {
+    n = "<c-w>",
+    i = "<c-o><c-w>",
+    t = "<c-\\><c-n><c-w>",
+  } do
+    vim.keymap.set(mode, prefix, rhs, { remap = true, desc = "mux: window command prefix" })
   end
-  vim.keymap.set({ "n", "i", "t" }, prefix, dispatch, { desc = "mux: prefix" })
+  vim.keymap.set("t", prefix .. prefix, prefix, { desc = "mux: send prefix" })
+  vim.keymap.set("t", prefix .. "[", [[<c-\><c-n>]], { desc = "mux: copy mode" })
 
   -- tmux parity
-  muxmap("-", function() M.split_terminal(false) end, "mux: horizontal split terminal")
-  muxmap("'", function() M.split_terminal(true) end, "mux: vertical split terminal")
-  muxmap("c", M.new_window, "mux: new window")
-  muxmap("x", M.kill_pane, "mux: kill pane")
-  muxmap("z", M.toggle_zoom, "mux: zoom pane (toggle fullscreen)")
-  muxmap("n", function() vim.cmd "tabnext" end, "mux: next window")
-  muxmap("p", function() vim.cmd "tabprevious" end, "mux: previous window")
-  muxmap("y", function()
+  muxmap(prefix .. "-", function() M.split_terminal(false) end, "mux: horizontal split terminal")
+  muxmap(prefix .. "'", function() M.split_terminal(true) end, "mux: vertical split terminal")
+  muxmap(prefix .. "c", M.new_window, "mux: new window")
+  muxmap(prefix .. "x", M.kill_pane, "mux: kill pane")
+  muxmap(prefix .. "z", M.toggle_zoom, "mux: zoom pane (toggle fullscreen)")
+  muxmap(prefix .. "n", function() vim.cmd "tabnext" end, "mux: next window")
+  muxmap(prefix .. "p", function() vim.cmd "tabprevious" end, "mux: previous window")
+  muxmap(prefix .. "y", function()
     core.leave_terminal()
     pcall(vim.cmd, "buffer #")
   end, "mux: previous buffer (last shell)")
   for i = 1, 9 do
-    muxmap(tostring(i), function()
+    muxmap(prefix .. i, function()
       local tabs = vim.api.nvim_list_tabpages()
       if tabs[i] then vim.api.nvim_set_current_tabpage(tabs[i]) end
     end, "mux: window " .. i)
   end
   for _, key in ipairs { "H", "K" } do
-    muxmap(key, function() M.cycle_project(-1) end, "mux: previous session")
+    muxmap(prefix .. key, function() M.cycle_project(-1) end, "mux: previous session")
   end
   for _, key in ipairs { "J", "L" } do
-    muxmap(key, function() M.cycle_project(1) end, "mux: next session")
+    muxmap(prefix .. key, function() M.cycle_project(1) end, "mux: next session")
   end
-  muxmap("f", M.pick_project, "mux: switch project")
-  muxmap("d", function() vim.cmd "detach" end, "mux: detach to shell")
+  muxmap(prefix .. "f", M.pick_project, "mux: switch project")
+  muxmap(prefix .. "d", function() vim.cmd "detach" end, "mux: detach to shell")
 
   -- views + session lifecycle
   for name, spec in pairs(core.views) do
     local view_name = name
-    muxmap(spec.key, function() M.open_view(view_name) end, "mux: " .. view_name)
+    muxmap(prefix .. spec.key, function() M.open_view(view_name) end, "mux: " .. view_name)
   end
-  muxmap("<tab>", M.last_session, "mux: last session")
-  muxmap("<bs>", M.last_session, "mux: last session")
-  muxmap("6", M.last_view, "mux: last view")
-  muxmap("s", M.save_session, "mux: save session")
-  muxmap("S", M.stop_to_latest, "mux: stop session (hop to last)")
-  muxmap("X", M.kill_to_latest, "mux: kill session (hop to last)")
-  muxmap("R", M.reload, "mux: reload session (restart)")
-  muxmap([[\]], line.toggle, "mux: pin/unpin tab bar")
+  muxmap(prefix .. "<tab>", M.last_session, "mux: last session")
+  muxmap(prefix .. "<bs>", M.last_session, "mux: last session")
+  muxmap(prefix .. "6", M.last_view, "mux: last view")
+  muxmap(prefix .. "s", M.save_session, "mux: save session")
+  muxmap(prefix .. "S", M.stop_to_latest, "mux: stop session (hop to last)")
+  muxmap(prefix .. "X", M.kill_to_latest, "mux: kill session (hop to last)")
+  muxmap(prefix .. "R", M.reload, "mux: reload session (restart)")
+  muxmap(prefix .. [[\]], line.toggle, "mux: toggle tab bar")
 
   local group = vim.api.nvim_create_augroup("mux", { clear = true })
   line.setup_hl()

@@ -18,12 +18,12 @@ M.views = {
     restore = true,
   },
   zsh = {
-    key = "g",
+    key = "t",
     kind = "terminal",
     cmd = { vim.o.shell },
     lifecycle = "ephemeral",
   },
-  vcs = { key = "v", kind = "vcs", restore = true },
+  vcs = { key = "g", kind = "vcs", restore = true },
 }
 
 M.VIEW_ORDER = { "edit", "vcs", "ai", "zsh" }

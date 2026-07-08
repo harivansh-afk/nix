@@ -62,8 +62,15 @@ function M.setup()
     end, { desc = desc })
   end
 
-  -- Prefix falls through to <c-w>, so <c-b>h/j/k/l is pane navigation and any
-  -- unmapped <c-b>* keeps its window-command meaning.
+  local function move_pane(primary, fallback)
+    local win = vim.api.nvim_get_current_win()
+    vim.cmd("wincmd " .. primary)
+    if vim.api.nvim_get_current_win() == win then vim.cmd("wincmd " .. fallback) end
+    core.restore_terminal_focus()
+  end
+
+  -- Prefix falls through to <c-w>; h/j/k/l get tmux-style edge fallback below
+  -- and any unmapped <c-b>* keeps its window-command meaning.
   for mode, rhs in pairs {
     n = "<c-w>",
     i = "<c-o><c-w>",
@@ -77,6 +84,10 @@ function M.setup()
   -- tmux parity
   muxmap(prefix .. "-", function() M.split_terminal(false) end, "mux: horizontal split terminal")
   muxmap(prefix .. "'", function() M.split_terminal(true) end, "mux: vertical split terminal")
+  muxmap(prefix .. "h", function() move_pane("h", "l") end, "mux: pane left or right")
+  muxmap(prefix .. "j", function() move_pane("j", "k") end, "mux: pane down or up")
+  muxmap(prefix .. "k", function() move_pane("k", "j") end, "mux: pane up or down")
+  muxmap(prefix .. "l", function() move_pane("l", "h") end, "mux: pane right or left")
   muxmap(prefix .. "c", M.new_window, "mux: new window")
   muxmap(prefix .. "x", M.kill_pane, "mux: kill pane")
   muxmap(prefix .. "z", M.toggle_zoom, "mux: zoom pane (toggle fullscreen)")

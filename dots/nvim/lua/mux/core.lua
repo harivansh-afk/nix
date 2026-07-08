@@ -107,6 +107,20 @@ function M.restore_terminal_focus()
   return true
 end
 
+---@param buf integer
+---@return string?
+function M.terminal_cwd(buf)
+  if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].buftype ~= "terminal" then return nil end
+  local cwd = vim.b[buf].mux_term_cwd
+  if cwd and cwd ~= "" and vim.fn.isdirectory(cwd) == 1 then return cwd end
+  local job = vim.b[buf].terminal_job_id
+  local pid = job and vim.fn.jobpid(job) or 0
+  if not pid or pid <= 0 then return nil end
+  local ok, dir = pcall(vim.uv.fs_readlink, "/proc/" .. pid .. "/cwd")
+  if ok and dir and dir ~= "" and vim.fn.isdirectory(dir) == 1 then return dir end
+  return nil
+end
+
 ---@param msg string
 function M.log(msg)
   local file = vim.env.MUX_LOG_FILE

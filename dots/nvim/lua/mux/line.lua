@@ -82,11 +82,11 @@ local function session_segment(name, current)
 end
 
 ---@param tp integer
----@return string label like tmux automatic-rename: basename of the terminal's
----live cwd (OSC 7 from the shell, see zshrc), falling back to the tab's cwd
+---@return string label like tmux automatic-rename: basename of the terminal cwd,
+---falling back to the tab's cwd
 local function window_label(tp)
   local win = vim.api.nvim_tabpage_get_win(tp)
-  local dir = vim.b[vim.api.nvim_win_get_buf(win)].mux_term_cwd
+  local dir = core.terminal_cwd(vim.api.nvim_win_get_buf(win))
   if not dir or dir == "" then
     local ok, cwd = pcall(vim.fn.getcwd, vim.api.nvim_win_get_number(win), vim.api.nvim_tabpage_get_number(tp))
     dir = (ok and cwd) or ""

@@ -26,8 +26,9 @@
 
 ## Personal KB recall (spark only)
 - Questions about my email, calendar, finances, subscriptions, repos, downloads, or reading: query the Cognee KB before saying you don't know.
-- `kb-search "query"`: fast vector chunk search (no LLM).
-- Graph store via first-party CLI: `sudo cognee-env /var/lib/cognee/venv/bin/cognee-cli search -t CHUNKS -d <dataset> -k 10 -f simple "query"`. Datasets: gmail, calendar, finance, forgejo, downloads, loops, research. Types: CHUNKS (raw retrieval, no LLM: prefer this and synthesize yourself), GRAPH_COMPLETION (default: one-shot answer from the small local brain, misses long-tail facts), RAG_COMPLETION, SUMMARIES. Use `-f json` for parseable output.
+- `kb-search "query"`: hybrid chunk search (pgvector HNSW + Postgres full-text, RRF-fused; no LLM, ~0.5s). First choice for any lookup; handles rare terms and one-word queries via the lexical arm.
+- `kb-graph resolve|neighbors|connect|source "<entity>"`: read-only graph traversal (no sudo, prints JSON). Use for relation questions: who connects to what, path between two entities, source chunks behind an entity.
+- Graph store via first-party CLI: `sudo cognee-env /var/lib/cognee/venv/bin/cognee-cli search -t CHUNKS -d <dataset> -k 15 -f simple "query"`. Datasets: gmail, calendar, finance, forgejo, downloads, loops, research. Types: CHUNKS (raw retrieval, no LLM: prefer this and synthesize yourself), GRAPH_COMPLETION (default: seeds from only the top-k vector hits, k defaults to 5 triplets, then a strict small-brain answer; says "No information found" whenever the seeds miss - always pass `-k 15`+), RAG_COMPLETION, SUMMARIES. Use `-f json` for parseable output.
 - Iterate: reformulate and re-query rather than trusting one retrieval pass.
 
 ## Clipboard image

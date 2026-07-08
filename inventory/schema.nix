@@ -1,4 +1,4 @@
-{ lib, username }:
+{ lib }:
 let
   inherit (lib) mkOption types;
 in
@@ -32,6 +32,10 @@ types.submodule (
         default = name;
       };
 
+      username = mkOption {
+        type = types.str;
+      };
+
       roles = mkOption {
         type = types.listOf types.str;
         default = [ ];
@@ -39,7 +43,7 @@ types.submodule (
 
       homeDirectory = mkOption {
         type = types.str;
-        default = if config.isDarwin then "/Users/${username}" else "/home/${username}";
+        default = if config.isDarwin then "/Users/${config.username}" else "/home/${config.username}";
       };
 
       isDarwin = mkOption {

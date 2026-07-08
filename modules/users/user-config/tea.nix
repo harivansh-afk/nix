@@ -10,6 +10,7 @@
     sshHost="$3"
     token="$4"
     default="$5"
+    user="$6"
 
     cat <<YAML
         - name: $name
@@ -23,7 +24,7 @@
           ssh_agent: false
           ssh_key_agent_pub: ""
           version_check: false
-          user: harivansh-afk
+          user: $user
     YAML
   '';
 }

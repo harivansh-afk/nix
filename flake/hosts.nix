@@ -2,7 +2,6 @@
   hosts,
   inputs,
   lib,
-  username,
   mkSpecialArgs,
   ...
 }:
@@ -19,12 +18,12 @@ let
         ../hosts/${host.name}
         inputs.nix-homebrew.darwinModules.nix-homebrew
         {
-          users.users.${username}.home = host.homeDirectory;
+          users.users.${host.username}.home = host.homeDirectory;
 
           nix-homebrew = {
             enable = true;
             enableRosetta = false;
-            user = username;
+            user = host.username;
             autoMigrate = true;
           };
 
@@ -32,7 +31,7 @@ let
             enable = true;
             # Same attrset spark uses for nix.settings; Determinate owns
             # nix.conf on darwin, so it is fed in through customSettings.
-            customSettings = import ../system/nix-settings.nix username;
+            customSettings = import ../system/nix-settings.nix host.username;
           };
         }
       ];

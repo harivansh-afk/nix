@@ -35,6 +35,7 @@
   ompReadXattr,
   ompWriteXattr,
   teaLoginYaml,
+  forgeLogins,
   heliumExtJson,
   heliumExtensions,
   ...
@@ -269,7 +270,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     {
       printf '%s\n' "logins:"
       if [ -n "$harivanToken" ]; then
-        ${teaLoginYaml} harivan https://git.harivan.sh git.harivan.sh "$harivanToken" true
+        ${teaLoginYaml} harivan https://git.harivan.sh git.harivan.sh "$harivanToken" true ${lib.escapeShellArg forgeLogins.harivan}
       fi
       if [ -n "$ixToken" ]; then
         if [ -n "$harivanToken" ]; then
@@ -277,7 +278,7 @@ pkgs.writeShellScript "user-config-${name}" ''
         else
           ixDefault=true
         fi
-        ${teaLoginYaml} ix-harivansh https://git.ix.dev git.ix.dev "$ixToken" "$ixDefault"
+        ${teaLoginYaml} ix-harivansh https://git.ix.dev git.ix.dev "$ixToken" "$ixDefault" ${lib.escapeShellArg forgeLogins.ix}
       fi
       cat <<'YAML'
   preferences:

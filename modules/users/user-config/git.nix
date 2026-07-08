@@ -7,12 +7,13 @@
   pkgs,
   theme,
   hostname,
+  forgeLogins,
   ...
 }:
 let
   forgejoCredentialHelper = pkgs.writeShellScript "git-credential-forgejo" ''
     if [ "$1" = "get" ] && [ -r /run/secrets/forgejo-token.env ]; then
-      echo "username=harivansh-afk"
+      echo "username=${forgeLogins.harivan}"
       echo "password=$(cat /run/secrets/forgejo-token.env)"
     fi
   '';
@@ -21,7 +22,7 @@ let
     if [ "$1" = "get" ] && [ -r /run/secrets/forgejo-ix.env ]; then
       set -a
       . /run/secrets/forgejo-ix.env
-      echo "username=harivansh-afk"
+      echo "username=${forgeLogins.ix}"
       echo "password=$FORGEJO_IX_TOKEN"
     fi
   '';
@@ -39,11 +40,11 @@ in
     ''
       [credential "https://git.harivan.sh"]
       	helper = !${forgejoCredentialHelper}
-      	username = harivansh-afk
+      	username = ${forgeLogins.harivan}
 
       [credential "https://git.ix.dev"]
       	helper = !${ixForgejoCredentialHelper}
-      	username = harivansh-afk
+      	username = ${forgeLogins.ix}
     ''
     # spark hosts git.harivan.sh itself: rewrite git ops to loopback SSH so
     # they skip the WAN round-trip through the Cloudflare tunnel (latency +

@@ -1,6 +1,6 @@
-{ lib, username }:
+{ lib }:
 let
-  nodeType = import ./schema.nix { inherit lib username; };
+  nodeType = import ./schema.nix { inherit lib; };
 
   nodesDir = ./nodes;
   nodeFiles = lib.filterAttrs (file: type: type == "regular" && lib.hasSuffix ".nix" file) (

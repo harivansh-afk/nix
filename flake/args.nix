@@ -5,8 +5,7 @@
   ...
 }:
 let
-  username = "rathi";
-  hosts = import ../inventory { inherit lib username; };
+  hosts = import ../inventory { inherit lib; };
 
   mkPkgs =
     system:
@@ -16,8 +15,8 @@ let
     };
 
   mkSpecialArgs = host: {
-    inherit inputs self username;
-    inherit (host) hostname;
+    inherit inputs self;
+    inherit (host) hostname username;
     hostConfig = host;
   };
 
@@ -32,7 +31,6 @@ in
 
   _module.args = {
     inherit
-      username
       hosts
       mkPkgs
       mkSpecialArgs

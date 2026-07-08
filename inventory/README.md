@@ -18,8 +18,9 @@ Typed host inventory. One record per host, validated against a schema with
 | `kind`          | enum `darwin` \| `nixos`      | Required                               |
 | `system`        | enum of the 4 nix systems     | Required                               |
 | `hostname`      | str                           | Defaults to `name`                     |
+| `username`      | str                           | Required; the host's primary user      |
 | `roles`         | list of str                   | Defaults to `[]`                       |
-| `homeDirectory` | str                           | Defaults by platform                   |
+| `homeDirectory` | str                           | Defaults by platform from `username`   |
 | `isDarwin` / `isLinux` / `isNixOS` | bool (read-only) | Derived from `kind`                  |
 
 ## Invariants (`default.nix`)
@@ -32,5 +33,5 @@ Evaluation fails fast if any node violates:
 
 ## Adding a host
 
-Create `nodes/<host>.nix` with at least `kind` and `system`. It is picked up
-automatically.
+Create `nodes/<host>.nix` with at least `kind`, `system`, and `username`. It is
+picked up automatically.

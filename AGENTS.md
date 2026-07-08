@@ -9,7 +9,7 @@ Two hosts, one flake:
 | `macbook` | nix-darwin | aarch64-darwin | Dev workstation |
 | `spark` | NixOS | aarch64-linux | NVIDIA DGX Spark server |
 
-Both are declared in `inventory/nodes/` and assembled in `flake/hosts.nix` (darwin) and `flake/nixos.nix` (nixos). The `flake/args.nix` module wires shared args (`username`, `mkSpecialArgs`) consumed by both host builders.
+Both are declared in `inventory/nodes/` and assembled in `flake/hosts.nix` (darwin) and `flake/nixos.nix` (nixos). The `flake/args.nix` module wires shared args (`hosts`, `mkSpecialArgs`) consumed by both host builders; each host's primary `username` comes from its inventory record.
 
 ### Host topology
 
@@ -67,7 +67,7 @@ To add a Barrett-owned secret: drop the file at `secrets/hosts/spark/barrett-<na
 ```
 flake.nix              Inputs + flake-parts structure
 flake/
-  args.nix             Shared args: username, host records, builders
+  args.nix             Shared args: host records, builders
   devshell.nix         Dev tools + formatter
   hosts.nix            macbook darwin configuration
   nixos.nix            spark NixOS configuration

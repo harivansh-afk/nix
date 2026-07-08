@@ -19,9 +19,15 @@
   hostname,
   isDarwin,
   extraPackages ? [ ],
+  forgeUsers ? { },
 }:
 let
   inherit (user) name homeDirectory;
+  forgeLogins = {
+    harivan = "harivansh-afk";
+    ix = "harivansh-afk";
+  }
+  // forgeUsers;
   configHome = "${homeDirectory}/.config";
   binHome = "${homeDirectory}/.local/bin";
   dataHome = "${homeDirectory}/.local/share";
@@ -49,6 +55,7 @@ let
       theme
       customScripts
       coreutilsBin
+      forgeLogins
       ;
   };
 

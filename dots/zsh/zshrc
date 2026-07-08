@@ -209,6 +209,24 @@ add-zle-hook-widget zle-keymap-select _codex_cursor_select
 add-zle-hook-widget zle-line-init _codex_cursor_beam
 add-zle-hook-widget zle-line-finish _codex_cursor_beam
 
+# Inside an nvim :terminal (mux windows), report the cwd via OSC 7 so the mux
+# tab bar can rename tabs like tmux automatic-rename. Byte-wise percent
+# encoding (LC_ALL=C) keeps multibyte path names intact.
+_mux_osc7() {
+  [[ -n "$NVIM" ]] || return
+  local LC_ALL=C ch encoded=""
+  for ch in ${(s::)PWD}; do
+    if [[ "$ch" == [A-Za-z0-9/._~-] ]]; then
+      encoded+="$ch"
+    else
+      encoded+="$(printf '%%%02X' "'$ch")"
+    fi
+  done
+  printf '\e]7;file://%s%s\a' "$HOST" "$encoded"
+}
+chpwd_functions+=(_mux_osc7)
+_mux_osc7
+
 # --- prompt (pure) ---
 source "${DOTS_ZSH_DIR:-$HOME/Documents/Git/nix/dots/zsh}/prompt.zsh"
 

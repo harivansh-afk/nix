@@ -1,7 +1,8 @@
 # mux: per-project Neovim server launcher (replaces tmux).
 # Each project (git root) gets one `nvim --headless --listen <socket>` server
 # (running the real config, with lua/mux activated via -c + MUX=1). Clients
-# attach via `--remote-ui`; switch projects from inside nvim with <c-b>f.
+# attach via `--remote-ui`; switch projects from inside nvim with <c-b>f
+# (local) or <c-b>F (all hosts).
 
 set -euo pipefail
 
@@ -19,7 +20,9 @@ STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/nvim/mux"
 LAST_FILE="$STATE_DIR/last"
 HISTORY_FILE="$STATE_DIR/history"
 LOG_DIR="$STATE_DIR/logs"
+HOP_FILE="$STATE_DIR/hop"
 SCRIPT_SELF="$(command -v -- "${BASH_SOURCE[0]:-$0}" 2>/dev/null || printf '%s' "${BASH_SOURCE[0]:-$0}")"
+MUX_LIST_TIMEOUT="${MUX_LIST_TIMEOUT:-3}"
 
 die() {
   printf 'mux: %s\n' "$1" >&2
@@ -347,14 +350,149 @@ restore_marked() {
   done
 }
 
+consume_hop() {
+  local line name host project
+  [ -f "$HOP_FILE" ] || return 1
+  IFS= read -r line <"$HOP_FILE" || true
+  rm -f "$HOP_FILE"
+  [ -n "${line:-}" ] || return 1
+  name="${line%%$'\t'*}"
+  line="${line#*$'\t'}"
+  host="${line%%$'\t'*}"
+  project="${line#*$'\t'}"
+  [ -n "$name" ] && [ -n "$host" ] || return 1
+  if [ "$project" = "$host" ]; then
+    project=""
+  fi
+  if command -v "$name" >/dev/null 2>&1; then
+    if [ -n "$project" ]; then
+      exec "$name" --ssh "$project"
+    fi
+    exec "$name" --ssh
+  fi
+  if [ -n "$project" ]; then
+    exec ssh -t "$host" mux "$project"
+  fi
+  exec ssh -t "$host" mux
+}
+
 open_project() {
   local root sock
+  rm -f "$HOP_FILE"
   root="$(root_for "${1:-$PWD}")"
   sock="$(ensure "$root")"
   record_last "$root"
   push_history "$root"
   cd "$root" || true
   env MUX=1 "$NVIM" --remote-ui --server "$sock"
+  consume_hop || true
+}
+
+local_name() {
+  local short
+  short="$(hostname -s 2>/dev/null || hostname 2>/dev/null || printf local)"
+  short="${short%%.*}"
+  case "$short" in
+  spark-ix | spark) printf 'spark\n' ;;
+  *) printf '%s\n' "$short" ;;
+  esac
+}
+
+remotes_catalog() {
+  if [ -n "${MUX_REMOTES_FILE:-}" ] && [ -f "$MUX_REMOTES_FILE" ]; then
+    cat "$MUX_REMOTES_FILE"
+    return 0
+  fi
+  cat <<'EOF'
+@MUX_REMOTES@
+EOF
+}
+
+# Federated list: local rows first, then each remote via ssh (batched).
+# Always TSV: host<TAB>cwd<TAB>socket<TAB>status. Unreachable hosts omitted.
+list_all() {
+  local me name host tmpdir pids=() outs=() i line cwd sock status
+  me="$(local_name)"
+  tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/mux-list-all.XXXXXX")"
+  # shellcheck disable=SC2064
+  trap "rm -rf '$tmpdir'" RETURN
+  i=0
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    name="${line%% *}"
+    host="${line#* }"
+    [ -n "$name" ] && [ -n "$host" ] || continue
+    [ "$name" = "$me" ] && continue
+    outs+=("$tmpdir/$i")
+    (
+      ssh -o BatchMode=yes -o ConnectTimeout="$MUX_LIST_TIMEOUT" \
+        -o StrictHostKeyChecking=accept-new \
+        "$host" mux list </dev/null >"$tmpdir/$i.raw" 2>/dev/null || true
+      if [ -s "$tmpdir/$i.raw" ]; then
+        while IFS= read -r row; do
+          [ -n "$row" ] || continue
+          cwd="${row%%$'\t'*}"
+          rest="${row#*$'\t'}"
+          sock="${rest%%$'\t'*}"
+          status="${rest#*$'\t'}"
+          [ -n "$cwd" ] || continue
+          printf '%s\t%s\t%s\t%s\n' "$name" "$cwd" "$sock" "$status"
+        done <"$tmpdir/$i.raw" >"$tmpdir/$i"
+      else
+        : >"$tmpdir/$i"
+      fi
+    ) &
+    pids+=("$!")
+    i=$((i + 1))
+  done < <(remotes_catalog)
+
+  while IFS= read -r row; do
+    [ -n "$row" ] || continue
+    cwd="${row%%$'\t'*}"
+    rest="${row#*$'\t'}"
+    sock="${rest%%$'\t'*}"
+    status="${rest#*$'\t'}"
+    [ -n "$cwd" ] || continue
+    printf '%s\t%s\t%s\t%s\n' "$me" "$cwd" "$sock" "$status"
+  done < <(list_projects)
+
+  for pid in "${pids[@]+"${pids[@]}"}"; do
+    wait "$pid" || true
+  done
+  for out in "${outs[@]+"${outs[@]}"}"; do
+    [ -f "$out" ] || continue
+    cat "$out"
+  done
+}
+
+write_hop() {
+  local name="$1" host="$2" project="$3"
+  mkdir -p "$STATE_DIR"
+  printf '%s\t%s\t%s\n' "$name" "$host" "$project" >"$HOP_FILE"
+  chmod 600 "$HOP_FILE" 2>/dev/null || true
+}
+
+# Record a cross-host hop; the next client detach/exit runs the connector.
+hop() {
+  local name="$1" project="${2:-}" host line me
+  [ -n "$name" ] || die "usage: mux hop <name> [project]"
+  me="$(local_name)"
+  if [ "$name" = "$me" ] || [ "$name" = local ] || [ "$name" = . ]; then
+    [ -n "$project" ] || die "mux hop: local hop needs a project path"
+    open_project "$project"
+    return
+  fi
+  host=""
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    if [ "${line%% *}" = "$name" ]; then
+      host="${line#* }"
+      break
+    fi
+  done < <(remotes_catalog)
+  [ -n "$host" ] || die "unknown remote: $name"
+  write_hop "$name" "$host" "$project"
+  printf '%s\n' "$HOP_FILE"
 }
 
 resume() {
@@ -568,6 +706,8 @@ mux: per-project neovim server launcher
   mux open [<path>]   alias for mux [<path>]
   mux ensure [<path>] print a live server socket for the project, spawning if needed
   mux list            list projects: live + stopped + dead + dir (cwd<TAB>socket<TAB>status)
+  mux list --all      list projects across remotes (host<TAB>cwd<TAB>socket<TAB>status)
+  mux hop <name> [p]  after detach, open project p on remote <name> (used by <c-b>F)
   mux pick            fzf-pick a project from mux list and open it
   mux stop [<path>]   stop the project's server (saved session restored next open)
   mux kill [<path>]   hard-remove the project: stop + delete its saved session
@@ -586,9 +726,10 @@ Environment:
   MUX_START_TIMEOUT       seconds to wait for cold startup (default: 150)
   MUX_DIRENV_TIMEOUT      timeout passed to direnv export (default: 120s)
   MUX_BOOTSTRAP_DIRENV    1/0, run direnv before starting nvim (default: 1)
+  MUX_LIST_TIMEOUT        ssh connect timeout for mux list --all (default: 3)
   MUX_LOG_LINES           lines shown by mux log and failure tails
 
-Inside nvim, switch projects with <c-b>f, detach with <c-b>d.
+Inside nvim, switch projects with <c-b>f (local) or <c-b>F (all hosts), detach with <c-b>d.
 EOF
 }
 
@@ -775,7 +916,15 @@ ensure)
   ensure "${1:-$PWD}"
   ;;
 list)
-  list
+  if [ "${2:-}" = --all ] || [ "${2:-}" = -a ]; then
+    list_all
+  else
+    list
+  fi
+  ;;
+hop)
+  shift
+  hop "$@"
   ;;
 pick)
   pick

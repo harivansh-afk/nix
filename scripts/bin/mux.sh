@@ -814,6 +814,7 @@ mux: per-project neovim server launcher
   mux ensure [<path>] print a live server socket for the project, spawning if needed
   mux list            list projects: live + dir (cwd<TAB>socket<TAB>status)
   mux list --all      list projects across remotes (TSV when piped: host<TAB>cwd<TAB>socket<TAB>status)
+  mux ls              alias for mux list --all
   mux list --hosts    list hosts from the connector catalog with mux reachability
   mux hop <name> [p]  after detach, open project p on remote <name> (used by <c-b>F)
   mux pick [q]        fzf-pick a local project and open it
@@ -1040,6 +1041,13 @@ list)
     list
     ;;
   esac
+  ;;
+ls)
+  if [ -t 1 ]; then
+    list_all | sort_all_rows | render_all_rows
+  else
+    list_all
+  fi
   ;;
 hop)
   shift

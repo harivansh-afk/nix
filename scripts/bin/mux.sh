@@ -408,59 +408,43 @@ remotes_catalog() {
 EOF
 }
 
-# Federated list: local rows first, then each remote via ssh (batched).
-# Always TSV: host<TAB>cwd<TAB>socket<TAB>status. Unreachable hosts omitted.
+# Prefix stdin TSV rows (cwd<TAB>socket<TAB>status) with a host column.
+tag_rows() {
+  awk -F'\t' -v host="$1" '$1 != "" && NF >= 3 { print host "\t" $0 }'
+}
+
+# Federated list: local rows first, then each remote via ssh (probed in
+# parallel). Always TSV: host<TAB>cwd<TAB>socket<TAB>status. Unreachable
+# hosts are omitted.
 list_all() {
-  local me name host tmpdir pids=() outs=() i line cwd sock status
+  local me name host tmpdir line i=0
+  local pids=() outs=()
   me="$(local_name)"
   tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/mux-list-all.XXXXXX")"
   # shellcheck disable=SC2064
   trap "rm -rf '$tmpdir'" RETURN
-  i=0
   while IFS= read -r line; do
     [ -n "$line" ] || continue
     name="${line%% *}"
     host="${line#* }"
     [ -n "$name" ] && [ -n "$host" ] || continue
-    [ "$name" = "$me" ] && continue
+    { [ "$name" = "$me" ] || [ "$host" = "$me" ]; } && continue
     outs+=("$tmpdir/$i")
     (
       ssh -o BatchMode=yes -o ConnectTimeout="$MUX_LIST_TIMEOUT" \
         -o StrictHostKeyChecking=accept-new \
-        "$host" mux list </dev/null >"$tmpdir/$i.raw" 2>/dev/null || true
-      if [ -s "$tmpdir/$i.raw" ]; then
-        while IFS= read -r row; do
-          [ -n "$row" ] || continue
-          cwd="${row%%$'\t'*}"
-          rest="${row#*$'\t'}"
-          sock="${rest%%$'\t'*}"
-          status="${rest#*$'\t'}"
-          [ -n "$cwd" ] || continue
-          printf '%s\t%s\t%s\t%s\n' "$name" "$cwd" "$sock" "$status"
-        done <"$tmpdir/$i.raw" >"$tmpdir/$i"
-      else
-        : >"$tmpdir/$i"
-      fi
+        "$host" mux list </dev/null 2>/dev/null | tag_rows "$name" >"$tmpdir/$i" || true
     ) &
     pids+=("$!")
     i=$((i + 1))
   done < <(remotes_catalog)
 
-  while IFS= read -r row; do
-    [ -n "$row" ] || continue
-    cwd="${row%%$'\t'*}"
-    rest="${row#*$'\t'}"
-    sock="${rest%%$'\t'*}"
-    status="${rest#*$'\t'}"
-    [ -n "$cwd" ] || continue
-    printf '%s\t%s\t%s\t%s\n' "$me" "$cwd" "$sock" "$status"
-  done < <(list_projects)
+  list_projects | tag_rows "$me"
 
   for pid in "${pids[@]+"${pids[@]}"}"; do
     wait "$pid" || true
   done
   for out in "${outs[@]+"${outs[@]}"}"; do
-    [ -f "$out" ] || continue
     cat "$out"
   done
 }
@@ -492,7 +476,6 @@ hop() {
   done < <(remotes_catalog)
   [ -n "$host" ] || die "unknown remote: $name"
   write_hop "$name" "$host" "$project"
-  printf '%s\n' "$HOP_FILE"
 }
 
 resume() {

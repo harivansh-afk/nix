@@ -270,7 +270,10 @@ local function show_picker(items, opts)
         local entry = sel and sel[1] and meta[strip_ansi(sel[1])]
         if entry then connect_or_hop(entry, name) end
       end
-      parts[#parts + 1] = ("%s %s"):format(hl("FzfLuaHeaderBind", "^" .. spec.key:upper()), hl("FzfLuaHeaderText", name))
+      parts[#parts + 1] = ("%s %s"):format(
+        hl("FzfLuaHeaderBind", "^" .. spec.key:upper()),
+        hl("FzfLuaHeaderText", name)
+      )
     end
     parts[#parts + 1] = ("%s %s"):format(hl("FzfLuaHeaderBind", "^O"), hl("FzfLuaHeaderText", "open"))
   end

@@ -66,26 +66,39 @@ cognee-env python ingest.py --state-file /path/to/state.json
 ## Search
 
 ```sh
-# Plain pgvector chunk search (kb_vec.py wrapper on PATH from kb-ingest.nix;
-# no LLM, no graph, any user, ~0.4s):
+# Hybrid chunk search (kb_vec.py wrapper on PATH from kb-ingest.nix;
+# no LLM, no graph, any user, ~0.5s):
 kb-search "what does the neovim wiki say about LSP configuration?"
 
 # Cognee knowledge-graph query via the first-party CLI. The venv is
 # root-owned (0750), hence sudo; cognee-env supplies the local-provider env:
 sudo cognee-env /var/lib/cognee/venv/bin/cognee-cli search "who invited me to the party?"
-sudo cognee-env /var/lib/cognee/venv/bin/cognee-cli search -t CHUNKS -d finance -k 5 -f simple "GoDaddy charge"
+sudo cognee-env /var/lib/cognee/venv/bin/cognee-cli search -t CHUNKS -d finance -k 15 -f simple "GoDaddy charge"
 ```
+
+`kb-search` runs two retrieval arms and fuses them with reciprocal rank
+fusion: semantic (pgvector cosine over an HNSW index, query embedded with the
+Qwen3-Embedding instruction prefix) and lexical (Postgres full-text over a GIN
+index). The lexical arm is what makes rare terms, names, and one-word queries
+land; the semantic arm covers paraphrase. Top 8 results print as
+`[dataset] file: excerpt` lines.
+
+Do not reintroduce ivfflat for the semantic arm: the original index shipped
+with default `lists=100`/`probes=1` and measured 8% recall@10.
 
 `cognee-cli search` flags: `-t` GRAPH_COMPLETION (default, one-shot answer
 via the local brain) | RAG_COMPLETION | CHUNKS (raw retrieval, no LLM call) |
 SUMMARIES | CYPHER; `-d` dataset(s): gmail, calendar, finance, forgejo,
 downloads, loops, research; `-k` top-k; `-f json|pretty|simple`.
 
-`kb-search` prints `[dataset] file: excerpt` blocks and is the tool Hermes
-calls for knowledge retrieval. Agent callers should prefer `-t CHUNKS` (fast,
-no local-LLM bottleneck) and iterate with reformulated queries; the default
-GRAPH_COMPLETION is a one-shot summary by the local Qwen brain and misses
-long-tail facts.
+GRAPH_COMPLETION seeds from the top-k vector hits only (`top_k` defaults to
+5 triplets), resolves that tiny neighborhood to text, and asks the local
+brain, which answers strictly from context - so it says "No information
+found" whenever the seeds miss, regardless of how rich the graph is. Pass
+`-k 15` or higher for real questions, prefer `-t CHUNKS` for retrieval
+(fast, no local-LLM bottleneck), and use `kb-graph resolve/neighbors/
+connect/source` for relation questions - it walks the whole graph instead
+of a 5-triplet neighborhood.
 
 ## VERIFY-API seams
 

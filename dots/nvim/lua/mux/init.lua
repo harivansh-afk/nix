@@ -2,7 +2,8 @@
 -- tabpages are plain tmux-style windows. Switching projects is `:connect` to
 -- another per-project nvim server (see scripts/bin/mux.sh). Bindings mirror the
 -- old tmux config: <c-b> prefix, h/j/k/l panes, -/' splits, c new window,
--- [ copy mode, H/J/K/L session cycling, f picker, d detach, \ tab bar toggle.
+-- [ copy mode, H/J/K/L session cycling, f local picker, F all-hosts picker,
+-- d detach, \ tab bar toggle.
 
 local core = require "mux.core"
 local view = require "mux.view"
@@ -27,6 +28,7 @@ M.toggle_zoom = view.toggle_zoom
 
 M._connect = project._connect
 M.pick_project = project.pick_project
+M.pick_project_all = project.pick_project_all
 M.cycle_project = project.cycle_project
 M.list_entries = project.list_entries
 M.last_session = project.last_session
@@ -116,6 +118,7 @@ function M.setup()
     muxmap(prefix .. key, function() M.cycle_project(1) end, "mux: next session")
   end
   muxmap(prefix .. "f", M.pick_project, "mux: switch project")
+  muxmap(prefix .. "F", M.pick_project_all, "mux: switch project (all hosts)")
   muxmap(prefix .. "d", function() vim.cmd "detach" end, "mux: detach to shell")
 
   -- views + session lifecycle

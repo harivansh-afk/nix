@@ -16,6 +16,14 @@ let
 
   remotes = import ../lib/remotes.nix;
 
+  muxRemotesText = lib.concatMapStrings (
+    name:
+    let
+      remote = remotes.${name};
+    in
+    "${name} ${remote.host}\n"
+  ) (lib.attrNames remotes);
+
   remotePackages = lib.mapAttrs (
     name: remote:
     mkScript {
@@ -42,8 +50,12 @@ let
           git
           gnugrep
           gnused
+          openssh
         ]
         ++ lib.optionals stdenv.isLinux [ util-linux ];
+      replacements = {
+        "@MUX_REMOTES@" = muxRemotesText;
+      };
     };
 
     ga = mkScript {

@@ -135,25 +135,81 @@ local function parse_list_output(output)
   return entries
 end
 
+---@param output string?
+---@return { host: string, cwd: string, socket: string, status: string }[]
+local function parse_list_all_output(output)
+  local entries = {}
+  for line in (output or ""):gmatch "[^\n]+" do
+    local host, cwd, socket, status = line:match "([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)"
+    if host and host ~= "" and cwd and cwd ~= "" and known_project_status(status) then
+      entries[#entries + 1] = { host = host, cwd = cwd, socket = socket, status = status }
+    end
+  end
+  return entries
+end
+
+local function local_host_name()
+  local h = vim.fn.hostname()
+  h = (h:gsub("%..*$", ""))
+  if h == "spark-ix" or h == "spark" then return "spark" end
+  return h
+end
+
+---@param entry { host: string, path: string, socket: string?, status: string }
+---@param view string?
+local function connect_or_hop(entry, view)
+  if not entry or entry.status == "dead" then return end
+  local me = local_host_name()
+  if entry.host == me then
+    M._connect({ path = entry.path, socket = entry.socket }, view)
+    return
+  end
+  leave_terminal()
+  vim.system({ "mux", "hop", entry.host, entry.path }, { text = true }, function(res)
+    vim.schedule(function()
+      if res.code ~= 0 then
+        vim.notify("mux: hop failed: " .. (res.stderr or res.stdout or ""), vim.log.levels.ERROR)
+        core.restore_terminal_focus()
+        return
+      end
+      vim.cmd "detach"
+    end)
+  end)
+end
+
 -- Build and show the project picker from `mux list`, mirroring the CLI's
 -- colored output: [live] (green) and [stopped] (amber) rows, each with the
 -- ~-shortened path and socket. Selecting connects to that project.
----@param items { cwd: string, socket: string, status: string }[]
-local function show_picker(items)
-  ---@type { path: string, socket: string?, status: string, disp: string }[]
+---@param items { cwd: string, socket: string, status: string, host: string? }[]
+---@param opts { federated: boolean? }?
+local function show_picker(items, opts)
+  opts = opts or {}
+  local federated = opts.federated == true
+  local me = local_host_name()
+  ---@type { path: string, socket: string?, status: string, disp: string, host: string }[]
   local entries = {}
   local w = 0
+  local hw = 0
   for _, item in ipairs(items or {}) do
     local cwd, sock, status = item.cwd, item.socket, item.status
+    local host = item.host or me
     if cwd and cwd ~= "" and known_project_status(status) then
-      local path = canon(cwd)
-      local disp = vim.fn.fnamemodify(path, ":~")
+      local path, disp
+      if host == me then
+        path = canon(cwd)
+        disp = vim.fn.fnamemodify(path, ":~")
+      else
+        path = cwd
+        disp = cwd
+      end
       if #disp > w then w = #disp end
+      if #host > hw then hw = #host end
       entries[#entries + 1] = {
         path = path,
         socket = (sock and sock ~= "" and sock) or nil,
         status = status,
         disp = disp,
+        host = host,
       }
     end
   end
@@ -178,20 +234,27 @@ local function show_picker(items)
   local color_lines, meta = {}, {}
   for _, e in ipairs(entries) do
     local tag = e.status == "dir" and (" "):rep(9) or ("%-9s"):format(("[%s]"):format(e.status))
-    local rest = (" %-" .. w .. "s  %s"):format(e.disp, e.socket or "")
+    local host_tag = federated and ("%-" .. (hw + 2) .. "s"):format(("[%s]"):format(e.host)) or ""
+    local rest
+    if federated then
+      rest = (" %s %-" .. w .. "s"):format(host_tag, e.disp)
+    else
+      rest = (" %-" .. w .. "s  %s"):format(e.disp, e.socket or "")
+    end
     rest = (rest:gsub("%s+$", ""))
     local group = tag_hl[e.status]
     color_lines[#color_lines + 1] = (hl and group and hl(group, tag) .. rest) or (tag .. rest)
-    meta[tag .. rest] = { path = e.path, socket = e.socket, status = e.status }
+    meta[tag .. rest] = { path = e.path, socket = e.socket, status = e.status, host = e.host }
   end
 
   local actions = {
     ["default"] = function(sel)
       local entry = sel and sel[1] and meta[strip_ansi(sel[1])]
-      if entry and entry.status ~= "dead" then M._connect(entry) end
+      if entry then connect_or_hop(entry) end
     end,
-    ["ctrl-o"] = function(_, opts)
-      local path, err = validate_dir(opts and opts.last_query or nil)
+    ["ctrl-o"] = function(_, fzf_opts)
+      if federated then return end
+      local path, err = validate_dir(fzf_opts and fzf_opts.last_query or nil)
       if not path then
         notify_path_error(err or "invalid path")
         return
@@ -200,16 +263,22 @@ local function show_picker(items)
     end,
   }
   local parts = {}
-  for _, name in ipairs(VIEW_ORDER) do
-    local spec = views[name]
-    actions["ctrl-" .. spec.key] = function(sel)
-      local entry = sel and sel[1] and meta[strip_ansi(sel[1])]
-      if entry and entry.status ~= "dead" then M._connect(entry, name) end
+  if not federated then
+    for _, name in ipairs(VIEW_ORDER) do
+      local spec = views[name]
+      actions["ctrl-" .. spec.key] = function(sel)
+        local entry = sel and sel[1] and meta[strip_ansi(sel[1])]
+        if entry then connect_or_hop(entry, name) end
+      end
+      parts[#parts + 1] = ("%s %s"):format(
+        hl("FzfLuaHeaderBind", "^" .. spec.key:upper()),
+        hl("FzfLuaHeaderText", name)
+      )
     end
-    parts[#parts + 1] = ("%s %s"):format(hl("FzfLuaHeaderBind", "^" .. spec.key:upper()), hl("FzfLuaHeaderText", name))
+    parts[#parts + 1] = ("%s %s"):format(hl("FzfLuaHeaderBind", "^O"), hl("FzfLuaHeaderText", "open"))
   end
-  parts[#parts + 1] = ("%s %s"):format(hl("FzfLuaHeaderBind", "^O"), hl("FzfLuaHeaderText", "open"))
   local function lifecycle(verb, sel)
+    if federated then return end
     local entry = sel and sel[1] and meta[strip_ansi(sel[1])]
     if entry and entry.status == "dir" then return end
     if entry and entry.status == "dead" and verb == "stop" then return end
@@ -234,17 +303,19 @@ local function show_picker(items)
     end
     vim.schedule(M.pick_project)
   end
-  actions["ctrl-s"] = function(sel) lifecycle("stop", sel) end
-  parts[#parts + 1] = ("%s %s"):format(hl("FzfLuaHeaderBind", "^S"), hl("FzfLuaHeaderText", "stop"))
-  actions["ctrl-x"] = function(sel) lifecycle("kill", sel) end
-  parts[#parts + 1] = ("%s %s"):format(hl("FzfLuaHeaderBind", "^X"), hl("FzfLuaHeaderText", "kill"))
+  if not federated then
+    actions["ctrl-s"] = function(sel) lifecycle("stop", sel) end
+    parts[#parts + 1] = ("%s %s"):format(hl("FzfLuaHeaderBind", "^S"), hl("FzfLuaHeaderText", "stop"))
+    actions["ctrl-x"] = function(sel) lifecycle("kill", sel) end
+    parts[#parts + 1] = ("%s %s"):format(hl("FzfLuaHeaderBind", "^X"), hl("FzfLuaHeaderText", "kill"))
+  end
   fzf.fzf_exec(color_lines, {
-    prompt = "project> ",
+    prompt = federated and "host-project> " or "project> ",
     fzf_args = (vim.env.FZF_DEFAULT_OPTS or ""):gsub("%-%-bind=ctrl%-a:select%-all", ""),
     keymap = { fzf = { ["ctrl-z"] = false } },
     fzf_opts = {
       ["--ansi"] = true,
-      ["--header"] = ":: " .. table.concat(parts, " | "),
+      ["--header"] = #parts > 0 and (":: " .. table.concat(parts, " | ")) or false,
     },
     winopts = {
       on_close = function() vim.schedule(core.restore_terminal_focus) end,
@@ -313,6 +384,20 @@ function M.pick_project()
     vim.schedule(function()
       if res.code == 0 then
         show_picker(parse_list_output(res.stdout))
+      else
+        core.restore_terminal_focus()
+      end
+    end)
+  end)
+  if not ok then core.restore_terminal_focus() end
+end
+
+function M.pick_project_all()
+  leave_terminal()
+  local ok = pcall(vim.system, { "mux", "list", "--all" }, { text = true }, function(res)
+    vim.schedule(function()
+      if res.code == 0 then
+        show_picker(parse_list_all_output(res.stdout), { federated = true })
       else
         core.restore_terminal_focus()
       end

@@ -177,9 +177,27 @@ local function connect_or_hop(entry, view)
   end)
 end
 
+-- deterministic per-host tag color: hash the host name into a fixed palette
+-- so each host keeps the same color across pickers and sessions.
+local HOST_HL = { "Function", "Constant", "Special", "Type", "Identifier", "PreProc", "Statement", "Number" }
+
+---@param host string
+---@return string
+local function host_hl(host)
+  local sum = 0
+  for i = 1, #host do
+    sum = (sum * 31 + host:byte(i)) % 0x1000000
+  end
+  return HOST_HL[sum % #HOST_HL + 1]
+end
+
+local STATUS_RANK = { live = 1, stopped = 2, dead = 3, dir = 4 }
+
 -- Build and show the project picker from `mux list`, mirroring the CLI's
 -- colored output: [live] (green) and [stopped] (amber) rows, each with the
--- ~-shortened path and socket. Selecting connects to that project.
+-- ~-shortened path and socket. Rows sort live, stopped, dead, then bare dirs;
+-- federated rows carry a [host] tag in that host's stable color. Selecting
+-- connects to that project.
 ---@param items { cwd: string, socket: string, status: string, host: string? }[]
 ---@param opts { federated: boolean? }?
 local function show_picker(items, opts)
@@ -214,6 +232,15 @@ local function show_picker(items, opts)
     end
   end
 
+  for i, e in ipairs(entries) do
+    e.rank = i
+  end
+  table.sort(entries, function(a, b)
+    local ra, rb = STATUS_RANK[a.status], STATUS_RANK[b.status]
+    if ra ~= rb then return ra < rb end
+    return a.rank < b.rank
+  end)
+
   if #entries == 0 then
     core.restore_terminal_focus()
     return
@@ -235,15 +262,17 @@ local function show_picker(items, opts)
   for _, e in ipairs(entries) do
     local tag = e.status == "dir" and (" "):rep(9) or ("%-9s"):format(("[%s]"):format(e.status))
     local host_tag = federated and ("%-" .. (hw + 2) .. "s"):format(("[%s]"):format(e.host)) or ""
-    local rest
+    local rest, line
     if federated then
-      rest = (" %s %-" .. w .. "s"):format(host_tag, e.disp)
+      rest = ((" %s %-" .. w .. "s"):format(host_tag, e.disp):gsub("%s+$", ""))
+      local colored_host = hl and hl(host_hl(e.host), host_tag) or host_tag
+      line = ((" %s %-" .. w .. "s"):format(colored_host, e.disp):gsub("%s+$", ""))
     else
-      rest = (" %-" .. w .. "s  %s"):format(e.disp, e.socket or "")
+      rest = ((" %-" .. w .. "s  %s"):format(e.disp, e.socket or ""):gsub("%s+$", ""))
+      line = rest
     end
-    rest = (rest:gsub("%s+$", ""))
     local group = tag_hl[e.status]
-    color_lines[#color_lines + 1] = (hl and group and hl(group, tag) .. rest) or (tag .. rest)
+    color_lines[#color_lines + 1] = (hl and group and hl(group, tag) or tag) .. line
     meta[tag .. rest] = { path = e.path, socket = e.socket, status = e.status, host = e.host }
   end
 

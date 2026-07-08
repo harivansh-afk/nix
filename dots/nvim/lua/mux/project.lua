@@ -177,18 +177,28 @@ local function connect_or_hop(entry, view)
   end)
 end
 
--- deterministic per-host tag color: hash the host name into a fixed palette
--- so each host keeps the same color across pickers and sessions.
-local HOST_HL = { "Function", "Constant", "Special", "Type", "Identifier", "PreProc", "Statement", "Number" }
+-- host tag colors: distinct cozybox hues, away from the status-tag lane
+-- (green=live, amber=stopped, red=dead). Hosts are colored round-robin in
+-- sorted order, so a given host set always colors the same way and no two
+-- hosts share a hue until there are more hosts than palette entries.
+local HOST_HL = { "CozyboxBlue", "CozyboxPurple", "CozyboxOrange", "CozyboxAqua" }
 
----@param host string
----@return string
-local function host_hl(host)
-  local sum = 0
-  for i = 1, #host do
-    sum = (sum * 31 + host:byte(i)) % 0x1000000
+---@param entries { host: string }[]
+---@return table<string, string>
+local function host_colors(entries)
+  local hosts, seen = {}, {}
+  for _, e in ipairs(entries) do
+    if not seen[e.host] then
+      seen[e.host] = true
+      hosts[#hosts + 1] = e.host
+    end
   end
-  return HOST_HL[sum % #HOST_HL + 1]
+  table.sort(hosts)
+  local map = {}
+  for i, h in ipairs(hosts) do
+    map[h] = HOST_HL[(i - 1) % #HOST_HL + 1]
+  end
+  return map
 end
 
 local STATUS_RANK = { live = 1, stopped = 2, dead = 3, dir = 4 }
@@ -258,6 +268,7 @@ local function show_picker(items, opts)
     dead = "DiagnosticError",
   }
 
+  local host_hl = federated and host_colors(entries) or {}
   local color_lines, meta = {}, {}
   for _, e in ipairs(entries) do
     local tag = e.status == "dir" and (" "):rep(9) or ("%-9s"):format(("[%s]"):format(e.status))
@@ -265,7 +276,7 @@ local function show_picker(items, opts)
     local rest, line
     if federated then
       rest = ((" %s %-" .. w .. "s"):format(host_tag, e.disp):gsub("%s+$", ""))
-      local colored_host = hl and hl(host_hl(e.host), host_tag) or host_tag
+      local colored_host = hl and host_hl[e.host] and hl(host_hl[e.host], host_tag) or host_tag
       line = ((" %s %-" .. w .. "s"):format(colored_host, e.disp):gsub("%s+$", ""))
     else
       rest = ((" %-" .. w .. "s  %s"):format(e.disp, e.socket or ""):gsub("%s+$", ""))

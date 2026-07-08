@@ -350,6 +350,35 @@ restore_marked() {
   done
 }
 
+# Resolve a catalog name to its ssh host; fails for unknown names.
+catalog_host() {
+  local line
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    if [ "${line%% *}" = "$1" ]; then
+      printf '%s\n' "${line#* }"
+      return 0
+    fi
+  done < <(remotes_catalog)
+  return 1
+}
+
+# Exec into a remote's mux: connector command when installed (optionally
+# forced onto ssh transport), plain ssh fallback otherwise.
+exec_remote() {
+  local name="$1" host="$2" project="$3" transport="${4:-}"
+  local args=()
+  [ "$transport" = ssh ] && args+=(--ssh)
+  [ -n "$project" ] && args+=("$project")
+  if command -v "$name" >/dev/null 2>&1; then
+    exec "$name" "${args[@]+"${args[@]}"}"
+  fi
+  if [ -n "$project" ]; then
+    exec ssh -t "$host" mux "$project"
+  fi
+  exec ssh -t "$host" mux
+}
+
 consume_hop() {
   local line name host project
   [ -f "$HOP_FILE" ] || return 1
@@ -364,16 +393,7 @@ consume_hop() {
   if [ "$project" = "$host" ]; then
     project=""
   fi
-  if command -v "$name" >/dev/null 2>&1; then
-    if [ -n "$project" ]; then
-      exec "$name" --ssh "$project"
-    fi
-    exec "$name" --ssh
-  fi
-  if [ -n "$project" ]; then
-    exec ssh -t "$host" mux "$project"
-  fi
-  exec ssh -t "$host" mux
+  exec_remote "$name" "$host" "$project" ssh
 }
 
 open_project() {
@@ -468,10 +488,10 @@ sort_all_rows() {
   awk -F'\t' '{ print (($4 == "live") ? 1 : 2) "\t" $0 }' | sort -s -k1,1n | cut -f2-
 }
 
-# Human view of list_all: live dot + colored [host] tag + ~ paths. Host
-# colors mirror the nvim picker lane (blue, purple, orange, aqua) assigned
-# round-robin over the sorted distinct hosts.
-list_all_pretty() {
+# Render federated TSV rows (stdin) for humans: live dot + colored [host]
+# tag + ~ paths. Host colors mirror the nvim picker lane (blue, purple,
+# orange, aqua) assigned round-robin over the sorted distinct hosts.
+render_all_rows() {
   local name cwd sock status disp i w=0 hw=0 h tag dot
   local names=() disps=() stats=() hosts=()
   local reset=$'\033[0m' green=$'\033[32m'
@@ -481,7 +501,7 @@ list_all_pretty() {
     names+=("$name")
     stats+=("$status")
     disps+=("$(shorten_home "$cwd")")
-  done < <(list_all | sort_all_rows)
+  done
   [ "${#names[@]}" -gt 0 ] || return 0
   declare -A hcolor=()
   while IFS= read -r h; do
@@ -562,7 +582,7 @@ write_hop() {
 
 # Record a cross-host hop; the next client detach/exit runs the connector.
 hop() {
-  local name="$1" project="${2:-}" host line me
+  local name="$1" project="${2:-}" host me
   [ -n "$name" ] || die "usage: mux hop <name> [project]"
   me="$(local_name)"
   if [ "$name" = "$me" ] || [ "$name" = local ] || [ "$name" = . ]; then
@@ -570,15 +590,7 @@ hop() {
     open_project "$project"
     return
   fi
-  host=""
-  while IFS= read -r line; do
-    [ -n "$line" ] || continue
-    if [ "${line%% *}" = "$name" ]; then
-      host="${line#* }"
-      break
-    fi
-  done < <(remotes_catalog)
-  [ -n "$host" ] || die "unknown remote: $name"
+  host="$(catalog_host "$name")" || die "unknown remote: $name"
   write_hop "$name" "$host" "$project"
 }
 
@@ -747,6 +759,33 @@ pick() {
   open_project "${choice/#\~/$HOME}"
 }
 
+# Federated fzf: pick a (host, project) row across every reachable remote
+# and go there -- locally via open_project, remotely via the connector.
+pick_all() {
+  local query="${1:-}" rows sel idx row name cwd host me
+  rows="$(list_all | sort_all_rows)"
+  [ -n "$rows" ] || return 0
+  sel="$(render_all_rows <<<"$rows" | nl -ba -w1 -s$'\t' |
+    fzf --ansi --query "$query" --select-1 --exit-0 \
+      --with-nth=2.. --delimiter=$'\t' --prompt 'host-project> ')" || return 0
+  if [ -z "$sel" ]; then
+    [ -n "$query" ] && printf 'mux: no project matching %s\n' "$query" >&2
+    return 0
+  fi
+  idx="${sel%%$'\t'*}"
+  row="$(sed -n "${idx}p" <<<"$rows")"
+  name="${row%%$'\t'*}"
+  row="${row#*$'\t'}"
+  cwd="${row%%$'\t'*}"
+  me="$(local_name)"
+  if [ "$name" = "$me" ]; then
+    open_project "$cwd"
+    return
+  fi
+  host="$(catalog_host "$name")" || die "unknown remote: $name"
+  exec_remote "$name" "$host" "$cwd"
+}
+
 show_log() {
   local follow=0 root logf lines
   case "${1:-}" in
@@ -777,7 +816,8 @@ mux: per-project neovim server launcher
   mux list --all      list projects across remotes (TSV when piped: host<TAB>cwd<TAB>socket<TAB>status)
   mux list --hosts    list hosts from the connector catalog with mux reachability
   mux hop <name> [p]  after detach, open project p on remote <name> (used by <c-b>F)
-  mux pick            fzf-pick a project from mux list and open it
+  mux pick [q]        fzf-pick a local project and open it
+  mux pick --all [q]  fzf-pick a project across hosts and go there
   mux stop [<path>]   stop the project's server (saved session restored next open)
   mux kill [<path>]   hard-remove the project: stop + delete its saved session
   mux clean           delete unrevivable session junk (orphan snapshots, stale sockets)
@@ -988,7 +1028,7 @@ list)
   case "${2:-}" in
   --all | -a)
     if [ -t 1 ]; then
-      list_all_pretty
+      list_all | sort_all_rows | render_all_rows
     else
       list_all
     fi
@@ -1006,7 +1046,16 @@ hop)
   hop "$@"
   ;;
 pick)
-  pick
+  shift
+  case "${1:-}" in
+  --all | -a)
+    shift
+    pick_all "${1:-}"
+    ;;
+  *)
+    pick "${1:-}"
+    ;;
+  esac
   ;;
 stop)
   shift

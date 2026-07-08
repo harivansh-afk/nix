@@ -517,9 +517,10 @@ list_rows() {
       printf '%s\t%s\t%s\n' "$cwd" "$sock" live
     done
   fi
-  # stopped = snapshot+sidecar present but the project's server isn't live.
+  # a stopped session (snapshot present, server not live) is just an openable
+  # dir; opening it restores the snapshot. Sessions whose root no longer
+  # exists are unrevivable -- prune their files instead of listing them.
   if [ -d "$STATE_DIR/sessions" ]; then
-    local dcwds=() dsocks=() dstats=() i
     for rf in "$STATE_DIR"/sessions/*.root; do
       [ -e "$rf" ] || continue
       root=""
@@ -531,15 +532,10 @@ list_rows() {
       if [ -d "$root" ]; then
         [ -f "${rf%.root}.vim" ] || continue
         if is_live "$sock"; then continue; fi
-        printf '%s\t\t%s\n' "$root" stopped
+        printf '%s\t\t%s\n' "$root" dir
       else
-        dcwds+=("$root")
-        dsocks+=("")
-        dstats+=("dead")
+        rm -f "$rf" "${rf%.root}.vim" "${rf%.root}.restore"
       fi
-    done
-    for i in "${!dcwds[@]}"; do
-      printf '%s\t%s\t%s\n' "${dcwds[$i]}" "${dsocks[$i]}" "${dstats[$i]}"
     done
   fi
   # Resolve each zoxide dir to its workspace root with a pure-shell marker walk
@@ -653,7 +649,7 @@ list() {
 
 pick() {
   local choice query="${1:-}"
-  choice="$(list | awk -F'\t' '$3 != "dead" { print $1 }' | sed "s|^$HOME|~|" |
+  choice="$(list | awk -F'\t' '{ print $1 }' | sed "s|^$HOME|~|" |
     fzf --query "$query" --select-1 --exit-0 --prompt 'project> ')" || return 0
   if [ -z "$choice" ]; then
     [ -n "$query" ] && printf 'mux: no project matching %s\n' "$query" >&2
@@ -688,7 +684,7 @@ mux: per-project neovim server launcher
   mux [<path>]        open the project at <path> (default: cwd), spawning if needed
   mux open [<path>]   alias for mux [<path>]
   mux ensure [<path>] print a live server socket for the project, spawning if needed
-  mux list            list projects: live + stopped + dead + dir (cwd<TAB>socket<TAB>status)
+  mux list            list projects: live + dir (cwd<TAB>socket<TAB>status)
   mux list --all      list projects across remotes (host<TAB>cwd<TAB>socket<TAB>status)
   mux hop <name> [p]  after detach, open project p on remote <name> (used by <c-b>F)
   mux pick            fzf-pick a project from mux list and open it

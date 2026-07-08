@@ -27,6 +27,11 @@ local function start_terminal(cmd, cwd)
   vim.schedule(core.restore_terminal_focus)
 end
 
+local function current_shell_cwd()
+  local buf = vim.api.nvim_get_current_buf()
+  return core.terminal_cwd(buf) or vim.fn.getcwd()
+end
+
 ---@param tp integer
 ---@param restoring? boolean true when pruning a stale tab during session restore
 function M.close_view_tab(tp, restoring)
@@ -144,13 +149,15 @@ end
 -- term_insert. Staying in terminal-mode carries insert straight over.
 ---@param vertical boolean
 function M.split_terminal(vertical)
+  local cwd = current_shell_cwd()
   vim.cmd(vertical and "vsplit" or "split")
-  start_terminal { vim.o.shell }
+  start_terminal({ vim.o.shell }, cwd)
 end
 
 function M.new_window()
+  local cwd = current_shell_cwd()
   vim.cmd "tabnew"
-  start_terminal { vim.o.shell }
+  start_terminal({ vim.o.shell }, cwd)
 end
 
 -- tmux-style pane zoom: maximize the current window within its tab and toggle

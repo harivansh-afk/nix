@@ -56,10 +56,15 @@ function M.setup()
   ---@param rhs fun()
   ---@param desc string
   local function muxmap(lhs, rhs, desc)
-    vim.keymap.set(modes, lhs, function()
+    local function wrapped()
       rhs()
       line.refresh()
-    end, { desc = desc })
+    end
+    vim.keymap.set(modes, lhs, wrapped, { desc = desc })
+    -- Ctrl still held from the prefix: <c-b><c-n> must mean <c-b>n, not fall
+    -- through to a raw window command (<c-w><c-n> opens an empty split).
+    local key = lhs:sub(#prefix + 1)
+    if key:match "^%l$" then vim.keymap.set(modes, prefix .. "<c-" .. key .. ">", wrapped, { desc = desc }) end
   end
 
   local function move_pane(primary, fallback)
@@ -70,7 +75,8 @@ function M.setup()
   end
 
   -- Prefix falls through to <c-w>; h/j/k/l get tmux-style edge fallback below
-  -- and any unmapped <c-b>* keeps its window-command meaning.
+  -- and any unmapped <c-b>* keeps its window-command meaning. Every lowercase
+  -- binding also answers its held-ctrl chord (see muxmap).
   for mode, rhs in pairs {
     n = "<c-w>",
     i = "<c-o><c-w>",

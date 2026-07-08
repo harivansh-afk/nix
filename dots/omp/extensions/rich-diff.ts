@@ -346,9 +346,13 @@ const richRenderDiff: RenderDiffFn = (diffText, options) => {
 };
 
 /**
- * Extend a diff line's background across the whole framed row (padding and
- * borders included). Mirrors renderOutputBlock's own bg stabilization: every
- * bg reset inside the row immediately re-opens the line bg.
+ * Extend a diff line's background across the framed row's interior (gutter
+ * and padding included), stopping short of the frame's outer border glyphs.
+ * The border cells keep the default background: ghostty's
+ * window-padding-color=extend paints window padding with the edge cells'
+ * background, so a tinted border cell would bleed outside the box. Mirrors
+ * renderOutputBlock's own bg stabilization: every bg reset inside the span
+ * immediately re-opens the line bg.
  */
 function extendRowBg(row: string): string {
 	let lineBg: string | undefined;
@@ -360,8 +364,17 @@ function extendRowBg(row: string): string {
 	}
 	if (!lineBg) return row;
 	const bg = lineBg;
-	const stabilized = row.replaceAll(BG_RESET, `${BG_RESET}${bg}`).replace(/\x1b\[0?m/g, match => `${match}${bg}`);
-	return `${bg}${stabilized}${BG_RESET}`;
+	// First `│` is the frame's left border (it precedes the gutter separator);
+	// last `│` is the right border (nothing printable follows it).
+	const vertical = theme.boxRound?.vertical ?? "│";
+	const first = row.indexOf(vertical);
+	const last = row.lastIndexOf(vertical);
+	if (first === -1 || last <= first) return row;
+	const head = row.slice(0, first + vertical.length);
+	const mid = row.slice(first + vertical.length, last);
+	const tail = row.slice(last);
+	const stabilized = mid.replaceAll(BG_RESET, `${BG_RESET}${bg}`).replace(/\x1b\[0?m/g, match => `${match}${bg}`);
+	return `${head}${bg}${stabilized}${BG_RESET}${tail}`;
 }
 
 function wrapComponent(component: ComponentLike): ComponentLike {

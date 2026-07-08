@@ -132,13 +132,14 @@ in
       quiet = true;
       setupWizard = false;
     };
-    symbolPreset = "nerd";
+    symbolPreset = "unicode";
     display.shimmer = "disabled";
     todo.enabled = false;
     # Seed matches the `default` mode so a config reseed lands on it.
     modelRoles = ompModes.default.roles;
     statusLine = {
       preset = "custom";
+      sessionAccent = false;
       leftSegments = [
         "model"
         "path"

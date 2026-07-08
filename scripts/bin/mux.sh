@@ -350,6 +350,35 @@ restore_marked() {
   done
 }
 
+# Resolve a catalog name to its ssh host; fails for unknown names.
+catalog_host() {
+  local line
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    if [ "${line%% *}" = "$1" ]; then
+      printf '%s\n' "${line#* }"
+      return 0
+    fi
+  done < <(remotes_catalog)
+  return 1
+}
+
+# Exec into a remote's mux: connector command when installed (optionally
+# forced onto ssh transport), plain ssh fallback otherwise.
+exec_remote() {
+  local name="$1" host="$2" project="$3" transport="${4:-}"
+  local args=()
+  [ "$transport" = ssh ] && args+=(--ssh)
+  [ -n "$project" ] && args+=("$project")
+  if command -v "$name" >/dev/null 2>&1; then
+    exec "$name" "${args[@]+"${args[@]}"}"
+  fi
+  if [ -n "$project" ]; then
+    exec ssh -t "$host" mux "$project"
+  fi
+  exec ssh -t "$host" mux
+}
+
 consume_hop() {
   local line name host project
   [ -f "$HOP_FILE" ] || return 1
@@ -364,16 +393,7 @@ consume_hop() {
   if [ "$project" = "$host" ]; then
     project=""
   fi
-  if command -v "$name" >/dev/null 2>&1; then
-    if [ -n "$project" ]; then
-      exec "$name" --ssh "$project"
-    fi
-    exec "$name" --ssh
-  fi
-  if [ -n "$project" ]; then
-    exec ssh -t "$host" mux "$project"
-  fi
-  exec ssh -t "$host" mux
+  exec_remote "$name" "$host" "$project" ssh
 }
 
 open_project() {
@@ -449,6 +469,110 @@ list_all() {
   done
 }
 
+# Display-only: shorten any home dir prefix (local or remote) to ~.
+shorten_home() {
+  local p="$1"
+  # shellcheck disable=SC2088
+  case "$p" in
+  "$HOME") p="~" ;;
+  "$HOME"/*) p="~${p#"$HOME"}" ;;
+  /home/*/*) p="~/${p#/home/*/}" ;;
+  /Users/*/*) p="~/${p#/Users/*/}" ;;
+  /home/* | /Users/*) p="~" ;;
+  esac
+  printf '%s\n' "$p"
+}
+
+# Rank federated rows live-first, stable within rank.
+sort_all_rows() {
+  awk -F'\t' '{ print (($4 == "live") ? 1 : 2) "\t" $0 }' | sort -s -k1,1n | cut -f2-
+}
+
+# Render federated TSV rows (stdin) for humans: live dot + colored [host]
+# tag + ~ paths. Host colors mirror the nvim picker lane (blue, purple,
+# orange, aqua) assigned round-robin over the sorted distinct hosts.
+render_all_rows() {
+  local name cwd sock status disp i w=0 hw=0 h tag dot
+  local names=() disps=() stats=() hosts=()
+  local reset=$'\033[0m' green=$'\033[32m'
+  local palette=($'\033[34m' $'\033[35m' $'\033[38;5;208m' $'\033[36m')
+  while IFS=$'\t' read -r name cwd sock status; do
+    [ -n "$name" ] && [ -n "$cwd" ] || continue
+    names+=("$name")
+    stats+=("$status")
+    disps+=("$(shorten_home "$cwd")")
+  done
+  [ "${#names[@]}" -gt 0 ] || return 0
+  declare -A hcolor=()
+  while IFS= read -r h; do
+    [ -n "$h" ] || continue
+    hosts+=("$h")
+  done < <(printf '%s\n' "${names[@]}" | sort -u)
+  for i in "${!hosts[@]}"; do
+    hcolor["${hosts[$i]}"]="${palette[$((i % ${#palette[@]}))]}"
+  done
+  for h in "${names[@]}"; do [ "${#h}" -gt "$hw" ] && hw="${#h}"; done
+  for disp in "${disps[@]}"; do [ "${#disp}" -gt "$w" ] && w="${#disp}"; done
+  for i in "${!names[@]}"; do
+    tag="$(printf '%-*s' $((hw + 2)) "[${names[$i]}]")"
+    dot="  "
+    [ "${stats[$i]}" = live ] && dot="${green}●${reset} "
+    printf '%s%s%s%s %s\n' "$dot" "${hcolor[${names[$i]}]}" "$tag" "$reset" "${disps[$i]}"
+  done
+}
+
+# Probe every catalog remote for a working mux. TSV when piped:
+# name<TAB>host<TAB>status (live|dead); [live]/[dead] tags on a tty.
+list_hosts() {
+  local me name host tmpdir line status i=0
+  local names=() hosts=() pids=()
+  me="$(local_name)"
+  tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/mux-hosts.XXXXXX")"
+  # shellcheck disable=SC2064
+  trap "rm -rf '$tmpdir'" RETURN
+  names+=("$me")
+  hosts+=("$me")
+  printf 'live\n' >"$tmpdir/0"
+  i=1
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    name="${line%% *}"
+    host="${line#* }"
+    [ -n "$name" ] && [ -n "$host" ] || continue
+    { [ "$name" = "$me" ] || [ "$host" = "$me" ]; } && continue
+    names+=("$name")
+    hosts+=("$host")
+    (
+      if ssh -o BatchMode=yes -o ConnectTimeout="$MUX_LIST_TIMEOUT" \
+        -o StrictHostKeyChecking=accept-new \
+        "$host" mux list </dev/null >/dev/null 2>&1; then
+        printf 'live\n' >"$tmpdir/$i"
+      else
+        printf 'dead\n' >"$tmpdir/$i"
+      fi
+    ) &
+    pids+=("$!")
+    i=$((i + 1))
+  done < <(remotes_catalog)
+  for pid in "${pids[@]+"${pids[@]}"}"; do
+    wait "$pid" || true
+  done
+  local reset=$'\033[0m' green=$'\033[32m' red=$'\033[31m'
+  for i in "${!names[@]}"; do
+    status=dead
+    [ -f "$tmpdir/$i" ] && IFS= read -r status <"$tmpdir/$i"
+    if [ -t 1 ]; then
+      if [ "$status" = live ]; then
+        printf '%s%-7s%s %s\n' "$green" "[live]" "$reset" "${names[$i]}"
+      else
+        printf '%s%-7s%s %s\n' "$red" "[dead]" "$reset" "${names[$i]}"
+      fi
+    else
+      printf '%s\t%s\t%s\n' "${names[$i]}" "${hosts[$i]}" "$status"
+    fi
+  done
+}
+
 write_hop() {
   local name="$1" host="$2" project="$3"
   mkdir -p "$STATE_DIR"
@@ -458,7 +582,7 @@ write_hop() {
 
 # Record a cross-host hop; the next client detach/exit runs the connector.
 hop() {
-  local name="$1" project="${2:-}" host line me
+  local name="$1" project="${2:-}" host me
   [ -n "$name" ] || die "usage: mux hop <name> [project]"
   me="$(local_name)"
   if [ "$name" = "$me" ] || [ "$name" = local ] || [ "$name" = . ]; then
@@ -466,15 +590,7 @@ hop() {
     open_project "$project"
     return
   fi
-  host=""
-  while IFS= read -r line; do
-    [ -n "$line" ] || continue
-    if [ "${line%% *}" = "$name" ]; then
-      host="${line#* }"
-      break
-    fi
-  done < <(remotes_catalog)
-  [ -n "$host" ] || die "unknown remote: $name"
+  host="$(catalog_host "$name")" || die "unknown remote: $name"
   write_hop "$name" "$host" "$project"
 }
 
@@ -517,9 +633,10 @@ list_rows() {
       printf '%s\t%s\t%s\n' "$cwd" "$sock" live
     done
   fi
-  # stopped = snapshot+sidecar present but the project's server isn't live.
+  # a stopped session (snapshot present, server not live) is just an openable
+  # dir; opening it restores the snapshot. Sessions whose root no longer
+  # exists are unrevivable -- prune their files instead of listing them.
   if [ -d "$STATE_DIR/sessions" ]; then
-    local dcwds=() dsocks=() dstats=() i
     for rf in "$STATE_DIR"/sessions/*.root; do
       [ -e "$rf" ] || continue
       root=""
@@ -531,15 +648,10 @@ list_rows() {
       if [ -d "$root" ]; then
         [ -f "${rf%.root}.vim" ] || continue
         if is_live "$sock"; then continue; fi
-        printf '%s\t\t%s\n' "$root" stopped
+        printf '%s\t\t%s\n' "$root" dir
       else
-        dcwds+=("$root")
-        dsocks+=("")
-        dstats+=("dead")
+        rm -f "$rf" "${rf%.root}.vim" "${rf%.root}.restore"
       fi
-    done
-    for i in "${!dcwds[@]}"; do
-      printf '%s\t%s\t%s\n' "${dcwds[$i]}" "${dsocks[$i]}" "${dstats[$i]}"
     done
   fi
   # Resolve each zoxide dir to its workspace root with a pure-shell marker walk
@@ -607,16 +719,12 @@ list_projects() {
 }
 
 list() {
-  local lines line rest cwd sock status i w=0 c tag
+  local lines line rest cwd sock status i w=0
   local cwds=() socks=() stats=() disp=()
   lines="$(list_projects)"
   [ -n "$lines" ] || return 0
   if [ -t 1 ]; then
-    local reset green amber red
-    reset=$'\033[0m'
-    green=$'\033[32m'
-    amber=$'\033[33m'
-    red=$'\033[31m'
+    local reset=$'\033[0m' green=$'\033[32m'
     while IFS= read -r line; do
       cwd="${line%%$'\t'*}"
       rest="${line#*$'\t'}"
@@ -625,25 +733,14 @@ list() {
       cwds+=("$cwd")
       socks+=("$sock")
       stats+=("$status")
-      disp+=("${cwd/#$HOME/\~}")
+      disp+=("$(shorten_home "$cwd")")
     done <<<"$lines"
     for cwd in "${disp[@]}"; do [ "${#cwd}" -gt "$w" ] && w="${#cwd}"; done
     for i in "${!disp[@]}"; do
-      case "${stats[$i]}" in
-      live) c="$green" ;;
-      stopped) c="$amber" ;;
-      dead) c="$red" ;;
-      *) c="" ;;
-      esac
-      if [ "${stats[$i]}" = dir ]; then
-        tag="$(printf '%-9s' '')"
+      if [ "${stats[$i]}" = live ]; then
+        printf '%s●%s %-*s  %s\n' "$green" "$reset" "$w" "${disp[$i]}" "${socks[$i]}"
       else
-        tag="$(printf '%-9s' "[${stats[$i]}]")"
-      fi
-      if [ -n "$c" ]; then
-        printf '%s%s%s %-*s  %s\n' "$c" "$tag" "$reset" "$w" "${disp[$i]}" "${socks[$i]}"
-      else
-        printf '%s %-*s  %s\n' "$tag" "$w" "${disp[$i]}" "${socks[$i]}"
+        printf '  %-*s  %s\n' "$w" "${disp[$i]}" "${socks[$i]}"
       fi
     done
   else
@@ -653,13 +750,40 @@ list() {
 
 pick() {
   local choice query="${1:-}"
-  choice="$(list | awk -F'\t' '$3 != "dead" { print $1 }' | sed "s|^$HOME|~|" |
+  choice="$(list | awk -F'\t' '{ print $1 }' | sed "s|^$HOME|~|" |
     fzf --query "$query" --select-1 --exit-0 --prompt 'project> ')" || return 0
   if [ -z "$choice" ]; then
     [ -n "$query" ] && printf 'mux: no project matching %s\n' "$query" >&2
     return 0
   fi
   open_project "${choice/#\~/$HOME}"
+}
+
+# Federated fzf: pick a (host, project) row across every reachable remote
+# and go there -- locally via open_project, remotely via the connector.
+pick_all() {
+  local query="${1:-}" rows sel idx row name cwd host me
+  rows="$(list_all | sort_all_rows)"
+  [ -n "$rows" ] || return 0
+  sel="$(render_all_rows <<<"$rows" | nl -ba -w1 -s$'\t' |
+    fzf --ansi --query "$query" --select-1 --exit-0 \
+      --with-nth=2.. --delimiter=$'\t' --prompt 'host-project> ')" || return 0
+  if [ -z "$sel" ]; then
+    [ -n "$query" ] && printf 'mux: no project matching %s\n' "$query" >&2
+    return 0
+  fi
+  idx="${sel%%$'\t'*}"
+  row="$(sed -n "${idx}p" <<<"$rows")"
+  name="${row%%$'\t'*}"
+  row="${row#*$'\t'}"
+  cwd="${row%%$'\t'*}"
+  me="$(local_name)"
+  if [ "$name" = "$me" ]; then
+    open_project "$cwd"
+    return
+  fi
+  host="$(catalog_host "$name")" || die "unknown remote: $name"
+  exec_remote "$name" "$host" "$cwd"
 }
 
 show_log() {
@@ -688,10 +812,12 @@ mux: per-project neovim server launcher
   mux [<path>]        open the project at <path> (default: cwd), spawning if needed
   mux open [<path>]   alias for mux [<path>]
   mux ensure [<path>] print a live server socket for the project, spawning if needed
-  mux list            list projects: live + stopped + dead + dir (cwd<TAB>socket<TAB>status)
-  mux list --all      list projects across remotes (host<TAB>cwd<TAB>socket<TAB>status)
+  mux list            list projects: live + dir (cwd<TAB>socket<TAB>status)
+  mux list --all      list projects across remotes (TSV when piped: host<TAB>cwd<TAB>socket<TAB>status)
+  mux list --hosts    list hosts from the connector catalog with mux reachability
   mux hop <name> [p]  after detach, open project p on remote <name> (used by <c-b>F)
-  mux pick            fzf-pick a project from mux list and open it
+  mux pick [q]        fzf-pick a local project and open it
+  mux pick --all [q]  fzf-pick a project across hosts and go there
   mux stop [<path>]   stop the project's server (saved session restored next open)
   mux kill [<path>]   hard-remove the project: stop + delete its saved session
   mux clean           delete unrevivable session junk (orphan snapshots, stale sockets)
@@ -899,18 +1025,37 @@ ensure)
   ensure "${1:-$PWD}"
   ;;
 list)
-  if [ "${2:-}" = --all ] || [ "${2:-}" = -a ]; then
-    list_all
-  else
+  case "${2:-}" in
+  --all | -a)
+    if [ -t 1 ]; then
+      list_all | sort_all_rows | render_all_rows
+    else
+      list_all
+    fi
+    ;;
+  --hosts | -H)
+    list_hosts
+    ;;
+  *)
     list
-  fi
+    ;;
+  esac
   ;;
 hop)
   shift
   hop "$@"
   ;;
 pick)
-  pick
+  shift
+  case "${1:-}" in
+  --all | -a)
+    shift
+    pick_all "${1:-}"
+    ;;
+  *)
+    pick "${1:-}"
+    ;;
+  esac
   ;;
 stop)
   shift

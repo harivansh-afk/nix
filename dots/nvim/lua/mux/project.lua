@@ -77,39 +77,14 @@ end
 ---@return { cwd: string, socket: string, status: string }[]
 local function list_entries()
   local entries = {}
-  local live = {}
   local socks = vim.fn.glob(core.runtime_dir() .. "/*.sock", true, true)
   table.sort(socks)
   for _, sock in ipairs(socks) do
     if socket_live(sock) then
       local slug = vim.fn.fnamemodify(sock, ":t:r")
       local cwd = root_for_slug(slug)
-      if cwd then
-        live[slug] = true
-        entries[#entries + 1] = { cwd = cwd, socket = sock, status = "live" }
-      end
+      if cwd then entries[#entries + 1] = { cwd = cwd, socket = sock, status = "live" } end
     end
-  end
-  local stopped, dead = {}, {}
-  for _, rf in ipairs(vim.fn.glob(sessions_dir() .. "/*.root", true, true)) do
-    local slug = vim.fn.fnamemodify(rf, ":t:r")
-    local root = vim.fn.readfile(rf)[1]
-    if root and root ~= "" and not live[slug] then
-      if vim.fn.isdirectory(root) == 1 then
-        local vimfile = (rf:gsub("%.root$", ".vim"))
-        if vim.fn.filereadable(vimfile) == 1 then
-          stopped[#stopped + 1] = { cwd = root, socket = "", status = "stopped" }
-        end
-      else
-        dead[#dead + 1] = { cwd = root, socket = "", status = "dead" }
-      end
-    end
-  end
-  for _, e in ipairs(stopped) do
-    entries[#entries + 1] = e
-  end
-  for _, e in ipairs(dead) do
-    entries[#entries + 1] = e
   end
   return entries
 end
@@ -118,9 +93,7 @@ M.list_entries = list_entries
 
 ---@param status string
 ---@return boolean
-local function known_project_status(status)
-  return status == "live" or status == "stopped" or status == "dead" or status == "dir"
-end
+local function known_project_status(status) return status == "live" or status == "dir" end
 
 ---@param output string?
 ---@return { cwd: string, socket: string, status: string }[]
@@ -158,7 +131,7 @@ end
 ---@param entry { host: string, path: string, socket: string?, status: string }
 ---@param view string?
 local function connect_or_hop(entry, view)
-  if not entry or entry.status == "dead" then return end
+  if not entry then return end
   local me = local_host_name()
   if entry.host == me then
     M._connect({ path = entry.path, socket = entry.socket }, view)
@@ -178,7 +151,7 @@ local function connect_or_hop(entry, view)
 end
 
 -- host tag colors: distinct cozybox hues, away from the status-tag lane
--- (green=live, amber=stopped, red=dead). Hosts are colored round-robin in
+-- (green=live). Hosts are colored round-robin in
 -- sorted order, so a given host set always colors the same way and no two
 -- hosts share a hue until there are more hosts than palette entries.
 local HOST_HL = { "CozyboxBlue", "CozyboxPurple", "CozyboxOrange", "CozyboxAqua" }
@@ -201,13 +174,12 @@ local function host_colors(entries)
   return map
 end
 
-local STATUS_RANK = { live = 1, stopped = 2, dead = 3, dir = 4 }
+local STATUS_RANK = { live = 1, dir = 2 }
 
--- Build and show the project picker from `mux list`, mirroring the CLI's
--- colored output: [live] (green) and [stopped] (amber) rows, each with the
--- ~-shortened path and socket. Rows sort live, stopped, dead, then bare dirs;
--- federated rows carry a [host] tag in that host's stable color. Selecting
--- connects to that project.
+-- Build and show the project picker from `mux list`: live sessions (green
+-- dot) first, then openable dirs, each with the ~-shortened path. Federated
+-- rows carry a [host] tag in that host's stable color. Selecting connects
+-- to that project.
 ---@param items { cwd: string, socket: string, status: string, host: string? }[]
 ---@param opts { federated: boolean? }?
 local function show_picker(items, opts)
@@ -228,7 +200,7 @@ local function show_picker(items, opts)
         disp = vim.fn.fnamemodify(path, ":~")
       else
         path = cwd
-        disp = cwd
+        disp = (cwd:gsub("^/home/[^/]+", "~"):gsub("^/Users/[^/]+", "~"))
       end
       if #disp > w then w = #disp end
       if #host > hw then hw = #host end
@@ -261,17 +233,13 @@ local function show_picker(items, opts)
   local function strip_ansi(s) return (s:gsub("\27%[[%d;]*m", "")) end
   local fzf = load_fzf()
   local hl = require("fzf-lua.utils").ansi_from_hl
-  -- status tag -> theme highlight group (picker coloring only)
-  local tag_hl = {
-    live = "DiagnosticOk",
-    stopped = "DiagnosticWarn",
-    dead = "DiagnosticError",
-  }
+  -- live rows get a colored dot; dirs a blank gutter (picker coloring only)
+  local tag_hl = { live = "DiagnosticOk" }
 
   local host_hl = federated and host_colors(entries) or {}
   local color_lines, meta = {}, {}
   for _, e in ipairs(entries) do
-    local tag = e.status == "dir" and (" "):rep(9) or ("%-9s"):format(("[%s]"):format(e.status))
+    local tag = e.status == "live" and "● " or "  "
     local host_tag = federated and ("%-" .. (hw + 2) .. "s"):format(("[%s]"):format(e.host)) or ""
     local rest, line
     if federated then
@@ -320,8 +288,7 @@ local function show_picker(items, opts)
   local function lifecycle(verb, sel)
     if federated then return end
     local entry = sel and sel[1] and meta[strip_ansi(sel[1])]
-    if entry and entry.status == "dir" then return end
-    if entry and entry.status == "dead" and verb == "stop" then return end
+    if entry and entry.status ~= "live" then return end
     if entry and entry.path then
       if canon(entry.path) == session.root() then
         if verb == "kill" then

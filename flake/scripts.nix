@@ -3,6 +3,6 @@
   perSystem =
     { pkgs, ... }:
     {
-      packages = (import ../scripts/portable.nix { inherit lib pkgs; }).packages;
+      inherit (import ../scripts/portable.nix { inherit lib pkgs; }) packages;
     };
 }

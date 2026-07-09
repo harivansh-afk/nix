@@ -23,6 +23,7 @@ LOG_DIR="$STATE_DIR/logs"
 HOP_FILE="$STATE_DIR/hop"
 SCRIPT_SELF="$(command -v -- "${BASH_SOURCE[0]:-$0}" 2>/dev/null || printf '%s' "${BASH_SOURCE[0]:-$0}")"
 MUX_LIST_TIMEOUT="${MUX_LIST_TIMEOUT:-3}"
+MUX_HOST_DEAD_TTL="${MUX_HOST_DEAD_TTL:-300}"
 
 die() {
   printf 'mux: %s\n' "$1" >&2
@@ -428,14 +429,50 @@ remotes_catalog() {
 EOF
 }
 
+host_cache_file() {
+  printf '%s/hosts/%s.status\n' "$STATE_DIR" "$(slug "$1@$2")"
+}
+
+host_cache_ttl() {
+  case "$MUX_HOST_DEAD_TTL" in
+  *[!0-9]* | "") printf '300\n' ;;
+  *) printf '%s\n' "$MUX_HOST_DEAD_TTL" ;;
+  esac
+}
+
+record_host_status() {
+  local name="$1" host="$2" status="$3" file
+  file="$(host_cache_file "$name" "$host")"
+  mkdir -p "$(dirname "$file")"
+  printf '%s %s\n' "$status" "$(date +%s)" >"$file"
+  chmod 600 "$file" 2>/dev/null || true
+}
+
+host_dead_cached() {
+  local name="$1" host="$2" file status ts ttl now
+  ttl="$(host_cache_ttl)"
+  [ "$ttl" -gt 0 ] || return 1
+  file="$(host_cache_file "$name" "$host")"
+  [ -f "$file" ] || return 1
+  status=""
+  ts=""
+  IFS=' ' read -r status ts <"$file" 2>/dev/null || true
+  [ "$status" = dead ] || return 1
+  case "$ts" in
+  *[!0-9]* | "") return 1 ;;
+  esac
+  now="$(date +%s)"
+  [ $((now - ts)) -lt "$ttl" ]
+}
+
 # Prefix stdin TSV rows (cwd<TAB>socket<TAB>status) with a host column.
 tag_rows() {
   awk -F'\t' -v host="$1" '$1 != "" && NF >= 3 { print host "\t" $0 }'
 }
 
-# Federated list: local rows first, then each remote via ssh (probed in
-# parallel). Always TSV: host<TAB>cwd<TAB>socket<TAB>status. Unreachable
-# hosts are omitted.
+# Federated list: local rows first, then reachable remotes via ssh (probed in
+# parallel). Recently failed hosts are skipped until their dead-cache expires.
+# Always TSV: host<TAB>cwd<TAB>socket<TAB>status. Unreachable hosts are omitted.
 list_all() {
   local me name host tmpdir line i=0
   local pids=() outs=()
@@ -449,11 +486,21 @@ list_all() {
     host="${line#* }"
     [ -n "$name" ] && [ -n "$host" ] || continue
     { [ "$name" = "$me" ] || [ "$host" = "$me" ]; } && continue
+    if host_dead_cached "$name" "$host"; then
+      continue
+    fi
     outs+=("$tmpdir/$i")
     (
-      ssh -o BatchMode=yes -o ConnectTimeout="$MUX_LIST_TIMEOUT" \
+      if ssh -o BatchMode=yes -o ConnectTimeout="$MUX_LIST_TIMEOUT" \
         -o StrictHostKeyChecking=accept-new \
-        "$host" mux list </dev/null 2>/dev/null | tag_rows "$name" >"$tmpdir/$i" || true
+        "$host" mux list </dev/null >"$tmpdir/$i.raw" 2>/dev/null; then
+        tag_rows "$name" <"$tmpdir/$i.raw" >"$tmpdir/$i"
+        record_host_status "$name" "$host" live
+      else
+        : >"$tmpdir/$i"
+        record_host_status "$name" "$host" dead
+      fi
+      rm -f "$tmpdir/$i.raw"
     ) &
     pids+=("$!")
     i=$((i + 1))
@@ -547,8 +594,10 @@ list_hosts() {
         -o StrictHostKeyChecking=accept-new \
         "$host" mux list </dev/null >/dev/null 2>&1; then
         printf 'live\n' >"$tmpdir/$i"
+        record_host_status "$name" "$host" live
       else
         printf 'dead\n' >"$tmpdir/$i"
+        record_host_status "$name" "$host" dead
       fi
     ) &
     pids+=("$!")
@@ -837,6 +886,7 @@ Environment:
   MUX_DIRENV_TIMEOUT      timeout passed to direnv export (default: 120s)
   MUX_BOOTSTRAP_DIRENV    1/0, run direnv before starting nvim (default: 1)
   MUX_LIST_TIMEOUT        ssh connect timeout for mux list --all (default: 3)
+  MUX_HOST_DEAD_TTL       seconds mux ls skips hosts after an ssh failure (default: 300; 0 disables)
   MUX_LOG_LINES           lines shown by mux log and failure tails
 
 Inside nvim, switch projects with <c-b>f (local) or <c-b>F (all hosts), detach with <c-b>d.

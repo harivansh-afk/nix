@@ -1,0 +1,182 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 738" width="960" height="738" role="img" aria-label="System map of the nix config: two hosts, edge routing, services, theme, mux, secrets">
+<rect x="0.5" y="0.5" width="959" height="737" rx="12" fill="#101010" stroke="#3c3836"/>
+<line x1="0.0" y1="34.0" x2="960.0" y2="34.0" stroke="#3c3836" stroke-width="1"/>
+<circle cx="26.0" cy="17.0" r="5.5" fill="#ea6962"/>
+<circle cx="46.0" cy="17.0" r="5.5" fill="#d79921"/>
+<circle cx="66.0" cy="17.0" r="5.5" fill="#8ec97c"/>
+<text x="480.0" y="21.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11.5" fill="#7c6f64" font-weight="normal" text-anchor="middle">hari@spark:~/nix</text>
+<text x="26.0" y="76.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="26" fill="#8ec97c" font-weight="bold" text-anchor="start">❯</text>
+<text x="48.0" y="76.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="26" fill="#ebdbb2" font-weight="bold" text-anchor="start">nix</text>
+<text x="109.0" y="76.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="13" fill="#7c6f64" font-weight="normal" text-anchor="start">· one flake, two machines, the whole stack</text>
+<text x="936.0" y="76.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#d97757" font-weight="normal" text-anchor="end">aarch64 everywhere</text>
+<text x="48.0" y="98.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11.5" fill="#a89984" font-weight="normal" text-anchor="start">nix-darwin macbook + NixOS on an NVIDIA DGX Spark, sharing one package universe</text>
+<text x="936.0" y="98.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#7c6f64" font-weight="normal" text-anchor="end">no home-manager</text>
+<rect x="24.0" y="116.0" width="142.0" height="52.0" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
+<text x="95.0" y="139.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="17" fill="#ebdbb2" font-weight="bold" text-anchor="middle">7.8k</text>
+<text x="95.0" y="156.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="middle">lines of nix</text>
+<rect x="178.0" y="116.0" width="142.0" height="52.0" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
+<text x="249.0" y="139.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="17" fill="#ebdbb2" font-weight="bold" text-anchor="middle">19</text>
+<text x="249.0" y="156.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="middle">flake inputs</text>
+<rect x="332.0" y="116.0" width="142.0" height="52.0" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
+<text x="403.0" y="139.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="17" fill="#ebdbb2" font-weight="bold" text-anchor="middle">19</text>
+<text x="403.0" y="156.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="middle">services on spark</text>
+<rect x="486.0" y="116.0" width="142.0" height="52.0" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
+<text x="557.0" y="139.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="17" fill="#ebdbb2" font-weight="bold" text-anchor="middle">28</text>
+<text x="557.0" y="156.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="middle">tools configured</text>
+<rect x="640.0" y="116.0" width="142.0" height="52.0" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
+<text x="711.0" y="139.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="17" fill="#ebdbb2" font-weight="bold" text-anchor="middle">27</text>
+<text x="711.0" y="156.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="middle">sops secrets</text>
+<rect x="794.0" y="116.0" width="142.0" height="52.0" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
+<text x="865.0" y="139.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="17" fill="#ebdbb2" font-weight="bold" text-anchor="middle">2</text>
+<text x="865.0" y="156.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="middle">hosts, 1 flake</text>
+<rect x="24.0" y="186.0" width="292.0" height="100.0" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
+<text x="38.0" y="207.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#d97757" font-weight="bold" text-anchor="start" letter-spacing="1.5">MACBOOK</text>
+<text x="302.0" y="207.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="end">aarch64-darwin</text>
+<text x="38.0" y="227.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">nix-darwin · homebrew casks</text>
+<text x="38.0" y="243.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">determinate nix · macos defaults</text>
+<text x="38.0" y="259.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">karabiner · aerospace · voiceink</text>
+<rect x="24.0" y="300.0" width="292.0" height="138.0" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
+<text x="38.0" y="321.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#d97757" font-weight="bold" text-anchor="start" letter-spacing="1.5">SPARK</text>
+<text x="302.0" y="321.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="end">aarch64-linux</text>
+<text x="38.0" y="341.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">NixOS on NVIDIA DGX Spark (GB10)</text>
+<text x="38.0" y="357.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">CUDA kernel · disko · nixos-anywhere</text>
+<text x="38.0" y="373.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">shared box · friends get users/*.nix</text>
+<text x="38.0" y="389.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">2 tailscale identities · mosh · et</text>
+<text x="38.0" y="405.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">llama.cpp on the GPU, loopback only</text>
+<rect x="340.0" y="186.0" width="596.0" height="88.0" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
+<text x="354.0" y="207.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#d97757" font-weight="bold" text-anchor="start" letter-spacing="1.5">EDGE</text>
+<text x="922.0" y="207.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="end">no open web ports · no ACME</text>
+<rect x="354.0" y="223.0" width="71.0" height="26.0" rx="5" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="389.5" y="240.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#928374" font-weight="normal" text-anchor="middle">internet</text>
+<line x1="431.0" y1="236.0" x2="452.4" y2="236.0" stroke="#7c6f64" stroke-width="1.2"/>
+<path d="M 451.4 232.5 L 457.4 236.0 L 451.4 239.5 Z" fill="#7c6f64"/>
+<rect x="463.4" y="223.0" width="84.2" height="26.0" rx="5" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="505.5" y="240.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#d79921" font-weight="normal" text-anchor="middle">cloudflare</text>
+<line x1="553.6" y1="236.0" x2="575.0" y2="236.0" stroke="#7c6f64" stroke-width="1.2"/>
+<path d="M 574.0 232.5 L 580.0 236.0 L 574.0 239.5 Z" fill="#7c6f64"/>
+<rect x="586.0" y="223.0" width="90.8" height="26.0" rx="5" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="631.4" y="240.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#5b84de" font-weight="normal" text-anchor="middle">cloudflared</text>
+<line x1="682.8" y1="236.0" x2="704.2" y2="236.0" stroke="#7c6f64" stroke-width="1.2"/>
+<path d="M 703.2 232.5 L 709.2 236.0 L 703.2 239.5 Z" fill="#7c6f64"/>
+<rect x="715.2" y="223.0" width="77.6" height="26.0" rx="5" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="754.0" y="240.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#8ec97c" font-weight="normal" text-anchor="middle">caddy :80</text>
+<line x1="798.8" y1="236.0" x2="820.2" y2="236.0" stroke="#7c6f64" stroke-width="1.2"/>
+<path d="M 819.2 232.5 L 825.2 236.0 L 819.2 239.5 Z" fill="#7c6f64"/>
+<rect x="831.2" y="223.0" width="90.8" height="26.0" rx="5" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="876.6" y="240.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#ebdbb2" font-weight="normal" text-anchor="middle">127.0.0.1:*</text>
+<text x="354.0" y="268.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="start">TLS terminates at the edge · tunnel to loopback · Host-header dispatch</text>
+<rect x="340.0" y="288.0" width="596.0" height="150.0" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
+<text x="354.0" y="309.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#d97757" font-weight="bold" text-anchor="start" letter-spacing="1.5">SERVICES · ON SPARK</text>
+<text x="922.0" y="309.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="end">modules/services/</text>
+<rect x="354.0" y="321.0" width="171.7" height="22.0" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="439.9" y="335.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#5b84de" font-weight="normal" text-anchor="middle">forgejo · git.harivan.sh</text>
+<rect x="533.7" y="321.0" width="89.5" height="22.0" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="578.5" y="335.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#5b84de" font-weight="normal" text-anchor="middle">vaultwarden</text>
+<rect x="631.2" y="321.0" width="51.6" height="22.0" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="657.0" y="335.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#5b84de" font-weight="normal" text-anchor="middle">delta</text>
+<rect x="690.8" y="321.0" width="64.2" height="22.0" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="723.0" y="335.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#5b84de" font-weight="normal" text-anchor="middle">website</text>
+<rect x="763.1" y="321.0" width="83.2" height="22.0" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="804.7" y="335.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#928374" font-weight="normal" text-anchor="middle">actions ci</text>
+<rect x="354.0" y="351.0" width="178.0" height="22.0" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="443.0" y="365.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#d3869b" font-weight="normal" text-anchor="middle">llama.cpp · GPU inference</text>
+<rect x="540.0" y="351.0" width="178.0" height="22.0" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="629.0" y="365.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#d3869b" font-weight="normal" text-anchor="middle">parakeet · speech-to-text</text>
+<rect x="726.0" y="351.0" width="171.7" height="22.0" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="811.9" y="365.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#d3869b" font-weight="normal" text-anchor="middle">hermes · always-on agent</text>
+<rect x="354.0" y="381.0" width="228.6" height="22.0" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="468.3" y="395.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#8ec97c" font-weight="normal" text-anchor="middle">cognee kb · graph + hybrid search</text>
+<rect x="590.6" y="381.0" width="197.0" height="22.0" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="689.1" y="395.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#8ec97c" font-weight="normal" text-anchor="middle">mini-loops · scheduled scans</text>
+<rect x="795.6" y="381.0" width="89.5" height="22.0" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="840.3" y="395.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#8ec97c" font-weight="normal" text-anchor="middle">browser-use</text>
+<rect x="354.0" y="411.0" width="152.7" height="22.0" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="430.4" y="425.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#928374" font-weight="normal" text-anchor="middle">push-mirrors → github</text>
+<rect x="514.7" y="411.0" width="140.1" height="22.0" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="584.8" y="425.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#928374" font-weight="normal" text-anchor="middle">kb ingestion timers</text>
+<rect x="662.8" y="411.0" width="133.8" height="22.0" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="729.7" y="425.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#928374" font-weight="normal" text-anchor="middle">daily graph render</text>
+<rect x="24.0" y="456.0" width="293.3" height="112.0" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
+<text x="38.0" y="477.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#d97757" font-weight="bold" text-anchor="start" letter-spacing="1.5">THEME · COZYBOX</text>
+<rect x="38.0" y="489.0" width="14.7" height="14.0" rx="3" fill="#1d2021" stroke="#3c3836" stroke-width="0.5"/>
+<rect x="54.7" y="489.0" width="14.7" height="14.0" rx="3" fill="#ea6962" stroke="#3c3836" stroke-width="0.5"/>
+<rect x="71.4" y="489.0" width="14.7" height="14.0" rx="3" fill="#8ec97c" stroke="#3c3836" stroke-width="0.5"/>
+<rect x="88.1" y="489.0" width="14.7" height="14.0" rx="3" fill="#d79921" stroke="#3c3836" stroke-width="0.5"/>
+<rect x="104.8" y="489.0" width="14.7" height="14.0" rx="3" fill="#5b84de" stroke="#3c3836" stroke-width="0.5"/>
+<rect x="121.5" y="489.0" width="14.7" height="14.0" rx="3" fill="#b16286" stroke="#3c3836" stroke-width="0.5"/>
+<rect x="138.2" y="489.0" width="14.7" height="14.0" rx="3" fill="#689d6a" stroke="#3c3836" stroke-width="0.5"/>
+<rect x="155.0" y="489.0" width="14.7" height="14.0" rx="3" fill="#a89984" stroke="#3c3836" stroke-width="0.5"/>
+<rect x="171.7" y="489.0" width="14.7" height="14.0" rx="3" fill="#928374" stroke="#3c3836" stroke-width="0.5"/>
+<rect x="188.4" y="489.0" width="14.7" height="14.0" rx="3" fill="#ea6962" stroke="#3c3836" stroke-width="0.5"/>
+<rect x="205.1" y="489.0" width="14.7" height="14.0" rx="3" fill="#8ec97c" stroke="#3c3836" stroke-width="0.5"/>
+<rect x="221.8" y="489.0" width="14.7" height="14.0" rx="3" fill="#fabd2f" stroke="#3c3836" stroke-width="0.5"/>
+<rect x="238.5" y="489.0" width="14.7" height="14.0" rx="3" fill="#5b84de" stroke="#3c3836" stroke-width="0.5"/>
+<rect x="255.2" y="489.0" width="14.7" height="14.0" rx="3" fill="#d3869b" stroke="#3c3836" stroke-width="0.5"/>
+<rect x="271.9" y="489.0" width="14.7" height="14.0" rx="3" fill="#8ec07c" stroke="#3c3836" stroke-width="0.5"/>
+<rect x="288.6" y="489.0" width="14.7" height="14.0" rx="3" fill="#ebdbb2" stroke="#3c3836" stroke-width="0.5"/>
+<text x="38.0" y="519.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">one palette → ghostty · nvim · fzf ·</text>
+<text x="38.0" y="534.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">lazygit · bat · zsh · omp · wallpaper</text>
+<text x="38.0" y="549.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">`theme` flips dark/light live</text>
+<rect x="333.3" y="456.0" width="293.3" height="112.0" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
+<text x="347.3" y="477.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#d97757" font-weight="bold" text-anchor="start" letter-spacing="1.5">MUX · TMUX, DELETED</text>
+<text x="347.3" y="495.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">panes/windows/sessions live in nvim</text>
+<text x="347.3" y="510.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">one headless server per project</text>
+<text x="347.3" y="525.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">mosh in, land in your session</text>
+<text x="347.3" y="540.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">federated picker across all hosts</text>
+<rect x="642.7" y="456.0" width="293.3" height="112.0" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
+<text x="656.7" y="477.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#d97757" font-weight="bold" text-anchor="start" letter-spacing="1.5">DOTS · NO HOME-MANAGER</text>
+<text x="656.7" y="495.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">plain files symlinked into $HOME</text>
+<text x="656.7" y="510.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">owner edits apply live, no rebuild</text>
+<text x="656.7" y="525.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">guests get the nix-store copy</text>
+<text x="656.7" y="540.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">28 tools from one dots/ tree</text>
+<rect x="24.0" y="582.0" width="293.3" height="76.0" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
+<text x="38.0" y="603.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#d97757" font-weight="bold" text-anchor="start" letter-spacing="1.5">SECRETS · SOPS-NIX</text>
+<text x="38.0" y="621.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">age recipients from ssh host keys</text>
+<text x="38.0" y="636.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">27 secrets · per-admin edit rules</text>
+<rect x="333.3" y="582.0" width="293.3" height="76.0" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
+<text x="347.3" y="603.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#d97757" font-weight="bold" text-anchor="start" letter-spacing="1.5">DNS · TERRANIX</text>
+<text x="347.3" y="621.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">cloudflare zone declared in nix</text>
+<text x="347.3" y="636.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">just dns-plan / dns-apply</text>
+<rect x="642.7" y="582.0" width="293.3" height="76.0" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
+<text x="656.7" y="603.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#d97757" font-weight="bold" text-anchor="start" letter-spacing="1.5">PACKAGES · FLAKE OUTPUTS</text>
+<text x="656.7" y="621.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">mux + connectors, fully portable</text>
+<text x="656.7" y="636.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">nix profile add …#mux anywhere</text>
+<rect x="24.0" y="676.0" width="38.1" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="43.0" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">nvim</text>
+<rect x="68.1" y="676.0" width="56.1" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="96.2" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">ghostty</text>
+<rect x="130.2" y="676.0" width="32.1" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="146.2" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">zsh</text>
+<rect x="168.3" y="676.0" width="32.1" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="184.3" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">omp</text>
+<rect x="206.3" y="676.0" width="50.1" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="231.4" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">claude</text>
+<rect x="262.5" y="676.0" width="44.1" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="284.5" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">codex</text>
+<rect x="312.6" y="676.0" width="44.1" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="334.6" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">devin</text>
+<rect x="362.7" y="676.0" width="26.0" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="375.7" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">pi</text>
+<rect x="394.7" y="676.0" width="56.1" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="422.8" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">lazygit</text>
+<rect x="456.8" y="676.0" width="68.2" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="490.9" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">karabiner</text>
+<rect x="531.0" y="676.0" width="68.2" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="565.1" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">aerospace</text>
+<rect x="605.2" y="676.0" width="32.1" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="621.2" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">k9s</text>
+<rect x="643.3" y="676.0" width="26.0" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="656.3" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">gh</text>
+<rect x="675.3" y="676.0" width="62.2" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="706.4" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">voiceink</text>
+<rect x="743.5" y="676.0" width="32.1" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="759.5" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">ssh</text>
+<rect x="781.5" y="676.0" width="32.1" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="797.5" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">git</text>
+<rect x="819.6" y="676.0" width="50.1" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="844.6" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">direnv</text>
+<rect x="875.7" y="676.0" width="50.1" height="20.0" rx="10" fill="none" stroke="#3c3836" stroke-width="1"/>
+<text x="900.8" y="690.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#928374" font-weight="normal" text-anchor="middle">+ more</text>
+<text x="24.0" y="720.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#7c6f64" font-weight="normal" text-anchor="start">❄ nix flake · flake-parts · determinate nix</text>
+<text x="936.0" y="720.0" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#d97757" font-weight="normal" text-anchor="end">git.harivan.sh/harivansh-afk/nix</text>
+</svg>

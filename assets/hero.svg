@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 676" width="960" height="676" role="img" aria-label="Flowchart of the nix config: one flake feeding a nix-darwin macbook, shared modules, and a NixOS DGX Spark; the edge chain dispatches into web, ai, and knowledge service clusters">
-<rect x="0.5" y="0.5" width="959" height="675" rx="12" fill="#101010" stroke="#3c3836" stroke-width="1"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 690" width="960" height="690" role="img" aria-label="Flowchart of the nix config: one flake feeding a nix-darwin macbook, shared modules, and a NixOS DGX Spark; the edge chain dispatches into web, ai, and knowledge service clusters">
+<rect x="0.5" y="0.5" width="959" height="689" rx="12" fill="#101010" stroke="#3c3836" stroke-width="1"/>
 <line x1="0" y1="34" x2="960" y2="34" stroke="#3c3836" stroke-width="1"/>
 <circle cx="26" cy="17" r="5.5" fill="#ea6962"/>
 <circle cx="46" cy="17" r="5.5" fill="#d79921"/>
@@ -7,8 +7,6 @@
 <text x="480" y="21" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11.5" fill="#7c6f64" font-weight="normal" text-anchor="middle">hari@spark:~/nix</text>
 <text x="32" y="76" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="24" fill="#8ec97c" font-weight="bold" text-anchor="start">❯</text>
 <text x="52" y="76" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="24" fill="#ebdbb2" font-weight="bold" text-anchor="start">nix</text>
-<text x="109.344" y="76" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="12.5" fill="#7c6f64" font-weight="normal" text-anchor="start">· one flake, two machines, the whole stack</text>
-<text x="928" y="76" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#7c6f64" font-weight="normal" text-anchor="end">aarch64 everywhere · no home-manager</text>
 <rect x="330" y="96" width="300" height="52" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
 <text x="433.646" y="118" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="14" fill="#5b84de" font-weight="bold" text-anchor="start">❄</text>
 <text x="450.502" y="118" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="14" fill="#ebdbb2" font-weight="bold" text-anchor="start">flake.nix</text>
@@ -69,7 +67,6 @@
 <path d="M 741.201 359.5 L 747.201 363 L 741.201 366.5 Z" fill="#504945"/>
 <rect x="753.201" y="350" width="83.598" height="26" rx="5" fill="#131313" stroke="#3c3836" stroke-width="1"/>
 <text x="795" y="367" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#ebdbb2" font-weight="normal" text-anchor="middle">caddy :80</text>
-<text x="374.163" y="367" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="end">TLS ends at the edge · no open web ports</text>
 <line x1="795" y1="376" x2="795" y2="398" stroke="#504945" stroke-width="1.2"/>
 <line x1="180" y1="398" x2="795" y2="398" stroke="#504945" stroke-width="1.2"/>
 <line x1="180" y1="398" x2="180" y2="412" stroke="#504945" stroke-width="1.2"/>
@@ -78,7 +75,7 @@
 <path d="M 476.5 411 L 483.5 411 L 480 417 Z" fill="#504945"/>
 <line x1="780" y1="398" x2="780" y2="412" stroke="#504945" stroke-width="1.2"/>
 <path d="M 776.5 411 L 783.5 411 L 780 417 Z" fill="#504945"/>
-<text x="480" y="390" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="middle">host-header dispatch · every service on 127.0.0.1</text>
+<text x="480" y="390" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="middle">host-header dispatch</text>
 <rect x="40" y="418" width="280" height="178" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
 <text x="54" y="440" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#d97757" font-weight="bold" text-anchor="start" letter-spacing="1.5">WEB</text>
 <text x="306" y="440" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="end">behind caddy</text>
@@ -103,7 +100,6 @@
 <text x="366" y="518.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">hermes · always-on agent</text>
 <rect x="354" y="532" width="93.531" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
 <text x="366" y="546.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">browser-use</text>
-<text x="354" y="584" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="start">all inference stays on loopback</text>
 <rect x="640" y="418" width="280" height="178" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
 <text x="654" y="440" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#d97757" font-weight="bold" text-anchor="start" letter-spacing="1.5">KNOWLEDGE</text>
 <text x="906" y="440" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="end">postgres · kuzu</text>
@@ -115,22 +111,21 @@
 <text x="666" y="518.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">mini-loops · scheduled scans</text>
 <rect x="654" y="532" width="137.778" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
 <text x="666" y="546.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">daily graph render</text>
-<text x="654" y="584" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="start">hybrid search: HNSW + FTS + RRF</text>
-<line x1="180" y1="596" x2="180" y2="614" stroke="#504945" stroke-width="1.2"/>
-<path d="M 176.5 613 L 183.5 613 L 180 619 Z" fill="#504945"/>
+<line x1="180" y1="596" x2="180" y2="616" stroke="#504945" stroke-width="1.2"/>
+<path d="M 176.5 615 L 183.5 615 L 180 621 Z" fill="#504945"/>
 <text x="190" y="612" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="start">push-mirrors</text>
-<rect x="88.9875" y="620" width="182.025" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1" stroke-dasharray="4 3"/>
-<text x="100.987" y="634.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#7c6f64" font-weight="normal" text-anchor="start">github · read-only mirror</text>
-<line x1="480" y1="596" x2="480" y2="614" stroke="#504945" stroke-width="1.2"/>
-<path d="M 476.5 613 L 483.5 613 L 480 619 Z" fill="#504945"/>
+<rect x="88.9875" y="622" width="182.025" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="100.987" y="636.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#7c6f64" font-weight="normal" text-anchor="start">github · read-only mirror</text>
+<line x1="480" y1="596" x2="480" y2="616" stroke="#504945" stroke-width="1.2"/>
+<path d="M 476.5 615 L 483.5 615 L 480 621 Z" fill="#504945"/>
 <text x="490" y="612" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="start">serves</text>
-<rect x="395.308" y="620" width="169.383" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
-<text x="407.308" y="634.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#7c6f64" font-weight="normal" text-anchor="start">pi · voiceink dictation</text>
-<line x1="780" y1="620" x2="780" y2="601" stroke="#504945" stroke-width="1.2"/>
+<rect x="395.308" y="622" width="169.383" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
+<text x="407.308" y="636.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#7c6f64" font-weight="normal" text-anchor="start">pi · voiceink dictation</text>
+<line x1="780" y1="622" x2="780" y2="601" stroke="#504945" stroke-width="1.2"/>
 <path d="M 776.5 602 L 783.5 602 L 780 596 Z" fill="#504945"/>
 <text x="790" y="612" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="start">ingests</text>
-<rect x="660.543" y="620" width="238.914" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1" stroke-dasharray="4 3"/>
-<text x="672.543" y="634.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#7c6f64" font-weight="normal" text-anchor="start">gmail · calendar · finance · repos</text>
-<text x="32" y="654" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#7c6f64" font-weight="normal" text-anchor="start">7.8k lines of nix · 77 files · 19 flake inputs · 19 services · 28 tools · 27 sops secrets</text>
-<text x="928" y="654" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#d97757" font-weight="normal" text-anchor="end">git.harivan.sh/harivansh-afk/nix</text>
+<rect x="660.543" y="622" width="238.914" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="672.543" y="636.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#7c6f64" font-weight="normal" text-anchor="start">gmail · calendar · finance · repos</text>
+<text x="32" y="666" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#7c6f64" font-weight="normal" text-anchor="start">7.8k lines of nix · 77 files · 19 flake inputs · 19 services · 28 tools · 27 sops secrets</text>
+<text x="928" y="666" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#d97757" font-weight="normal" text-anchor="end">git.harivan.sh/harivansh-afk/nix</text>
 </svg>

@@ -516,7 +516,7 @@ render_all_rows() {
   for i in "${!names[@]}"; do
     tag="$(printf '%-*s' $((hw + 2)) "[${names[$i]}]")"
     dot="  "
-    [ "${stats[$i]}" = live ] && dot="${green}●${reset} "
+    [ "${stats[$i]}" = live ] && dot="${green}▍${reset} "
     printf '%s%s%s%s %s\n' "$dot" "${hcolor[${names[$i]}]}" "$tag" "$reset" "${disps[$i]}"
   done
 }
@@ -738,7 +738,7 @@ list() {
     for cwd in "${disp[@]}"; do [ "${#cwd}" -gt "$w" ] && w="${#cwd}"; done
     for i in "${!disp[@]}"; do
       if [ "${stats[$i]}" = live ]; then
-        printf '%s●%s %-*s  %s\n' "$green" "$reset" "$w" "${disp[$i]}" "${socks[$i]}"
+        printf '%s▍%s %-*s  %s\n' "$green" "$reset" "$w" "${disp[$i]}" "${socks[$i]}"
       else
         printf '  %-*s  %s\n' "$w" "${disp[$i]}" "${socks[$i]}"
       fi

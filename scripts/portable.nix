@@ -29,7 +29,10 @@ let
     mkScript {
       inherit name;
       file = ./bin/remote.sh;
-      runtimeInputs = [ pkgs.mosh ];
+      runtimeInputs = [
+        pkgs.mosh
+        pkgs.openssh
+      ];
       replacements = {
         "@NAME@" = name;
         "@HOST@" = remote.host;
@@ -51,6 +54,7 @@ let
           gnugrep
           gnused
           openssh
+          zoxide
         ]
         ++ lib.optionals stdenv.isLinux [ util-linux ];
       replacements = {

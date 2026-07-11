@@ -69,7 +69,9 @@ function M.last_window(win) return M.live_window_count(vim.api.nvim_win_get_tabp
 ---@return string
 function M.canon(p)
   if not p or p == "" then return "" end
-  return (vim.fn.fnamemodify(p, ":p"):gsub("/$", ""))
+  local absolute = vim.fn.fnamemodify(p, ":p")
+  if absolute == "/" then return absolute end
+  return (absolute:gsub("/$", ""))
 end
 
 ---@return string

@@ -23,6 +23,7 @@ LOG_DIR="$STATE_DIR/logs"
 HOP_FILE="$STATE_DIR/hop"
 SCRIPT_SELF="$(command -v -- "${BASH_SOURCE[0]:-$0}" 2>/dev/null || printf '%s' "${BASH_SOURCE[0]:-$0}")"
 MUX_LIST_TIMEOUT="${MUX_LIST_TIMEOUT:-3}"
+LIVE_MARKER="▍"
 
 die() {
   printf 'mux: %s\n' "$1" >&2
@@ -146,7 +147,17 @@ is_live() {
 rpc() {
   "$NVIM" --server "$1" --remote-expr \
     "luaeval('(function() require([[mux]]).$2 return 1 end)()')" \
-    </dev/null >/dev/null 2>&1 || true
+    </dev/null >/dev/null 2>&1
+}
+
+wait_until_stopped() {
+  local sock="$1" limit="${2:-100}" i=0
+  while [ "$i" -lt "$limit" ]; do
+    is_live "$sock" || return 0
+    sleep 0.05
+    i=$((i + 1))
+  done
+  return 1
 }
 
 bootstrap_direnv_mode() {
@@ -228,7 +239,7 @@ ensure() {
   esac
   mkdir -p "$RUNTIME_DIR" "$LOG_DIR"
   if [ -e "$sock" ] && ! is_live "$sock"; then
-    rm -f "$sock" "$bootpidf"
+    rm -f "$sock" "$bootpidf" "${sock%.sock}.pid"
   fi
   if ! is_live "$sock"; then
     : >>"$logf"
@@ -274,7 +285,7 @@ ensure() {
     log_line "$logf" "mux: startup timeout after ${start_timeout}s"
     terminate_process_group "$monitor_pid" "$logf"
     wait "$pid" 2>/dev/null || true
-    rm -f "$sock" "$bootpidf"
+    rm -f "$sock" "$bootpidf" "${sock%.sock}.pid"
     log_tail "$logf"
     die "server did not start at $sock"
   fi
@@ -436,13 +447,12 @@ tag_rows() {
 # Federated list: local rows first, then each remote via ssh (probed in
 # parallel). Always TSV: host<TAB>cwd<TAB>socket<TAB>status. Unreachable
 # hosts are omitted.
-list_all() {
+list_all() (
   local me name host tmpdir line i=0
   local pids=() outs=()
   me="$(local_name)"
   tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/mux-list-all.XXXXXX")"
-  # shellcheck disable=SC2064
-  trap "rm -rf '$tmpdir'" RETURN
+  trap 'rm -rf -- "$tmpdir"' EXIT
   while IFS= read -r line; do
     [ -n "$line" ] || continue
     name="${line%% *}"
@@ -467,7 +477,7 @@ list_all() {
   for out in "${outs[@]+"${outs[@]}"}"; do
     cat "$out"
   done
-}
+)
 
 # Display-only: shorten any home dir prefix (local or remote) to ~.
 shorten_home() {
@@ -488,15 +498,15 @@ sort_all_rows() {
   awk -F'\t' '{ print (($4 == "live") ? 1 : 2) "\t" $0 }' | sort -s -k1,1n | cut -f2-
 }
 
-# Render federated TSV rows (stdin) for humans: live dot + colored [host]
+# Render federated TSV rows (stdin) for humans: live marker + colored [host]
 # tag + ~ paths. Host colors mirror the nvim picker lane (blue, purple,
 # orange, aqua) assigned round-robin over the sorted distinct hosts.
 render_all_rows() {
-  local name cwd sock status disp i w=0 hw=0 h tag dot
+  local name cwd status disp i hw=0 h tag marker
   local names=() disps=() stats=() hosts=()
   local reset=$'\033[0m' green=$'\033[32m'
   local palette=($'\033[34m' $'\033[35m' $'\033[38;5;208m' $'\033[36m')
-  while IFS=$'\t' read -r name cwd sock status; do
+  while IFS=$'\t' read -r name cwd _ status; do
     [ -n "$name" ] && [ -n "$cwd" ] || continue
     names+=("$name")
     stats+=("$status")
@@ -512,24 +522,22 @@ render_all_rows() {
     hcolor["${hosts[$i]}"]="${palette[$((i % ${#palette[@]}))]}"
   done
   for h in "${names[@]}"; do [ "${#h}" -gt "$hw" ] && hw="${#h}"; done
-  for disp in "${disps[@]}"; do [ "${#disp}" -gt "$w" ] && w="${#disp}"; done
   for i in "${!names[@]}"; do
     tag="$(printf '%-*s' $((hw + 2)) "[${names[$i]}]")"
-    dot="  "
-    [ "${stats[$i]}" = live ] && dot="${green}▍${reset} "
-    printf '%s%s%s%s %s\n' "$dot" "${hcolor[${names[$i]}]}" "$tag" "$reset" "${disps[$i]}"
+    marker="  "
+    [ "${stats[$i]}" = live ] && marker="${green}${LIVE_MARKER}${reset} "
+    printf '%s%s%s%s %s\n' "$marker" "${hcolor[${names[$i]}]}" "$tag" "$reset" "${disps[$i]}"
   done
 }
 
 # Probe every catalog remote for a working mux. TSV when piped:
 # name<TAB>host<TAB>status (live|dead); [live]/[dead] tags on a tty.
-list_hosts() {
+list_hosts() (
   local me name host tmpdir line status i=0
   local names=() hosts=() pids=()
   me="$(local_name)"
   tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/mux-hosts.XXXXXX")"
-  # shellcheck disable=SC2064
-  trap "rm -rf '$tmpdir'" RETURN
+  trap 'rm -rf -- "$tmpdir"' EXIT
   names+=("$me")
   hosts+=("$me")
   printf 'live\n' >"$tmpdir/0"
@@ -571,7 +579,7 @@ list_hosts() {
       printf '%s\t%s\t%s\n' "${names[$i]}" "${hosts[$i]}" "$status"
     fi
   done
-}
+)
 
 write_hop() {
   local name="$1" host="$2" project="$3"
@@ -619,7 +627,7 @@ resume() {
 # List sessions: live servers (running) plus stopped ones (a saved snapshot
 # exists, recovered from its `.root` sidecar)
 list_rows() {
-  local sock cwd slug rootf rf root
+  local sock cwd slug rootf rf root d p
   if [ -d "$RUNTIME_DIR" ]; then
     for sock in "$RUNTIME_DIR"/*.sock; do
       [ -e "$sock" ] || continue
@@ -648,7 +656,9 @@ list_rows() {
       if [ -d "$root" ]; then
         [ -f "${rf%.root}.vim" ] || continue
         if is_live "$sock"; then continue; fi
-        printf '%s\t\t%s\n' "$root" dir
+        # Keep saved sessions distinct until nested generic dirs are pruned;
+        # the public list protocol still exposes them as ordinary dirs.
+        printf '%s\t\t%s\n' "$root" saved
       else
         rm -f "$rf" "${rf%.root}.vim" "${rf%.root}.restore"
       fi
@@ -712,7 +722,8 @@ list_projects() {
           continue
         }
         seen[p] = 1
-        print cwd[i] "\t" sock[i] "\t" status[i]
+        output_status = status[i] == "saved" ? "dir" : status[i]
+        print cwd[i] "\t" sock[i] "\t" output_status
       }
     }
   '
@@ -720,7 +731,7 @@ list_projects() {
 
 list() {
   local lines line rest cwd sock status i w=0
-  local cwds=() socks=() stats=() disp=()
+  local socks=() stats=() disp=()
   lines="$(list_projects)"
   [ -n "$lines" ] || return 0
   if [ -t 1 ]; then
@@ -730,7 +741,6 @@ list() {
       rest="${line#*$'\t'}"
       sock="${rest%%$'\t'*}"
       status="${rest#*$'\t'}"
-      cwds+=("$cwd")
       socks+=("$sock")
       stats+=("$status")
       disp+=("$(shorten_home "$cwd")")
@@ -738,7 +748,7 @@ list() {
     for cwd in "${disp[@]}"; do [ "${#cwd}" -gt "$w" ] && w="${#cwd}"; done
     for i in "${!disp[@]}"; do
       if [ "${stats[$i]}" = live ]; then
-        printf '%s▍%s %-*s  %s\n' "$green" "$reset" "$w" "${disp[$i]}" "${socks[$i]}"
+        printf '%s%s%s %-*s  %s\n' "$green" "$LIVE_MARKER" "$reset" "$w" "${disp[$i]}" "${socks[$i]}"
       else
         printf '  %-*s  %s\n' "$w" "${disp[$i]}" "${socks[$i]}"
       fi
@@ -844,23 +854,19 @@ EOF
 }
 
 stop_server() {
-  local root sock i
+  local root sock
   root="$(root_for "${1:-$PWD}")"
   sock="$(socket_for "$root")"
-  unmark_restore "$root"
   if is_live "$sock"; then
-    rpc "$sock" 'stop_session()'
-    i=0
-    while [ "$i" -lt 100 ] && is_live "$sock"; do
-      sleep 0.05
-      i=$((i + 1))
-    done
+    rpc "$sock" 'stop_session()' || true
+    wait_until_stopped "$sock" || die "server did not stop for $root; socket left intact"
   fi
-  rm -f "$sock" "${sock%.sock}.boot.pid"
+  unmark_restore "$root"
+  rm -f "$sock" "${sock%.sock}.boot.pid" "${sock%.sock}.pid"
 }
 
 kill_server() {
-  local target root sock sf i
+  local target root sock sf
   target="${1:-$PWD}"
   root="$(root_for "$target" 2>/dev/null || true)"
   [ -n "$root" ] || root="$target"
@@ -869,20 +875,16 @@ kill_server() {
   if is_live "$sock"; then
     # hard kill: set the in-Neovim no-save guard and quit, so VimLeavePre can't
     # re-save the snapshot we're about to delete.
-    rpc "$sock" 'kill_session()'
-    i=0
-    while [ "$i" -lt 100 ] && is_live "$sock"; do
-      sleep 0.05
-      i=$((i + 1))
-    done
+    rpc "$sock" 'kill_session()' || true
+    wait_until_stopped "$sock" || die "server did not stop for $root; socket left intact"
   fi
-  rm -f "$sock" "${sock%.sock}.boot.pid" "$sf" "${sf%.vim}.root" "${sf%.vim}.restore"
+  rm -f "$sock" "${sock%.sock}.boot.pid" "${sock%.sock}.pid" "$sf" "${sf%.vim}.root" "${sf%.vim}.restore"
   forget_history "$root"
   clear_last "$root"
 }
 
 killall() {
-  local sock pidf pid i n=0
+  local sock pidf pid n=0
   if [ -d "$RUNTIME_DIR" ]; then
     for sock in "$RUNTIME_DIR"/*.sock; do
       [ -e "$sock" ] || continue
@@ -891,12 +893,8 @@ killall() {
         # graceful hard-kill: sets the in-Neovim no-save guard, deletes the
         # snapshot, and quits. Fall back to killing the process group if the
         # server ignores the RPC.
-        rpc "$sock" 'kill_session()'
-        i=0
-        while [ "$i" -lt 40 ] && is_live "$sock"; do
-          sleep 0.05
-          i=$((i + 1))
-        done
+        rpc "$sock" 'kill_session()' || true
+        wait_until_stopped "$sock" 40 || true
         pidf="${sock%.sock}.pid"
         if is_live "$sock" && [ -f "$pidf" ]; then
           pid=""
@@ -939,9 +937,6 @@ clean() {
       if [ -f "$vim" ] && [ -n "$rootval" ] && [ -d "$rootval" ]; then
         continue
       fi
-      if [ -n "$rootval" ] && [ ! -d "$rootval" ]; then
-        continue
-      fi
       rm -f "$vim" "$root" "$restore"
     done
   fi
@@ -949,13 +944,13 @@ clean() {
     for sock in "$RUNTIME_DIR"/*.sock; do
       [ -e "$sock" ] || continue
       if is_live "$sock"; then continue; fi
-      rm -f "$sock" "${sock%.sock}.boot.pid"
+      rm -f "$sock" "${sock%.sock}.boot.pid" "${sock%.sock}.pid"
     done
   fi
 }
 
 reload_one() {
-  local root sock logf uis mode start end i
+  local root sock logf uis mode start end
   root="$(root_for "${1:-$PWD}")"
   sock="$(socket_for "$root")"
   logf="$(log_for "$root")"
@@ -967,14 +962,10 @@ reload_one() {
   start="$(date +%s)"
   log_line "$logf" "mux reload: begin mode=$mode uis=${uis:-0}"
   if [ "${uis:-0}" -gt 0 ]; then
-    rpc "$sock" 'reload()'
+    rpc "$sock" 'reload()' || is_live "$sock" || die "reload failed for $root"
   else
     "$NVIM" --server "$sock" --remote-expr 'execute("silent! wall | qall!")' </dev/null >/dev/null 2>&1 || true
-    i=0
-    while [ "$i" -lt 100 ] && is_live "$sock"; do
-      sleep 0.05
-      i=$((i + 1))
-    done
+    wait_until_stopped "$sock" || die "server did not stop for reload: $root"
     ensure "$root" >/dev/null
   fi
   end="$(date +%s)"
@@ -1003,7 +994,7 @@ save_one() {
   local sock
   sock="$(socket_for "$(root_for "${1:-$PWD}")")"
   is_live "$sock" || return 0
-  rpc "$sock" 'save_session()'
+  rpc "$sock" 'save_session()' || die "save failed for ${1:-$PWD}"
 }
 
 save_all() {
@@ -1012,7 +1003,7 @@ save_all() {
   for sock in "$RUNTIME_DIR"/*.sock; do
     [ -e "$sock" ] || continue
     is_live "$sock" || continue
-    rpc "$sock" 'save_session()'
+    rpc "$sock" 'save_session()' || die "save failed for $sock"
   done
 }
 

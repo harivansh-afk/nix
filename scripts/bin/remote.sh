@@ -7,14 +7,20 @@
 
 transport="mosh"
 target=""
+
+usage() {
+  echo "usage: @NAME@ [--ssh] [project]" >&2
+  exit 2
+}
+
 for arg in "$@"; do
   case "$arg" in
   --ssh) transport="ssh" ;;
-  -*)
-    echo "usage: @NAME@ [--ssh] [project]" >&2
-    exit 2
+  -*) usage ;;
+  *)
+    [ -z "$target" ] || usage
+    target="$arg"
     ;;
-  *) target="$arg" ;;
   esac
 done
 

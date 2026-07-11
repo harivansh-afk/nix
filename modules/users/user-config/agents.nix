@@ -36,10 +36,10 @@ let
   # at spawn time (the task agent's model is `pi/task`).
   ompModes = {
     default = {
-      description = "fable-5 high main, gpt-5.5 low subagents";
+      description = "fable-5 high main, gpt-5.6-sol low subagents";
       roles = {
         default = "anthropic/claude-fable-5:high";
-        task = "openai-codex/gpt-5.5:low";
+        task = "openai-codex/gpt-5.6-sol:low";
       };
     };
   };

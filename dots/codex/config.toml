@@ -1,4 +1,4 @@
-model = "gpt-5.5"
+model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
 personality = "pragmatic"
 suppress_unstable_features_warning = true
@@ -37,12 +37,9 @@ chronicle = true
 realtime_conversation = true
 artifact = true
 
-# gpt-5.5 is not enabled for encrypted tool use, and multi_agent_v2 encrypts
-# the spawn_agent/send_message/followup_task `message` params unconditionally
-# (codex #26210), so the Responses API rejects every request with a 400
-# "spawn_agent declares encrypted parameters". enable_fanout above keeps
-# multi-agent v1 (unencrypted) sub-agents. Re-enable once gpt-5.5 supports
-# encrypted tool use. Verified by codex exec: v2 -> 400, v1 -> OK.
+# multi_agent_v2 encrypts the spawn_agent/send_message/followup_task `message`
+# params unconditionally (codex #26210). Keep multi-agent v1 via enable_fanout
+# until encrypted tool use is verified with the configured model.
 [features.multi_agent_v2]
 enabled = false
 max_concurrent_threads_per_session = 8
@@ -81,6 +78,3 @@ hide_rate_limit_model_nudge = true
 
 [tui]
 status_line = ["model-name", "git-branch", "context-remaining"]
-
-[tui.model_availability_nux]
-"gpt-5.5" = 4

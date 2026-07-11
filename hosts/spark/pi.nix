@@ -38,14 +38,14 @@ in
     models = null;
     settings = {
       defaultProvider = "openai";
-      defaultModel = "gpt-5.5";
+      defaultModel = "gpt-5.6-sol";
     };
     extraArgs = [
       "--no-builtin-tools"
       "--provider"
       "openai"
       "--model"
-      "gpt-5.5"
+      "gpt-5.6-sol"
     ];
   };
 

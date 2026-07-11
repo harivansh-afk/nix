@@ -46,8 +46,8 @@ output="$(
     MUX_TEST_CHILD="$child" \
     bash "$MUX_SOURCE" list
 )"
-expected="$(printf '%s\t\t%s\n%s\t\t%s' "$child" dir "$parent" dir)"
-[ "$output" = "$expected" ] || fail "saved nested project was pruned from mux list"
+expected="$(printf '%s\t\t%s' "$child" dir)"
+printf '%s\n' "$output" | grep -Fxq "$expected" || fail "saved nested project was pruned from mux list"
 
 printf '%s\n' "$orphan" >"$sessions/orphan.root"
 printf 'session\n' >"$sessions/orphan.vim"

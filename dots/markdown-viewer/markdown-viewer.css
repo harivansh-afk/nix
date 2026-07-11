@@ -1,24 +1,20 @@
-:root {
-  color-scheme: light dark;
-  --bg: #ffffff;
-  --fg: #24292f;
-  --muted: #57606a;
-  --border: #d0d7de;
-  --subtle: #f6f8fa;
-  --accent: #0969da;
-  --code-bg: #f6f8fa;
-}
+/* Dark-only, Notion-like viewer theme: near-black background, neutral gray
+   text, minimal chrome. Rendered by pandoc (gfm) via dots/bin/macbook-open;
+   covers everything that reader emits: headings, task lists, alerts,
+   footnotes, title block, sourceCode highlighting wrappers, and the mermaid
+   containers created by mermaid.html. */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0d1117;
-    --fg: #e6edf3;
-    --muted: #8b949e;
-    --border: #30363d;
-    --subtle: #161b22;
-    --accent: #58a6ff;
-    --code-bg: #161b22;
-  }
+:root {
+  color-scheme: dark;
+  --bg: #191919;
+  --surface: #202020;
+  --fg: #d4d4d4;
+  --bright: #f0f0f0;
+  --muted: #9b9b9b;
+  --border: #2f2f2f;
+  --border-strong: #444444;
+  --code: #eb5757;
+  --code-bg: rgba(135, 131, 120, 0.15);
 }
 
 * {
@@ -27,25 +23,47 @@
 
 html {
   background: var(--bg);
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  margin: 0;
-  max-width: none;
-  padding: 32px 48px 64px;
+  margin: 0 auto;
+  max-width: 48em;
+  padding: 40px 32px 96px;
   background: var(--bg);
   color: var(--fg);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 16px;
-  line-height: 1.58;
+  line-height: 1.6;
+  overflow-wrap: break-word;
 }
 
-body > * {
-  max-width: none;
+/* Frontmatter title block (yaml_metadata_block). */
+#title-block-header {
+  margin-bottom: 2em;
+}
+
+#title-block-header .title {
+  margin: 0 0 0.2em;
+}
+
+#title-block-header .author,
+#title-block-header .date {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95em;
 }
 
 a {
-  color: var(--accent);
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+a:hover {
+  text-decoration-color: var(--muted);
 }
 
 h1,
@@ -54,14 +72,26 @@ h3,
 h4,
 h5,
 h6 {
-  margin: 1.4em 0 0.55em;
-  line-height: 1.25;
+  margin: 1.6em 0 0.5em;
+  color: var(--bright);
+  font-weight: 650;
+  line-height: 1.3;
 }
 
-h1,
-h2 {
-  padding-bottom: 0.25em;
-  border-bottom: 1px solid var(--border);
+h1 { font-size: 1.75em; }
+h2 { font-size: 1.4em; }
+h3 { font-size: 1.15em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.95em; }
+
+h6 {
+  font-size: 0.9em;
+  color: var(--muted);
+}
+
+body > h1:first-child,
+body > h2:first-child {
+  margin-top: 0.2em;
 }
 
 p,
@@ -69,62 +99,186 @@ ul,
 ol,
 blockquote,
 pre,
-table {
+table,
+details {
   margin-top: 0;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+}
+
+ul,
+ol {
+  padding-left: 1.7em;
+}
+
+li > ul,
+li > ol {
+  margin-bottom: 0;
+}
+
+/* Task lists: pandoc emits ul.task-list with checkbox inputs. */
+ul.task-list {
+  list-style: none;
+  padding-left: 0.4em;
+}
+
+ul.task-list input[type="checkbox"] {
+  accent-color: #2383e2;
+  margin-right: 0.5em;
+}
+
+hr {
+  margin: 28px 0;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+strong {
+  color: var(--bright);
+}
+
+del {
+  color: var(--muted);
+}
+
+mark {
+  background: rgba(255, 212, 0, 0.14);
+  color: var(--bright);
+  padding: 0 0.15em;
+  border-radius: 3px;
 }
 
 code,
 pre,
 kbd,
 samp {
-  font-family: "Berkeley Mono", "SFMono-Regular", Consolas, monospace;
+  font-family: "Berkeley Mono", "SFMono-Regular", ui-monospace, Consolas, monospace;
 }
 
 code {
-  padding: 0.15em 0.35em;
+  padding: 0.15em 0.4em;
   border-radius: 4px;
   background: var(--code-bg);
-  font-size: 0.9em;
+  color: var(--code);
+  font-size: 0.85em;
 }
 
 pre {
-  overflow: auto;
+  overflow-x: auto;
   padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--code-bg);
+  border-radius: 6px;
+  background: var(--surface);
+  line-height: 1.5;
 }
 
 pre code {
   padding: 0;
   background: transparent;
+  color: var(--fg);
+  font-size: 0.85em;
+  white-space: pre;
+}
+
+/* pandoc wraps highlighted blocks in div.sourceCode > pre. */
+div.sourceCode {
+  margin: 0 0 14px;
+  background: transparent;
+}
+
+div.sourceCode pre {
+  margin: 0;
+}
+
+kbd {
+  display: inline-block;
+  padding: 0.1em 0.45em;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--bright);
+  font-size: 0.85em;
 }
 
 blockquote {
   margin-left: 0;
-  padding: 0.75em 1em;
-  border-left: 4px solid var(--border);
-  background: var(--subtle);
-  color: var(--fg);
+  padding: 0 0 0 1em;
+  border-left: 3px solid var(--fg);
 }
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote blockquote {
+  margin: 0.5em 0;
+}
+
+/* GitHub-style alerts: pandoc gfm emits div.note/tip/important/warning/
+   caution, each with a div.title. Rendered as quiet callouts with a muted
+   colored edge. */
+div.note,
+div.tip,
+div.important,
+div.warning,
+div.caution {
+  margin: 0 0 14px;
+  padding: 0.75em 1em;
+  border-left: 3px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+div.note > .title,
+div.tip > .title,
+div.important > .title,
+div.warning > .title,
+div.caution > .title {
+  color: var(--bright);
+  font-weight: 600;
+  font-size: 0.9em;
+}
+
+div.note > .title p,
+div.tip > .title p,
+div.important > .title p,
+div.warning > .title p,
+div.caution > .title p {
+  margin: 0 0 0.3em;
+}
+
+div.note > :last-child,
+div.tip > :last-child,
+div.important > :last-child,
+div.warning > :last-child,
+div.caution > :last-child {
+  margin-bottom: 0;
+}
+
+div.note { border-left-color: #4c8dd6; }
+div.tip { border-left-color: #57ab5a; }
+div.important { border-left-color: #986ee2; }
+div.warning { border-left-color: #c69026; }
+div.caution { border-left-color: #e5534b; }
 
 table {
   width: 100%;
   border-collapse: collapse;
   display: block;
   overflow-x: auto;
+  font-size: 0.95em;
 }
 
 th,
 td {
-  padding: 6px 10px;
+  padding: 6px 12px;
   border: 1px solid var(--border);
 }
 
 th {
-  background: var(--subtle);
+  background: var(--surface);
+  color: var(--bright);
   font-weight: 600;
+  text-align: left;
 }
 
 img,
@@ -132,24 +286,77 @@ svg,
 video {
   max-width: 100%;
   height: auto;
+  border-radius: 4px;
 }
 
+/* Broken images degrade to their alt text instead of a stray icon. */
+img {
+  font-style: italic;
+  color: var(--muted);
+}
+
+details {
+  padding: 0.6em 1em;
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+details > summary {
+  cursor: pointer;
+  color: var(--bright);
+  font-weight: 600;
+}
+
+details[open] > summary {
+  margin-bottom: 0.6em;
+}
+
+section.footnotes {
+  margin-top: 40px;
+  font-size: 0.9em;
+  color: var(--muted);
+}
+
+section.footnotes hr {
+  margin: 0 0 12px;
+}
+
+a.footnote-back {
+  text-decoration: none;
+}
+
+sup,
+sub {
+  line-height: 0;
+}
+
+/* Mermaid containers created by mermaid.html. */
 .mermaid {
   overflow-x: auto;
-  margin: 20px 0;
+  margin: 0 0 14px;
   padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--subtle);
+  border-radius: 6px;
+  background: var(--surface);
+  text-align: center;
 }
 
-.mermaid-source {
-  border-color: var(--border);
-  background: var(--code-bg);
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Diagram source shown when mermaid fails to parse a block. */
+pre.mermaid-error::before {
+  content: "mermaid: failed to render, showing source";
+  display: block;
+  margin-bottom: 0.6em;
+  color: var(--muted);
+  font-size: 0.8em;
+  font-family: inherit;
 }
 
 @media (max-width: 720px) {
   body {
-    padding: 20px 18px 48px;
+    padding: 24px 18px 64px;
   }
 }

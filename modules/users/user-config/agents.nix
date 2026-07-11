@@ -2,7 +2,6 @@
   lib,
   pkgs,
   homeDirectory,
-  dotsRoot,
   isDarwin,
   theme,
   ...

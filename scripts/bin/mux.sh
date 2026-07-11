@@ -502,6 +502,7 @@ sort_all_rows() {
 # tag + ~ paths. Host colors mirror the nvim picker lane (blue, purple,
 # orange, aqua) assigned round-robin over the sorted distinct hosts.
 render_all_rows() {
+  local show_marker="${1:-1}"
   local name cwd status disp i hw=0 h tag marker
   local names=() disps=() stats=() hosts=()
   local reset=$'\033[0m' green=$'\033[32m'
@@ -524,8 +525,11 @@ render_all_rows() {
   for h in "${names[@]}"; do [ "${#h}" -gt "$hw" ] && hw="${#h}"; done
   for i in "${!names[@]}"; do
     tag="$(printf '%-*s' $((hw + 2)) "[${names[$i]}]")"
-    marker="  "
-    [ "${stats[$i]}" = live ] && marker="${green}${LIVE_MARKER}${reset} "
+    marker=""
+    if [ "$show_marker" = 1 ]; then
+      marker="  "
+      [ "${stats[$i]}" = live ] && marker="${green}${LIVE_MARKER}${reset} "
+    fi
     printf '%s%s%s%s %s\n' "$marker" "${hcolor[${names[$i]}]}" "$tag" "$reset" "${disps[$i]}"
   done
 }
@@ -824,7 +828,7 @@ mux: per-project neovim server launcher
   mux ensure [<path>] print a live server socket for the project, spawning if needed
   mux list            list projects: live + dir (cwd<TAB>socket<TAB>status)
   mux list --all      list projects across remotes (TSV when piped: host<TAB>cwd<TAB>socket<TAB>status)
-  mux ls              alias for mux list --all
+  mux ls              list live sessions across remotes
   mux list --hosts    list hosts from the connector catalog with mux reachability
   mux hop <name> [p]  after detach, open project p on remote <name> (used by <c-b>F)
   mux pick [q]        fzf-pick a local project and open it
@@ -1035,9 +1039,9 @@ list)
   ;;
 ls)
   if [ -t 1 ]; then
-    list_all | sort_all_rows | render_all_rows
+    list_all | awk -F'\t' '$4 == "live"' | render_all_rows 0
   else
-    list_all
+    list_all | awk -F'\t' '$4 == "live"'
   fi
   ;;
 hop)

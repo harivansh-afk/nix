@@ -13,6 +13,7 @@ username: {
   experimental-features = [
     "nix-command"
     "flakes"
+    "ca-derivations"
   ];
   trusted-users = [
     "root"

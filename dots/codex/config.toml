@@ -6,21 +6,18 @@ web_search = "live"
 plan_mode_reasoning_effort = "xhigh"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
-service_tier = "fast"
+service_tier = "priority"
 
-# Only non-default feature toggles are listed. Stable defaults (shell_tool,
-# unified_exec, shell_snapshot, personality, hooks, goals, guardian_approval,
-# fast_mode, enable_request_compression, skill_mcp_dependency_install) are
-# already on and were dropped. Removed/dead no-op keys were dropped too:
-# apply_patch_freeform, skill_env_var_dependency_prompt, codex_git_commit,
-# plugin_hooks, external_migration, remote_control, child_agents_md, and the
-# top-level commit_attribution (attribution now lives in an extension).
+# Only non-default feature toggles are listed. Stable defaults stay implicit so
+# this file follows upstream as features graduate.
 [features]
 # Opt-out from a stable on-by-default feature.
 apps = false
 
-# Experimental (also exposed in /experimental).
+# Stable opt-in.
 memories = true
+
+# Experimental (also exposed in /experimental).
 prevent_idle_sleep = true
 
 # Under development; off by default. The warning banner is silenced via
@@ -37,11 +34,9 @@ chronicle = true
 realtime_conversation = true
 artifact = true
 
-# multi_agent_v2 encrypts the spawn_agent/send_message/followup_task `message`
-# params unconditionally (codex #26210). Keep multi-agent v1 via enable_fanout
-# until encrypted tool use is verified with the configured model.
+# Encrypted v2 delegation is supported by gpt-5.6-sol.
 [features.multi_agent_v2]
-enabled = false
+enabled = true
 max_concurrent_threads_per_session = 8
 
 [agents]
@@ -60,12 +55,8 @@ max_rollout_age_days = 30
 max_rollouts_per_startup = 2
 min_rollout_idle_hours = 24
 
-[mcp_servers.mgrep]
-command = "mgrep"
-args = ["mcp"]
-
-[sandbox_workspace_write]
-network_access = true
+[history]
+max_bytes = 52428800
 
 [projects."/home/rathi/Documents/Git/indexable/ix"]
 trust_level = "trusted"
@@ -77,4 +68,4 @@ hide_rate_limit_model_nudge = true
 "gpt-5.2" = "gpt-5.2-codex"
 
 [tui]
-status_line = ["model-name", "git-branch", "context-remaining"]
+status_line = ["model-with-reasoning", "git-branch", "task-progress", "context-remaining"]

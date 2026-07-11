@@ -32,6 +32,7 @@
     ../../modules/services/kb-finance.nix
     ../../modules/services/mini-loops.nix
     ../../modules/services/mosh.nix
+    ../../modules/services/mux-restore.nix
     ../../modules/services/parakeet.nix
     ../../modules/services/vaultwarden.nix
     ../../modules/services/website.nix

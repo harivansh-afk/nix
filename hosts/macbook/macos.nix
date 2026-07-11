@@ -80,21 +80,41 @@ in
     sudo -u ${config.system.primaryUser} /bin/mkdir -p /Users/${config.system.primaryUser}/Desktop/screenshots
   '';
 
-  launchd.user.agents = builtins.listToAttrs (
-    map (app: {
-      name = "open-${lib.strings.toLower (builtins.replaceStrings [ " " ] [ "-" ] app)}";
-      value.serviceConfig = {
-        Program = "/usr/bin/open";
+  launchd.user.agents =
+    builtins.listToAttrs (
+      map (app: {
+        name = "open-${lib.strings.toLower (builtins.replaceStrings [ " " ] [ "-" ] app)}";
+        value.serviceConfig = {
+          Program = "/usr/bin/open";
+          ProgramArguments = [
+            "/usr/bin/open"
+            "-a"
+            app
+          ];
+          RunAtLoad = true;
+          KeepAlive = false;
+        };
+      }) loginApps
+    )
+    // {
+      # Respawn mux sessions at login. mux already writes a `.restore` marker
+      # per live server (removed on stop/kill); this agent only triggers
+      # `mux restore` so marked sessions come back before a terminal is opened.
+      # TMPDIR is resolved explicitly because mux derives its socket dir from it
+      # on darwin and the agent must agree with login shells. AbandonProcessGroup
+      # keeps the spawned nvim servers alive after the agent exits.
+      mux-restore.serviceConfig = {
         ProgramArguments = [
-          "/usr/bin/open"
-          "-a"
-          app
+          "/bin/sh"
+          "-c"
+          ''export TMPDIR="''${TMPDIR:-$(getconf DARWIN_USER_TEMP_DIR)}"; exec /run/current-system/sw/bin/mux restore''
         ];
         RunAtLoad = true;
         KeepAlive = false;
+        AbandonProcessGroup = true;
+        EnvironmentVariables.PATH = "/run/current-system/sw/bin:/usr/bin:/bin";
       };
-    }) loginApps
-  );
+    };
 
   services.tailscale.enable = true;
 }

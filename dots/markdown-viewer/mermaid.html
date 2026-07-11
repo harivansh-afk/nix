@@ -1,39 +1,57 @@
 <script type="module">
-  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  // Injected by macbook-open after the pandoc-rendered body. Turns fenced
+  // ```mermaid blocks (pandoc gfm emits <pre class="mermaid"><code>) into
+  // rendered diagrams. Degrades gracefully: offline/CDN failure leaves the
+  // source as a normal code block; a block mermaid cannot parse becomes a
+  // labelled pre.mermaid-error with its source intact.
+  let mermaid;
+  try {
+    ({ default: mermaid } = await import(
+      "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"
+    ));
+  } catch {
+    // No network: leave the source blocks as-is.
+  }
 
-  mermaid.initialize({
-    startOnLoad: false,
-    securityLevel: "loose",
-    theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default"
-  });
+  if (mermaid) {
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: "loose",
+      suppressErrorRendering: true,
+      theme: "dark",
+      themeVariables: {
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+      }
+    });
 
-  const blocks = document.querySelectorAll(
-    "pre.mermaid, pre > code.language-mermaid, pre > code.mermaid"
-  );
+    const blocks = document.querySelectorAll(
+      "pre.mermaid, pre > code.language-mermaid, pre > code.mermaid"
+    );
 
-  const renderDiagram = async (block, index) => {
-    const code = block.tagName.toLowerCase() === "code" ? block : block.querySelector("code");
-    const source = (code || block).textContent;
-    const container = document.createElement("div");
-    container.className = "mermaid";
-    container.id = "mermaid-" + index;
-    const pre = block.tagName.toLowerCase() === "pre" ? block : block.closest("pre");
-    pre.replaceWith(container);
+    const renderDiagram = async (block, index) => {
+      const code =
+        block.tagName.toLowerCase() === "code" ? block : block.querySelector("code");
+      const source = (code || block).textContent;
+      const container = document.createElement("div");
+      container.className = "mermaid";
+      container.id = "mermaid-" + index;
+      const pre = block.tagName.toLowerCase() === "pre" ? block : block.closest("pre");
+      pre.replaceWith(container);
 
-    try {
-      const rendered = await mermaid.render("mermaid-svg-" + index, source, container);
-      container.innerHTML = rendered.svg;
-      rendered.bindFunctions?.(container);
-    } catch {
-      const fallback = document.createElement("pre");
-      const fallbackCode = document.createElement("code");
-      fallback.className = "mermaid-source";
-      fallbackCode.className = "language-mermaid";
-      fallbackCode.textContent = source;
-      fallback.append(fallbackCode);
-      container.replaceWith(fallback);
-    }
-  };
+      try {
+        const rendered = await mermaid.render("mermaid-svg-" + index, source, container);
+        container.innerHTML = rendered.svg;
+        rendered.bindFunctions?.(container);
+      } catch {
+        const fallback = document.createElement("pre");
+        const fallbackCode = document.createElement("code");
+        fallback.className = "mermaid-error";
+        fallbackCode.textContent = source;
+        fallback.append(fallbackCode);
+        container.replaceWith(fallback);
+      }
+    };
 
-  await Promise.all(Array.from(blocks, renderDiagram));
+    await Promise.all(Array.from(blocks, renderDiagram));
+  }
 </script>

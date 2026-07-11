@@ -104,7 +104,9 @@ in
     };
   };
 
-  codexConfigSource = "${dotsRoot}/codex/config.toml";
+  codexConfigSource = pkgs.writeText "codex-config.toml" (
+    builtins.readFile ../../../dots/codex/config.toml
+  );
 
   readXattr = mkReadXattr codexXattr;
   writeXattr = mkWriteXattr codexXattr;

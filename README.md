@@ -13,7 +13,7 @@ One flake, two machines, declared with [flake-parts](https://github.com/hercules
 
 **Edge** - internet traffic hits Cloudflare (TLS terminates there), rides a cloudflared tunnel to Caddy on `127.0.0.1:80`, and gets dispatched by Host header to services bound on loopback. No open web ports, no ACME. DNS for the zone is nix too, via [terranix](https://github.com/terranix/terranix) (`just dns-plan` / `just dns-apply`).
 
-**Services on spark** - [Forgejo](https://git.harivan.sh) with a Pierre-themed frontend, Actions runners, and push-mirrors back to GitHub; Vaultwarden; Delta; the harivan.sh site; `llama.cpp` inference on the GPU; parakeet speech-to-text; the Hermes always-on agent; a Cognee knowledge graph with hybrid search over mail, calendar, finance, and repos; mini-loops scheduled scans; browser automation. Each one is a module in `modules/services/`.
+**Services on spark** - [Forgejo](https://git.harivan.sh) with a Pierre-themed frontend, Actions runners, and push-mirrors back to GitHub; Vaultwarden; Delta; the harivan.sh site; `llama.cpp` inference on the GPU; Whisper Large v3 speech-to-text; the Hermes always-on agent; a Cognee knowledge graph with hybrid search over mail, calendar, finance, and repos; mini-loops scheduled scans; browser automation. Each one is a module in `modules/services/`.
 
 **mux** - tmux is gone. Sessions, panes, and windows live in Neovim: one detached headless server per project, thin `--remote-ui` clients, mksession persistence across reboots, and a federated session picker across every host. `mosh spark` lands you straight in a session. The whole thing ships as a portable flake package: `nix profile add git+https://git.harivan.sh/harivansh-afk/nix#mux`.
 

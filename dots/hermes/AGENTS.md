@@ -63,7 +63,7 @@ Read freely. Never write to or modify the KB without being asked.
 
 # Speech-to-Text
 
-Service: Parakeet
+Service: Whisper Large v3
 Endpoint: http://127.0.0.1:6060 (OpenAI-compatible)
 
 # Nix Config Repo

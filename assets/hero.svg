@@ -95,7 +95,7 @@
 <rect x="354" y="448" width="182.025" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
 <text x="366" y="462.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">llama.cpp · GPU inference</text>
 <rect x="354" y="476" width="182.025" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
-<text x="366" y="490.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">parakeet · speech-to-text</text>
+<text x="366" y="490.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">whisper v3 · speech-to-text</text>
 <rect x="354" y="504" width="175.704" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
 <text x="366" y="518.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">hermes · always-on agent</text>
 <rect x="354" y="532" width="93.531" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>

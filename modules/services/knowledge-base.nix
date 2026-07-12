@@ -50,7 +50,7 @@ let
     fi
   '';
 
-  # --- Cognee (uv venv, parakeet bootstrap pattern) --------------------------
+  # --- Cognee (uv venv, whisper bootstrap pattern) ---------------------------
   cogneeStateDir = "/var/lib/cognee";
   cogneeVenv = "${cogneeStateDir}/venv";
   python = pkgs.python312;

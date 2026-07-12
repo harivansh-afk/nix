@@ -21,7 +21,7 @@
 #      Nothing is ever downloaded at runtime except the pip deps on first start.
 #
 # The runtime is bootstrapped into a uv venv on first use (mirrors
-# knowledge-base.nix / parakeet.nix), gated on a req-version file.
+# knowledge-base.nix / whisper.nix), gated on a req-version file.
 let
   stateDir = "/var/lib/browser-use";
   venv = "${stateDir}/venv";

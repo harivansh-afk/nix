@@ -87,9 +87,10 @@ def models():
 async def transcription(
     file: UploadFile,
     response_format: str = Form(default="json"),
-    _requested_model: str = Form(default=MODEL_ID, alias="model"),
+    requested_model: str = Form(default=MODEL_ID, alias="model"),
     language: str | None = Form(default=None),
 ):
+    del requested_model
     text = transcribe(decode(await file.read()), language)
     if response_format == "text":
         return PlainTextResponse(text)

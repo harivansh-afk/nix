@@ -19,9 +19,10 @@ packages, so they land on `PATH` on every host. Sources live in `bin/`.
 | `wallpaper-gen`| `bin/wallpaper-gen.sh`| Generate themed wallpapers (uses `lib/wallpaper-gen.py`) |
 
 Each entry in `lib/remotes.nix` additionally renders `bin/remote.sh` into a
-per-remote connector command (`spark`, `macbook`, `hari1`) that runs the remote's
-`mux` over mosh. The same catalog is baked into `mux` for `mux list --all`,
-`mux list --hosts`, `mux pick --all`, and `<c-b>F`.
+per-remote connector command (`spark`, `macbook`, `hari1`, `dev1`, `hil1`,
+`hil2`, `vin1`, `vin2`) that runs the remote's `mux` over mosh. The same catalog
+is baked into `mux` for `mux list --all`, `mux list --hosts`, `mux pick --all`,
+and `<c-b>F`.
 
 `default.nix` also exports `themeAssetsText`, consumed by the theme-activation
 block in `modules/users/user-config/`.

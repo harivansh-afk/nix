@@ -44,6 +44,19 @@ Host macbook
   ServerAliveInterval 60
   ServerAliveCountMax 3
 
+Host dev-1
+  HostName 100.80.19.69
+  HostKeyAlias dev-1
+  User hari
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+  ForwardAgent yes
+  ControlMaster auto
+  ControlPath ~/.ssh/sockets/%r@%h:%p
+  ControlPersist 10m
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+
 Host hil-compute-1
   HostName 15.204.111.75
   AddKeysToAgent yes

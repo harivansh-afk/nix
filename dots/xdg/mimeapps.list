@@ -22,3 +22,4 @@ audio/x-wav=macbook-open.desktop
 audio/ogg=macbook-open.desktop
 x-scheme-handler/http=macbook-open.desktop
 x-scheme-handler/https=macbook-open.desktop
+x-scheme-handler/claude-cli=claude-code-url-handler.desktop

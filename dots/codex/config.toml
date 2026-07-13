@@ -1,9 +1,10 @@
 model = "gpt-5.6-sol"
-model_reasoning_effort = "high"
+model_verbosity = "low"
+model_reasoning_effort = "med"
 personality = "pragmatic"
 suppress_unstable_features_warning = true
 web_search = "live"
-plan_mode_reasoning_effort = "xhigh"
+plan_mode_reasoning_effort = "high"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
 service_tier = "priority"

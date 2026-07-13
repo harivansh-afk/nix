@@ -110,8 +110,8 @@ pkgs.writeShellScript "user-config-${name}" ''
     mkSymlink "${dotsRoot}/xdg/mimeapps.list" "${configHome}/mimeapps.list"
   ''}
 
-  # --- nvim: live directory symlink; salvage lock files from the old
-  # home-manager symlink forest before replacing it ---
+  # --- nvim: keep the config directory writable for vim.pack's lockfile,
+  # while symlinking every managed config entry from the dotfiles tree.
   if [ -d "${configHome}/nvim" ] && [ ! -L "${configHome}/nvim" ]; then
     for lock in lazy-lock.json nvim-pack-lock.json; do
       if [ -f "${configHome}/nvim/$lock" ] && [ ! -L "${configHome}/nvim/$lock" ] \
@@ -120,7 +120,33 @@ pkgs.writeShellScript "user-config-${name}" ''
       fi
     done
   fi
-  mkSymlink "${dotsRoot}/nvim" "${configHome}/nvim"
+  if [ -L "${configHome}/nvim" ]; then
+    rm -f "${configHome}/nvim"
+  fi
+  mkdir -p "${configHome}/nvim"
+  # drop managed links from earlier generations so removed dots entries
+  # do not linger
+  for entry in "${configHome}/nvim"/* "${configHome}/nvim"/.[!.]* "${configHome}/nvim"/..?*; do
+    if [ -L "$entry" ]; then
+      rm -f "$entry"
+    fi
+  done
+  for source in "${dotsRoot}/nvim"/* "${dotsRoot}/nvim"/.[!.]* "${dotsRoot}/nvim"/..?*; do
+    [ -e "$source" ] || continue
+    name="''${source##*/}"
+    case "$name" in
+      lazy-lock.json|nvim-pack-lock.json)
+        if [ -w "${dotsRoot}/nvim" ]; then
+          mkSymlink "$source" "${configHome}/nvim/$name"
+        else
+          install -m 0644 "$source" "${configHome}/nvim/$name"
+        fi
+        ;;
+      *)
+        mkSymlink "$source" "${configHome}/nvim/$name"
+        ;;
+    esac
+  done
 
   # --- assorted app configs ---
   mkSymlink "${btopConf}" "${configHome}/btop/btop.conf"

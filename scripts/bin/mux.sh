@@ -22,7 +22,7 @@ HISTORY_FILE="$STATE_DIR/history"
 LOG_DIR="$STATE_DIR/logs"
 HOP_FILE="$STATE_DIR/hop"
 SCRIPT_SELF="$(command -v -- "${BASH_SOURCE[0]:-$0}" 2>/dev/null || printf '%s' "${BASH_SOURCE[0]:-$0}")"
-MUX_LIST_TIMEOUT="${MUX_LIST_TIMEOUT:-3}"
+MUX_LIST_TIMEOUT="${MUX_LIST_TIMEOUT:-1}"
 LIVE_MARKER="▍"
 
 die() {
@@ -850,7 +850,7 @@ Environment:
   MUX_START_TIMEOUT       seconds to wait for cold startup (default: 150)
   MUX_DIRENV_TIMEOUT      timeout passed to direnv export (default: 120s)
   MUX_BOOTSTRAP_DIRENV    1/0, run direnv before starting nvim (default: 1)
-  MUX_LIST_TIMEOUT        ssh connect timeout for mux list --all (default: 3)
+  MUX_LIST_TIMEOUT        ssh connect timeout for mux list --all (default: 1)
   MUX_LOG_LINES           lines shown by mux log and failure tails
 
 Inside nvim, switch projects with <c-b>f (local) or <c-b>F (all hosts), detach with <c-b>d.

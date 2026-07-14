@@ -51,6 +51,13 @@ link_mode_assets() {
     mkdir -p "@LAZYGIT_DARWIN_DIR@"
     ln -sfn "$THEME_DARWIN_LAZYGIT_TARGET" "@LAZYGIT_DARWIN_FILE@"
 
+    mkdir -p "@SKETCHYBAR_DIR@"
+    ln -sfn "$THEME_SKETCHYBAR_TARGET" "@SKETCHYBAR_CURRENT_FILE@"
+    sketchybar_bin=$(command -v sketchybar || echo /run/current-system/sw/bin/sketchybar)
+    if [[ -x "$sketchybar_bin" ]]; then
+      "$sketchybar_bin" --reload >/dev/null 2>&1 || true
+    fi
+
     osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to ${THEME_APPLE_DARK_MODE}" >/dev/null 2>&1 || true
 
     set_wallpaper

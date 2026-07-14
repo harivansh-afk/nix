@@ -22,6 +22,7 @@
   gitDeltaThemesInc,
   btopConf,
   fzfThemes,
+  sketchybarThemes,
   ghosttyThemes,
   lazygitConfigs,
   claudeSettings,
@@ -372,6 +373,15 @@ pkgs.writeShellScript "user-config-${name}" ''
     # aerospace reads ~/.config/aerospace/aerospace.toml
     mkdir -p "${configHome}/aerospace"
     mkSymlink "${dotsRoot}/aerospace/aerospace.toml" "${configHome}/aerospace/aerospace.toml"
+
+    # sketchybar: rc + plugins from dots, palette fragments from the store,
+    # themes/current follows the active theme mode (see also theme.sh)
+    mkdir -p "${theme.paths.sketchybarDir}"
+    mkSymlink "${dotsRoot}/sketchybar/sketchybarrc" "${configHome}/sketchybar/sketchybarrc"
+    mkSymlink "${dotsRoot}/sketchybar/plugins" "${configHome}/sketchybar/plugins"
+    mkSymlink "${sketchybarThemes.dark}" "${theme.paths.sketchybarDir}/cozybox-dark.sh"
+    mkSymlink "${sketchybarThemes.light}" "${theme.paths.sketchybarDir}/cozybox-light.sh"
+    ln -sfn "$THEME_SKETCHYBAR_TARGET" "${theme.paths.sketchybarCurrentFile}"
 
     # helium managed extensions
     helium_ext="${homeDirectory}/Library/Application Support/net.imput.helium/External Extensions"

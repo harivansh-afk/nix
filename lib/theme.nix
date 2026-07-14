@@ -89,6 +89,8 @@ let
     lazygitCurrentFile = "${configHome}/lazygit/config.yml";
     gitDir = "${configHome}/git";
     gitThemeCurrentFile = "${configHome}/git/theme.inc";
+    sketchybarDir = "${configHome}/sketchybar/themes";
+    sketchybarCurrentFile = "${configHome}/sketchybar/themes/current";
   };
 
   themes = {
@@ -691,6 +693,30 @@ let
       };
     };
 
+  # Shell fragment sourced by the sketchybar rc and plugins. Sketchybar wants
+  # 0xAARRGGBB colors; the accent stays on the cozybox cream/yellow.
+  renderSketchybar =
+    mode:
+    let
+      t = themes.${mode};
+      accent = if mode == "light" then "#b57614" else sharedPalette.yellow;
+      red = if mode == "light" then "#c5524a" else sharedPalette.red;
+      hex = color: builtins.replaceStrings [ "#" ] [ "0xff" ] color;
+    in
+    ''
+      export BAR_COLOR=${hex t.background}
+      export SURFACE_COLOR=${hex t.surface}
+      export SELECTED_COLOR=${hex t.selectionBackground}
+      export TEXT_COLOR=${hex t.text}
+      export BRIGHT_COLOR=${hex t.foreground}
+      export MUTED_COLOR=${hex t.mutedText}
+      export ACCENT_COLOR=${hex accent}
+      export PINK_COLOR=${hex t.purple}
+      export RED_COLOR=${hex red}
+      export GREEN_COLOR=${hex t.green}
+      export BORDER_COLOR=${hex t.border}
+    '';
+
   renderZshHighlights =
     mode:
     let
@@ -761,6 +787,7 @@ in
     renderGhostty
     renderLazygit
     renderPurePrompt
+    renderSketchybar
     renderZshHighlights
     themes
     wallpapers

@@ -26,6 +26,7 @@ let
       lazygit = "${theme.paths.lazygitDir}/config-dark.yml";
       gitTheme = "${gitThemeIncludes.dark}";
       darwinLazygit = "${lazygitDarwinDir}/config-dark.yml";
+      sketchybar = "${theme.paths.sketchybarDir}/cozybox-dark.sh";
       wallpaper = theme.wallpapers.dark;
       appleDarkMode = "true";
     };
@@ -35,6 +36,7 @@ let
       lazygit = "${theme.paths.lazygitDir}/config-light.yml";
       gitTheme = "${gitThemeIncludes.light}";
       darwinLazygit = "${lazygitDarwinDir}/config-light.yml";
+      sketchybar = "${theme.paths.sketchybarDir}/cozybox-light.sh";
       wallpaper = theme.wallpapers.light;
       appleDarkMode = "false";
     };
@@ -60,6 +62,7 @@ let
           THEME_LAZYGIT_TARGET='${modeAssets.light.lazygit}'
           THEME_GIT_THEME_TARGET='${modeAssets.light.gitTheme}'
           THEME_DARWIN_LAZYGIT_TARGET='${modeAssets.light.darwinLazygit}'
+          THEME_SKETCHYBAR_TARGET='${modeAssets.light.sketchybar}'
           THEME_WALLPAPER='${modeAssets.light.wallpaper}'
           THEME_APPLE_DARK_MODE=${modeAssets.light.appleDarkMode}
           ;;
@@ -70,6 +73,7 @@ let
           THEME_LAZYGIT_TARGET='${modeAssets.dark.lazygit}'
           THEME_GIT_THEME_TARGET='${modeAssets.dark.gitTheme}'
           THEME_DARWIN_LAZYGIT_TARGET='${modeAssets.dark.darwinLazygit}'
+          THEME_SKETCHYBAR_TARGET='${modeAssets.dark.sketchybar}'
           THEME_WALLPAPER='${modeAssets.dark.wallpaper}'
           THEME_APPLE_DARK_MODE=${modeAssets.dark.appleDarkMode}
           ;;
@@ -114,6 +118,8 @@ let
         "@GIT_THEME_CURRENT_FILE@" = theme.paths.gitThemeCurrentFile;
         "@LAZYGIT_DARWIN_DIR@" = lazygitDarwinDir;
         "@LAZYGIT_DARWIN_FILE@" = "${lazygitDarwinDir}/config.yml";
+        "@SKETCHYBAR_DIR@" = theme.paths.sketchybarDir;
+        "@SKETCHYBAR_CURRENT_FILE@" = theme.paths.sketchybarCurrentFile;
         "@WALLPAPER_DIR@" = theme.wallpapers.dir;
         "@WALLPAPER_CURRENT_FILE@" = theme.wallpapers.current;
         "@WALLPAPER_STATIC_DARK@" = "${theme.wallpapers.staticDark}";

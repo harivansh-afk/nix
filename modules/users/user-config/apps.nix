@@ -36,6 +36,11 @@ in
     light = pkgs.writeText "ghostty-cozybox-light" (theme.renderGhostty "light");
   };
 
+  sketchybarThemes = {
+    dark = pkgs.writeText "sketchybar-cozybox-dark.sh" (theme.renderSketchybar "dark");
+    light = pkgs.writeText "sketchybar-cozybox-light.sh" (theme.renderSketchybar "light");
+  };
+
   lazygitConfigs = {
     dark = pkgs.writeText "lazygit-config-dark.yml" (lazygitBase + theme.renderLazygit "dark");
     light = pkgs.writeText "lazygit-config-light.yml" (lazygitBase + theme.renderLazygit "light");

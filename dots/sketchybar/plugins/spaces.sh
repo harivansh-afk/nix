@@ -25,12 +25,13 @@ for sid in 1 2 3 4 5 6 7 8 9; do
   fi
 
   # with no glyph the number sits alone: mirror the left padding on the
-  # right so the tab stays centered instead of lopsided
+  # right so the tab stays centered instead of lopsided. Values are the
+  # bearing-compensated tab paddings from the rc - keep them in sync.
   label_drawing=off
-  icon_pad_right=14
+  icon_pad_right=10
   if [ -n "$icons" ]; then
     label_drawing=on
-    icon_pad_right=8
+    icon_pad_right=11
   fi
 
   # background.color is set explicitly in every branch: item properties
@@ -38,18 +39,20 @@ for sid in 1 2 3 4 5 6 7 8 9; do
   # (e.g. a tab frozen on the old accent after a config change)
   if [ "$sid" = "$focused" ]; then
     # same surface background as every tab; only the number lights up pink
-    # (the mux pointer purple)
+    # (the mux pointer purple) and goes bold
     args+=(--set "space.$sid" drawing=on
-      background.color="$SURFACE_COLOR"
+      background.color="$BAR_COLOR"
       icon.color="$PINK_COLOR"
+      icon.font="Berkeley Mono:Bold:13.0"
       icon.padding_right="$icon_pad_right"
       label="$icons"
       label.drawing="$label_drawing"
       label.color="$BRIGHT_COLOR")
   elif [ -n "$icons" ]; then
     args+=(--set "space.$sid" drawing=on
-      background.color="$SURFACE_COLOR"
+      background.color="$BAR_COLOR"
       icon.color="$MUTED_COLOR"
+      icon.font="Berkeley Mono:Regular:13.0"
       icon.padding_right="$icon_pad_right"
       label="$icons"
       label.drawing=on

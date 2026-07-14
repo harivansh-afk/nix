@@ -58,26 +58,26 @@ sketchybar --add event aerospace_workspace_change
 for sid in $(aerospace list-workspaces --all); do
   sketchybar --add item "space.$sid" left \
     --set "space.$sid" \
-      drawing=off \
-      background.drawing=on \
-      padding_left=3 \
-      padding_right=3 \
-      icon.drawing=on \
-      icon="$sid" \
-      icon.padding_left=14 \
-      icon.padding_right=8 \
-      label.font="$APP_FONT:Regular:15.0" \
-      label.drawing=off \
-      label.padding_left=0 \
-      label.padding_right=14 \
-      click_script="aerospace workspace $sid"
+    drawing=off \
+    background.drawing=on \
+    padding_left=3 \
+    padding_right=3 \
+    icon.drawing=on \
+    icon="$sid" \
+    icon.padding_left=14 \
+    icon.padding_right=8 \
+    label.font="$APP_FONT:Regular:15.0" \
+    label.drawing=off \
+    label.padding_left=0 \
+    label.padding_right=14 \
+    click_script="aerospace workspace $sid"
 done
 
 sketchybar --add item spaces_monitor left \
   --subscribe spaces_monitor aerospace_workspace_change front_app_switched system_woke \
   --set spaces_monitor \
-    drawing=off \
-    script="$PLUGIN_DIR/spaces.sh"
+  drawing=off \
+  script="$PLUGIN_DIR/spaces.sh"
 
 # --- right section: one floating block, spacing instead of separators:
 # volume | battery | clock | controls ---
@@ -85,44 +85,44 @@ sketchybar --add item spaces_monitor left \
 # shared background)
 sketchybar --add item controls right \
   --set controls \
-    label="=" \
-    label.color="$MUTED_COLOR" \
-    label.padding_left=10 \
-    label.padding_right=16 \
-    click_script="$PLUGIN_DIR/controlcenter.sh"
+  label="=" \
+  label.color="$MUTED_COLOR" \
+  label.padding_left=10 \
+  label.padding_right=16 \
+  click_script="$PLUGIN_DIR/controlcenter.sh"
 
 sketchybar --add item clock right \
   --subscribe clock system_woke \
   --set clock \
-    update_freq=10 \
-    label.padding_left=10 \
-    label.padding_right=10 \
-    click_script="open -a Calendar" \
-    script="$PLUGIN_DIR/clock.sh"
+  update_freq=10 \
+  label.padding_left=10 \
+  label.padding_right=10 \
+  click_script="open -a Calendar" \
+  script="$PLUGIN_DIR/clock.sh"
 
 sketchybar --add item battery right \
   --subscribe battery power_source_change system_woke \
   --set battery \
-    update_freq=60 \
-    icon.drawing=on \
-    icon=bat \
-    icon.padding_left=10 \
-    icon.padding_right=5 \
-    label.padding_left=5 \
-    label.padding_right=10 \
-    click_script='open "x-apple.systempreferences:com.apple.Battery-Settings.extension"' \
-    script="$PLUGIN_DIR/battery.sh"
+  update_freq=60 \
+  icon.drawing=on \
+  icon=bat \
+  icon.padding_left=10 \
+  icon.padding_right=5 \
+  label.padding_left=5 \
+  label.padding_right=10 \
+  click_script='open "x-apple.systempreferences:com.apple.Battery-Settings.extension"' \
+  script="$PLUGIN_DIR/battery.sh"
 
 sketchybar --add item volume right \
   --subscribe volume volume_change mouse.clicked mouse.scrolled \
   --set volume \
-    icon.drawing=on \
-    icon=vol \
-    icon.padding_left=16 \
-    icon.padding_right=5 \
-    label.padding_left=5 \
-    label.padding_right=10 \
-    script="$PLUGIN_DIR/volume.sh"
+  icon.drawing=on \
+  icon=vol \
+  icon.padding_left=16 \
+  icon.padding_right=5 \
+  label.padding_left=5 \
+  label.padding_right=10 \
+  script="$PLUGIN_DIR/volume.sh"
 
 sketchybar --add bracket status \
   controls clock battery volume \

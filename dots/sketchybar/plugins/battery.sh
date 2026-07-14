@@ -9,7 +9,7 @@ pct=$(printf '%s' "$batt" | grep -Eo '[0-9]+%' | head -1 | tr -d '%')
 
 icon=bat
 case "$batt" in
-  *"AC Power"*) icon=chg ;;
+*"AC Power"*) icon=chg ;;
 esac
 
 color="$TEXT_COLOR"

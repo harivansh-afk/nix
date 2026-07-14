@@ -4,12 +4,12 @@
 source "$CONFIG_DIR/themes/current"
 
 case "$SENDER" in
-  mouse.clicked)
-    osascript -e 'set volume output muted not (output muted of (get volume settings))'
-    ;;
-  mouse.scrolled)
-    osascript -e "set volume output volume ((output volume of (get volume settings)) + ${SCROLL_DELTA:-0})"
-    ;;
+mouse.clicked)
+  osascript -e 'set volume output muted not (output muted of (get volume settings))'
+  ;;
+mouse.scrolled)
+  osascript -e "set volume output volume ((output volume of (get volume settings)) + ${SCROLL_DELTA:-0})"
+  ;;
 esac
 
 vol=$(osascript -e 'output volume of (get volume settings)')

@@ -22,6 +22,7 @@ M.views = {
     kind = "terminal",
     cmd = { vim.o.shell },
     lifecycle = "ephemeral",
+    restore = true,
   },
   vcs = { key = "g", kind = "vcs", restore = true },
 }

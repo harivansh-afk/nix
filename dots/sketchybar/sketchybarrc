@@ -1,0 +1,134 @@
+#!/bin/bash
+# SketchyBar rc, linked at ~/.config/sketchybar/sketchybarrc. Cozybox
+# floating layout: the bar itself is fully transparent (no painted strip),
+# only the items carry a background - soft rounded blocks, no borders.
+# Left: one floating tab per aerospace workspace (number + one app icon
+# glyph, focused tab in the accent). Right: one floating status block.
+# The notch keeps the two sections apart; nothing is placed in the middle.
+# Colors come from themes/current, a symlink managed by the `theme` script
+# (rendered per-mode from lib/theme.nix).
+
+source "$CONFIG_DIR/themes/current"
+
+PLUGIN_DIR="$CONFIG_DIR/plugins"
+FONT="Berkeley Mono"
+APP_FONT="sketchybar-app-font"
+
+# Height of the notch strip: NSScreen.safeAreaInsets.top at the current
+# scaled resolution (2048x1330 on the built-in display). Re-measure with:
+#   swift -e 'import AppKit; print(NSScreen.main!.safeAreaInsets.top)'
+BAR_HEIGHT=43
+ITEM_HEIGHT=30
+
+sketchybar --bar \
+  position=top \
+  height=$BAR_HEIGHT \
+  color=0x00000000 \
+  corner_radius=0 \
+  margin=0 \
+  y_offset=0 \
+  padding_left=8 \
+  padding_right=8 \
+  display=all \
+  sticky=on
+
+# corner_radius 13 was calibrated by eye against the physical display corner
+# curve (Apple does not publish the radius and no API exposes it on macOS)
+sketchybar --default \
+  background.drawing=off \
+  background.color="$SURFACE_COLOR" \
+  background.corner_radius=13 \
+  background.height=$ITEM_HEIGHT \
+  background.border_width=0 \
+  icon.drawing=off \
+  icon.font="$FONT:Regular:13.0" \
+  icon.color="$MUTED_COLOR" \
+  icon.padding_left=12 \
+  icon.padding_right=4 \
+  label.font="$FONT:Regular:13.0" \
+  label.color="$TEXT_COLOR" \
+  label.padding_left=4 \
+  label.padding_right=12
+
+# --- left section: floating workspace tabs ---
+# Static shells only; plugins/spaces.sh renders all of them in one batch per
+# event (one process per event instead of one per workspace - keeps it fast).
+sketchybar --add event aerospace_workspace_change
+
+for sid in $(aerospace list-workspaces --all); do
+  sketchybar --add item "space.$sid" left \
+    --set "space.$sid" \
+    drawing=off \
+    background.drawing=on \
+    padding_left=3 \
+    padding_right=3 \
+    icon.drawing=on \
+    icon="$sid" \
+    icon.padding_left=14 \
+    icon.padding_right=8 \
+    label.font="$APP_FONT:Regular:15.0" \
+    label.drawing=off \
+    label.padding_left=0 \
+    label.padding_right=14 \
+    click_script="aerospace workspace $sid"
+done
+
+sketchybar --add item spaces_monitor left \
+  --subscribe spaces_monitor aerospace_workspace_change front_app_switched system_woke \
+  --set spaces_monitor \
+  drawing=off \
+  script="$PLUGIN_DIR/spaces.sh"
+
+# --- right section: one floating block, spacing instead of separators:
+# volume | battery | clock | controls ---
+# (items added rightmost-first, grouped by a bracket that paints the
+# shared background)
+sketchybar --add item controls right \
+  --set controls \
+  label="=" \
+  label.color="$MUTED_COLOR" \
+  label.padding_left=10 \
+  label.padding_right=16 \
+  click_script="$PLUGIN_DIR/controlcenter.sh"
+
+sketchybar --add item clock right \
+  --subscribe clock system_woke \
+  --set clock \
+  update_freq=10 \
+  label.padding_left=10 \
+  label.padding_right=10 \
+  click_script="open -a Calendar" \
+  script="$PLUGIN_DIR/clock.sh"
+
+sketchybar --add item battery right \
+  --subscribe battery power_source_change system_woke \
+  --set battery \
+  update_freq=60 \
+  icon.drawing=on \
+  icon=bat \
+  icon.padding_left=10 \
+  icon.padding_right=5 \
+  label.padding_left=5 \
+  label.padding_right=10 \
+  click_script='open "x-apple.systempreferences:com.apple.Battery-Settings.extension"' \
+  script="$PLUGIN_DIR/battery.sh"
+
+sketchybar --add item volume right \
+  --subscribe volume volume_change mouse.clicked mouse.scrolled \
+  --set volume \
+  icon.drawing=on \
+  icon=vol \
+  icon.padding_left=16 \
+  icon.padding_right=5 \
+  label.padding_left=5 \
+  label.padding_right=10 \
+  script="$PLUGIN_DIR/volume.sh"
+
+sketchybar --add bracket status \
+  controls clock battery volume \
+  --set status background.drawing=on
+
+# --- init ---
+sketchybar --update
+sketchybar --trigger aerospace_workspace_change \
+  FOCUSED_WORKSPACE="$(aerospace list-workspaces --focused)"

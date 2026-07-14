@@ -97,6 +97,7 @@ let
         fzfThemes
         ghosttyThemes
         lazygitConfigs
+        sketchybarThemes
         heliumExtJson
         heliumExtensions
         ;

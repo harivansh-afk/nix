@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -52,7 +53,23 @@ in
     ShowRemovableMediaOnDesktop = true;
   };
 
+  # sketchybar replaces the native menu bar (auto-hidden below); the rc lives
+  # in dots/sketchybar and is symlinked to ~/.config/sketchybar by the user
+  # activation, so config here stays "" (sketchybar's default lookup path).
+  # aerospace is needed on the agent's PATH for the workspace items.
+  services.sketchybar = {
+    enable = true;
+    extraPackages = [
+      pkgs.aerospace
+      pkgs.sketchybar-app-font # icon_map.sh for the workspace tab app icons
+    ];
+  };
+
+  # app icon glyphs for the sketchybar workspace tabs
+  fonts.packages = [ pkgs.sketchybar-app-font ];
+
   system.defaults.NSGlobalDomain = {
+    _HIHideMenuBar = true;
     ApplePressAndHoldEnabled = false;
     InitialKeyRepeat = 15;
     KeyRepeat = 2;

@@ -3,7 +3,7 @@
 # floating layout: the bar itself is fully transparent (no painted strip),
 # only the items carry a background - soft rounded blocks, no borders.
 # Left: one floating tab per aerospace workspace (number + one app icon
-# glyph, focused tab in the accent). Right: one floating status block.
+# glyph, focused tab in the accent). Right: floating resource and status blocks.
 # The notch keeps the two sections apart; nothing is placed in the middle.
 # Colors come from themes/current, a symlink managed by the `theme` script
 # (rendered per-mode from lib/theme.nix).
@@ -148,6 +148,32 @@ sketchybar --add item volume right \
 sketchybar --add bracket status \
   clock battery volume \
   --set status background.drawing=on
+
+# --- resources: a separate block immediately left of status ---
+sketchybar --add item cpu right \
+  --set cpu \
+  update_freq=5 \
+  padding_right=$TAB_GAP \
+  icon.drawing=on \
+  icon=cpu \
+  icon.padding_left=$PAD_ITEM \
+  icon.padding_right=$PAD_TIGHT \
+  label.padding_left=$PAD_TIGHT \
+  label.padding_right=$PAD_EDGE \
+  script="$PLUGIN_DIR/stats.sh"
+
+sketchybar --add item memory right \
+  --set memory \
+  icon.drawing=on \
+  icon=mem \
+  icon.padding_left=$PAD_EDGE \
+  icon.padding_right=$PAD_TIGHT \
+  label.padding_left=$PAD_TIGHT \
+  label.padding_right=$PAD_ITEM
+
+sketchybar --add bracket resources \
+  cpu memory \
+  --set resources background.drawing=on
 
 # --- init ---
 sketchybar --update

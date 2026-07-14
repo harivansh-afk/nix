@@ -20,7 +20,5 @@ memory="$(memory_pressure -Q 2>/dev/null | awk '
   }
 ')"
 
-args=()
-[ -n "$cpu" ] && args+=(--set cpu label="${cpu}%")
-[ -n "$memory" ] && args+=(--set memory label="${memory}%")
-[ "${#args[@]}" -gt 0 ] && sketchybar "${args[@]}"
+[ -n "$cpu" ] && [ -n "$memory" ] && \
+  sketchybar --set resources icon="mem ${memory}%" label="cpu ${cpu}%"

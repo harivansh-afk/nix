@@ -150,30 +150,17 @@ sketchybar --add bracket status \
   --set status background.drawing=on
 
 # --- resources: a separate block immediately left of status ---
-sketchybar --add item cpu right \
-  --set cpu \
+sketchybar --add item resources right \
+  --set resources \
   update_freq=5 \
   padding_right=$TAB_GAP \
+  background.drawing=on \
   icon.drawing=on \
-  icon=cpu \
-  icon.padding_left=$PAD_ITEM \
-  icon.padding_right=$PAD_TIGHT \
-  label.padding_left=$PAD_TIGHT \
+  icon.padding_left=$PAD_EDGE \
+  icon.padding_right=$PAD_ITEM \
+  label.padding_left=$PAD_ITEM \
   label.padding_right=$PAD_EDGE \
   script="$PLUGIN_DIR/stats.sh"
-
-sketchybar --add item memory right \
-  --set memory \
-  icon.drawing=on \
-  icon=mem \
-  icon.padding_left=$PAD_EDGE \
-  icon.padding_right=$PAD_TIGHT \
-  label.padding_left=$PAD_TIGHT \
-  label.padding_right=$PAD_ITEM
-
-sketchybar --add bracket resources \
-  cpu memory \
-  --set resources background.drawing=on
 
 # --- init ---
 sketchybar --update

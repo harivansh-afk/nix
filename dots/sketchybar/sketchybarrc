@@ -18,7 +18,23 @@ APP_FONT="sketchybar-app-font"
 # scaled resolution (2048x1330 on the built-in display). Re-measure with:
 #   swift -e 'import AppKit; print(NSScreen.main!.safeAreaInsets.top)'
 BAR_HEIGHT=43
-ITEM_HEIGHT=30
+
+# MARGIN is the air around the floating blocks: the item height and the bar
+# edge padding both derive from it so the gap is identical top, bottom, left
+# and right (43 - 2*6 = 31).
+MARGIN=6
+ITEM_HEIGHT=$((BAR_HEIGHT - 2 * MARGIN))
+
+# --- spacing scale (pt): every gap in the bar derives from these ---
+# PAD_EDGE   inside a block at its outer edges (also glyphless-tab padding,
+#            mirrored in plugins/spaces.sh - keep them in sync)
+# PAD_ITEM   each side of a component boundary in the right block (gap = 2x)
+# PAD_TIGHT  between a muted prefix (vol/bat) and its value (gap = 2x)
+# TAB_GAP    between workspace tabs
+PAD_EDGE=14
+PAD_ITEM=9
+PAD_TIGHT=4
+TAB_GAP=6
 
 sketchybar --bar \
   position=top \
@@ -27,28 +43,30 @@ sketchybar --bar \
   corner_radius=0 \
   margin=0 \
   y_offset=0 \
-  padding_left=8 \
-  padding_right=8 \
+  padding_left=$MARGIN \
+  padding_right=$MARGIN \
   display=all \
   sticky=on
 
 # corner_radius 13 was calibrated by eye against the physical display corner
-# curve (Apple does not publish the radius and no API exposes it on macOS)
+# curve (Apple does not publish the radius and no API exposes it on macOS).
+# Blocks paint the main cozybox background (BAR_COLOR, #101010 dark), darker
+# than the surface tone - user preference.
 sketchybar --default \
   background.drawing=off \
-  background.color="$SURFACE_COLOR" \
+  background.color="$BAR_COLOR" \
   background.corner_radius=13 \
   background.height=$ITEM_HEIGHT \
   background.border_width=0 \
   icon.drawing=off \
   icon.font="$FONT:Regular:13.0" \
   icon.color="$MUTED_COLOR" \
-  icon.padding_left=12 \
-  icon.padding_right=4 \
+  icon.padding_left=$PAD_ITEM \
+  icon.padding_right=$PAD_TIGHT \
   label.font="$FONT:Regular:13.0" \
   label.color="$TEXT_COLOR" \
-  label.padding_left=4 \
-  label.padding_right=12
+  label.padding_left=$PAD_TIGHT \
+  label.padding_right=$PAD_ITEM
 
 # --- left section: floating workspace tabs ---
 # Static shells only; plugins/spaces.sh renders all of them in one batch per
@@ -56,20 +74,24 @@ sketchybar --default \
 sketchybar --add event aerospace_workspace_change
 
 for sid in $(aerospace list-workspaces --all); do
+  # tab internals are visually compensated for font side bearings (digits
+  # render ~2pt inside their advance, the app glyphs ~1pt): 10/11/10 makes
+  # all three gaps measure ~12pt on screen (verified by pixel measurement);
+  # plugins/spaces.sh mirrors these numbers - keep them in sync
   sketchybar --add item "space.$sid" left \
     --set "space.$sid" \
     drawing=off \
     background.drawing=on \
-    padding_left=3 \
-    padding_right=3 \
+    padding_left=0 \
+    padding_right=$TAB_GAP \
     icon.drawing=on \
     icon="$sid" \
-    icon.padding_left=14 \
-    icon.padding_right=8 \
+    icon.padding_left=10 \
+    icon.padding_right=11 \
     label.font="$APP_FONT:Regular:15.0" \
     label.drawing=off \
     label.padding_left=0 \
-    label.padding_right=14 \
+    label.padding_right=10 \
     click_script="aerospace workspace $sid"
 done
 
@@ -80,23 +102,21 @@ sketchybar --add item spaces_monitor left \
   script="$PLUGIN_DIR/spaces.sh"
 
 # --- right section: one floating block, spacing instead of separators:
-# volume | battery | clock | controls ---
+# volume | battery | clock ---
 # (items added rightmost-first, grouped by a bracket that paints the
 # shared background)
-sketchybar --add item controls right \
-  --set controls \
-  label="=" \
-  label.color="$MUTED_COLOR" \
-  label.padding_left=10 \
-  label.padding_right=16 \
-  click_script="$PLUGIN_DIR/controlcenter.sh"
-
+# icon = date (normal text color), label = time (pink)
 sketchybar --add item clock right \
   --subscribe clock system_woke \
   --set clock \
   update_freq=10 \
-  label.padding_left=10 \
-  label.padding_right=10 \
+  icon.drawing=on \
+  icon.color="$TEXT_COLOR" \
+  icon.padding_left=$PAD_ITEM \
+  icon.padding_right=$PAD_TIGHT \
+  label.color="$PINK_COLOR" \
+  label.padding_left=$PAD_TIGHT \
+  label.padding_right=$PAD_EDGE \
   click_script="open -a Calendar" \
   script="$PLUGIN_DIR/clock.sh"
 
@@ -106,10 +126,11 @@ sketchybar --add item battery right \
   update_freq=60 \
   icon.drawing=on \
   icon=bat \
-  icon.padding_left=10 \
-  icon.padding_right=5 \
-  label.padding_left=5 \
-  label.padding_right=10 \
+  icon.padding_left=$PAD_ITEM \
+  icon.padding_right=$PAD_TIGHT \
+  label.font="$FONT:Bold:13.0" \
+  label.padding_left=$PAD_TIGHT \
+  label.padding_right=$PAD_ITEM \
   click_script='open "x-apple.systempreferences:com.apple.Battery-Settings.extension"' \
   script="$PLUGIN_DIR/battery.sh"
 
@@ -118,14 +139,14 @@ sketchybar --add item volume right \
   --set volume \
   icon.drawing=on \
   icon=vol \
-  icon.padding_left=16 \
-  icon.padding_right=5 \
-  label.padding_left=5 \
-  label.padding_right=10 \
+  icon.padding_left=$PAD_EDGE \
+  icon.padding_right=$PAD_TIGHT \
+  label.padding_left=$PAD_TIGHT \
+  label.padding_right=$PAD_ITEM \
   script="$PLUGIN_DIR/volume.sh"
 
 sketchybar --add bracket status \
-  controls clock battery volume \
+  clock battery volume \
   --set status background.drawing=on
 
 # --- init ---

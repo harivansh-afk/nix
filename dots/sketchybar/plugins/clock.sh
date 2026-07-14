@@ -1,2 +1,4 @@
 #!/bin/bash
-sketchybar --set "$NAME" label="$(date '+%a %d %b %l:%M %p' | tr -s ' ')"
+# icon carries the date, label carries the time (styled pink in the rc)
+time="$(date '+%l:%M %p')"
+sketchybar --set "$NAME" icon="$(date '+%a %d %b')" label="${time# }"

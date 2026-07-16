@@ -12,7 +12,15 @@
   };
 
   dev1 = {
-    host = "dev-1";
+    host = "dev-compute-1";
+  };
+
+  dev2 = {
+    host = "dev-compute-2";
+  };
+
+  dev3 = {
+    host = "dev-compute-3";
   };
 
   hil1 = {

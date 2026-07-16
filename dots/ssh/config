@@ -44,9 +44,41 @@ Host macbook
   ServerAliveInterval 60
   ServerAliveCountMax 3
 
-Host dev-1
-  HostName 100.80.19.69
-  HostKeyAlias dev-1
+Host dev-compute-1
+  HostName dev-compute-1
+  HostKeyAlias dev-compute-1
+  ProxyCommand tailscale nc %h %p
+  StrictHostKeyChecking accept-new
+  User hari
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+  ForwardAgent yes
+  ControlMaster auto
+  ControlPath ~/.ssh/sockets/%r@%h:%p
+  ControlPersist 10m
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+
+Host dev-compute-2
+  HostName dev-compute-2
+  HostKeyAlias dev-compute-2
+  ProxyCommand tailscale nc %h %p
+  StrictHostKeyChecking accept-new
+  User hari
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+  ForwardAgent yes
+  ControlMaster auto
+  ControlPath ~/.ssh/sockets/%r@%h:%p
+  ControlPersist 10m
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+
+Host dev-compute-3
+  HostName dev-compute-3
+  HostKeyAlias dev-compute-3
+  ProxyCommand tailscale nc %h %p
+  StrictHostKeyChecking accept-new
   User hari
   IdentityFile ~/.ssh/id_ed25519
   IdentitiesOnly yes

@@ -89,6 +89,36 @@ Host dev-compute-3
   ServerAliveInterval 60
   ServerAliveCountMax 3
 
+Host dev-compute-4
+  HostName dev-compute-4
+  HostKeyAlias dev-compute-4
+  ProxyCommand tailscale nc %h %p
+  StrictHostKeyChecking accept-new
+  User hari
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+  ForwardAgent yes
+  ControlMaster auto
+  ControlPath ~/.ssh/sockets/%r@%h:%p
+  ControlPersist 10m
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+
+Host dev-compute-5
+  HostName dev-compute-5
+  HostKeyAlias dev-compute-5
+  ProxyCommand tailscale nc %h %p
+  StrictHostKeyChecking accept-new
+  User hari
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+  ForwardAgent yes
+  ControlMaster auto
+  ControlPath ~/.ssh/sockets/%r@%h:%p
+  ControlPersist 10m
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+
 Host hil-compute-1
   HostName 15.204.111.75
   AddKeysToAgent yes

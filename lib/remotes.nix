@@ -23,6 +23,14 @@
     host = "dev-compute-3";
   };
 
+  dev4 = {
+    host = "dev-compute-4";
+  };
+
+  dev5 = {
+    host = "dev-compute-5";
+  };
+
   hil1 = {
     host = "hil-compute-1";
   };

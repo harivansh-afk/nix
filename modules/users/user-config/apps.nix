@@ -3,7 +3,6 @@
 {
   pkgs,
   theme,
-  hostname,
   ...
 }:
 let
@@ -18,9 +17,13 @@ in
     ln -s ${pkgs.neovim}/bin/nvim "$out/bin/vimdiff"
   '';
 
+  # @HOSTNAME@ is substituted at activation time with the node's runtime
+  # hostname: the same closure gets deployed to nodes this flake did not
+  # build for, so baking the eval-time hostname in labels every node with
+  # the build host's name.
   btopConf = pkgs.writeText "btop.conf" ''
     color_theme = "ayu"
-    custom_cpu_name = "${hostname}"
+    custom_cpu_name = "@HOSTNAME@"
     rounded_corners = False
     theme_background = False
     vim_keys = True

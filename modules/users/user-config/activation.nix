@@ -150,7 +150,11 @@ pkgs.writeShellScript "user-config-${name}" ''
   done
 
   # --- assorted app configs ---
-  mkSymlink "${btopConf}" "${configHome}/btop/btop.conf"
+  # btop: rendered (not symlinked) so custom_cpu_name shows the node's own
+  # hostname even when the closure was built for a different host
+  rm -f "${configHome}/btop/btop.conf"
+  ${pkgs.gnused}/bin/sed "s/@HOSTNAME@/$(uname -n)/" "${btopConf}" \
+    > "${configHome}/btop/btop.conf"
   mkSymlink "${dotsRoot}/k9s/views.yaml" "${configHome}/k9s/views.yaml"
   mkSymlink "${dotsRoot}/direnv/direnv.toml" "${configHome}/direnv/direnv.toml"
   mkSymlink "${pkgs.nix-direnv}/share/nix-direnv/direnvrc" "${configHome}/direnv/lib/nix-direnv.sh"

@@ -117,6 +117,13 @@ if [[ -d /opt/homebrew/bin ]]; then
   path=(/opt/homebrew/bin /opt/homebrew/sbin $path)
 fi
 
+# aerospace ships via environment.systemPackages (modules/users/darwin.nix),
+# so its stable home is /run/current-system/sw/bin. ~/.nix-profile is legacy
+# imperative state whose store path can be GC'd away; tools that spawn
+# aerospace by absolute path (test-ide fleet server) honor AEROSPACE_BIN.
+[[ -x /run/current-system/sw/bin/aerospace ]] &&
+  export AEROSPACE_BIN=/run/current-system/sw/bin/aerospace
+
 # --- theme plumbing ---
 # Mode files are nix-rendered (pure prompt zstyles, ZSH_HIGHLIGHT_STYLES,
 # BAT_THEME) and linked at ~/.config/zsh/themes/{dark,light}.zsh by system

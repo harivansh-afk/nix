@@ -119,45 +119,25 @@ Host dev-compute-5
   ServerAliveInterval 60
   ServerAliveCountMax 3
 
-Host hil-compute-1
-  HostName 15.204.111.75
-  AddKeysToAgent yes
-  ForwardAgent yes
-  IdentitiesOnly yes
-  Port 9999
+# hil/vin fleet: routed over tailscale (same pattern as dev-compute-*).
+# Public :9999 path removed 2026-07-19: outbound 9999 is blocked on some
+# networks, and hil-compute-1 / vin-compute-1 had public 9999 filtered even
+# fleet-internally, so the app's BatchMode probes read the region as offline.
+Host hil-compute-1 hil-compute-2 hil-compute-3 hil-stor-1 hil-stor-2 vin-compute-1 vin-compute-2
+  # No HostKeyAlias: it does not expand %h (a literal "%h" entry results);
+  # the default known_hosts key is the alias name itself, which is what we want.
+  HostName %h
+  ProxyCommand tailscale nc %h %p
+  StrictHostKeyChecking accept-new
   User hari
-
-Host hil-compute-2
-  HostName 15.204.105.165
-  AddKeysToAgent yes
-  ForwardAgent yes
+  IdentityFile ~/.ssh/id_ed25519
   IdentitiesOnly yes
-  Port 9999
-  User hari
-
-Host hil-stor-1
-  HostName 15.204.106.118
-  AddKeysToAgent yes
   ForwardAgent yes
-  IdentitiesOnly yes
-  Port 9999
-  User hari
-
-Host vin-compute-1
-  HostName 40.160.30.136
-  AddKeysToAgent yes
-  ForwardAgent yes
-  IdentitiesOnly yes
-  Port 9999
-  User hari
-
-Host vin-compute-2
-  HostName 40.160.64.85
-  AddKeysToAgent yes
-  ForwardAgent yes
-  IdentitiesOnly yes
-  Port 9999
-  User hari
+  ControlMaster auto
+  ControlPath ~/.ssh/sockets/%r@%h:%p
+  ControlPersist 10m
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
 
 Host vin-stor-1
   HostName 15.204.241.32

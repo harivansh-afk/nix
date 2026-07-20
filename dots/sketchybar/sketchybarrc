@@ -14,6 +14,12 @@ PLUGIN_DIR="$CONFIG_DIR/plugins"
 FONT="Berkeley Mono"
 APP_FONT="sketchybar-app-font"
 
+# One text size across the whole bar - user preference (grew from 13pt via
+# 14pt to 18pt). The app glyph font keeps its historical +2pt over the text
+# size (sketchybar-app-font renders visually smaller at equal pt).
+FONT_SIZE=18.0
+APP_FONT_SIZE=20.0
+
 # Height of the notch strip: NSScreen.safeAreaInsets.top at the current
 # scaled resolution (2048x1330 on the built-in display). Re-measure with:
 #   swift -e 'import AppKit; print(NSScreen.main!.safeAreaInsets.top)'
@@ -50,8 +56,9 @@ sketchybar --bar \
 
 # corner_radius 13 was calibrated by eye against the physical display corner
 # curve (Apple does not publish the radius and no API exposes it on macOS).
-# Blocks paint the main cozybox background (BAR_COLOR, #101010 dark), darker
-# than the surface tone - user preference.
+# Tabs paint the main cozybox background (BAR_COLOR, #101010 dark), matching
+# the ghostty terminal background - user preference. The right section paints
+# no background at all (plain text on the wallpaper).
 sketchybar --default \
   background.drawing=off \
   background.color="$BAR_COLOR" \
@@ -59,11 +66,11 @@ sketchybar --default \
   background.height=$ITEM_HEIGHT \
   background.border_width=0 \
   icon.drawing=off \
-  icon.font="$FONT:Regular:13.0" \
+  icon.font="$FONT:Regular:$FONT_SIZE" \
   icon.color="$MUTED_COLOR" \
   icon.padding_left=$PAD_ITEM \
   icon.padding_right=$PAD_TIGHT \
-  label.font="$FONT:Regular:13.0" \
+  label.font="$FONT:Regular:$FONT_SIZE" \
   label.color="$TEXT_COLOR" \
   label.padding_left=$PAD_TIGHT \
   label.padding_right=$PAD_ITEM
@@ -88,7 +95,7 @@ for sid in $(aerospace list-workspaces --all); do
     icon="$sid" \
     icon.padding_left=10 \
     icon.padding_right=11 \
-    label.font="$APP_FONT:Regular:15.0" \
+    label.font="$APP_FONT:Regular:$APP_FONT_SIZE" \
     label.drawing=off \
     label.padding_left=0 \
     label.padding_right=10 \
@@ -106,14 +113,20 @@ sketchybar --add item spaces_monitor left \
 # (items added rightmost-first, grouped by a bracket that paints the
 # shared background)
 # icon = date (normal text color), label = time (pink)
+# background.drawing=off is set explicitly on every right item: properties
+# persist in the daemon across --reload, so relying on the default would
+# leave a stale painted block behind after a config change.
 sketchybar --add item clock right \
   --subscribe clock system_woke \
   --set clock \
+  background.drawing=off \
   update_freq=10 \
   icon.drawing=on \
+  icon.font="$FONT:Regular:$FONT_SIZE" \
   icon.color="$TEXT_COLOR" \
   icon.padding_left=$PAD_ITEM \
   icon.padding_right=$PAD_TIGHT \
+  label.font="$FONT:Regular:$FONT_SIZE" \
   label.color="$PINK_COLOR" \
   label.padding_left=$PAD_TIGHT \
   label.padding_right=$PAD_EDGE \
@@ -123,12 +136,14 @@ sketchybar --add item clock right \
 sketchybar --add item battery right \
   --subscribe battery power_source_change system_woke \
   --set battery \
+  background.drawing=off \
   update_freq=60 \
   icon.drawing=on \
   icon=bat \
+  icon.font="$FONT:Regular:$FONT_SIZE" \
   icon.padding_left=$PAD_ITEM \
   icon.padding_right=$PAD_TIGHT \
-  label.font="$FONT:Bold:13.0" \
+  label.font="$FONT:Bold:$FONT_SIZE" \
   label.padding_left=$PAD_TIGHT \
   label.padding_right=$PAD_ITEM \
   click_script='open "x-apple.systempreferences:com.apple.Battery-Settings.extension"' \
@@ -137,27 +152,31 @@ sketchybar --add item battery right \
 sketchybar --add item volume right \
   --subscribe volume volume_change mouse.clicked mouse.scrolled \
   --set volume \
+  background.drawing=off \
   icon.drawing=on \
   icon=vol \
+  icon.font="$FONT:Regular:$FONT_SIZE" \
   icon.padding_left=$PAD_EDGE \
   icon.padding_right=$PAD_TIGHT \
+  label.font="$FONT:Regular:$FONT_SIZE" \
   label.padding_left=$PAD_TIGHT \
   label.padding_right=$PAD_ITEM \
   script="$PLUGIN_DIR/volume.sh"
 
-sketchybar --add bracket status \
-  clock battery volume \
-  --set status background.drawing=on
+# No bracket/background on the right section: the items sit directly on the
+# wallpaper - user preference.
 
-# --- resources: a separate block immediately left of status ---
+# --- resources: immediately left of the status items ---
 sketchybar --add item resources right \
   --set resources \
+  background.drawing=off \
   update_freq=5 \
   padding_right=$TAB_GAP \
-  background.drawing=on \
   icon.drawing=on \
+  icon.font="$FONT:Regular:$FONT_SIZE" \
   icon.padding_left=$PAD_EDGE \
   icon.padding_right=$PAD_ITEM \
+  label.font="$FONT:Regular:$FONT_SIZE" \
   label.padding_left=$PAD_ITEM \
   label.padding_right=$PAD_EDGE \
   script="$PLUGIN_DIR/stats.sh"

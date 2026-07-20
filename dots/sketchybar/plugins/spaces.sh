@@ -3,8 +3,9 @@
 # hidden spaces_monitor item): two aerospace calls total, one icon_map.sh call
 # per occupied workspace, one sketchybar apply - instead of a process per tab.
 # FOCUSED_WORKSPACE arrives with the aerospace_workspace_change trigger.
-# Focused tab: accent background with dark content. Occupied: surface
-# background. Empty: hidden.
+# All tabs share the BAR_COLOR background; focused = pink bold number with a
+# text-tone glyph, occupied = muted number and glyph (glyphs kept dim - user
+# preference). Empty: hidden.
 
 source "$CONFIG_DIR/themes/current"
 
@@ -43,20 +44,20 @@ for sid in 1 2 3 4 5 6 7 8 9; do
     args+=(--set "space.$sid" drawing=on
       background.color="$BAR_COLOR"
       icon.color="$PINK_COLOR"
-      icon.font="Berkeley Mono:Bold:13.0"
+      icon.font="Berkeley Mono:Bold:18.0"
       icon.padding_right="$icon_pad_right"
       label="$icons"
       label.drawing="$label_drawing"
-      label.color="$BRIGHT_COLOR")
+      label.color="$TEXT_COLOR")
   elif [ -n "$icons" ]; then
     args+=(--set "space.$sid" drawing=on
       background.color="$BAR_COLOR"
       icon.color="$MUTED_COLOR"
-      icon.font="Berkeley Mono:Regular:13.0"
+      icon.font="Berkeley Mono:Regular:18.0"
       icon.padding_right="$icon_pad_right"
       label="$icons"
       label.drawing=on
-      label.color="$TEXT_COLOR")
+      label.color="$MUTED_COLOR")
   else
     args+=(--set "space.$sid" drawing=off)
   fi

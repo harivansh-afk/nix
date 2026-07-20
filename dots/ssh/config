@@ -119,6 +119,22 @@ Host dev-compute-5
   ServerAliveInterval 60
   ServerAliveCountMax 3
 
+# Renamed from hari-compute-1 (2026-07-20); same box, now in the dev fleet.
+Host dev-compute-6
+  HostName dev-compute-6
+  HostKeyAlias dev-compute-6
+  ProxyCommand tailscale nc %h %p
+  StrictHostKeyChecking accept-new
+  User hari
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+  ForwardAgent yes
+  ControlMaster auto
+  ControlPath ~/.ssh/sockets/%r@%h:%p
+  ControlPersist 10m
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+
 # hil/vin fleet: routed over tailscale (same pattern as dev-compute-*).
 # Public :9999 path removed 2026-07-19: outbound 9999 is blocked on some
 # networks, and hil-compute-1 / vin-compute-1 had public 9999 filtered even
@@ -146,18 +162,3 @@ Host vin-stor-1
   IdentitiesOnly yes
   Port 9999
   User hari
-
-# Reached over Tailscale only (no public port). Mirrors the `spark` block so
-# mosh behaves the same: MagicDNS name + agent/control/keepalive options.
-Host hari-compute-1
-  HostName 100.76.23.116
-  HostKeyAlias hari-compute-1
-  User hari
-  IdentityFile ~/.ssh/id_ed25519
-  IdentitiesOnly yes
-  ForwardAgent yes
-  ControlMaster auto
-  ControlPath ~/.ssh/sockets/%r@%h:%p
-  ControlPersist 10m
-  ServerAliveInterval 60
-  ServerAliveCountMax 3

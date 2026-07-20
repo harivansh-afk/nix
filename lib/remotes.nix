@@ -7,10 +7,6 @@
     host = "macbook";
   };
 
-  hari1 = {
-    host = "hari-compute-1";
-  };
-
   dev1 = {
     host = "dev-compute-1";
   };
@@ -29,6 +25,10 @@
 
   dev5 = {
     host = "dev-compute-5";
+  };
+
+  dev6 = {
+    host = "dev-compute-6";
   };
 
   hil1 = {

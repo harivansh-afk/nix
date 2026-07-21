@@ -11,6 +11,10 @@ let
     "Ghostty"
     "Karabiner-Elements"
     "Tailscale"
+    # VoiceInk autostart lives here (launchd), NOT in the app's own
+    # "Launch at Login" toggle: that uses SMAppService, whose registration
+    # goes stale every time the ad-hoc source build is re-signed.
+    "VoiceInk"
   ];
 in
 {

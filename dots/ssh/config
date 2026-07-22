@@ -139,13 +139,16 @@ Host dev-compute-6
 # Public :9999 path removed 2026-07-19: outbound 9999 is blocked on some
 # networks, and hil-compute-1 / vin-compute-1 had public 9999 filtered even
 # fleet-internally, so the app's BatchMode probes read the region as offline.
+# hil/vin hosts log in as root: all user accounts were removed from those
+# regions (2026-07-22); Tailscale SSH rejected "hari" with "unknown user",
+# which read both regions as offline in the fleet dashboard.
 Host hil-compute-1 hil-compute-2 hil-compute-3 hil-stor-1 hil-stor-2 vin-compute-1 vin-compute-2
   # No HostKeyAlias: it does not expand %h (a literal "%h" entry results);
   # the default known_hosts key is the alias name itself, which is what we want.
   HostName %h
   ProxyCommand tailscale nc %h %p
   StrictHostKeyChecking accept-new
-  User hari
+  User root
   IdentityFile ~/.ssh/id_ed25519
   IdentitiesOnly yes
   ForwardAgent yes

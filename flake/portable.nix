@@ -90,27 +90,26 @@
       # individually.
       tools = pkgs.buildEnv {
         name = "portable-tools";
-        paths =
-          [
-            btop
-            lazygit
-            nvim
-          ]
-          ++ (with pkgs; [
-            bat
-            delta
-            direnv
-            eza
-            fd
-            fzf
-            gh
-            git
-            git-lfs
-            k9s
-            ripgrep
-            tea
-          ])
-          ++ builtins.attrValues (import ../scripts/portable.nix { inherit lib pkgs; }).packages;
+        paths = [
+          btop
+          lazygit
+          nvim
+        ]
+        ++ (with pkgs; [
+          bat
+          delta
+          direnv
+          eza
+          fd
+          fzf
+          gh
+          git
+          git-lfs
+          k9s
+          ripgrep
+          tea
+        ])
+        ++ builtins.attrValues (import ../scripts/portable.nix { inherit lib pkgs; }).packages;
       };
     in
     {

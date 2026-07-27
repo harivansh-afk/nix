@@ -726,7 +726,9 @@ let
             base = "gruvbox";
             accent = "#ebdbb2";
             surfaceDim = t.surface;
-            surface0 = "#1d2021";
+            # inactive tabs sit on surface0; keep it on the sidebar's grey so
+            # the two chrome surfaces match (the light render already does)
+            surface0 = t.surface;
             surface1 = t.border;
             overlay0 = t.selectionBackground;
             overlay1 = "#665c54";

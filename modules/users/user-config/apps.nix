@@ -7,6 +7,7 @@
 }:
 let
   lazygitBase = builtins.readFile ../../../dots/lazygit/config.yml;
+  herdrBase = builtins.readFile ../../../dots/herdr/config.toml;
 in
 {
   nvimAliases = pkgs.runCommand "nvim-command-aliases" { } ''
@@ -47,6 +48,13 @@ in
   lazygitConfigs = {
     dark = pkgs.writeText "lazygit-config-dark.yml" (lazygitBase + theme.renderLazygit "dark");
     light = pkgs.writeText "lazygit-config-light.yml" (lazygitBase + theme.renderLazygit "light");
+  };
+
+  herdrConfigs = {
+    dark = pkgs.writeText "herdr-config-dark.toml" (herdrBase + "\n" + theme.renderHerdrTheme "dark");
+    light = pkgs.writeText "herdr-config-light.toml" (
+      herdrBase + "\n" + theme.renderHerdrTheme "light"
+    );
   };
 
   # darwin: helium managed extensions

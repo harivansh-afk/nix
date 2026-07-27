@@ -88,6 +88,21 @@ in
             }
           ];
         }
+        # herdr claude integration: session identity for native restore.
+        # `herdr integration install claude` drops the hook script (herdr
+        # keeps it current) but cannot register it in this read-only rendered
+        # settings.json, so the registration it would write lives here. The
+        # sh guard keeps sessions clean on hosts where the script is absent.
+        {
+          matcher = "*";
+          hooks = [
+            {
+              type = "command";
+              command = "sh -c '[ -x \"$0\" ] && exec \"$0\" session || :' ${homeDirectory}/.claude/hooks/herdr-agent-state.sh";
+              timeout = 10;
+            }
+          ];
+        }
       ];
       PreToolUse = [
         {

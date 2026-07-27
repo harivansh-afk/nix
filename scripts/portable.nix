@@ -16,7 +16,9 @@ let
 
   remotes = import ../lib/remotes.nix;
 
-  muxRemotesText = lib.concatMapStrings (
+  # Shared "name host" catalog lines, baked into mux (@MUX_REMOTES@) and
+  # hrd (@HRD_REMOTES@).
+  remotesText = lib.concatMapStrings (
     name:
     let
       remote = remotes.${name};
@@ -58,7 +60,25 @@ let
         ]
         ++ lib.optionals stdenv.isLinux [ util-linux ];
       replacements = {
-        "@MUX_REMOTES@" = muxRemotesText;
+        "@MUX_REMOTES@" = remotesText;
+      };
+    };
+
+    hrd = mkScript {
+      name = "hrd";
+      file = ./bin/hrd.sh;
+      runtimeInputs =
+        with pkgs;
+        [
+          coreutils
+          gawk
+          jq
+          mosh
+          openssh
+        ]
+        ++ lib.optionals stdenv.isLinux [ util-linux ];
+      replacements = {
+        "@HRD_REMOTES@" = remotesText;
       };
     };
 

@@ -91,6 +91,8 @@ let
     gitThemeCurrentFile = "${configHome}/git/theme.inc";
     sketchybarDir = "${configHome}/sketchybar/themes";
     sketchybarCurrentFile = "${configHome}/sketchybar/themes/current";
+    herdrDir = "${configHome}/herdr";
+    herdrCurrentFile = "${configHome}/herdr/config.toml";
   };
 
   themes = {
@@ -693,6 +695,71 @@ let
       };
     };
 
+  # TOML [theme] fragment appended to the herdr base config (dots/herdr).
+  # Base is gruvbox with cozybox token overrides; the accent (selected tab,
+  # focused pane border, navigation UI) is deliberately GREYSCALE - user
+  # preference, herdr deviates from the sketchybar cream/yellow accent rule -
+  # while mauve stays on the signature pink. herdr's auto_switch is off: the
+  # repo's `theme` script owns mode switching by flipping the config.toml
+  # symlink and running `herdr server reload-config`.
+  renderHerdrTheme =
+    mode:
+    let
+      t = themes.${mode};
+      c =
+        if mode == "light" then
+          {
+            base = "gruvbox-light";
+            accent = "#3c3836";
+            surfaceDim = t.surface;
+            surface0 = t.surface;
+            surface1 = t.selectionBackground;
+            overlay0 = "#a89984";
+            overlay1 = sharedPalette.gray;
+            subtext = "#665c54";
+            red = "#c5524a";
+            teal = sharedPalette.aquaNeutral;
+            peach = "#af3a03";
+          }
+        else
+          {
+            base = "gruvbox";
+            accent = "#ebdbb2";
+            surfaceDim = t.surface;
+            surface0 = "#1d2021";
+            surface1 = t.border;
+            overlay0 = t.selectionBackground;
+            overlay1 = "#665c54";
+            subtext = "#a89984";
+            inherit (sharedPalette) red;
+            teal = sharedPalette.aqua;
+            peach = "#d97757";
+          };
+    in
+    ''
+      [theme]
+      name = "${c.base}"
+      auto_switch = false
+
+      [theme.custom]
+      accent = "${c.accent}"
+      panel_bg = "${t.background}"
+      surface_dim = "${c.surfaceDim}"
+      surface0 = "${c.surface0}"
+      surface1 = "${c.surface1}"
+      overlay0 = "${c.overlay0}"
+      overlay1 = "${c.overlay1}"
+      text = "${t.text}"
+      subtext0 = "${c.subtext}"
+      red = "${c.red}"
+      green = "${t.green}"
+      yellow = "${sharedPalette.yellow}"
+      blue = "${t.blue}"
+      mauve = "${t.purple}"
+      teal = "${c.teal}"
+      peach = "${c.peach}"
+    '';
+
   # Shell fragment sourced by the sketchybar rc and plugins. Sketchybar wants
   # 0xAARRGGBB colors; the accent stays on the cozybox cream/yellow.
   renderSketchybar =
@@ -785,6 +852,7 @@ in
     renderFzf
     renderGitThemeInclude
     renderGhostty
+    renderHerdrTheme
     renderLazygit
     renderPurePrompt
     renderSketchybar

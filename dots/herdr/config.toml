@@ -1,0 +1,46 @@
+# herdr base config. The cozybox [theme] section is appended per mode from
+# lib/theme.nix (renderHerdrTheme); ~/.config/herdr/config.toml is a symlink
+# flipped between the dark/light renders by activation and the `theme`
+# script, which also runs `herdr server reload-config` to hot-apply it.
+# The binary comes from the upstream flake input (see flake.nix); update via
+# `nix flake update herdr`, then restart the server to swap binaries.
+
+onboarding = false
+
+[update]
+# nix owns the binary; keep the background version check as an update cue.
+channel = "stable"
+
+[keys]
+# mux parity (dots/nvim/lua/mux/init.lua): ctrl+b prefix, h/j/k/l panes,
+# -/' splits, c new tab, x kill pane, z zoom, [ copy mode - all herdr
+# defaults already. Only the deltas from herdr's defaults live here.
+split_vertical = "prefix+'" # mux: <c-b>' vertical split (default: prefix+v)
+detach = "prefix+d" # mux: <c-b>d detach (default: prefix+q)
+workspace_picker = "prefix+f" # mux: <c-b>f project picker (default: prefix+w)
+previous_workspace = "prefix+shift+h" # mux: <c-b>H previous session
+next_workspace = "prefix+shift+l" # mux: <c-b>L next session
+
+# lazygit in a throwaway pane, mirroring the nvim lazygit habit
+[[keys.command]]
+key = "prefix+alt+g"
+type = "pane"
+command = "lazygit"
+
+[ui]
+# bordered panes, but shared tmux-style dividers (gaps misalign the boxes)
+# and no agent labels on the borders - user preference, keep it clean
+pane_borders = true
+pane_gaps = false
+show_agent_labels_on_pane_borders = false
+# tmux-style instant tabs; names follow the pane cwd like mux automatic-rename
+prompt_new_tab_name = false
+
+[ui.toast]
+# quiet in-app toasts only, matching the cozybox no-noise preference
+delivery = "herdr"
+
+[session]
+# claude/codex integrations report session refs; panes resume their native
+# agent sessions after a server restart or binary update
+resume_agents_on_restore = true

@@ -8,6 +8,7 @@ let
   inherit (pkgs.stdenv.hostPlatform) system;
   gwsPackage = inputs.googleworkspace-cli.packages.${system}.default or null;
   openspecPackage = inputs.openspec.packages.${system}.default or null;
+  herdrPackage = inputs.herdr.packages.${system}.default or null;
 in
 {
   core =
@@ -82,6 +83,7 @@ in
     ++ (builtins.filter (p: p != null) [
       gwsPackage
       openspecPackage
+      herdrPackage
     ]);
 
   darwinExtras = with pkgs; [

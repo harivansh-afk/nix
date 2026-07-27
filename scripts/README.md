@@ -12,6 +12,7 @@ packages, so they land on `PATH` on every host. Sources live in `bin/`.
 | Command        | Source                | Purpose                                      |
 |----------------|-----------------------|----------------------------------------------|
 | `mux`          | `bin/mux.sh`          | Per-project nvim server launcher (tmux replacement) |
+| `hrd`         | `bin/hrd.sh`         | herdr remote console (mosh, `--ssh` override) + federated `hrd ls` |
 | `theme`        | `bin/theme.sh`        | Switch cozybox dark/light, relink theme assets |
 | `ga`           | `bin/ga.sh`           | Git add helper                               |
 | `ghpr`         | `bin/ghpr.sh`         | Open/create GitHub PR                        |
@@ -22,7 +23,7 @@ Each entry in `lib/remotes.nix` additionally renders `bin/remote.sh` into a
 per-remote connector command (`spark`, `macbook`, `dev6`, `dev1`, `dev2`,
 `dev3`, `hil1`, `hil2`, `vin1`, `vin2`) that runs the remote's `mux` over mosh. The same catalog
 is baked into `mux` for `mux list --all`, `mux list --hosts`, `mux pick --all`,
-and `<c-b>F`.
+and `<c-b>F`, and into `hrd` for `hrd <name>` / `hrd ls`.
 
 `default.nix` also exports `themeAssetsText`, consumed by the theme-activation
 block in `modules/users/user-config/`.

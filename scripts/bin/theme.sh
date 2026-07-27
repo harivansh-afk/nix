@@ -36,12 +36,18 @@ link_mode_assets() {
   theme_load_mode_assets "$mode"
   mode="$THEME_MODE"
 
-  mkdir -p "@STATE_DIR@" "@FZF_DIR@" "@GHOSTTY_DIR@" "@LAZYGIT_DIR@" "@GIT_THEME_DIR@" "@WALLPAPER_DIR@"
+  mkdir -p "@STATE_DIR@" "@FZF_DIR@" "@GHOSTTY_DIR@" "@LAZYGIT_DIR@" "@HERDR_DIR@" "@GIT_THEME_DIR@" "@WALLPAPER_DIR@"
   printf '%s\n' "$mode" >"@STATE_FILE@"
   ln -sfn "$THEME_FZF_TARGET" "@FZF_CURRENT_FILE@"
   ln -sfn "$THEME_GHOSTTY_TARGET" "@GHOSTTY_CURRENT_FILE@"
   ln -sfn "$THEME_LAZYGIT_TARGET" "@LAZYGIT_CURRENT_FILE@"
   ln -sfn "$THEME_GIT_THEME_TARGET" "@GIT_THEME_CURRENT_FILE@"
+
+  # herdr: flip the config symlink, then hot-reload the running server
+  ln -sfn "$THEME_HERDR_TARGET" "@HERDR_CURRENT_FILE@"
+  if command -v herdr >/dev/null 2>&1; then
+    herdr server reload-config >/dev/null 2>&1 || true
+  fi
 
   if [[ -f "$THEME_WALLPAPER" ]]; then
     ln -sfn "$THEME_WALLPAPER" "@WALLPAPER_CURRENT_FILE@"

@@ -83,9 +83,11 @@ function M.pr()
 
     -- Columns: number | title (fills the window) | author | age, the last
     -- two right-aligned against the window edge. Fullscreen window: columns
-    -- minus the single border (2) and fzf's pointer gutter (2). Title
-    -- absorbs whatever the fixed columns leave.
-    local width = vim.o.columns - 4
+    -- minus the single border (2), fzf's pointer gutter (2) and its
+    -- scrollbar column (1) - one column over and fzf truncates the line
+    -- tail into its ".." ellipsis, eating the age. Title absorbs whatever
+    -- the fixed columns leave.
+    local width = vim.o.columns - 5
     local num_w, author_w, age_w, gap = 6, 16, 4, 2
     local title_w = math.max(20, width - num_w - author_w - age_w - 3 * gap)
 

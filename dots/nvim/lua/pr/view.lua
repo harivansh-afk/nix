@@ -1,0 +1,228 @@
+-- pr.view: THE surface for PR review - a fugitive-status style files buffer.
+--
+-- One row per file ("M path", letter semantics identical to fugitive),
+-- <Tab>/= expands the file's hunks inline, <CR> opens the full diffs.nvim
+-- review at that file. The buffer is a pure function of require("pr").state
+-- plus the `expanded` set: every change rebuilds it wholesale.
+--
+-- diffs.nvim decoration: rows are exactly "M path" because its parser's
+-- FIRST filename pattern is the fugitive form `^[MADRCU?!]%s+(.+)$` - clean
+-- rows give every expanded hunk correct treesitter language highlighting.
+-- Stats live in right-aligned virtual text so they never pollute the row.
+
+local data = require "pr.data"
+
+local M = {}
+
+local ns = vim.api.nvim_create_namespace "pr_view"
+local buf = nil ---@type integer?
+local attached = false
+local expanded = {} ---@type table<string, true> -- survives commit hops on purpose
+local line_map = {} ---@type table<integer, string> -- lnum -> owning file path
+local file_rows = {} ---@type table<string, integer> -- path -> its row lnum
+
+local function state() return require("pr").state end
+
+function M.active() return buf ~= nil and vim.api.nvim_get_current_buf() == buf end
+
+-- ------------------------------------------------------------ highlights ---
+
+--- Stat colors are TAKEN FROM diffs.nvim (its rail line-number fg is its
+--- green/red identity) so the view never drifts from the diffs it embeds.
+local function setup_hls()
+  vim.api.nvim_set_hl(0, "diffLine", { link = "Statement", default = true })
+
+  local stat_sources = {
+    PrStatAdd = { "DiffsAddRailNr", "Added" },
+    PrStatDel = { "DiffsDeleteRailNr", "Removed" },
+  }
+  for our, src in pairs(stat_sources) do
+    local ok, h = pcall(vim.api.nvim_get_hl, 0, { name = src[1], link = false })
+    if ok and h and h.fg then
+      vim.api.nvim_set_hl(0, our, { fg = h.fg })
+    else
+      vim.api.nvim_set_hl(0, our, { link = src[2] })
+    end
+  end
+end
+
+-- ---------------------------------------------------------------- render ---
+
+---@param keep? string  path to keep the cursor on
+function M.render(keep)
+  local s = state()
+  local c = s.commits[s.idx]
+  if not (buf and c) then return end
+
+  setup_hls()
+  local files = data.files(s.root, s.base, c.sha, s.mode)
+  local _, add, del = data.totals(files)
+  local has_diffs = (pcall(require, "diffs"))
+
+  local lines, hl, vt = {}, {}, {}
+  line_map, file_rows = {}, {}
+
+  --- Build a line from { text, group? } segments; offsets computed, never
+  --- hand-counted.
+  ---@param segs {[1]:string,[2]:string?}[]
+  local function seg(segs)
+    local text, off = {}, 0
+    for _, sg in ipairs(segs) do
+      text[#text + 1] = sg[1]
+      if sg[2] then hl[#hl + 1] = { #lines, sg[2], off, off + #sg[1] } end
+      off = off + #sg[1]
+    end
+    lines[#lines + 1] = table.concat(text)
+  end
+
+  seg { { "PR:", "Label" }, { "     " }, { "#" .. s.pr.number, "Number" }, { " " }, { s.pr.title or "" } }
+  seg {
+    { "Commit:", "Label" },
+    { " " },
+    { c.sha, "Identifier" },
+    { " " },
+    { c.subject },
+  }
+  seg {
+    { "Mode:", "Label" },
+    { "   " },
+    { s.mode, "Function" },
+    { " " },
+    { ("(%d/%d)"):format(s.idx, #s.commits), "Number" },
+  }
+  lines[#lines + 1] = ""
+  seg {
+    { "Files", "PreProc" },
+    { " (" },
+    { tostring(#files), "Number" },
+    { ") " },
+    { "+" .. add, "PrStatAdd" },
+    { " " },
+    { "-" .. del, "PrStatDel" },
+  }
+
+  for _, f in ipairs(files) do
+    local name = f.old_path and (f.old_path .. " -> " .. f.path) or f.path
+    seg { { f.status, "Type" }, { " " }, { name } } -- fugitiveModifier + plain path
+    local row = #lines
+    line_map[row], file_rows[f.path] = f.path, row
+    vt[#vt + 1] = {
+      row - 1,
+      f.binary and { { "binary", "Comment" } }
+        or { { "+" .. f.add, "PrStatAdd" }, { " ", "Normal" }, { "-" .. f.del, "PrStatDel" } },
+    }
+
+    if expanded[f.path] then
+      for _, l in ipairs(data.file_diff(s.root, s.base, c.sha, s.mode, f.path)) do
+        local at = l:match "^@@+.-@@+"
+        -- Drop git's xfuncname context from hunk headers: the marker line is
+        -- a delimiter, code belongs to the hunk body below it.
+        if at then l = at end
+        lines[#lines + 1] = l
+        line_map[#lines] = f.path
+        if at then
+          hl[#hl + 1] = { #lines - 1, "diffLine", 0, #at }
+        elseif not has_diffs then
+          -- Flat fallback ONLY without diffs.nvim - never fight its treesitter.
+          local ch = l:sub(1, 1)
+          local g = ch == "+" and "PrStatAdd" or ch == "-" and "PrStatDel" or nil
+          if g then hl[#hl + 1] = { #lines - 1, g, 0, -1 } end
+        end
+      end
+      lines[#lines + 1] = ""
+    end
+  end
+
+  vim.bo[buf].modifiable = true
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].modifiable = false
+
+  vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
+  for _, h in ipairs(hl) do
+    local end_col = h[4] == -1 and #lines[h[1] + 1] or h[4]
+    vim.api.nvim_buf_set_extmark(buf, ns, h[1], h[3], { end_col = end_col, hl_group = h[2] })
+  end
+  for _, v in ipairs(vt) do
+    vim.api.nvim_buf_set_extmark(buf, ns, v[1], 0, { virt_text = v[2], virt_text_pos = "right_align" })
+  end
+
+  local diffs_ok, diffs = pcall(require, "diffs")
+  if diffs_ok then
+    if attached then
+      diffs.refresh(buf)
+    else
+      diffs.attach(buf)
+      attached = true
+    end
+  end
+
+  local target = keep and file_rows[keep]
+  if target then vim.api.nvim_win_set_cursor(0, { target, 0 }) end
+end
+
+-- --------------------------------------------------------------- actions ---
+
+local function toggle()
+  local path = line_map[vim.fn.line "."]
+  if not path then return end
+  expanded[path] = not expanded[path] and true or nil
+  M.render(path)
+end
+
+--- Full diffs.nvim review of the current range, jumped to this file.
+local function dive()
+  local path = line_map[vim.fn.line "."]
+  if not path then return end
+  local s = state()
+  local c = s.commits[s.idx]
+  local ok, commands = pcall(require, "diffs.commands")
+  if not (ok and c) then return end
+  commands.review(data.spec(s.root, s.base, c.sha, s.mode))
+  vim.schedule(function() pcall(require("diffs").review_goto, path) end)
+end
+
+---@param dir 1|-1
+local function file_step(dir)
+  local cur = vim.fn.line "."
+  local best
+  for _, row in pairs(file_rows) do
+    if dir == 1 and row > cur and (not best or row < best) then best = row end
+    if dir == -1 and row < cur and (not best or row > best) then best = row end
+  end
+  if best then vim.api.nvim_win_set_cursor(0, { best, 0 }) end
+end
+
+-- ------------------------------------------------------------------ open ---
+
+local function ensure_buf()
+  if buf and vim.api.nvim_buf_is_valid(buf) then return end
+  buf = vim.api.nvim_create_buf(false, true)
+  attached = false
+  vim.api.nvim_buf_set_name(buf, "pr://files")
+  vim.bo[buf].buftype = "nofile"
+  vim.bo[buf].bufhidden = "hide"
+  vim.bo[buf].swapfile = false
+  vim.bo[buf].filetype = "prfiles"
+
+  local o = { buffer = buf, silent = true }
+  vim.keymap.set("n", "<Tab>", toggle, o)
+  vim.keymap.set("n", "=", toggle, o)
+  vim.keymap.set("n", "<CR>", dive, o)
+  vim.keymap.set("n", "]f", function() file_step(1) end, o)
+  vim.keymap.set("n", "[f", function() file_step(-1) end, o)
+  vim.keymap.set("n", "R", function() M.render() end, o)
+  vim.keymap.set("n", "q", "<cmd>silent! buffer #<cr>", o)
+end
+
+function M.open()
+  ensure_buf()
+  local was_active = M.active()
+  if not was_active then vim.api.nvim_win_set_buf(0, buf) end
+  vim.api.nvim_set_option_value("wrap", false, { win = 0, scope = "local" })
+  M.render()
+  if not was_active then
+    vim.api.nvim_win_set_cursor(0, { math.min(6, vim.api.nvim_buf_line_count(buf)), 0 })
+  end
+end
+
+return M

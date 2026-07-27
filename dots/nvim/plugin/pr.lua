@@ -37,9 +37,7 @@ vim.api.nvim_create_user_command("PR", function(opts)
   }
   local fn = actions[sub] or sub
   local mod = require "pr"
-  if type(mod[fn]) ~= "function" then
-    return vim.notify("pr: unknown subcommand " .. sub, vim.log.levels.ERROR)
-  end
+  if type(mod[fn]) ~= "function" then return vim.notify("pr: unknown subcommand " .. sub, vim.log.levels.ERROR) end
   mod[fn]()
 end, {
   nargs = "?",

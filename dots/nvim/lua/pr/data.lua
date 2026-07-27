@@ -25,14 +25,12 @@ end
 function M.has_refspec(root)
   local out = git { "-C", root, "config", "--get-all", "remote.origin.fetch" } or {}
   for _, line in ipairs(out) do
-    if line:find("refs/pull/%*/head") then return true end
+    if line:find "refs/pull/%*/head" then return true end
   end
   return false
 end
 
-function M.install_refspec(root)
-  return git { "-C", root, "config", "--add", "remote.origin.fetch", REFSPEC } ~= nil
-end
+function M.install_refspec(root) return git { "-C", root, "config", "--add", "remote.origin.fetch", REFSPEC } ~= nil end
 
 ---@param cb fun(ok: boolean, err?: string)
 function M.fetch(root, cb)
@@ -54,7 +52,7 @@ end
 function M.forge(root)
   local out = git { "-C", root, "remote", "get-url", "origin" }
   local url = out and out[1] or ""
-  return url:find("github%.com") and "gh" or "tea"
+  return url:find "github%.com" and "gh" or "tea"
 end
 
 --- PR list, forge-agnostic. Metadata only - async, never blocks the UI.
@@ -66,13 +64,25 @@ function M.prs(root, cb)
   local cmd
   if forge == "gh" then
     cmd = {
-      "gh", "pr", "list", "--limit", "100",
-      "--json", "number,title,author,baseRefName,headRefName,isDraft,updatedAt",
+      "gh",
+      "pr",
+      "list",
+      "--limit",
+      "100",
+      "--json",
+      "number,title,author,baseRefName,headRefName,isDraft,updatedAt",
     }
   else
     cmd = {
-      "tea", "pr", "list", "--output", "json", "--limit", "100",
-      "--fields", "index,title,author,base,updated",
+      "tea",
+      "pr",
+      "list",
+      "--output",
+      "json",
+      "--limit",
+      "100",
+      "--fields",
+      "index,title,author,base,updated",
     }
   end
 
@@ -106,11 +116,16 @@ end
 ---@return table[] commits  { sha, author, ago, subject }
 function M.commits(root, base, target)
   local out = git {
-    "-C", root, "log", "--reverse", "--format=%h\t%an\t%ar\t%s", base .. ".." .. target,
+    "-C",
+    root,
+    "log",
+    "--reverse",
+    "--format=%h\t%an\t%ar\t%s",
+    base .. ".." .. target,
   } or {}
   local commits = {}
   for _, line in ipairs(out) do
-    local sha, an, ar, subject = line:match("^(%S+)\t(.-)\t(.-)\t(.*)$")
+    local sha, an, ar, subject = line:match "^(%S+)\t(.-)\t(.-)\t(.*)$"
     if sha then commits[#commits + 1] = { sha = sha, author = an, ago = ar, subject = subject } end
   end
   return commits
@@ -121,9 +136,7 @@ end
 ---   incremental -> what THIS commit changed   (sha^..sha, direct)
 ---@return table spec  ready for require("diffs.commands").review()
 function M.spec(root, base, sha, mode)
-  if mode == "incremental" then
-    return { repo = root, base = sha .. "^", target = sha, mode = "direct" }
-  end
+  if mode == "incremental" then return { repo = root, base = sha .. "^", target = sha, mode = "direct" } end
   return { repo = root, base = base, target = sha, mode = "merge-base" }
 end
 
@@ -139,14 +152,14 @@ function M.files(root, base, sha, mode)
 
   local files = {}
   for i, line in ipairs(st) do
-    local letter, rest = line:match("^(%a)%d*\t(.+)$")
+    local letter, rest = line:match "^(%a)%d*\t(.+)$"
     if not letter then
-      letter, rest = line:match("^(%?)%?\t(.+)$") -- untracked never appears here, but be safe
+      letter, rest = line:match "^(%?)%?\t(.+)$" -- untracked never appears here, but be safe
     end
     if letter then
-      local old_path, path = rest:match("^(.+)\t(.+)$") -- rename/copy: old<TAB>new
+      local old_path, path = rest:match "^(.+)\t(.+)$" -- rename/copy: old<TAB>new
       if not path then path = rest end
-      local add, del = (num[i] or ""):match("^(%S+)\t(%S+)\t")
+      local add, del = (num[i] or ""):match "^(%S+)\t(%S+)\t"
       files[#files + 1] = {
         status = letter,
         path = path,

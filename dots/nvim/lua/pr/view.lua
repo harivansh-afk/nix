@@ -220,9 +220,7 @@ function M.open()
   if not was_active then vim.api.nvim_win_set_buf(0, buf) end
   vim.api.nvim_set_option_value("wrap", false, { win = 0, scope = "local" })
   M.render()
-  if not was_active then
-    vim.api.nvim_win_set_cursor(0, { math.min(6, vim.api.nvim_buf_line_count(buf)), 0 })
-  end
+  if not was_active then vim.api.nvim_win_set_cursor(0, { math.min(6, vim.api.nvim_buf_line_count(buf)), 0 }) end
 end
 
 return M

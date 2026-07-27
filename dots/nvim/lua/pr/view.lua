@@ -55,7 +55,10 @@ function M.render(keep)
   if not (buf and c) then return end
 
   setup_hls()
-  local files = data.files(s.root, s.base, c.sha, s.mode)
+  -- Resolve the base ref ONCE per render: diff caches key on shas, so an
+  -- externally moved origin/<base> invalidates them without any bookkeeping.
+  local base_sha = s.mode == "cumulative" and data.resolve(s.root, s.base) or nil
+  local files = data.files(s.root, s.base, c.sha, s.mode, base_sha)
   local _, add, del = data.totals(files)
   local has_diffs = (pcall(require, "diffs"))
 
@@ -113,7 +116,7 @@ function M.render(keep)
     }
 
     if expanded[f.path] then
-      for _, l in ipairs(data.file_diff(s.root, s.base, c.sha, s.mode, f.path)) do
+      for _, l in ipairs(data.file_diff(s.root, s.base, c.sha, s.mode, f.path, base_sha)) do
         local at = l:match "^@@+.-@@+"
         -- Drop git's xfuncname context from hunk headers: the marker line is
         -- a delimiter, code belongs to the hunk body below it.
@@ -169,16 +172,51 @@ local function toggle()
   M.render(path)
 end
 
---- Full diffs.nvim review of the current range, jumped to this file.
+--- New-file line for a cursor row inside an expanded hunk, nil elsewhere.
+--- Walk up to the owning @@ header, then count new-side rows (context and
+--- '+'; '-' rows do not exist in the new file) down to the cursor.
+local function hunk_line(row, path)
+  local frow = file_rows[path]
+  if not (frow and buf) or row <= frow then return nil end
+  local lines = vim.api.nvim_buf_get_lines(buf, frow, row, false) -- rows frow+1..row
+  for i = #lines, 1, -1 do
+    local start = lines[i]:match "^@@+ %-%d+,?%d* %+(%d+)"
+    if start then
+      if i == #lines then return tonumber(start) end -- cursor ON the header
+      local n = 0
+      for j = i + 1, #lines do
+        if lines[j]:sub(1, 1) ~= "-" then n = n + 1 end
+      end
+      -- A '-' row has no new-side self: land on the first line after it.
+      return tonumber(start) + n - (lines[#lines]:sub(1, 1) ~= "-" and 1 or 0)
+    end
+  end
+  return nil
+end
+
+--- Full diffs.nvim review of the current range, jumped to this file - and,
+--- from inside an expanded hunk, to this line. review_goto only takes a
+--- file key (no line targeting in diffs.nvim), but the review split shows
+--- real file content, so landing is a plain cursor move after the switch.
 local function dive()
-  local path = line_map[vim.fn.line "."]
+  local row = vim.fn.line "."
+  local path = line_map[row]
   if not path then return end
+  local lnum = hunk_line(row, path)
   local s = state()
   local c = s.commits[s.idx]
   local ok, commands = pcall(require, "diffs.commands")
   if not (ok and c) then return end
   commands.review(data.spec(s.root, s.base, c.sha, s.mode))
-  vim.schedule(function() pcall(require("diffs").review_goto, path) end)
+  vim.schedule(function()
+    pcall(require("diffs").review_goto, path)
+    if lnum then
+      vim.schedule(function()
+        pcall(vim.api.nvim_win_set_cursor, 0, { lnum, 0 })
+        vim.cmd "silent! normal! zvzz"
+      end)
+    end
+  end)
 end
 
 ---@param dir 1|-1

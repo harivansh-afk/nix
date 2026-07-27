@@ -6,6 +6,32 @@ local M = {}
 
 local REFSPEC = "+refs/pull/*/head:refs/remotes/origin/pr/*"
 
+-- ------------------------------------------------------------------ cache ---
+-- The diff between two commits is immutable, so every entry is keyed on
+-- RESOLVED shas (never ref names): when origin/<base> or origin/pr/N moves,
+-- new shas mean new keys and stale entries are simply never hit again -
+-- invalidation is structural, not bookkeeping. M.fetch clears outright (the
+-- one place this plugin moves refs) and the size cap clears wholesale;
+-- both are memory valves, not correctness requirements.
+
+local cache, cache_n = {}, 0
+local CACHE_MAX = 512
+
+local function cached(key, fn)
+  local hit = cache[key]
+  if hit ~= nil then return hit end
+  local val = fn()
+  if cache_n >= CACHE_MAX then
+    cache, cache_n = {}, 0
+  end
+  cache[key], cache_n = val, cache_n + 1
+  return val
+end
+
+function M.clear_cache()
+  cache, cache_n = {}, 0
+end
+
 ---@param args string[]
 ---@return string[]? lines, string? err
 local function git(args)
@@ -35,8 +61,18 @@ function M.install_refspec(root) return git { "-C", root, "config", "--add", "re
 ---@param cb fun(ok: boolean, err?: string)
 function M.fetch(root, cb)
   vim.system({ "git", "-C", root, "fetch", "origin", "--prune" }, { text = true }, function(r)
-    vim.schedule(function() cb(r.code == 0, r.stderr) end)
+    vim.schedule(function()
+      M.clear_cache()
+      cb(r.code == 0, r.stderr)
+    end)
   end)
+end
+
+--- Ref -> sha, THE cache-key ingredient. One call per render buys automatic
+--- invalidation when a ref moves outside this plugin (fetch in a terminal).
+function M.resolve(root, ref)
+  local out = git { "-C", root, "rev-parse", "--short", ref }
+  return out and out[1] or ref
 end
 
 --- Local ref for a PR number. Exists only after `M.fetch` with the refspec set.
@@ -144,7 +180,13 @@ end
 --- `--numstat` and `--name-status` emit files in identical order for the
 --- same diff, so the two outputs zip together by index.
 ---@return table[] files  { status, path, old_path?, add, del, binary }
-function M.files(root, base, sha, mode)
+---@param base_sha? string resolved sha of `base` (cache key; cumulative only)
+function M.files(root, base, sha, mode, base_sha)
+  local key = table.concat({ "files", root, mode, mode == "incremental" and sha or (base_sha or base), sha }, "\0")
+  return cached(key, function() return M.files_uncached(root, base, sha, mode) end)
+end
+
+function M.files_uncached(root, base, sha, mode)
   local range = mode == "incremental" and { sha .. "^", sha } or { base .. "..." .. sha }
 
   local num = git(vim.list_extend({ "-C", root, "diff", "--numstat", "-M" }, vim.deepcopy(range))) or {}
@@ -178,7 +220,13 @@ end
 --- above already names the file, and diffs.nvim's parser takes the filename
 --- from that row, so the noise carries zero information here.
 ---@return string[] lines
-function M.file_diff(root, base, sha, mode, path)
+---@param base_sha? string resolved sha of `base` (cache key; cumulative only)
+function M.file_diff(root, base, sha, mode, path, base_sha)
+  local key = table.concat({ "diff", root, mode, mode == "incremental" and sha or (base_sha or base), sha, path }, "\0")
+  return cached(key, function() return M.file_diff_uncached(root, base, sha, mode, path) end)
+end
+
+function M.file_diff_uncached(root, base, sha, mode, path)
   local args = { "-C", root, "diff", "--no-color", "--no-ext-diff" }
   if mode == "incremental" then
     vim.list_extend(args, { sha .. "^", sha })

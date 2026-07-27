@@ -27,6 +27,7 @@ let
   home = "/Users/${username}";
   build = "${home}/Library/Caches/voiceink-build";
   app = "/Applications/VoiceInk.app";
+  lsregister = "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister";
 
   script = pkgs.writeShellScript "voiceink-build" ''
     set -euo pipefail
@@ -68,6 +69,18 @@ let
     codesign --force --deep --sign - "${app}"
 
     xattr -cr "${app}"
+
+    # Drop the intermediate build tree. It is NOT a cache - the build above
+    # wipes and re-copies it every time - but leaving it on disk registers a
+    # SECOND VoiceInk bundle (same bundle id, Sparkle still live, ~1.5G) with
+    # LaunchServices. `open -a VoiceInk` resolves by NAME, so a stray copy can
+    # outrank /Applications and get launched instead; its ad-hoc cdhash differs,
+    # so the TCC grants (Accessibility/Microphone) silently do not apply and the
+    # hotkey + mic appear broken. Unregister, then delete.
+    ${lsregister} -u "${build}/src/.local-build/Build/Products/Debug/VoiceInk.app" >/dev/null 2>&1 || true
+    rm -rf "${build}/src"
+    ${lsregister} -f "${app}" >/dev/null 2>&1 || true
+
     printf '%s' "${rev}" >"${build}/.rev"
     echo "VoiceInk: installed ${rev}"
   '';

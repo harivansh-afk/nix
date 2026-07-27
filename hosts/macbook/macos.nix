@@ -107,10 +107,15 @@ in
         name = "open-${lib.strings.toLower (builtins.replaceStrings [ " " ] [ "-" ] app)}";
         value.serviceConfig = {
           Program = "/usr/bin/open";
+          # Absolute path, never the bare name: `open -a VoiceInk` resolves
+          # through LaunchServices, which ranks every registered bundle with
+          # that name - stray build products (old source checkouts, build
+          # caches) can and did outrank /Applications, launching a stale copy
+          # whose ad-hoc cdhash misses the TCC grants.
           ProgramArguments = [
             "/usr/bin/open"
             "-a"
-            app
+            "/Applications/${app}.app"
           ];
           RunAtLoad = true;
           KeepAlive = false;

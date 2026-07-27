@@ -96,6 +96,7 @@ let
         btopConf
         fzfThemes
         ghosttyThemes
+        herdrConfigs
         lazygitConfigs
         sketchybarThemes
         heliumExtJson

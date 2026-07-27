@@ -68,6 +68,16 @@
       url = "github:NousResearch/hermes-agent/v2026.7.1";
     };
 
+    # Herdr agent multiplexer, built from the upstream flake like dgx-spark:
+    # `nix flake update herdr` delivers version bumps (master is herdr's
+    # preview channel; stable tags trail it). The binary is nix-managed, so
+    # `herdr update` self-update stays unused - after an update, restart the
+    # server (`herdr server stop`, then `herdr`) to pick up the new binary.
+    herdr = {
+      url = "github:ogulcancelik/herdr";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Upstream NixOS module for the DGX Spark hardware. Deliberately no
     # nixpkgs follows: upstream pins a known-good revision for the NVIDIA
     # kernel build, and overriding it invalidates that hash.

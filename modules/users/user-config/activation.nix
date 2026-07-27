@@ -25,6 +25,7 @@
   sketchybarThemes,
   ghosttyThemes,
   lazygitConfigs,
+  herdrConfigs,
   claudeSettings,
   codexConfigSource,
   readXattr,
@@ -65,6 +66,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${configHome}/ghostty/shaders" \
     "${configHome}/ghostty/themes" \
     "${configHome}/lazygit" \
+    "${configHome}/herdr" \
     "${configHome}/direnv/lib" \
     "${configHome}/k9s" \
     "${configHome}/gh" \
@@ -169,6 +171,11 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${fzfThemes.light}" "${configHome}/fzf/themes/cozybox-light"
   mkSymlink "${lazygitConfigs.dark}" "${configHome}/lazygit/config-dark.yml"
   mkSymlink "${lazygitConfigs.light}" "${configHome}/lazygit/config-light.yml"
+  mkSymlink "${herdrConfigs.dark}" "${configHome}/herdr/config-dark.toml"
+  mkSymlink "${herdrConfigs.light}" "${configHome}/herdr/config-light.toml"
+  # herdr is nix-managed (inputs.herdr); drop any installer/self-update copy
+  # that would shadow the nix binary via ~/.local/bin's PATH precedence
+  rm -f "${homeDirectory}/.local/bin/herdr"
 
   # gh rewrites its config at runtime; keep a managed copy instead of a
   # read-only store symlink
@@ -348,6 +355,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   ln -sfn "$THEME_GHOSTTY_TARGET" "${theme.paths.ghosttyCurrentFile}"
   ln -sfn "$THEME_LAZYGIT_TARGET" "${theme.paths.lazygitCurrentFile}"
   ln -sfn "$THEME_GIT_THEME_TARGET" "${theme.paths.gitThemeCurrentFile}"
+  ln -sfnT "$THEME_HERDR_TARGET" "${theme.paths.herdrCurrentFile}"
 
   if [ ! -f "${theme.wallpapers.dark}" ]; then
     cp "${theme.wallpapers.staticDark}" "${theme.wallpapers.dark}"

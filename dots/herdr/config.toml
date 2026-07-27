@@ -28,13 +28,30 @@ type = "pane"
 command = "lazygit"
 
 [ui]
-# bordered panes, but shared tmux-style dividers (gaps misalign the boxes)
-# and no agent labels on the borders - user preference, keep it clean
+# bordered panes with shared tmux-style dividers (gaps misalign the boxes).
+# The claude/codex integrations report per-pane agent identity, so the border
+# label comes for free; a manual `herdr pane rename` overrides it.
 pane_borders = true
 pane_gaps = false
-show_agent_labels_on_pane_borders = false
+show_agent_labels_on_pane_borders = true
 # tmux-style instant tabs; names follow the pane cwd like mux automatic-rename
 prompt_new_tab_name = false
+# no tab row until a workspace actually has more than one tab
+hide_tab_bar_when_single_tab = true
+# "auto" defers to the outer terminal's cursor, which never renders over mosh
+# (hrd attaches that way); draw herdr's own cursor as cell content instead
+host_cursor = "drawn"
+
+# Sidebar rows. Spaces drop the state orb - the workspace name plus git
+# context is the whole signal; the orb was the only yellow in the UI.
+[ui.sidebar.spaces]
+rows = [
+  [ "workspace" ],
+  [
+    "branch",
+    "git_status",
+  ],
+]
 
 [ui.toast]
 # quiet in-app toasts only, matching the cozybox no-noise preference

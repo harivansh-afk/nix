@@ -1,0 +1,45 @@
+--- a/src/ui/panes.rs
++++ b/src/ui/panes.rs
+@@ -671,10 +671,10 @@
+         (false, false, true, true) | (false, false, true, false) | (false, false, false, true) => {
+             "─"
+         }
+-        (false, true, false, true) => "┌",
+-        (false, true, true, false) => "┐",
+-        (true, false, false, true) => "└",
+-        (true, false, true, false) => "┘",
++        (false, true, false, true) => "╭",
++        (false, true, true, false) => "╮",
++        (true, false, false, true) => "╰",
++        (true, false, true, false) => "╯",
+         _ => "",
+     }
+ }
+@@ -844,11 +844,25 @@
+ }
+ 
+ fn selection_palette_background(p: &Palette) -> Color {
+-    if p.panel_bg == Color::Reset {
++    let base = if p.panel_bg == Color::Reset {
+         p.surface_dim
+     } else {
+         p.panel_bg
+-    }
++    };
++    // The host terminal did not answer the OSC 10/11 color query (mosh does
++    // not forward the response). Returning `base` unchanged paints the
++    // selection in the pane's own background color, making it invisible.
++    // Mix toward the contrasting extreme exactly like automatic_selection_bg.
++    let Some(rgb) = color_to_rgb(base) else {
++        return base;
++    };
++    let target = if relative_luminance(rgb) < 0.5 {
++        (255, 255, 255)
++    } else {
++        (0, 0, 0)
++    };
++    let mixed = mix_rgb(rgb, target, 0.28);
++    Color::Rgb(mixed.0, mixed.1, mixed.2)
+ }
+ 
+ fn terminal_theme_to_rgb(color: crate::terminal_theme::RgbColor) -> Rgb {

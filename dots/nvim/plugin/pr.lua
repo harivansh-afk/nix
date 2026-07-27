@@ -17,7 +17,7 @@ local function step_or_builtin(delta, key)
   end
 end
 
-map("n", "<leader>gP", pr "pick_pr", { desc = "pr: pick PR" })
+map("n", "<c-p>", pr "pick_pr", { desc = "pr: pick PR" })
 map("n", "<leader>gf", pr "files", { desc = "pr: files view" })
 map("n", "<leader>gC", pr "pick_commit", { desc = "pr: pick commit in PR" })
 map("n", "<leader>gm", pr "toggle_mode", { desc = "pr: cumulative <-> incremental" })

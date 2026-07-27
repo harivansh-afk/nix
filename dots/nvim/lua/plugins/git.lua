@@ -45,13 +45,17 @@ return {
     before = function()
       vim.g.forge = {
         sources = {
-          forgejo = { hosts = { "git.harivan.sh" } },
+          -- Key must name a module under lua/forge/. Forgejo/Gitea are served
+          -- by codeberg.lua (tea CLI); `forgejo` is only a host substring, and
+          -- using it as the key makes detection silently return nil.
+          codeberg = { hosts = { "git.harivan.sh" } },
         },
       }
     end,
     after = function() pcall(vim.cmd.packadd, "fzf-lua") end,
     keys = {
-      { "<c-t>", [[<cmd>lua require('forge').open()<cr>]], desc = "forge" },
+      -- forge has no M.open(); the entry point is the pickers module.
+      { "<c-t>", [[<cmd>lua require('forge.pickers').git()<cr>]], desc = "forge" },
     },
   },
   {

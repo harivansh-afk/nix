@@ -9,6 +9,11 @@
 -- FIRST filename pattern is the fugitive form `^[MADRCU?!]%s+(.+)$` - clean
 -- rows give every expanded hunk correct treesitter language highlighting.
 -- Stats live in right-aligned virtual text so they never pollute the row.
+--
+-- Colors are fugitive's, exactly: every group here routes through the
+-- fugitive* highlight groups (declared below with fugitive's own default
+-- links), so the buffer is indistinguishable from a :Git status palette
+-- and follows any colorscheme that themes fugitive.
 
 local data = require "pr.data"
 
@@ -27,10 +32,51 @@ function M.active() return buf ~= nil and vim.api.nvim_get_current_buf() == buf 
 
 -- ------------------------------------------------------------ highlights ---
 
+--- fugitive's exact hi-def-link table (syntax/fugitive.vim), declared with
+--- default=true: the view renders IDENTICALLY to a :Git status buffer even
+--- before fugitive's syntax ever loads, real fugitive links are no-ops on
+--- top of these, and a colorscheme that themes fugitive restyles this view
+--- for free.
+local FUGITIVE_LINKS = {
+  fugitiveHeader = "Label",
+  fugitiveHelpHeader = "fugitiveHeader",
+  fugitiveHelpTag = "Tag",
+  fugitiveHeading = "PreProc",
+  fugitiveUntrackedHeading = "PreCondit",
+  fugitiveUnstagedHeading = "Macro",
+  fugitiveStagedHeading = "Include",
+  fugitiveModifier = "Type",
+  fugitiveUntrackedModifier = "StorageClass",
+  fugitiveUnstagedModifier = "Structure",
+  fugitiveStagedModifier = "Typedef",
+  fugitiveHash = "Identifier",
+  fugitiveSymbolicRef = "Function",
+  fugitiveCount = "Number",
+}
+
+--- Letter -> the fugitive modifier group that letter wears in a fugitive
+--- status buffer. fugitive colors by SECTION, not letter; a PR file list has
+--- one section, so each letter takes the group of the section it lives in
+--- in practice: M/R/C sit in Unstaged (Structure), A lands in Staged
+--- (Typedef), D/? borrow Untracked (StorageClass) to stay distinct without
+--- leaving fugitive's palette. Anything else falls back to fugitiveModifier.
+local MOD_HL = {
+  M = "fugitiveUnstagedModifier",
+  R = "fugitiveUnstagedModifier",
+  C = "fugitiveUnstagedModifier",
+  A = "fugitiveStagedModifier",
+  D = "fugitiveUntrackedModifier",
+  ["?"] = "fugitiveUntrackedModifier",
+}
+
 --- Stat colors are TAKEN FROM diffs.nvim (its rail line-number fg is its
 --- green/red identity) so the view never drifts from the diffs it embeds.
 local function setup_hls()
   vim.api.nvim_set_hl(0, "diffLine", { link = "Statement", default = true })
+
+  for group, link in pairs(FUGITIVE_LINKS) do
+    vim.api.nvim_set_hl(0, group, { link = link, default = true })
+  end
 
   local stat_sources = {
     PrStatAdd = { "DiffsAddRailNr", "Added" },
@@ -59,7 +105,6 @@ function M.render(keep)
   -- externally moved origin/<base> invalidates them without any bookkeeping.
   local base_sha = s.mode == "cumulative" and data.resolve(s.root, s.base) or nil
   local files = data.files(s.root, s.base, c.sha, s.mode, base_sha)
-  local _, add, del = data.totals(files)
   local has_diffs = (pcall(require, "diffs"))
 
   local lines, hl, vt = {}, {}, {}
@@ -78,35 +123,41 @@ function M.render(keep)
     lines[#lines + 1] = table.concat(text)
   end
 
-  seg { { "PR:", "Label" }, { "     " }, { "#" .. s.pr.number, "Number" }, { " " }, { s.pr.title or "" } }
+  seg { { "PR:", "fugitiveHeader" }, { "     " }, { "#" .. s.pr.number, "fugitiveCount" }, { " " }, { s.pr.title or "" } }
   seg {
-    { "Commit:", "Label" },
+    { "Commit:", "fugitiveHeader" },
     { " " },
-    { c.sha, "Identifier" },
+    { c.sha, "fugitiveHash" },
     { " " },
     { c.subject },
   }
   seg {
-    { "Mode:", "Label" },
+    { "Base:", "fugitiveHeader" },
     { "   " },
-    { s.mode, "Function" },
-    { " " },
-    { ("(%d/%d)"):format(s.idx, #s.commits), "Number" },
+    { s.base or "", "fugitiveSymbolicRef" },
   }
-  lines[#lines + 1] = ""
   seg {
-    { "Files", "PreProc" },
+    { "Mode:", "fugitiveHeader" },
+    { "   " },
+    { s.mode, "fugitiveSymbolicRef" },
     { " (" },
-    { tostring(#files), "Number" },
-    { ") " },
-    { "+" .. add, "PrStatAdd" },
-    { " " },
-    { "-" .. del, "PrStatDel" },
+    { ("%d/%d"):format(s.idx, #s.commits), "fugitiveCount" },
+    { ")" },
+  }
+  seg { { "Help:", "fugitiveHelpHeader" }, { "   " }, { "g?", "fugitiveHelpTag" } }
+  lines[#lines + 1] = ""
+  -- Fugitive-bare heading: change totals live ONLY in the per-file virtual
+  -- text, never duplicated up here.
+  seg {
+    { "Files", "fugitiveHeading" },
+    { " (" },
+    { tostring(#files), "fugitiveCount" },
+    { ")" },
   }
 
   for _, f in ipairs(files) do
     local name = f.old_path and (f.old_path .. " -> " .. f.path) or f.path
-    seg { { f.status, "Type" }, { " " }, { name } } -- fugitiveModifier + plain path
+    seg { { f.status, MOD_HL[f.status] or "fugitiveModifier" }, { " " }, { name } } -- modifier + plain path
     local row = #lines
     line_map[row], file_rows[f.path] = f.path, row
     vt[#vt + 1] = {
@@ -151,6 +202,10 @@ function M.render(keep)
 
   local diffs_ok, diffs = pcall(require, "diffs")
   if diffs_ok then
+    -- diffs.nvim's parser reads b:diffs_repo_root to resolve filetypes (open
+    -- buffers, then filename, then file CONTENT under the root) - without it
+    -- the treesitter + intra-line diffing falls back to cwd guessing.
+    vim.b[buf].diffs_repo_root = s.root
     if attached then
       diffs.refresh(buf)
     else
@@ -219,6 +274,61 @@ local function dive()
   end)
 end
 
+--- g? - the fugitive gesture. A small float over the cursor, keys in
+--- fugitiveHelpTag like fugitive's own help column.
+local HELP = {
+  { "g?", "this help" },
+  { "<Tab> / =", "toggle inline hunks" },
+  { "<CR>", "open full review at file / line" },
+  { "]f / [f", "next / prev file" },
+  { "]c / [c", "next / prev commit" },
+  { "<leader>m", "cumulative <-> incremental" },
+  { "<leader>gC", "pick commit" },
+  { "<leader>gA", "whole PR view" },
+  { "R", "re-render" },
+  { "q", "back" },
+}
+
+local function help()
+  local keyw, width = 0, 0
+  for _, h in ipairs(HELP) do
+    keyw = math.max(keyw, #h[1])
+  end
+  local lines = {}
+  for _, h in ipairs(HELP) do
+    lines[#lines + 1] = (" %-" .. keyw .. "s  %s"):format(h[1], h[2])
+    width = math.max(width, #lines[#lines])
+  end
+  local b = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(b, 0, -1, false, lines)
+  vim.bo[b].modifiable = false
+  vim.bo[b].bufhidden = "wipe"
+  for i, h in ipairs(HELP) do
+    vim.api.nvim_buf_set_extmark(b, ns, i - 1, 1, { end_col = 1 + #h[1], hl_group = "fugitiveHelpTag" })
+  end
+  local win = vim.api.nvim_open_win(b, true, {
+    relative = "cursor",
+    row = 1,
+    col = 0,
+    width = width + 1,
+    height = #lines,
+    style = "minimal",
+    border = "single",
+    title = " pr ",
+    title_pos = "center",
+  })
+  for _, k in ipairs { "q", "<Esc>", "g?" } do
+    vim.keymap.set("n", k, "<cmd>close<cr>", { buffer = b, silent = true, nowait = true })
+  end
+  vim.api.nvim_create_autocmd("BufLeave", {
+    buffer = b,
+    once = true,
+    callback = function()
+      if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
+    end,
+  })
+end
+
 ---@param dir 1|-1
 local function file_step(dir)
   local cur = vim.fn.line "."
@@ -249,6 +359,7 @@ local function ensure_buf()
   vim.keymap.set("n", "]f", function() file_step(1) end, o)
   vim.keymap.set("n", "[f", function() file_step(-1) end, o)
   vim.keymap.set("n", "R", function() M.render() end, o)
+  vim.keymap.set("n", "g?", help, o)
   vim.keymap.set("n", "q", "<cmd>silent! buffer #<cr>", o)
 end
 
@@ -258,7 +369,15 @@ function M.open()
   if not was_active then vim.api.nvim_win_set_buf(0, buf) end
   vim.api.nvim_set_option_value("wrap", false, { win = 0, scope = "local" })
   M.render()
-  if not was_active then vim.api.nvim_win_set_cursor(0, { math.min(6, vim.api.nvim_buf_line_count(buf)), 0 }) end
+  if not was_active then
+    -- Land on the first file row, wherever the header ends.
+    local first = math.huge
+    for _, row in pairs(file_rows) do
+      first = math.min(first, row)
+    end
+    if first == math.huge then first = vim.api.nvim_buf_line_count(buf) end
+    vim.api.nvim_win_set_cursor(0, { math.min(first, vim.api.nvim_buf_line_count(buf)), 0 })
+  end
 end
 
 return M

@@ -62,6 +62,22 @@ let
       };
     };
 
+    fork = mkScript {
+      name = "fork";
+      file = ./bin/fork.sh;
+      # herdr and the agent binaries (claude, codex, omp) resolve from the
+      # user PATH on purpose: herdr is the nix input's bin, the agents are
+      # installer-managed in ~/.local/bin.
+      runtimeInputs =
+        with pkgs;
+        [
+          coreutils
+          gnugrep
+          jq
+        ]
+        ++ lib.optionals stdenv.isLinux [ util-linux ]; # uuidgen (darwin: /usr/bin)
+    };
+
     ga = mkScript {
       name = "ga";
       file = ./bin/ga.sh;

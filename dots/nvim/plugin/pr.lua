@@ -20,7 +20,7 @@ end
 map("n", "<c-p>", pr "pick_pr", { desc = "pr: pick PR" })
 map("n", "<leader>gf", pr "files", { desc = "pr: files view" })
 map("n", "<leader>gC", pr "pick_commit", { desc = "pr: pick commit in PR" })
-map("n", "<leader>gm", pr "toggle_mode", { desc = "pr: cumulative <-> incremental" })
+map("n", "<leader>m", pr "toggle_mode", { desc = "pr: cumulative <-> incremental" })
 map("n", "<leader>gA", pr "whole", { desc = "pr: whole PR view" })
 map("n", "]c", step_or_builtin(1, "]c"), { desc = "pr: next commit / diff jump" })
 map("n", "[c", step_or_builtin(-1, "[c"), { desc = "pr: prev commit / diff jump" })

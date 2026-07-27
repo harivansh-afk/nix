@@ -1,7 +1,7 @@
 -- pr: move between PRs, and between commits inside a PR.
 --
 --   <leader>gP   pick a PR (fzf)      ]c / [c     next / prev commit
---   <leader>gf   files view           <leader>gm  cumulative <-> incremental
+--   <leader>gf   files view           <leader>m   cumulative <-> incremental
 --   <leader>gC   pick a commit        <leader>gA  whole-PR view
 --
 -- Modules:

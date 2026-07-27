@@ -241,13 +241,4 @@ function M.file_diff_uncached(root, base, sha, mode, path)
   return {} -- binary or metadata-only change: nothing textual to splice
 end
 
---- Totals for the winbar, without re-shelling for each file.
-function M.totals(files)
-  local a, d = 0, 0
-  for _, f in ipairs(files) do
-    a, d = a + f.add, d + f.del
-  end
-  return #files, a, d
-end
-
 return M

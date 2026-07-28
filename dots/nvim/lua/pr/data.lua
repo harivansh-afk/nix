@@ -125,9 +125,54 @@ function M.forge(root)
   return url:find "github%.com" and "gh" or "tea"
 end
 
+--- Runs a forge list command async and hands the decoded JSON rows to cb.
+---@param cb fun(rows?: table[], err?: string)
+local function forge_json(cmd, root, forge, cb)
+  vim.system(cmd, { cwd = root, text = true }, function(r)
+    vim.schedule(function()
+      if r.code ~= 0 then return cb(nil, vim.trim(r.stderr or (forge .. " failed"))) end
+      local ok, decoded = pcall(vim.json.decode, r.stdout)
+      if not ok or type(decoded) ~= "table" then return cb(nil, "could not parse " .. forge .. " output") end
+      cb(decoded)
+    end)
+  end)
+end
+
+--- One ci state from gh's statusCheckRollup (CheckRun {status, conclusion}
+--- and StatusContext {state} entries mixed): any failure wins, any
+--- in-flight check means pending, otherwise success. nil = no CI at all.
+---@return "success"|"failure"|"pending"|nil
+local function ci_rollup(checks)
+  if type(checks) ~= "table" or #checks == 0 then return nil end
+  local state = "success"
+  for _, ch in ipairs(checks) do
+    local s = tostring(ch.conclusion or ch.state or ""):upper()
+    if ch.status and ch.status ~= "COMPLETED" then s = "PENDING" end
+    if s == "FAILURE" or s == "ERROR" or s == "TIMED_OUT" or s == "ACTION_REQUIRED" then return "failure" end
+    if s == "PENDING" or s == "EXPECTED" or s == "" then state = "pending" end
+    -- SKIPPED / NEUTRAL / CANCELLED / SUCCESS don't demote the rollup.
+  end
+  return state
+end
+
+--- tea's `ci` field is the Gitea commit-status state as a string
+--- ("success", "failure", "error", "pending", "warning", "" for none).
+---@return "success"|"failure"|"pending"|nil
+local function ci_tea(s)
+  s = tostring(s or ""):lower()
+  if s == "success" then return "success" end
+  if s == "failure" or s == "error" then return "failure" end
+  if s == "pending" or s == "warning" then return "pending" end
+  return nil
+end
+
 --- PR list, forge-agnostic. Metadata only - async, never blocks the UI.
+--- Deliberately NO CI here: the status rollup is the slow half of the list
+--- call (measured: gh on neovim/neovim 0.8s bare -> 11s + HTTP 504 with
+--- statusCheckRollup). M.ci fetches states behind the rendered list.
 --- Results are normalized to the gh shape:
----   { number, title, author = { login }, baseRefName, isDraft, updatedAt }
+---   { number, title, author = { login }, baseRefName, headRefName,
+---     isDraft, updatedAt }
 ---@param cb fun(prs?: table[], err?: string)
 function M.prs(root, cb)
   local forge = M.forge(root)
@@ -152,32 +197,54 @@ function M.prs(root, cb)
       "--limit",
       "100",
       "--fields",
-      "index,title,author,base,updated",
+      "index,title,author,base,head,updated",
     }
   end
 
-  vim.system(cmd, { cwd = root, text = true }, function(r)
-    vim.schedule(function()
-      if r.code ~= 0 then return cb(nil, vim.trim(r.stderr or (forge .. " failed"))) end
-      local ok, decoded = pcall(vim.json.decode, r.stdout)
-      if not ok or type(decoded) ~= "table" then return cb(nil, "could not parse " .. forge .. " output") end
-      if forge == "gh" then return cb(decoded) end
+  forge_json(cmd, root, forge, function(decoded, err)
+    if not decoded then return cb(nil, err) end
+    if forge == "gh" then return cb(decoded) end
 
-      -- Normalize tea: index is a string, drafts are the WIP: title
-      -- convention, `base` is the target branch.
-      local prs = {}
-      for _, p in ipairs(decoded) do
-        prs[#prs + 1] = {
-          number = tonumber(p.index),
-          title = p.title,
-          author = { login = p.author or "?" },
-          baseRefName = p.base and p.base ~= "" and p.base or "main",
-          isDraft = (p.title or ""):match "^WIP" ~= nil,
-          updatedAt = p.updated,
-        }
+    -- Normalize tea: index is a string, drafts are the WIP: title
+    -- convention, `base` is the target branch.
+    local prs = {}
+    for _, p in ipairs(decoded) do
+      prs[#prs + 1] = {
+        number = tonumber(p.index),
+        title = p.title,
+        author = { login = p.author or "?" },
+        baseRefName = p.base and p.base ~= "" and p.base or "main",
+        headRefName = p.head,
+        isDraft = (p.title or ""):match "^WIP" ~= nil,
+        updatedAt = p.updated,
+      }
+    end
+    cb(prs)
+  end)
+end
+
+--- CI states alone - the slow call M.prs skips. Returns number -> state.
+---@param cb fun(ci?: table<integer, "success"|"failure"|"pending">, err?: string)
+function M.ci(root, cb)
+  local forge = M.forge(root)
+  local cmd
+  if forge == "gh" then
+    cmd = { "gh", "pr", "list", "--limit", "100", "--json", "number,statusCheckRollup" }
+  else
+    cmd = { "tea", "pr", "list", "--output", "json", "--limit", "100", "--fields", "index,ci" }
+  end
+
+  forge_json(cmd, root, forge, function(decoded, err)
+    if not decoded then return cb(nil, err) end
+    local map = {}
+    for _, p in ipairs(decoded) do
+      if forge == "gh" then
+        map[p.number] = ci_rollup(p.statusCheckRollup)
+      else
+        map[tonumber(p.index) or -1] = ci_tea(p.ci)
       end
-      cb(prs)
-    end)
+    end
+    cb(map)
   end)
 end
 

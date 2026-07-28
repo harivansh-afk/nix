@@ -1,12 +1,14 @@
 -- pr: move between PRs, and between commits inside a PR.
 --
---   <leader>gP   pick a PR (fzf)      ]c / [c     next / prev commit
+--   <c-p>        PR list (pr://list)  ]p / [p     next / prev PR
+--   :PR pick     pick a PR (fzf)      ]c / [c     next / prev commit
 --   <leader>gf   files view           <leader>m   cumulative <-> incremental
 --   <leader>gC   pick a commit        <leader>gA  whole-PR view
 --
 -- Modules:
 --   pr        state + navigation + loading (this file, the orchestrator)
 --   pr.data   every git/forge query
+--   pr.list   the PR home surface (pr://list) - stacks render adjacent
 --   pr.pick   the two fzf surfaces (PR list, commit list)
 --   pr.view   the files buffer - THE review surface
 --
@@ -75,6 +77,8 @@ end
 
 -- --------------------------------------------------------------- pickers ---
 
+function M.list() require("pr.list").open() end
+
 function M.pick_pr() require("pr.pick").pr() end
 
 function M.pick_commit() require("pr.pick").commit() end
@@ -87,6 +91,25 @@ function M.step(delta)
   local n = #S.commits
   S.idx = ((S.idx - 1 + delta) % n) + 1
   M.render()
+end
+
+--- ]p / [p: step to the adjacent PR in pr://list display order (stacks are
+--- adjacent there, so this walks a stack parent-first). Wraps like M.step.
+---@param delta integer
+function M.step_pr(delta)
+  local list = require "pr.list"
+  local n = #list.order
+  if n == 0 or not list.root then return warn "no PR list - <c-p> first" end
+  local cur = 0
+  for i, p in ipairs(list.order) do
+    if S.pr and p.number == S.pr.number then
+      cur = i
+      break
+    end
+  end
+  -- No current PR: ]p enters at the top, [p at the bottom.
+  local nxt = cur == 0 and (delta > 0 and 1 or n) or ((cur - 1 + delta) % n) + 1
+  M.load(list.root, list.order[nxt])
 end
 
 function M.toggle_mode()

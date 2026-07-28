@@ -122,6 +122,8 @@ function M.render(keep)
     lines[#lines + 1] = table.concat(text)
   end
 
+  -- Identifier = blue in cozybox, same as the author column in pr://list.
+  seg { { "Author:", "fugitiveHeader" }, { " " }, { s.pr.author and s.pr.author.login or "?", "Identifier" } }
   seg { { "PR:", "fugitiveHeader" }, { "     " }, { "#" .. s.pr.number, "fugitiveCount" }, { " " }, { s.pr.title or "" } }
   seg {
     { "Commit:", "fugitiveHeader" },
@@ -143,6 +145,17 @@ function M.render(keep)
     { ("%d/%d"):format(s.idx, #s.commits), "fugitiveCount" },
     { ")" },
   }
+  -- Stack position, when pr://list knows this PR is stacked. ]p / [p move
+  -- this counter the way ]c / [c move the Mode one.
+  local stack = package.loaded["pr.list"] and require("pr.list").stack_info(s.pr.number)
+  if stack then
+    seg {
+      { "Stack:", "fugitiveHeader" },
+      { "  " },
+      { ("%d/%d"):format(stack.pos, stack.total), "fugitiveCount" },
+      stack.parent and { (" └ #%d"):format(stack.parent.number), "Constant" } or { "" },
+    }
+  end
   seg { { "Help:", "fugitiveHelpHeader" }, { "   " }, { "g?", "fugitiveHelpTag" } }
   lines[#lines + 1] = ""
   -- Fugitive-bare heading: change totals live ONLY in the per-file virtual
@@ -277,6 +290,8 @@ local HELP = {
   { "<CR>", "open full review at file / line" },
   { "]f / [f", "next / prev file" },
   { "]c / [c", "next / prev commit" },
+  { "]p / [p", "next / prev PR" },
+  { "-", "PR list" },
   { "<leader>m", "cumulative <-> incremental" },
   { "<leader>gC", "pick commit" },
   { "<leader>gA", "whole PR view" },
@@ -284,45 +299,7 @@ local HELP = {
   { "q", "back" },
 }
 
-local function help()
-  local keyw, width = 0, 0
-  for _, h in ipairs(HELP) do
-    keyw = math.max(keyw, #h[1])
-  end
-  local lines = {}
-  for _, h in ipairs(HELP) do
-    lines[#lines + 1] = (" %-" .. keyw .. "s  %s"):format(h[1], h[2])
-    width = math.max(width, #lines[#lines])
-  end
-  local b = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_lines(b, 0, -1, false, lines)
-  vim.bo[b].modifiable = false
-  vim.bo[b].bufhidden = "wipe"
-  for i, h in ipairs(HELP) do
-    vim.api.nvim_buf_set_extmark(b, ns, i - 1, 1, { end_col = 1 + #h[1], hl_group = "fugitiveHelpTag" })
-  end
-  local win = vim.api.nvim_open_win(b, true, {
-    relative = "cursor",
-    row = 1,
-    col = 0,
-    width = width + 1,
-    height = #lines,
-    style = "minimal",
-    border = "single",
-    title = " pr ",
-    title_pos = "center",
-  })
-  for _, k in ipairs { "q", "<Esc>", "g?" } do
-    vim.keymap.set("n", k, "<cmd>close<cr>", { buffer = b, silent = true, nowait = true })
-  end
-  vim.api.nvim_create_autocmd("BufLeave", {
-    buffer = b,
-    once = true,
-    callback = function()
-      if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
-    end,
-  })
-end
+local function help() require("pr.fmt").help(" pr ", HELP) end
 
 ---@param dir 1|-1
 local function file_step(dir)
@@ -382,6 +359,7 @@ local function ensure_buf()
   vim.keymap.set("n", "]f", function() file_step(1) end, o)
   vim.keymap.set("n", "[f", function() file_step(-1) end, o)
   vim.keymap.set("n", "R", function() M.render() end, o)
+  vim.keymap.set("n", "-", function() require("pr.list").open() end, o)
   vim.keymap.set("n", "g?", help, o)
   vim.keymap.set("n", "q", "<cmd>silent! buffer #<cr>", o)
 end

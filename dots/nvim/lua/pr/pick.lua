@@ -24,42 +24,10 @@ end
 
 -- ---------------------------------------------------------------- columns ---
 
--- Truncation and padding go by DISPLAY width, not bytes - "…" is 3 bytes but
--- 1 cell, and byte-based %-Ns padding scatters every column after a
--- multibyte char.
-
-local function trunc(str, w)
-  if vim.fn.strdisplaywidth(str) > w then
-    while vim.fn.strdisplaywidth(str) > w - 1 do
-      str = vim.fn.strcharpart(str, 0, vim.fn.strchars(str) - 1)
-    end
-    str = str .. "…"
-  end
-  return str
-end
-
-local function ljust(str, w)
-  str = trunc(str, w)
-  return str .. string.rep(" ", w - vim.fn.strdisplaywidth(str))
-end
-
-local function rjust(str, w)
-  str = trunc(str, w)
-  return string.rep(" ", w - vim.fn.strdisplaywidth(str)) .. str
-end
-
---- "3d" from an ISO-8601 timestamp; both sides shifted equally through
---- os.time, so the local-tz interpretation cancels out.
-local function ago(iso)
-  local y, mo, d, h, mi, sec = (iso or ""):match "(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)"
-  if not y then return "" end
-  local t = os.time { year = y, month = mo, day = d, hour = h, min = mi, sec = sec }
-  local dt = os.time(os.date "!*t") - t
-  if dt < 3600 then return math.max(1, math.floor(dt / 60)) .. "m" end
-  if dt < 86400 then return math.floor(dt / 3600) .. "h" end
-  if dt < 86400 * 30 then return math.floor(dt / 86400) .. "d" end
-  return math.floor(dt / 86400 / 30) .. "mo"
-end
+-- Display-width truncation/padding + "3d" ages live in pr.fmt (shared with
+-- the pr://list buffer).
+local fmt = require "pr.fmt"
+local ljust, rjust, ago = fmt.ljust, fmt.rjust, fmt.ago
 
 -- ---------------------------------------------------------------- pickers ---
 

@@ -79,15 +79,22 @@ end
 
 -- ----------------------------------------------------------------- render ---
 
+--- Last rendered PR set, so resize re-renders re-flow the columns.
+local last ---@type table[]?
+
 local function render(prs)
+  last = prs
   M.order = stacked(prs)
 
-  -- Title column fits the widest (indented) title; meta hugs it.
-  local title_w = 0
-  for _, p in ipairs(M.order) do
-    title_w = math.max(title_w, 2 * p.depth + vim.fn.strdisplaywidth(p.title or ""))
-  end
-  title_w = math.min(title_w, 72)
+  -- fzf-picker-era columns: number | title (fills the window) | author | age,
+  -- author + age right-aligned against the window edge. Title absorbs
+  -- whatever the fixed columns leave, truncating into "…" when narrow.
+  local win = vim.fn.bufwinid(buf)
+  local width = win ~= -1 and (vim.api.nvim_win_get_width(win) - vim.fn.getwininfo(win)[1].textoff)
+    or vim.o.columns
+  local num_w, author_w, age_w, gap = 6, 16, 4, 2
+  -- 3 = leading space + orb + space; all widths in display cells.
+  local title_w = math.max(20, width - 3 - num_w - author_w - age_w - 3 * gap)
 
   local lines, marks = {}, {}
   --- Build a line from { text, group? } segments; offsets computed, never
@@ -203,6 +210,23 @@ local function ensure_buf()
   vim.bo[buf].swapfile = false
   vim.bo[buf].filetype = "prlist"
   vim.bo[buf].modifiable = false
+
+  -- Columns derive from the window width: re-flow when that changes, or when
+  -- the buffer is re-shown in a differently sized window.
+  local grp = vim.api.nvim_create_augroup("pr_list_layout", { clear = true })
+  vim.api.nvim_create_autocmd({ "WinResized", "VimResized" }, {
+    group = grp,
+    callback = function()
+      if last and buf and vim.api.nvim_buf_is_valid(buf) and vim.fn.bufwinid(buf) ~= -1 then render(last) end
+    end,
+  })
+  vim.api.nvim_create_autocmd("BufWinEnter", {
+    group = grp,
+    buffer = buf,
+    callback = function()
+      if last then render(last) end
+    end,
+  })
 
   local o = { buffer = buf, silent = true }
   vim.keymap.set("n", "<CR>", select, o)

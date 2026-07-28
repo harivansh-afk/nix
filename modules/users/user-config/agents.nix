@@ -59,7 +59,7 @@ in
     "$schema" = "https://json.schemastore.org/claude-code-settings.json";
     env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
     model = "claude-fable-5";
-    tui = "default";
+    tui = "fullscreen";
     permissions.defaultMode = "bypassPermissions";
     includeCoAuthoredBy = false;
     autoCompactEnabled = true;

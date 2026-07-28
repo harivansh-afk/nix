@@ -97,6 +97,15 @@ function M.render(keep)
   local files = data.files(s.root, s.base, c.sha, s.mode, base_sha)
   local has_diffs = (pcall(require, "diffs"))
 
+  -- Fugitive-style eagerness: its status render starts the section diffs it
+  -- will need for inline expansion BEFORE anyone asks. Same here - this
+  -- range's whole diff starts now, in the background, so the first <Tab>
+  -- reads cache; the neighbor commits' file tables warm for ]c / [c.
+  data.warm_diff(s.root, s.base, c.sha, s.mode, base_sha)
+  for _, i in ipairs { s.idx - 1, s.idx + 1 } do
+    if s.commits[i] then data.warm_files(s.root, s.base, s.commits[i].sha, s.mode, base_sha) end
+  end
+
   local lines, hl, vt = {}, {}, {}
   line_map, file_rows = {}, {}
 
@@ -328,6 +337,31 @@ end
 
 -- ------------------------------------------------------------------ open ---
 
+--- With 'number' on, the gutter width follows line('$'): expanding a big
+--- file's hunks pushes the buffer past 999 lines and the number column
+--- widens, shifting every row sideways on <Tab>. Relative numbers never
+--- exceed the window height, so 'number' off + whatever 'relativenumber'
+--- the user runs = a CONSTANT gutter. Window options outlive the buffer in
+--- that window, so save on enter and restore on leave.
+local WIN_OPTS = { wrap = false, number = false }
+local saved_win ---@type table<string, any>?
+
+local function win_opts_apply()
+  if saved_win then return end -- already applied in this window
+  saved_win = {}
+  for opt, val in pairs(WIN_OPTS) do
+    saved_win[opt] = vim.api.nvim_get_option_value(opt, { win = 0 })
+    vim.api.nvim_set_option_value(opt, val, { win = 0, scope = "local" })
+  end
+end
+
+local function win_opts_restore()
+  for opt, val in pairs(saved_win or {}) do
+    vim.api.nvim_set_option_value(opt, val, { win = 0, scope = "local" })
+  end
+  saved_win = nil
+end
+
 local function ensure_buf()
   if buf and vim.api.nvim_buf_is_valid(buf) then return end
   buf = vim.api.nvim_create_buf(false, true)
@@ -337,6 +371,9 @@ local function ensure_buf()
   vim.bo[buf].bufhidden = "hide"
   vim.bo[buf].swapfile = false
   vim.bo[buf].filetype = "prfiles"
+
+  vim.api.nvim_create_autocmd("BufEnter", { buffer = buf, callback = win_opts_apply })
+  vim.api.nvim_create_autocmd("BufLeave", { buffer = buf, callback = win_opts_restore })
 
   local o = { buffer = buf, silent = true }
   vim.keymap.set("n", "<Tab>", toggle, o)
@@ -352,8 +389,7 @@ end
 function M.open()
   ensure_buf()
   local was_active = M.active()
-  if not was_active then vim.api.nvim_win_set_buf(0, buf) end
-  vim.api.nvim_set_option_value("wrap", false, { win = 0, scope = "local" })
+  if not was_active then vim.api.nvim_win_set_buf(0, buf) end -- fires BufEnter -> win_opts_apply
   M.render()
   if not was_active then
     -- Land on the first file row, wherever the header ends.

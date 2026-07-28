@@ -17,10 +17,7 @@ local REFSPEC = "+refs/pull/*/head:refs/remotes/origin/pr/*"
 local cache, cache_n = {}, 0
 local CACHE_MAX = 512
 
-local function cached(key, fn)
-  local hit = cache[key]
-  if hit ~= nil then return hit end
-  local val = fn()
+local function put(key, val)
   if cache_n >= CACHE_MAX then
     cache, cache_n = {}, 0
   end
@@ -28,16 +25,53 @@ local function cached(key, fn)
   return val
 end
 
-function M.clear_cache()
-  cache, cache_n = {}, 0
-end
+--- Global flags on EVERY git call, stolen from fugitive's status runner:
+--- never take the optional index lock for a read, and never octal-quote
+--- non-ASCII paths (paths here must match buffer rows byte-for-byte).
+local GIT = { "git", "--no-optional-locks", "-c", "core.quotePath=false" }
 
 ---@param args string[]
 ---@return string[]? lines, string? err
 local function git(args)
-  local out = vim.fn.systemlist(vim.list_extend({ "git" }, args))
+  local out = vim.fn.systemlist(vim.list_extend(vim.deepcopy(GIT), args))
   if vim.v.shell_error ~= 0 then return nil, table.concat(out or {}, "\n") end
   return out
+end
+
+-- ------------------------------------------------------------------- jobs ---
+-- Fugitive's core perf move (fugitive#Execute + fugitive#Wait): START a git
+-- call the moment it is known to be needed, BLOCK only when the answer is
+-- consumed. spawn() begins filling a cache slot in the background; await()
+-- is the sync read, riding an in-flight job instead of forking a second
+-- process. The view warms the slots the next keystroke will need.
+
+local jobs = {} ---@type table<string, {obj: vim.SystemObj, settle: fun(r: vim.SystemCompleted)}>
+
+---@param key string cache slot the job fills
+---@param args string[] git args
+---@param parse fun(lines: string[]): any pure Lua - on_exit is a fast context
+local function spawn(key, args, parse)
+  if cache[key] ~= nil or jobs[key] then return end
+  local job = {}
+  job.settle = function(r)
+    if jobs[key] ~= job then return end -- clear_cache dropped this job
+    jobs[key] = nil
+    if r.code == 0 then put(key, parse(vim.split(r.stdout or "", "\n", { trimempty = true }))) end
+  end
+  jobs[key] = job
+  job.obj = vim.system(vim.list_extend(vim.deepcopy(GIT), args), { text = true }, job.settle)
+end
+
+--- Cache read that first waits for (and settles) the in-flight job, if any.
+--- settle is idempotent, so racing git's own on_exit is harmless.
+local function await(key)
+  local job = jobs[key]
+  if job then job.settle(job.obj:wait()) end
+  return cache[key]
+end
+
+function M.clear_cache()
+  cache, cache_n, jobs = {}, 0, {}
 end
 
 ---@return string? root
@@ -176,28 +210,43 @@ function M.spec(root, base, sha, mode)
   return { repo = root, base = base, target = sha, mode = "merge-base" }
 end
 
---- Files of a range with fugitive-grade status letters (M/A/D/R/C).
---- `--numstat` and `--name-status` emit files in identical order for the
---- same diff, so the two outputs zip together by index.
----@return table[] files  { status, path, old_path?, add, del, binary }
----@param base_sha? string resolved sha of `base` (cache key; cumulative only)
-function M.files(root, base, sha, mode, base_sha)
-  local key = table.concat({ "files", root, mode, mode == "incremental" and sha or (base_sha or base), sha }, "\0")
-  return cached(key, function() return M.files_uncached(root, base, sha, mode) end)
+---@return string[] range args for git diff
+local function range_of(mode, base, sha)
+  if mode == "incremental" then return { sha .. "^", sha } end
+  return { base .. "..." .. sha }
 end
 
-function M.files_uncached(root, base, sha, mode)
-  local range = mode == "incremental" and { sha .. "^", sha } or { base .. "..." .. sha }
+---@return string cache key for `kind` over a resolved range
+local function key_of(kind, root, base, sha, mode, base_sha)
+  return table.concat({ kind, root, mode, mode == "incremental" and sha or (base_sha or base), sha }, "\0")
+end
 
-  local num = git(vim.list_extend({ "-C", root, "diff", "--numstat", "-M" }, vim.deepcopy(range))) or {}
-  local st = git(vim.list_extend({ "-C", root, "diff", "--name-status", "-M" }, range)) or {}
+local function files_args(root, mode, base, sha)
+  return vim.list_extend({ "-C", root, "diff", "--raw", "--numstat", "-M" }, range_of(mode, base, sha))
+end
 
-  local files = {}
-  for i, line in ipairs(st) do
-    local letter, rest = line:match "^(%a)%d*\t(.+)$"
-    if not letter then
-      letter, rest = line:match "^(%?)%?\t(.+)$" -- untracked never appears here, but be safe
+local function diff_args(root, mode, base, sha)
+  return vim.list_extend({ "-C", root, "diff", "--no-color", "--no-ext-diff", "-M" }, range_of(mode, base, sha))
+end
+
+--- `--raw --numstat` TOGETHER: git emits every raw record, then every
+--- numstat record, in identical file order - one process answers status
+--- letters, rename paths and +/- counts (was two sequential git calls).
+--- Raw:     :100644 100644 abc1234 def5678 M\tpath[\tnew_path]
+--- Numstat: add\tdel\tpath  (counts read by index; "-" marks binary)
+---@return table[] files  { status, path, old_path?, add, del, binary }
+local function parse_files(lines)
+  local raw, num = {}, {}
+  for _, line in ipairs(lines) do
+    if line:sub(1, 1) == ":" then
+      raw[#raw + 1] = line
+    else
+      num[#num + 1] = line
     end
+  end
+  local files = {}
+  for i, line in ipairs(raw) do
+    local letter, rest = line:match "^:%S+ %S+ %S+ %S+ (%a)%d*\t(.+)$"
     if letter then
       local old_path, path = rest:match "^(.+)\t(.+)$" -- rename/copy: old<TAB>new
       if not path then path = rest end
@@ -215,30 +264,62 @@ function M.files_uncached(root, base, sha, mode)
   return files
 end
 
+--- Split ONE whole-range diff into per-file hunk lines - fugitive's trick:
+--- its status buffer runs a single `diff` per section and serves every
+--- inline `=` expansion from that one result; here one call serves every
+--- <Tab>. Keys match the file table: post-image path from `+++ b/`, old
+--- path for deletions. Bodies start after `+++` (the first `@@`), so the
+--- diff/index preamble is dropped exactly as before; binary and mode-only
+--- blocks never reach `+++` with a path and produce no entry.
+---@return table<string, string[]>
+local function parse_range_diff(lines)
+  local by_path, cur, old = {}, nil, nil
+  for _, l in ipairs(lines) do
+    if l:find "^diff %-%-git " then
+      cur, old = nil, nil -- header zone; body lines always carry a prefix char
+    elseif cur then
+      cur[#cur + 1] = l
+    else
+      old = l:match "^%-%-%- a/(.+)$" or old
+      local path = l:match "^%+%+%+ b/(.+)$" or (l:find "^%+%+%+ /dev/null" and old)
+      if path then
+        cur = {}
+        by_path[path] = cur
+      end
+    end
+  end
+  return by_path
+end
+
+--- Files of a range with fugitive-grade status letters (M/A/D/R/C).
+---@return table[] files  { status, path, old_path?, add, del, binary }
+---@param base_sha? string resolved sha of `base` (cache key; cumulative only)
+function M.files(root, base, sha, mode, base_sha)
+  local key = key_of("files", root, base, sha, mode, base_sha)
+  spawn(key, files_args(root, mode, base, sha), parse_files)
+  return await(key) or {}
+end
+
 --- Hunks-only diff for ONE file of the range (spliced under its row in the
---- files view). The diff/index/---/+++ preamble is stripped: the file row
---- above already names the file, and diffs.nvim's parser takes the filename
---- from that row, so the noise carries zero information here.
+--- files view), served from the whole-range split above.
 ---@return string[] lines
 ---@param base_sha? string resolved sha of `base` (cache key; cumulative only)
 function M.file_diff(root, base, sha, mode, path, base_sha)
-  local key = table.concat({ "diff", root, mode, mode == "incremental" and sha or (base_sha or base), sha, path }, "\0")
-  return cached(key, function() return M.file_diff_uncached(root, base, sha, mode, path) end)
+  local key = key_of("diff", root, base, sha, mode, base_sha)
+  spawn(key, diff_args(root, mode, base, sha), parse_range_diff)
+  return (await(key) or {})[path] or {}
 end
 
-function M.file_diff_uncached(root, base, sha, mode, path)
-  local args = { "-C", root, "diff", "--no-color", "--no-ext-diff" }
-  if mode == "incremental" then
-    vim.list_extend(args, { sha .. "^", sha })
-  else
-    vim.list_extend(args, { base .. "..." .. sha })
-  end
-  vim.list_extend(args, { "--", path })
-  local raw = git(args) or {}
-  for i, line in ipairs(raw) do
-    if line:match "^@@" then return vim.list_slice(raw, i) end
-  end
-  return {} -- binary or metadata-only change: nothing textual to splice
+-- Fire-and-forget cache warmers, called by the view right after a render -
+-- fugitive computes its section diffs AT status-render time for the same
+-- reason: the first expansion should never wait on a subprocess.
+
+function M.warm_diff(root, base, sha, mode, base_sha)
+  spawn(key_of("diff", root, base, sha, mode, base_sha), diff_args(root, mode, base, sha), parse_range_diff)
+end
+
+function M.warm_files(root, base, sha, mode, base_sha)
+  spawn(key_of("files", root, base, sha, mode, base_sha), files_args(root, mode, base, sha), parse_files)
 end
 
 return M

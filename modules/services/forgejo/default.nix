@@ -631,16 +631,29 @@ let
       ;
   };
   forgejoPackageBase = pkgs.callPackage (import "${pkgs.path}/pkgs/by-name/fo/forgejo/generic.nix" {
-    version = "15.0.2";
-    hash = "sha256-ba5jog6eXY4TTmBblhfVa2LSLPGE1/HPfslIb30b3kk=";
-    npmDepsHash = "sha256-70w39jbMWpuAsbzBC9oFHaUMwshtFDeTSEOXDgFNPmE=";
-    vendorHash = "sha256-I6bGvXBP2K3+Xx9E9DS/AyG6Ilqf/s8VjfBnCmLUHsk=";
+    version = "16.0.1";
+    hash = "sha256-fMAOmYh21nMyd9b8e6cXlh7ArJtIys3N6sbTJNV1oyw=";
+    npmDepsHash = "sha256-UhivpUqNJvc3zHxdRVAWT9x68jG1KnQa8yS4KkL2W5g=";
+    vendorHash = "sha256-elbuQxUtbuDTJV686ZqiFgxWlIYrWDZ4fUet2QY/sJ8=";
     lts = false;
   }) { };
   forgejoPackage = pierreForgejo.mkForgejoWithPierre (
-    forgejoPackageBase.overrideAttrs (_: {
+    forgejoPackageBase.overrideAttrs (old: {
       patches = [
         "${pkgs.path}/pkgs/by-name/fo/forgejo/static-root-path.patch"
+      ];
+      # Forgejo 16 centralizes git hooks under APP_DATA/home/hooks with
+      # "#!/usr/bin/env <shell>" shebangs, which cannot exec inside the build
+      # sandbox (no /usr/bin/env), so the wiki-write tests 500 on pre-receive.
+      # Mirror nixpkgs master's generic.nix fixes for forgejo >= 16 until the
+      # nixpkgs pin catches up: rewrite the shebang for the test run only and
+      # skip TestMigrateRepository alongside the pin's existing skip list.
+      preCheck = (old.preCheck or "") + ''
+        substituteInPlace modules/git/hook_generate.go \
+          --replace-fail "#!/usr/bin/env" "#!${pkgs.lib.getExe' pkgs.coreutils "env"}"
+      '';
+      checkFlags = [
+        "-skip=^TestPassword$|^TestCaptcha$|^TestDNSUpdate$|^TestMigrateRepository$|^TestMigrateWhiteBlocklist$|^TestURLAllowedSSH/Pushmirror_URL$|^TestBleveDeleteIssue$"
       ];
     })
   );

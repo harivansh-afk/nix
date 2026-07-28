@@ -16,6 +16,7 @@
 -- and follows any colorscheme that themes fugitive.
 
 local data = require "pr.data"
+local gitstats = require "gitstats"
 
 local M = {}
 
@@ -69,8 +70,8 @@ local MOD_HL = {
   ["?"] = "fugitiveUntrackedModifier",
 }
 
---- Stat colors are TAKEN FROM diffs.nvim (its rail line-number fg is its
---- green/red identity) so the view never drifts from the diffs it embeds.
+--- Stat colors (GitStatAdd/GitStatDel) come from gitstats - the ONE module
+--- defining the "+N -N" identity shared with the fugitive status buffer.
 local function setup_hls()
   vim.api.nvim_set_hl(0, "diffLine", { link = "Statement", default = true })
 
@@ -78,18 +79,7 @@ local function setup_hls()
     vim.api.nvim_set_hl(0, group, { link = link, default = true })
   end
 
-  local stat_sources = {
-    PrStatAdd = { "DiffsAddRailNr", "Added" },
-    PrStatDel = { "DiffsDeleteRailNr", "Removed" },
-  }
-  for our, src in pairs(stat_sources) do
-    local ok, h = pcall(vim.api.nvim_get_hl, 0, { name = src[1], link = false })
-    if ok and h and h.fg then
-      vim.api.nvim_set_hl(0, our, { fg = h.fg })
-    else
-      vim.api.nvim_set_hl(0, our, { link = src[2] })
-    end
-  end
+  gitstats.setup_hls()
 end
 
 -- ---------------------------------------------------------------- render ---
@@ -160,11 +150,7 @@ function M.render(keep)
     seg { { f.status, MOD_HL[f.status] or "fugitiveModifier" }, { " " }, { name } } -- modifier + plain path
     local row = #lines
     line_map[row], file_rows[f.path] = f.path, row
-    vt[#vt + 1] = {
-      row - 1,
-      f.binary and { { "binary", "Comment" } }
-        or { { "+" .. f.add, "PrStatAdd" }, { " ", "Normal" }, { "-" .. f.del, "PrStatDel" } },
-    }
+    vt[#vt + 1] = { row - 1, gitstats.virt(f.add, f.del, f.binary) }
 
     if expanded[f.path] then
       for _, l in ipairs(data.file_diff(s.root, s.base, c.sha, s.mode, f.path, base_sha)) do
@@ -179,7 +165,7 @@ function M.render(keep)
         elseif not has_diffs then
           -- Flat fallback ONLY without diffs.nvim - never fight its treesitter.
           local ch = l:sub(1, 1)
-          local g = ch == "+" and "PrStatAdd" or ch == "-" and "PrStatDel" or nil
+          local g = ch == "+" and "GitStatAdd" or ch == "-" and "GitStatDel" or nil
           if g then hl[#hl + 1] = { #lines - 1, g, 0, -1 } end
         end
       end

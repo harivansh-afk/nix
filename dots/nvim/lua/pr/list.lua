@@ -90,8 +90,7 @@ local function render(prs)
   -- author + age right-aligned against the window edge. Title absorbs
   -- whatever the fixed columns leave, truncating into "…" when narrow.
   local win = vim.fn.bufwinid(buf)
-  local width = win ~= -1 and (vim.api.nvim_win_get_width(win) - vim.fn.getwininfo(win)[1].textoff)
-    or vim.o.columns
+  local width = win ~= -1 and (vim.api.nvim_win_get_width(win) - vim.fn.getwininfo(win)[1].textoff) or vim.o.columns
   local num_w, author_w, age_w, gap = 6, 16, 4, 2
   -- 3 = leading space + orb + space; all widths in display cells.
   local title_w = math.max(20, width - 3 - num_w - author_w - age_w - 3 * gap)
@@ -134,11 +133,22 @@ local function render(prs)
   vim.bo[buf].modifiable = true
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.bo[buf].modifiable = false
+  vim.bo[buf].modified = false -- a render is a load, never an edit (:e checks this)
   vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
   for _, m in ipairs(marks) do
     vim.api.nvim_buf_set_extmark(buf, ns, m[1], m[2], { end_col = m[3], hl_group = m[4] })
   end
 end
+
+--- Re-paint the last fetched set with no network call. The verbs mutate PR
+--- tables in place (draft flips a highlight, nothing else), so this is all
+--- the redraw they need.
+function M.repaint()
+  if last and buf and vim.api.nvim_buf_is_valid(buf) then render(last) end
+end
+
+--- Force the next M.open to re-fetch, without touching the buffer now.
+function M.invalidate() M.order = {} end
 
 --- Stack membership for a PR number, read straight off the display order
 --- (a stack = a depth-0 root plus the depth>0 run under it). Feeds the
@@ -188,11 +198,16 @@ local HELP = {
   { "g?", "this help" },
   { "<CR>", "review PR (pr://files)" },
   { "]p / [p", "next / prev PR (global)" },
-  { "R", "refresh" },
+  { "R / :e", "refresh" },
   { "q", "back" },
 }
 
-local function help() fmt.help(" pr list ", HELP) end
+--- Verb rows are appended from pr.verbs so the two surfaces can never drift.
+local function help()
+  local rows = vim.deepcopy(HELP)
+  vim.list_extend(rows, require("pr.verbs").help_entries())
+  fmt.help(" pr list ", rows)
+end
 
 -- ------------------------------------------------------------------- open ---
 
@@ -201,10 +216,15 @@ local function select()
   if p and M.root then require("pr").load(M.root, p) end
 end
 
+--- `:e pr://list` in a fresh session lands nvim on a brand new buffer
+--- already wearing that name; creating our own on top would be a duplicate
+--- name (E95). Adopt whatever buffer is already there instead.
 local function ensure_buf()
   if buf and vim.api.nvim_buf_is_valid(buf) then return end
-  buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(buf, "pr://list")
+  local cur = vim.api.nvim_get_current_buf()
+  local adopt = vim.api.nvim_buf_get_name(cur):match "pr://list$" ~= nil
+  buf = adopt and cur or vim.api.nvim_create_buf(false, true)
+  if not adopt then vim.api.nvim_buf_set_name(buf, "pr://list") end
   vim.bo[buf].buftype = "nofile"
   vim.bo[buf].bufhidden = "hide"
   vim.bo[buf].swapfile = false
@@ -233,6 +253,7 @@ local function ensure_buf()
   vim.keymap.set("n", "R", function() M.open(true) end, o)
   vim.keymap.set("n", "g?", help, o)
   vim.keymap.set("n", "q", "<cmd>silent! buffer #<cr>", o)
+  require("pr.verbs").attach(buf)
 end
 
 --- Drops stale async responses after an R mid-flight.

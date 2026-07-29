@@ -28,12 +28,21 @@ function M.rjust(str, w)
   return string.rep(" ", w - vim.fn.strdisplaywidth(str)) .. str
 end
 
---- "3d" from an ISO-8601 timestamp; both sides shifted equally through
---- os.time, so the local-tz interpretation cancels out.
+--- "3d" from an ISO-8601 UTC timestamp (both forges emit Z). There is no
+--- portable "UTC fields -> epoch" in Lua, so both sides go through os.time,
+--- which reads its table as LOCAL time - the shift cancels only if BOTH
+--- sides get the same offset.
+---
+--- isdst=false is what makes that true. os.date "!*t" sets isdst=false
+--- itself; leaving it off the parsed table means tm_isdst=-1, so mktime
+--- GUESSES DST for that date and the two sides differ by exactly one hour
+--- whenever local time is on summer time - a PR opened 3 minutes ago
+--- measured 3784s and rendered "1h". Pinning both to standard time makes
+--- the offsets identical and the subtraction exact, year-round.
 function M.ago(iso)
   local y, mo, d, h, mi, sec = (iso or ""):match "(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)"
   if not y then return "" end
-  local t = os.time { year = y, month = mo, day = d, hour = h, min = mi, sec = sec }
+  local t = os.time { year = y, month = mo, day = d, hour = h, min = mi, sec = sec, isdst = false }
   local dt = os.time(os.date "!*t") - t
   if dt < 3600 then return math.max(1, math.floor(dt / 60)) .. "m" end
   if dt < 86400 then return math.floor(dt / 3600) .. "h" end

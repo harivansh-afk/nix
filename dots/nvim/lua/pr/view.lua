@@ -124,7 +124,15 @@ function M.render(keep)
 
   -- Identifier = blue in cozybox, same as the author column in pr://list.
   seg { { "Author:", "fugitiveHeader" }, { " " }, { s.pr.author and s.pr.author.login or "?", "Identifier" } }
-  seg { { "PR:", "fugitiveHeader" }, { "     " }, { "#" .. s.pr.number, "fugitiveCount" }, { " " }, { s.pr.title or "" } }
+  -- Draft is carried by a GREY number, exactly as in pr://list and the fzf
+  -- picker - no "[draft]" column anywhere in this plugin.
+  seg {
+    { "PR:", "fugitiveHeader" },
+    { "     " },
+    { "#" .. s.pr.number, s.pr.isDraft and "Comment" or "fugitiveCount" },
+    { " " },
+    { s.pr.title or "" },
+  }
   seg {
     { "Commit:", "fugitiveHeader" },
     { " " },
@@ -198,6 +206,7 @@ function M.render(keep)
   vim.bo[buf].modifiable = true
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.bo[buf].modifiable = false
+  vim.bo[buf].modified = false -- a render is a load, never an edit (:e checks this)
 
   vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
   for _, h in ipairs(hl) do
@@ -295,11 +304,16 @@ local HELP = {
   { "<leader>m", "cumulative <-> incremental" },
   { "<leader>gC", "pick commit" },
   { "<leader>gA", "whole PR view" },
-  { "R", "re-render" },
+  { "R / :e", "re-fetch this PR" },
   { "q", "back" },
 }
 
-local function help() require("pr.fmt").help(" pr ", HELP) end
+--- Verb rows are appended from pr.verbs so the two surfaces can never drift.
+local function help()
+  local rows = vim.deepcopy(HELP)
+  vim.list_extend(rows, require("pr.verbs").help_entries())
+  require("pr.fmt").help(" pr ", rows)
+end
 
 ---@param dir 1|-1
 local function file_step(dir)
@@ -339,11 +353,16 @@ local function win_opts_restore()
   saved_win = nil
 end
 
+--- `:e pr://files` in a fresh session lands nvim on a brand new buffer
+--- already wearing that name; creating our own on top would be a duplicate
+--- name (E95). Adopt whatever buffer is already there instead.
 local function ensure_buf()
   if buf and vim.api.nvim_buf_is_valid(buf) then return end
-  buf = vim.api.nvim_create_buf(false, true)
+  local cur = vim.api.nvim_get_current_buf()
+  local adopt = vim.api.nvim_buf_get_name(cur):match "pr://files$" ~= nil
+  buf = adopt and cur or vim.api.nvim_create_buf(false, true)
   attached = false
-  vim.api.nvim_buf_set_name(buf, "pr://files")
+  if not adopt then vim.api.nvim_buf_set_name(buf, "pr://files") end
   vim.bo[buf].buftype = "nofile"
   vim.bo[buf].bufhidden = "hide"
   vim.bo[buf].swapfile = false
@@ -358,10 +377,11 @@ local function ensure_buf()
   vim.keymap.set("n", "<CR>", dive, o)
   vim.keymap.set("n", "]f", function() file_step(1) end, o)
   vim.keymap.set("n", "[f", function() file_step(-1) end, o)
-  vim.keymap.set("n", "R", function() M.render() end, o)
+  vim.keymap.set("n", "R", function() require("pr").reload() end, o)
   vim.keymap.set("n", "-", function() require("pr.list").open() end, o)
   vim.keymap.set("n", "g?", help, o)
   vim.keymap.set("n", "q", "<cmd>silent! buffer #<cr>", o)
+  require("pr.verbs").attach(buf)
 end
 
 function M.open()

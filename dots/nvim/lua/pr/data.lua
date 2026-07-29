@@ -1,10 +1,26 @@
 -- pr.data: every git/gh query behind the PR review flow.
 -- Diff content always comes from LOCAL refs (see refspec below), never the network.
--- `gh` is used only for PR metadata (titles, authors, base branch).
+-- `gh` is used only for PR metadata (titles, authors, base branch) and for
+-- the write verbs at the bottom of this file (draft, merge, close, checkout).
 
 local M = {}
 
 local REFSPEC = "+refs/pull/*/head:refs/remotes/origin/pr/*"
+
+--- Gitea/Forgejo has no draft FLAG: a draft PR is literally one whose title
+--- carries a WIP prefix (repository.pull-request.work_in_progress_prefixes,
+--- these two by default). So on tea, "toggle draft" is a title edit - the
+--- prefix is stripped for display in M.prs and re-added in M.set_draft.
+local WIP_PREFIXES = { "WIP:", "[WIP]" }
+local WIP = "WIP: "
+
+---@return string title, boolean draft
+local function strip_wip(title)
+  for _, p in ipairs(WIP_PREFIXES) do
+    if (title or ""):sub(1, #p) == p then return vim.trim(title:sub(#p + 1)), true end
+  end
+  return title or "", false
+end
 
 -- ------------------------------------------------------------------ cache ---
 -- The diff between two commits is immutable, so every entry is keyed on
@@ -206,16 +222,19 @@ function M.prs(root, cb)
     if forge == "gh" then return cb(decoded) end
 
     -- Normalize tea: index is a string, drafts are the WIP: title
-    -- convention, `base` is the target branch.
+    -- convention, `base` is the target branch. The WIP prefix is display
+    -- noise once isDraft carries it (and set_draft rebuilds it), so `title`
+    -- here is always the bare title on BOTH forges.
     local prs = {}
     for _, p in ipairs(decoded) do
+      local title, draft = strip_wip(p.title)
       prs[#prs + 1] = {
         number = tonumber(p.index),
-        title = p.title,
+        title = title,
         author = { login = p.author or "?" },
         baseRefName = p.base and p.base ~= "" and p.base or "main",
         headRefName = p.head,
-        isDraft = (p.title or ""):match "^WIP" ~= nil,
+        isDraft = draft,
         updatedAt = p.updated,
       }
     end
@@ -387,6 +406,117 @@ end
 
 function M.warm_files(root, base, sha, mode, base_sha)
   spawn(key_of("files", root, base, sha, mode, base_sha), files_args(root, mode, base, sha), parse_files)
+end
+
+-- ------------------------------------------------------------------ verbs ---
+-- The write half: everything that CHANGES a PR. Same forge split as the
+-- reads above, same async shape - nothing here ever blocks the UI, and the
+-- caller decides what to prompt (see pr.verbs).
+
+--- Run a forge write command. Forge CLIs put failures on stderr, but not
+--- all of them (tea prints some refusals on stdout), so the error handed
+--- back is whichever stream actually said something.
+---@param cb fun(ok: boolean, err?: string)
+local function forge_run(cmd, root, cb)
+  vim.system(cmd, { cwd = root, text = true }, function(r)
+    vim.schedule(function()
+      local err = vim.trim(r.stderr or "")
+      if err == "" then err = vim.trim(r.stdout or "") end
+      cb(r.code == 0, err ~= "" and err or nil)
+    end)
+  end)
+end
+
+--- Draft <-> ready. gh has a first-class verb; tea rewrites the title (see
+--- WIP_PREFIXES) - `pr.title` is always the bare title, so the prefix is
+--- simply added or omitted.
+---@param draft boolean target state
+---@param cb fun(ok: boolean, err?: string)
+function M.set_draft(root, pr, draft, cb)
+  if M.forge(root) == "gh" then
+    local cmd = { "gh", "pr", "ready", tostring(pr.number) }
+    if draft then cmd[#cmd + 1] = "--undo" end
+    return forge_run(cmd, root, cb)
+  end
+  local title = (draft and WIP or "") .. (pr.title or "")
+  forge_run({ "tea", "pr", "edit", tostring(pr.number), "--title", title }, root, cb)
+end
+
+local GH_STYLE = { squash = "--squash", merge = "--merge", rebase = "--rebase" }
+
+---@param opts {style?: string, force?: boolean}  style: squash|merge|rebase
+---@param cb fun(ok: boolean, err?: string)
+function M.merge(root, pr, opts, cb)
+  if M.forge(root) == "gh" then
+    local cmd = { "gh", "pr", "merge", tostring(pr.number) }
+    if opts.style then cmd[#cmd + 1] = GH_STYLE[opts.style] end
+    -- --admin is THE escalation: merge despite unmet branch protection.
+    if opts.force then cmd[#cmd + 1] = "--admin" end
+    return forge_run(cmd, root, cb)
+  end
+  local cmd = { "tea", "pr", "merge", tostring(pr.number) }
+  if opts.style then vim.list_extend(cmd, { "--style", opts.style }) end
+  forge_run(cmd, root, cb)
+end
+
+--- Can this forge escalate a refused merge? gh can (--admin). tea cannot:
+--- the Gitea API takes a force_merge flag but the CLI never sends it, so a
+--- refusal there is re-offered as a different merge STYLE instead.
+function M.can_force(root) return M.forge(root) == "gh" end
+
+--- The repo's own merge rules, so the merge prompt asks only what the repo
+--- actually permits. gh answers exactly (viewerDefaultMergeMethod is the
+--- method its web UI pre-selects for you); tea/Gitea exposes neither
+--- allowed styles nor the default, so it reports "unknown" and the caller
+--- falls through to the forge default.
+---@param cb fun(policy: {default?: string, allowed: string[]})
+function M.merge_policy(root, cb)
+  if M.forge(root) ~= "gh" then return cb { allowed = {} } end
+  local cmd = {
+    "gh",
+    "repo",
+    "view",
+    "--json",
+    "viewerDefaultMergeMethod,mergeCommitAllowed,squashMergeAllowed,rebaseMergeAllowed",
+  }
+  forge_json(cmd, root, "gh", function(d)
+    if not d then return cb { allowed = {} } end
+    local allowed = {}
+    if d.squashMergeAllowed then allowed[#allowed + 1] = "squash" end
+    if d.mergeCommitAllowed then allowed[#allowed + 1] = "merge" end
+    if d.rebaseMergeAllowed then allowed[#allowed + 1] = "rebase" end
+    cb { default = (d.viewerDefaultMergeMethod or ""):lower(), allowed = allowed }
+  end)
+end
+
+---@param cb fun(ok: boolean, err?: string)
+function M.close(root, pr, cb)
+  local cmd = M.forge(root) == "gh" and { "gh", "pr", "close", tostring(pr.number) }
+    or { "tea", "pr", "close", tostring(pr.number) }
+  forge_run(cmd, root, cb)
+end
+
+--- Check the PR branch out into the working tree. Both CLIs name it the
+--- same and both set up the upstream, so pushing fixups just works.
+---@param cb fun(ok: boolean, err?: string)
+function M.checkout(root, pr, cb)
+  local cmd = M.forge(root) == "gh" and { "gh", "pr", "checkout", tostring(pr.number) }
+    or { "tea", "pr", "checkout", tostring(pr.number) }
+  forge_run(cmd, root, cb)
+end
+
+--- Browser URL for a PR, derived from origin - no subprocess round trip to
+--- `gh pr view --web` just to learn a URL we already know. Both scp-style
+--- (git@host:owner/repo) and ssh:// remotes normalize to https.
+---@return string? url
+function M.web_url(root, number)
+  local out = git { "-C", root, "remote", "get-url", "origin" }
+  local url = out and out[1]
+  if not url then return nil end
+  url = url:gsub("%.git$", ""):gsub("^ssh://git@", "https://"):gsub("^git@([^:]+):", "https://%1/")
+  if not url:find "^https?://" then return nil end
+  -- github.com/o/r/pull/N vs gitea/forgejo o/r/pulls/N.
+  return url .. (M.forge(root) == "gh" and "/pull/" or "/pulls/") .. number
 end
 
 return M

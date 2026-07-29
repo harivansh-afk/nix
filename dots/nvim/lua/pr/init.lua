@@ -5,11 +5,15 @@
 --   <leader>gf   files view           <leader>m   cumulative <-> incremental
 --   <leader>gC   pick a commit        <leader>gA  whole-PR view
 --
+-- Inside either PR buffer, the verbs (pr.verbs, same keys on both):
+--   D draft <-> ready    M merge    C checkout    O browser    X close
+--
 -- Modules:
 --   pr        state + navigation + loading (this file, the orchestrator)
---   pr.data   every git/forge query
+--   pr.data   every git/forge query, read and write
 --   pr.list   the PR home surface (pr://list) - stacks render adjacent
 --   pr.pick   the two fzf surfaces (PR list, commit list)
+--   pr.verbs  the write side - one verb, both surfaces
 --   pr.view   the files buffer - THE review surface
 --
 -- The files view (pr.view) is the single surface: picking a PR lands there,
@@ -72,6 +76,32 @@ function M.load(root, pr)
       return warn("no local ref " .. ref .. " - is the pull refspec installed? :PR refspec")
     end
     go()
+  end)
+end
+
+--- Re-read the loaded PR from the remote: what `:e` and `R` mean on
+--- pr://files. `:e` on a real file rereads it from disk, so on a PR buffer
+--- it rereads the PR from origin - a force-push or a new commit lands here.
+---
+--- Renders from cache FIRST and fetches behind it: :e must never leave a
+--- blank buffer sitting there while the network answers.
+function M.reload()
+  if #S.commits == 0 then return warn "no PR loaded - <c-p> first" end
+  M.render()
+  local at = S.commits[S.idx] and S.commits[S.idx].sha
+  info("refreshing #" .. S.pr.number .. "...")
+  data.fetch(S.root, function(ok, err) -- clears every diff cache on the way
+    if not ok then return warn("fetch failed: " .. (err or "")) end
+    local commits = data.commits(S.root, S.base, S.target)
+    if #commits == 0 then return warn("no commits in #" .. S.pr.number) end
+    S.commits = commits
+    -- Hold position on the same commit; a force-push that rewrote it drops
+    -- us at the tip, which is where a rewritten PR wants reviewing anyway.
+    S.idx = #commits
+    for i, c in ipairs(commits) do
+      if c.sha == at then S.idx = i end
+    end
+    M.render()
   end)
 end
 

@@ -442,27 +442,55 @@ function M.set_draft(root, pr, draft, cb)
   forge_run({ "tea", "pr", "edit", tostring(pr.number), "--title", title }, root, cb)
 end
 
+--- `tea api` for the endpoints tea grew no verb for. Three traps, all of
+--- them handled here: it exits 0 whatever the HTTP status, `-i` writes the
+--- status line to STDERR while the body stays on stdout, and Gitea answers
+--- some refusals (405 "already merged" among them) with an EMPTY `message`.
+--- So the verdict is the status line, and that line is also the last-resort
+--- error text - `message or ...` alone would surrender to the empty string.
+---@param args string[] endpoint, then tea api flags
+---@param cb fun(ok: boolean, err?: string)
+local function tea_api(root, args, cb)
+  local cmd = vim.list_extend({ "tea", "api", "-i", "-X", "POST" }, args)
+  vim.system(cmd, { cwd = root, text = true }, function(r)
+    vim.schedule(function()
+      local line = (r.stderr or ""):match "HTTP/[%d%.]+ [^\r\n]*" or "no HTTP response"
+      local status = tonumber(line:match "(%d%d%d)")
+      if r.code == 0 and status and status < 300 then return cb(true) end
+      local ok, body = pcall(vim.json.decode, r.stdout or "")
+      local msg = ok and type(body) == "table" and vim.trim(body.message or "") or ""
+      cb(false, msg ~= "" and msg or line)
+    end)
+  end)
+end
+
 local GH_STYLE = { squash = "--squash", merge = "--merge", rebase = "--rebase" }
 
----@param opts {style?: string, force?: boolean}  style: squash|merge|rebase
+--- opts.auto is THE escalation for a refused merge: rather than overriding
+--- the checks the forge is waiting on, hand it the merge to perform once
+--- they pass. Both forges then merge straight away if the PR turns out to be
+--- mergeable already, so "auto" is never a worse outcome than plain merge.
+--- gh spells it --auto; Gitea/Forgejo only expose it on the merge endpoint
+--- (merge_when_checks_succeed), never through tea's own `pr merge`.
+---@param opts {style?: string, auto?: boolean}  style: squash|merge|rebase
 ---@param cb fun(ok: boolean, err?: string)
 function M.merge(root, pr, opts, cb)
   if M.forge(root) == "gh" then
     local cmd = { "gh", "pr", "merge", tostring(pr.number) }
     if opts.style then cmd[#cmd + 1] = GH_STYLE[opts.style] end
-    -- --admin is THE escalation: merge despite unmet branch protection.
-    if opts.force then cmd[#cmd + 1] = "--admin" end
+    if opts.auto then cmd[#cmd + 1] = "--auto" end
     return forge_run(cmd, root, cb)
   end
-  local cmd = { "tea", "pr", "merge", tostring(pr.number) }
-  if opts.style then vim.list_extend(cmd, { "--style", opts.style }) end
-  forge_run(cmd, root, cb)
+  if not opts.auto then
+    local cmd = { "tea", "pr", "merge", tostring(pr.number) }
+    if opts.style then vim.list_extend(cmd, { "--style", opts.style }) end
+    return forge_run(cmd, root, cb)
+  end
+  -- {owner}/{repo} are tea's own placeholders, filled from the checkout.
+  local args = { ("/repos/{owner}/{repo}/pulls/%d/merge"):format(pr.number), "-F", "merge_when_checks_succeed=true" }
+  if opts.style then vim.list_extend(args, { "-f", "do=" .. opts.style }) end
+  tea_api(root, args, cb)
 end
-
---- Can this forge escalate a refused merge? gh can (--admin). tea cannot:
---- the Gitea API takes a force_merge flag but the CLI never sends it, so a
---- refusal there is re-offered as a different merge STYLE instead.
-function M.can_force(root) return M.forge(root) == "gh" end
 
 --- The repo's own merge rules, so the merge prompt asks only what the repo
 --- actually permits. gh answers exactly (viewerDefaultMergeMethod is the

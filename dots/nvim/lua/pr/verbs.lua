@@ -1,6 +1,6 @@
 -- pr.verbs: the write side of the flow - the things that CHANGE a PR.
 --
---   D  draft <-> ready     M  merge (escalates to force on refusal)
+--   D  draft <-> ready     M  merge (escalates to auto-merge on refusal)
 --   O  open in browser     C  check out the branch
 --   X  close
 --
@@ -46,11 +46,12 @@ local function repaint()
   if view and view.active() then view.render() end
 end
 
---- The PR just left the open set (merged or closed). Its row must go, and
---- the stack shape around it changes, so this is a real re-fetch. From
+--- The PR is decided - merged, closed, or handed to the forge to merge when
+--- its checks pass. Either its row is gone or the stack shape around it
+--- moved, and only origin knows which, so this is a real re-fetch. From
 --- either PR surface that means landing back on the list - the diff below
 --- is of something that no longer needs reviewing.
-local function gone()
+local function settled()
   local name = vim.api.nvim_buf_get_name(0)
   if name:match "pr://" then return require("pr.list").open(true) end
   require("pr.list").invalidate() -- :PR merge from elsewhere: refetch on next open
@@ -100,32 +101,49 @@ local function choose_style(p, policy)
   return allowed[vim.fn.confirm(("merge #%d?"):format(p.number), table.concat(labels, "\n"), default)]
 end
 
---- Retry menu after tea refuses a merge. tea has no --admin, and a Gitea
---- refusal is most often "this repo does not allow that merge style", so
---- the escalation there is a different STYLE rather than more privilege.
----@return string? style
-local function choose_retry(msg)
-  local c = vim.fn.confirm(msg .. "retry with another style?", "&squash\n&merge\n&rebase\n&quit", 4)
-  return STYLES[c]
+--- What to offer after a refusal. There are two ways out and the refusal
+--- text rarely says which one it wants, so they share one menu:
+---   auto-merge  - the merge was refused because the CHECKS are not done.
+---                 Hand it back to the forge to merge when they are. This
+---                 is the escalation, and it is the default: it waits for
+---                 branch protection rather than overriding it.
+---   a different style - the repo does not allow the one we tried. Offered
+---                 on tea only; merge_policy already narrowed gh's menu to
+---                 styles the repo permits, so a style retry there would
+---                 just fail the same way.
+---@param tried string the style that was just refused
+---@return "auto"|string? choice  a style name = retry with it; nil = give up
+local function choose_retry(root, msg, tried)
+  local labels, choices = { "&auto-merge when checks pass" }, { "auto" }
+  if data.forge(root) ~= "gh" then
+    for _, s in ipairs(STYLES) do
+      if s ~= tried then
+        labels[#labels + 1] = "&" .. s
+        choices[#choices + 1] = s
+      end
+    end
+  end
+  labels[#labels + 1] = "&quit"
+  return choices[vim.fn.confirm(msg .. "escalate?", table.concat(labels, "\n"), 1)]
 end
 
-local function do_merge(root, p, style, force)
-  info(("merging #%d..."):format(p.number))
-  data.merge(root, p, { style = style ~= "" and style or nil, force = force }, function(ok, err)
+local function do_merge(root, p, style, auto)
+  info(("%s #%d..."):format(auto and "scheduling auto-merge on" or "merging", p.number))
+  data.merge(root, p, { style = style ~= "" and style or nil, auto = auto }, function(ok, err)
     if ok then
-      info(("#%d merged"):format(p.number))
-      return gone()
+      -- Both forges merge on the spot when the PR is already mergeable, so
+      -- an auto-merge that succeeded may mean "merged", not "queued". The
+      -- re-fetch below is what actually resolves which.
+      info(("#%d %s"):format(p.number, auto and "merges once its checks pass" or "merged"))
+      return settled()
     end
     -- The escalation prompt carries the refusal with it, so the reason and
-    -- the y/n sit in the cmdline together.
-    local msg = ("merge #%d failed:\n%s\n\n"):format(p.number, err or "?")
-    if force then return warn(msg) end -- already escalated: nothing left to offer
-    if data.can_force(root) then
-      if yes(msg .. "force merge (--admin)?") then do_merge(root, p, style, true) end
-      return
-    end
-    local retry = choose_retry(msg)
-    if retry then do_merge(root, p, retry, false) end
+    -- the menu sit in the cmdline together.
+    local msg = ("%s #%d failed:\n%s\n\n"):format(auto and "auto-merge" or "merge", p.number, err or "?")
+    if auto then return warn(msg) end -- already escalated: nothing left to offer
+    local choice = choose_retry(root, msg, style)
+    if choice == "auto" then return do_merge(root, p, style, true) end
+    if choice then do_merge(root, p, choice, false) end
   end)
 end
 
@@ -148,7 +166,7 @@ function M.close()
   data.close(root, p, function(ok, err)
     if not ok then return warn("close failed: " .. (err or "")) end
     info(("#%d closed"):format(p.number))
-    gone()
+    settled()
   end)
 end
 
@@ -181,7 +199,7 @@ end
 --- the same keystroke wherever you are.
 M.KEYS = {
   { "D", "draft", "draft <-> ready" },
-  { "M", "merge", "merge (force on refusal)" },
+  { "M", "merge", "merge (auto-merge on refusal)" },
   { "C", "checkout", "check out the branch" },
   { "O", "web", "open in browser" },
   { "X", "close", "close without merging" },

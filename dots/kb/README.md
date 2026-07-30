@@ -1,15 +1,33 @@
-# Personal Knowledge Base - Slice 1
+# Personal knowledge base
 
-Ingestion pipeline and search tool for the Cognee-backed personal knowledge base.
+Local ingestion, hybrid retrieval, and Cognee graph enrichment for the personal
+knowledge base.
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `ingest.py` | Walk corpus, enforce denylist, dedup, ingest into Cognee |
-| `kb-search` | CLI query tool; prints top results in plain parseable format |
+| `kb_vec.py` | Hourly chunking, embedding, and hybrid vector/full-text retrieval |
+| `kb_graph.py` | Read-only entity resolution and source lookup over Cognee's graph |
+| `ingest.py` | Legacy direct Cognee corpus ingestion utility |
 | `denylist.txt` | One denied path-segment per line |
-| `modules/services/kb-ingest.nix` | NixOS module: `kb-search` on PATH + systemd oneshot service |
+| `modules/services/kb-ingest.nix` | NixOS module providing `kb-search` and the vector indexer |
+
+## Active architecture
+
+Source connectors normalize Gmail, Calendar, Forgejo, downloads, saved links,
+research, and loop results into `/var/lib/kb/staging/<source>/`.
+
+- Hourly, `kb_vec.py ingest` rebuilds the fast Postgres index. Documents are
+  chunked and embedded locally with Qwen3-Embedding-0.6B. Search fuses HNSW
+  pgvector similarity with Postgres full-text ranking.
+- Nightly, Cognee adds unchanged documents idempotently and runs `cognify` with
+  the local Qwen inference server. This produces the entity graph used only for
+  relationship and provenance fallback.
+
+The finance dataset is excluded by default from `kb-search`, `kb-graph resolve`,
+and `kb-graph source`. Finance remains available only to separate local
+workflows.
 
 ## Corpus (Slice 1)
 
@@ -35,33 +53,29 @@ Hard-coded fallbacks (always enforced even if the file is missing):
 
 Denylist segments include: `security`, `recovery-codes-keys`, `finance-tax`, `travel-identity`, `legal-business`, `.git`, `node_modules`.
 
-## Dry-run (review before ingesting)
+## Vector ingestion
 
-Always run dry-run first to see exactly what would be ingested:
+The active hourly indexer can also be run on demand:
+
+```sh
+systemctl start kb-ingest
+```
+
+It performs a deterministic full reload of the chunk table, then recreates the
+HNSW and full-text indexes. It does not invoke an LLM or Cognee.
+
+## Legacy direct Cognee utility
+
+`ingest.py` predates the source-organized nightly graph builder. Keep it for
+manual corpus experiments; it is not used by the active timers.
 
 ```sh
 cognee-env python ingest.py --dry-run
-```
-
-This lists every file (with a short content hash prefix) that would be added in a real run, plus a summary count.  No Cognee calls are made.
-
-## Real ingestion
-
-```sh
-# Run via systemd (manual trigger - never auto-starts):
-systemctl start kb-ingest
-
-# Or directly:
 cognee-env python ingest.py
 ```
 
-Ingestion is **incremental and idempotent**: state is tracked in `/var/lib/cognee/ingest-state.json` (path + mtime + SHA-256).  Unchanged files are skipped.  Run again at any time; only new or modified files are processed.
-
-Override state file location:
-
-```sh
-cognee-env python ingest.py --state-file /path/to/state.json
-```
+This utility tracks `/var/lib/cognee/ingest-state.json`; unchanged files are
+skipped.
 
 ## Search
 
@@ -79,9 +93,15 @@ sudo cognee-env /var/lib/cognee/venv/bin/cognee-cli search -t CHUNKS -d finance 
 `kb-search` runs two retrieval arms and fuses them with reciprocal rank
 fusion: semantic (pgvector cosine over an HNSW index, query embedded with the
 Qwen3-Embedding instruction prefix) and lexical (Postgres full-text over a GIN
-index). The lexical arm is what makes rare terms, names, and one-word queries
-land; the semantic arm covers paraphrase. Top 8 results print as
+index). The lexical arm makes rare terms, names, and one-word queries land; the
+semantic arm covers paraphrase. The default output is eight short
 `[dataset] file: excerpt` lines.
+
+Hermes uses structured, longer excerpts:
+
+```sh
+kb-search --json --limit 8 --excerpt-chars 1200 "query"
+```
 
 Do not reintroduce ivfflat for the semantic arm: the original index shipped
 with default `lists=100`/`probes=1` and measured 8% recall@10.

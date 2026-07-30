@@ -8,8 +8,14 @@ import subprocess
 KB_SEARCH = "/run/current-system/sw/bin/kb-search"
 KB_GRAPH = "/run/current-system/sw/bin/kb-graph"
 FINANCE_TERMS = re.compile(
-    r"\b(account|bank|budget|charge|credit|debit|expense|finance|financial|"
-    r"invoice|merchant|payment|receipt|spend|tax|transaction)\b",
+    r"\b(amount|balance|bank|billing|budget|charge|credit card|debit card|"
+    r"expense|finance|financial|invoice|merchant|payment|purchase|receipt|"
+    r"refund|spend|statement|tax|transaction)\b",
+    re.IGNORECASE,
+)
+FINANCE_QUERY_TERMS = re.compile(
+    r"\b(bank|banking|budget|charge|credit card|debit card|expense|finance|"
+    r"financial|invoice|payment|receipt|refund|spend|tax|transaction)\b",
     re.IGNORECASE,
 )
 
@@ -32,7 +38,7 @@ def _safe_query(value: str) -> str | None:
     query = value.strip()
     if not query:
         return None
-    if FINANCE_TERMS.search(query):
+    if FINANCE_QUERY_TERMS.search(query):
         return None
     return query
 
@@ -42,13 +48,20 @@ def _is_finance(value: object) -> bool:
 
 
 def _filter_vector_output(output: str) -> str:
-    rows = []
-    for line in output.splitlines():
-        match = re.match(r"^\[([^\]]+)\]", line)
-        if (match and _is_finance(match.group(1))) or _is_finance(line):
-            continue
-        rows.append(line)
-    return "\n".join(rows)
+    try:
+        payload = json.loads(output)
+    except json.JSONDecodeError:
+        return json.dumps({"error": "kb-search returned invalid JSON"})
+    if not isinstance(payload, list):
+        return json.dumps({"error": "kb-search returned an unexpected result"})
+    safe = [
+        item
+        for item in payload
+        if not _is_finance(item.get("source", ""))
+        and not _is_finance(item.get("path", ""))
+        and not _is_finance(item.get("text", ""))
+    ]
+    return json.dumps({"results": safe}, ensure_ascii=False)
 
 
 def _filter_graph_output(output: str) -> str:
@@ -88,8 +101,9 @@ def register(ctx):
     search_schema = {
         "name": "kb_search",
         "description": (
-            "Search Hari's local Cognee vector database for notes, documents, "
-            "email, calendar, repositories, research, and saved items. Use this "
+            "Search Hari's local hybrid knowledge index for notes, documents, "
+            "email, calendar, repositories, research, and saved items. This "
+            "combines semantic pgvector and exact full-text ranking. Use it "
             "before asking Hari for information that may already be indexed."
         ),
         "parameters": {
@@ -107,8 +121,8 @@ def register(ctx):
     resolve_schema = {
         "name": "kb_graph_resolve",
         "description": (
-            "Resolve a rough mention to entities in the Cognee knowledge graph. "
-            "Use after vector search when relationships or provenance matter."
+            "Resolve a rough mention to entities in the nightly Cognee knowledge "
+            "graph. Use after kb_search when identity or provenance matters."
         ),
         "parameters": {
             "type": "object",
@@ -157,7 +171,21 @@ def register(ctx):
         query = _safe_query(str(params.get("query", "")))
         if query is None:
             return _blocked()
-        return _filter_vector_output(_run([KB_SEARCH, query]))
+        return _filter_vector_output(
+            _run(
+                [
+                    KB_SEARCH,
+                    "--json",
+                    "--exclude-source",
+                    "finance",
+                    "--excerpt-chars",
+                    "1200",
+                    "--limit",
+                    "8",
+                    query,
+                ]
+            )
+        )
 
     def resolve(params, **kwargs):
         del kwargs
@@ -166,7 +194,17 @@ def register(ctx):
             return _blocked()
         limit = max(1, min(int(params.get("limit", 8)), 20))
         return _filter_graph_output(
-            _run([KB_GRAPH, "resolve", mention, "-k", str(limit)])
+            _run(
+                [
+                    KB_GRAPH,
+                    "resolve",
+                    "--exclude-dataset",
+                    "finance",
+                    "-k",
+                    str(limit),
+                    mention,
+                ]
+            )
         )
 
     def source(params, **kwargs):
@@ -176,26 +214,36 @@ def register(ctx):
             return _blocked()
         limit = max(1, min(int(params.get("limit", 5)), 20))
         return _filter_graph_output(
-            _run([KB_GRAPH, "source", entity, "-k", str(limit)])
+            _run(
+                [
+                    KB_GRAPH,
+                    "source",
+                    "--exclude-dataset",
+                    "finance",
+                    "-k",
+                    str(limit),
+                    entity,
+                ]
+            )
         )
 
     ctx.register_tool(
         name="kb_search",
-        toolset="cognee",
+        toolset="knowledge_base",
         schema=search_schema,
         handler=search,
-        description="Search the local Cognee vector database.",
+        description="Search the local hybrid vector and full-text knowledge index.",
     )
     ctx.register_tool(
         name="kb_graph_resolve",
-        toolset="cognee",
+        toolset="knowledge_base",
         schema=resolve_schema,
         handler=resolve,
         description="Resolve an entity in the local Cognee graph.",
     )
     ctx.register_tool(
         name="kb_graph_source",
-        toolset="cognee",
+        toolset="knowledge_base",
         schema=source_schema,
         handler=source,
         description="Retrieve source chunks for a Cognee graph entity.",

@@ -91,7 +91,7 @@ logged-in tasks (and the `x` KB research mission) no-op cleanly.
 
 Always ask before using on sites that require the user's credentials.
 
-# Knowledge Base (native Cognee tools)
+# Personal knowledge base
 
 ## Permissions
 
@@ -105,38 +105,25 @@ Always ask before using on sites that require the user's credentials.
 ### Never
 - See DENYLIST section below
 
-## Usage
+## Retrieval
 
-Fast vector search (default, start here):
+Use `kb_search` when a question depends on Hari's notes, email, calendar,
+repositories, saved links, or documents and the answer is not already in native
+Hermes memory. Do not retrieve KB context for unrelated questions.
 
-  kb_search(query="query text")
+`kb_search` is the default path. It combines local semantic pgvector search and
+Postgres full-text search, returning ranked records with `source`, `path`,
+`chunk`, `text`, and `score`. If results are weak, reformulate once using
+concrete names or phrases. Ask Hari only after the second search is insufficient.
 
-Returns ranked results from Hari's indexed notes and documents.
-Use before asking him - if the answer might already be written down, search first.
+## Cognee graph fallback
 
-## Knowledge graph (kb-graph)
+Cognee is not the primary vector index. It builds a nightly entity graph from
+the same staged documents. Use `kb_graph_resolve` followed by
+`kb_graph_source` only for entity identity, relationships, or provenance.
 
-When `kb_search` comes back thin, or provenance matters, use
-`kb_graph_resolve` followed by `kb_graph_source`. They walk the knowledge graph
-Cognee builds nightly from the same sources and return read-only JSON.
-
-How to use it well - this matters, the graph is powerful but noisy:
-
-1. Start with `resolve` to turn a rough mention into a real entity name (it
-   combines exact, substring, and semantic matching, and reports each match's
-   datasets and degree). Names are lowercased and messy, so two spellings can be
-   separate entities - resolve first, then pass the exact name (or its slug) to
-   the other commands.
-2. Trust node existence and connectivity; DISTRUST the edge names. The extractor
-   invents relation names and sometimes reverses direction, so read an edge as
-   "these two are related", never quote it as a fact.
-3. The ground truth is the source text. Run `kb_graph_source` and answer from
-   the returned document chunk, with its dataset, not from a relation label.
-
-Datasets in the graph: gmail calendar finance forgejo downloads loops research.
-
-The graph is READ-ONLY here. Never run cognee subcommands that modify it
-(add/cognify/delete/forget/memify); re-indexing is ask-first.
+Trust source-document text, not generated relationship labels. The graph and
+vector tools are read-only; ingestion and re-indexing remain ask-first.
 
 ## Finance namespace
 
@@ -151,10 +138,10 @@ A dedicated local-only finance namespace lives under
 Because both sources share that entity shape, the off-hours knowledge graph can
 LINK a bank transaction to its receipt email by merchant + amount + date, giving
 you a centralized, linkable understanding of spend. This data remains
-local-only. The cloud-backed Hermes agent must not retrieve, reason over, or
-transmit it. For finance questions, explain that a local-only workflow is
-required. This does not touch the finance-tax denylist below, which stays
-excluded.
+local-only. The Hermes service cannot read its staging directory, and its KB
+commands exclude the finance dataset before ranking or source retrieval. For
+finance questions, explain that a separate local-only workflow is required.
+This does not touch the finance-tax denylist below, which stays excluded.
 
 # DENYLIST / hard privacy rules
 

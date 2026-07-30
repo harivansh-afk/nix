@@ -41,14 +41,15 @@ let
   toolsets = [
     "all"
     "kanban"
-    "cognee"
+    "knowledge_base"
   ];
 
   hermesSettings = {
     model = {
       provider = "openai-codex";
-      default = "gpt-5.5";
+      default = "gpt-5.6-sol";
       base_url = "";
+      api_mode = "codex_responses";
     };
     agent = {
       reasoning_effort = "medium";
@@ -77,7 +78,7 @@ let
       cli = toolsets;
       photon = toolsets;
     };
-    plugins.enabled = [ "cognee" ];
+    plugins.enabled = [ "knowledge-base" ];
     skills = {
       guard_agent_created = true;
       write_approval = false;
@@ -120,6 +121,13 @@ in
       ProtectSystem = "strict";
       ProtectHome = false;
       ReadWritePaths = [ home ];
+      InaccessiblePaths = [
+        "-/var/lib/kb/staging/finance"
+        "-${home}/Documents/Downloads/security"
+        "-${home}/Documents/Downloads/documents/finance-tax"
+        "-${home}/Documents/Downloads/documents/travel-identity"
+        "-${home}/Documents/Downloads/documents/legal-business"
+      ];
       PrivateTmp = true;
     };
 
@@ -138,6 +146,6 @@ in
     "L+ ${hermesHome}/AGENTS.md - - - - ${repoHermesDir}/AGENTS.md"
     "L+ ${hermesHome}/TOOLS.md - - - - ${repoHermesDir}/TOOLS.md"
     "L+ ${hermesHome}/HEARTBEAT.md - - - - ${repoHermesDir}/HEARTBEAT.md"
-    "L+ ${hermesHome}/plugins/cognee - - - - ${repoHermesDir}/plugins/cognee"
+    "L+ ${hermesHome}/plugins/knowledge-base - - - - ${repoHermesDir}/plugins/knowledge-base"
   ];
 }

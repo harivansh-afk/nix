@@ -16,10 +16,10 @@ default probes=1, which scanned ~1% of the table: measured recall@10 was 8%.
 HNSW at this scale is near-exact. Do not reintroduce ivfflat.
 """
 
+import argparse
 import glob
 import json
 import os
-import sys
 import time
 import urllib.request
 
@@ -119,23 +119,39 @@ def ingest():
     print(f"INDEXED {n} chunks from {len(files)} docs in {time.time() - t0:.1f}s")
 
 
-def search(q):
+def search(
+    q,
+    *,
+    exclude_sources=(),
+    limit=TOPK,
+    excerpt_chars=EXCERPT,
+    json_output=False,
+):
     con = psycopg2.connect(**PG)
     cur = con.cursor()
 
     e = str(embed([QUERY_INSTRUCT + q])[0])
     cur.execute("SET hnsw.ef_search = 100")
-    cur.execute("SELECT id FROM kb_vec ORDER BY emb <=> %s LIMIT %s", (e, CANDIDATES))
+    cur.execute(
+        """
+        SELECT id FROM kb_vec
+        WHERE NOT (source = ANY(%s))
+        ORDER BY emb <=> %s
+        LIMIT %s
+        """,
+        (list(exclude_sources), e, CANDIDATES),
+    )
     sem = [r[0] for r in cur.fetchall()]
 
     cur.execute(
         """
         SELECT id FROM kb_vec
-        WHERE to_tsvector('english', txt) @@ websearch_to_tsquery('english', %s)
+        WHERE NOT (source = ANY(%s))
+          AND to_tsvector('english', txt) @@ websearch_to_tsquery('english', %s)
         ORDER BY ts_rank_cd(to_tsvector('english', txt), websearch_to_tsquery('english', %s)) DESC
         LIMIT %s
         """,
-        (q, q, CANDIDATES),
+        (list(exclude_sources), q, q, CANDIDATES),
     )
     lex = [r[0] for r in cur.fetchall()]
 
@@ -143,23 +159,63 @@ def search(q):
     for ids in (sem, lex):
         for rank, i in enumerate(ids):
             scores[i] = scores.get(i, 0.0) + 1.0 / (RRF_K + rank + 1)
-    top = sorted(scores, key=scores.get, reverse=True)[:TOPK]
+    top = sorted(scores, key=scores.get, reverse=True)[:limit]
     if not top:
-        print("No results found.")
+        print("[]" if json_output else "No results found.")
         return
 
-    cur.execute("SELECT id, source, path, txt FROM kb_vec WHERE id = ANY(%s)", (top,))
+    cur.execute("SELECT id, source, path, chunk, txt FROM kb_vec WHERE id = ANY(%s)", (top,))
     rows = {r[0]: r[1:] for r in cur.fetchall()}
+    results = []
     for i in top:
-        s, p, t = rows[i]
+        s, p, chunk, t = rows[i]
         t = " ".join(t.split())
-        print(f"[{s}] {p.split('/')[-1]}: {t[:EXCERPT]}")
+        results.append(
+            {
+                "source": s,
+                "path": p,
+                "chunk": chunk,
+                "text": t[:excerpt_chars],
+                "score": round(scores[i], 8),
+            }
+        )
+
+    if json_output:
+        print(json.dumps(results, ensure_ascii=False))
+        return
+
+    for result in results:
+        print(f"[{result['source']}] {result['path'].split('/')[-1]}: {result['text']}")
 
 
-if sys.argv[1] == "ingest":
-    ingest()
-else:
+def main():
+    parser = argparse.ArgumentParser(prog="kb-vec")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("ingest")
+
+    search_parser = sub.add_parser("search")
+    search_parser.add_argument("query", nargs="+")
+    search_parser.add_argument("--exclude-source", action="append", default=["finance"])
+    search_parser.add_argument("--limit", type=int, default=TOPK)
+    search_parser.add_argument("--excerpt-chars", type=int, default=EXCERPT)
+    search_parser.add_argument("--json", action="store_true", dest="json_output")
+
+    args = parser.parse_args()
+    if args.command == "ingest":
+        ingest()
+        return
+
     try:
-        search(" ".join(sys.argv[2:]))
+        search(
+            " ".join(args.query),
+            exclude_sources=args.exclude_source,
+            limit=max(1, min(args.limit, 20)),
+            excerpt_chars=max(80, min(args.excerpt_chars, 4000)),
+            json_output=args.json_output,
+        )
     except BrokenPipeError:
         os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+
+
+if __name__ == "__main__":
+    main()

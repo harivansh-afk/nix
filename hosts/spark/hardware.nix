@@ -16,26 +16,36 @@
         type = "gpt";
         partitions = {
           esp = {
-            size = "512M";
+            size = "2G";
             type = "EF00";
             content = {
               type = "filesystem";
               format = "vfat";
               mountpoint = "/boot";
-            };
-          };
-          swap = {
-            size = "2G";
-            content = {
-              type = "swap";
+              mountOptions = [ "umask=0077" ];
             };
           };
           root = {
             size = "100%";
             content = {
-              type = "filesystem";
-              format = "ext4";
-              mountpoint = "/";
+              type = "luks";
+              name = "cryptroot";
+              extraFormatArgs = [
+                "--pbkdf"
+                "argon2id"
+                "--type"
+                "luks2"
+              ];
+              settings.crypttabExtraOpts = [ "fido2-device=auto" ];
+              content = {
+                type = "filesystem";
+                format = "ext4";
+                mountpoint = "/";
+                mountOptions = [
+                  "errors=remount-ro"
+                  "nodev"
+                ];
+              };
             };
           };
         };

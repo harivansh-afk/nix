@@ -133,6 +133,14 @@
         (lib.assertMsg (
           spark.boot.initrd.systemd.enable && spark.security.tpm2.enable
         ) "spark: verified boot requires the systemd initrd and TPM2 userspace")
+        (lib.assertMsg (
+          spark.disko.devices.disk.main.content.partitions.root.content.type == "luks"
+          && spark.disko.devices.disk.main.content.partitions.root.content.name == "cryptroot"
+          &&
+            spark.disko.devices.disk.main.content.partitions.root.content.settings.crypttabExtraOpts
+            == [ "fido2-device=auto" ]
+          && !(spark.disko.devices.disk.main.content.partitions ? swap)
+        ) "spark: root must use FIDO2-capable LUKS2 with no plaintext swap")
       ];
     in
     {

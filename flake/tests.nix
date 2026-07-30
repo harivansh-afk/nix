@@ -52,8 +52,25 @@
           spark.services.forgejo.settings.server.ROOT_URL == "https://git.harivan.sh/"
         ) "spark: forgejo ROOT_URL drifted from git.harivan.sh")
         (lib.assertMsg (
-          spark.networking.firewall.enable && spark.networking.firewall.allowedTCPPorts == [ 22 ]
-        ) "spark: firewall must be enabled with only ssh open; backends are reached via the tunnel")
+          spark.networking.firewall.enable
+          && spark.networking.firewall.allowedTCPPorts == [ ]
+          && spark.networking.firewall.allowedUDPPortRanges == [ ]
+        ) "spark: the global firewall must expose no TCP or UDP ports")
+        (lib.assertMsg (
+          spark.services.openssh.enable
+          && !spark.services.openssh.openFirewall
+          && spark.services.openssh.settings.PasswordAuthentication == false
+          && spark.services.openssh.settings.KbdInteractiveAuthentication == false
+          && spark.services.openssh.settings.PermitRootLogin == "no"
+        ) "spark: openssh must require keys, deny root, and leave the global firewall closed")
+        (lib.assertMsg (
+          !spark.programs.mosh.openFirewall
+        ) "spark: mosh must rely on the tailscale trust boundary")
+        (lib.assertMsg (
+          spark.users.users.root.hashedPassword == "!"
+          && spark.users.users.root.openssh.authorizedKeys.keys == [ ]
+        ) "spark: root must have no password or authorized ssh keys")
+        (lib.assertMsg spark.security.sudo.wheelNeedsPassword "spark: wheel must authenticate before sudo")
       ];
     in
     {

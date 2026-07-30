@@ -1,3 +1,6 @@
 _: {
-  programs.mosh.enable = true;
+  programs.mosh = {
+    enable = true;
+    openFirewall = false;
+  };
 }

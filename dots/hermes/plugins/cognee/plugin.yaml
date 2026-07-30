@@ -1,0 +1,7 @@
+name: cognee
+version: "1.0"
+description: Read-only retrieval from Hari's local Cognee knowledge base
+provides_tools:
+  - kb_search
+  - kb_graph_resolve
+  - kb_graph_source

@@ -10,6 +10,7 @@
   imports = [
     inputs.disko.nixosModules.disko
     inputs.dgx-spark.nixosModules.dgx-spark
+    inputs.lanzaboote.nixosModules.lanzaboote
     ../../system/common.nix
     ../../system/packages.nix
     inputs.sops-nix.nixosModules.sops
@@ -45,6 +46,19 @@
   ++ lib.optional (builtins.pathExists ./hardware-configuration.nix) ./hardware-configuration.nix;
 
   networking.hostName = hostname;
+
+  boot = {
+    initrd.systemd.enable = true;
+    lanzaboote = {
+      allowUnsigned = false;
+      configurationLimit = 4;
+      enable = true;
+      pkiBundle = "/var/lib/sbctl";
+    };
+    loader.systemd-boot.editor = false;
+  };
+
+  security.tpm2.enable = true;
 
   nixpkgs.config.cudaCapabilities = [ "12.1" ];
 

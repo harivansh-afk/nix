@@ -65,6 +65,7 @@ local SUBS = {
   whole = "whole",
   reload = "reload",
   refspec = "refspec",
+  clean = "clean",
 }
 
 --- Every verb is a subcommand too (:PR merge, :PR draft, ...), resolved out

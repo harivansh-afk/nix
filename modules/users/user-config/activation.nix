@@ -8,6 +8,7 @@
   name,
   homeDirectory,
   configHome,
+  dataHome,
   stateHome,
   coreutilsBin,
   dotsRoot,
@@ -435,6 +436,29 @@ pkgs.writeShellScript "user-config-${name}" ''
     if ! "${pkgs.curl}/bin/curl" -fsSL https://omp.sh/install \
       | PI_INSTALL_DIR="${homeDirectory}/.local/bin" "${pkgs.bash}/bin/bash"; then
       echo "warning: omp install failed; will retry on next switch" >&2
+    fi
+  fi
+
+  # --- rust-analyzer's sysroot source ---
+  # rust-analyzer resolves std by READING its source, not by loading rlibs, so
+  # with no rust-src component every std type is simply unknown: no hover, no
+  # completion, no goto-definition into the standard library. `cargo build`
+  # keeps working the whole time, so it reads as "the LSP is broken" rather
+  # than "a component is missing". packages.nix installs rust-analyzer and
+  # rustup but a toolchain COMPONENT is not something nix declares, so this is
+  # the step that keeps the pair usable.
+  #
+  # Guarded on the directory: a switch costs one stat, never a network call.
+  rustup_bin="/run/current-system/sw/bin/rustup"
+  rustc_bin="/run/current-system/sw/bin/rustc"
+  if [ -x "$rustup_bin" ] && [ -x "$rustc_bin" ]; then
+    export RUSTUP_HOME="${dataHome}/rustup"
+    export CARGO_HOME="${dataHome}/cargo"
+    rust_sysroot="$("$rustc_bin" --print sysroot 2>/dev/null || true)"
+    if [ -n "$rust_sysroot" ] && [ ! -d "$rust_sysroot/lib/rustlib/src/rust/library" ]; then
+      if ! "$rustup_bin" component add rust-src >/dev/null 2>&1; then
+        echo "warning: rustup component add rust-src failed; rust-analyzer will not resolve std" >&2
+      fi
     fi
   fi
 

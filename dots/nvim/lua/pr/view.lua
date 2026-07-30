@@ -1,9 +1,10 @@
 -- pr.view: THE surface for PR review - a fugitive-status style files buffer.
 --
 -- One row per file ("M path", letter semantics identical to fugitive),
--- <Tab>/= expands the file's hunks inline, <CR> opens the full diffs.nvim
--- review at that file. The buffer is a pure function of require("pr").state
--- plus the `expanded` set: every change rebuilds it wholesale.
+-- <Tab>/= expands the file's hunks inline, <CR> opens the real file out of a
+-- PR worktree (pr.tree), dd/dv opens the full diffs.nvim review at that file.
+-- The buffer is a pure function of require("pr").state plus the `expanded`
+-- set: every change rebuilds it wholesale.
 --
 -- diffs.nvim decoration: rows are exactly "M path" because its parser's
 -- FIRST filename pattern is the fugitive form `^[MADRCU?!]%s+(.+)$` - clean
@@ -258,10 +259,29 @@ local function hunk_line(row, path)
   return nil
 end
 
+--- <CR>: the file itself. Fugitive's <CR> opens the real file from a status
+--- buffer and this is the same gesture, one step further - pr.tree materialises
+--- the PR as a worktree first, so what opens is a real file at a real path in
+--- the PR's own state. rust-analyzer, fugitive and gitsigns all attach to it
+--- normally; there is nothing synthetic left to work around, and your own
+--- checkout is never touched.
+---
+--- From inside an expanded hunk it lands on that hunk's line, so <Tab> then
+--- <CR> puts the cursor on the changed line in the live file.
+local function edit()
+  local row = vim.fn.line "."
+  local path = line_map[row]
+  if not path then return end
+  require("pr.tree").open(path, hunk_line(row, path))
+end
+
 --- Full diffs.nvim review of the current range, jumped to this file - and,
 --- from inside an expanded hunk, to this line. review_goto only takes a
 --- file key (no line targeting in diffs.nvim), but the review split shows
 --- real file content, so landing is a plain cursor move after the switch.
+---
+--- On `dd`/`dv`, fugitive's own diff gestures, because <CR> now means what it
+--- means in a fugitive status buffer: open the file.
 local function dive()
   local row = vim.fn.line "."
   local path = line_map[row]
@@ -288,7 +308,8 @@ end
 local HELP = {
   { "g?", "this help" },
   { "<Tab> / =", "toggle inline hunks" },
-  { "<CR>", "open full review at file / line" },
+  { "<CR>", "open the real file (PR worktree)" },
+  { "dd / dv", "full review at file / line" },
   { "]f / [f", "next / prev file" },
   { "]c / [c", "next / prev commit" },
   { "]p / [p", "next / prev PR" },
@@ -366,7 +387,9 @@ local function ensure_buf()
   local o = { buffer = buf, silent = true }
   vim.keymap.set("n", "<Tab>", toggle, o)
   vim.keymap.set("n", "=", toggle, o)
-  vim.keymap.set("n", "<CR>", dive, o)
+  vim.keymap.set("n", "<CR>", edit, o)
+  vim.keymap.set("n", "dd", dive, o)
+  vim.keymap.set("n", "dv", dive, o)
   vim.keymap.set("n", "]f", function() file_step(1) end, o)
   vim.keymap.set("n", "[f", function() file_step(-1) end, o)
   vim.keymap.set("n", "R", function() require("pr").reload() end, o)

@@ -6,7 +6,7 @@
 --   <leader>gC   pick a commit        <leader>gA  whole-PR view
 --
 -- Inside either PR buffer, the verbs (pr.verbs, same keys on both):
---   D draft <-> ready    M merge    C checkout    O browser    X close
+--   D draft <-> ready    M merge    C checkout <-> back    O browser    X close
 --
 -- Modules:
 --   pr        state + navigation + loading (this file, the orchestrator)
@@ -15,10 +15,13 @@
 --   pr.pick   the two fzf surfaces (PR list, commit list)
 --   pr.verbs  the write side - one verb, both surfaces
 --   pr.view   the files buffer - THE review surface
+--   pr.tree   where a PR becomes real files (a worktree, never your checkout)
 --
 -- The files view (pr.view) is the single surface: picking a PR lands there,
--- and every navigation re-renders it. The full diffs.nvim review is reached
--- only by <CR> on a file row inside the view.
+-- and every navigation re-renders it. From a file row, <CR> materialises the
+-- PR as a worktree and opens the real file out of it (LSP, fugitive and
+-- gitsigns all see the PR state, and your own tree is never touched), and
+-- dd/dv opens the full diffs.nvim review.
 --
 -- State is five values. Every action recomputes a range and re-renders.
 
@@ -156,6 +159,9 @@ function M.whole()
 end
 
 -- ------------------------------------------------------------------ setup ---
+
+--- `:PR clean` - drop the worktrees <CR> materialised.
+function M.clean() require("pr.tree").clean() end
 
 function M.refspec()
   local root = data.root()

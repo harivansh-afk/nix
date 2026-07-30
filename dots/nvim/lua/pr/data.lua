@@ -524,13 +524,102 @@ function M.close(root, pr, cb)
   forge_run(cmd, root, cb)
 end
 
---- Check the PR branch out into the working tree. Both CLIs name it the
---- same and both set up the upstream, so pushing fixups just works.
+--- Check the PR out onto a real local branch, in plain git.
+---
+--- NOT `gh/tea pr checkout`. tea's is broken on Forgejo: it detaches HEAD
+--- onto the remote-TRACKING ref, leaves the index still holding the old tree
+--- (so `git status` reports the entire repo as staged), and then exits
+--- non-zero with "invalid checksum" - a half-applied checkout, which is worse
+--- than a failed one. And neither CLI is needed here: the refspec has already
+--- put the PR head in origin/pr/N locally, and the forge list already told us
+--- the head branch name, so this is a pure-git, network-free operation.
+---
+--- Never clobbers work. An existing local branch of that name is only moved
+--- when origin/pr/N already contains it (a fast-forward); a branch carrying
+--- commits the PR does not have is reported, not overwritten.
 ---@param cb fun(ok: boolean, err?: string)
 function M.checkout(root, pr, cb)
-  local cmd = M.forge(root) == "gh" and { "gh", "pr", "checkout", tostring(pr.number) }
-    or { "tea", "pr", "checkout", tostring(pr.number) }
-  forge_run(cmd, root, cb)
+  local ref = M.ref(pr.number)
+  local branch = pr.headRefName
+  if not branch or branch == "" then return cb(false, "PR #" .. pr.number .. " has no head branch name") end
+
+  local exists = git { "-C", root, "rev-parse", "--verify", "--quiet", "refs/heads/" .. branch } ~= nil
+  if exists and git { "-C", root, "merge-base", "--is-ancestor", branch, ref } == nil then
+    return cb(false, ("local branch %s has commits that are not in #%d"):format(branch, pr.number))
+  end
+
+  -- -B is the fast-forward (or create) in one call; the ancestor check above
+  -- is what makes the reset it performs safe.
+  forge_run({ "git", "checkout", "-B", branch, ref }, root, function(ok, err)
+    if not ok then return cb(false, err) end
+    -- Upstream so a fixup pushes back to the PR. Same-repo PRs have an
+    -- origin/<branch>; a fork PR has none, and then there is simply no
+    -- upstream to set - not an error, so the checkout still counts.
+    if git { "-C", root, "rev-parse", "--verify", "--quiet", "refs/remotes/origin/" .. branch } then
+      git { "-C", root, "branch", "--set-upstream-to=origin/" .. branch, branch }
+    end
+    cb(true)
+  end)
+end
+
+-- ----------------------------------------------------------- working tree ---
+-- The reads and writes that concern a TREE rather than a PR. Only pr.tree
+-- calls these; every other consumer in this plugin is ref-only and works
+-- whatever any tree happens to be at. `root` here is any working tree - the
+-- main checkout or one of the PR worktrees, since git -C makes no distinction.
+
+--- Tracked changes only. Untracked files do not block a checkout in general,
+--- so counting them would refuse checkouts git itself would perform.
+function M.dirty(root)
+  local out = git { "-C", root, "status", "--porcelain", "--untracked-files=no" } or {}
+  return #out > 0
+end
+
+--- Where a tree is. `branch` is nil on a detached HEAD, which is exactly what
+--- --quiet reports by exiting non-zero.
+---@return {sha: string, branch: string?}
+function M.head(root)
+  local sha = git { "-C", root, "rev-parse", "--short", "HEAD" }
+  local branch = git { "-C", root, "symbolic-ref", "--short", "--quiet", "HEAD" }
+  return { sha = sha and sha[1] or "", branch = branch and branch[1] or nil }
+end
+
+--- Detached checkout of one commit, inside `root`. Used to MOVE an existing PR
+--- worktree to another commit of the same PR rather than rebuild it.
+---@param cb fun(ok: boolean, err?: string)
+function M.detach(root, sha, cb) forge_run({ "git", "checkout", "--detach", sha }, root, cb) end
+
+-- ------------------------------------------------------------- worktrees ---
+-- How a PR becomes real files without touching your checkout. Detached on
+-- purpose: a worktree holding a BRANCH locks that branch out of every other
+-- worktree, which would make materialising a PR quietly steal it.
+
+--- Create a worktree detached at `sha`. Parent directories are made first:
+--- `worktree add` creates the leaf but not `.worktrees/` itself.
+---@param cb fun(ok: boolean, err?: string)
+function M.worktree_add(root, path, sha, cb)
+  vim.fn.mkdir(vim.fn.fnamemodify(path, ":h"), "p")
+  forge_run({ "git", "-C", root, "worktree", "add", "--detach", path, sha }, root, cb)
+end
+
+--- Remove a worktree, synchronously. --force because these are detached and
+--- disposable; the caller has already refused to remove a dirty one.
+---@return boolean ok
+function M.worktree_remove(root, path) return git { "-C", root, "worktree", "remove", "--force", path } ~= nil end
+
+--- Drop administrative entries for worktrees whose directory is gone.
+function M.worktree_prune(root) git { "-C", root, "worktree", "prune" } end
+
+--- Every worktree path registered on this repo, main checkout included.
+---@return string[]
+function M.worktree_list(root)
+  local out = git { "-C", root, "worktree", "list", "--porcelain" } or {}
+  local paths = {}
+  for _, line in ipairs(out) do
+    local p = line:match "^worktree (.+)$"
+    if p then paths[#paths + 1] = p end
+  end
+  return paths
 end
 
 --- Browser URL for a PR, derived from origin - no subprocess round trip to

@@ -1,7 +1,7 @@
 -- pr.verbs: the write side of the flow - the things that CHANGE a PR.
 --
 --   D  draft <-> ready     M  merge (escalates to auto-merge on refusal)
---   O  open in browser     C  check out the branch
+--   O  open in browser     C  check out to WORK on (reading is <CR>, pr.tree)
 --   X  close
 --
 -- Capitals on purpose: every one of these letters is a no-op in a
@@ -170,8 +170,12 @@ function M.close()
   end)
 end
 
---- Check out the PR branch into the working tree. Fires FugitiveChanged so
---- the statusline / fugitive buffers notice the branch moved under them.
+--- Check the PR out into YOUR tree, on its real branch with upstream set: the
+--- verb for when you mean to work on the PR, not read it. Reading is <CR>,
+--- which materialises a worktree instead and leaves this tree alone (pr.tree).
+---
+--- Fires FugitiveChanged so the statusline and any fugitive buffer notice the
+--- branch moved under them.
 function M.checkout()
   local root, p = target()
   if not p then return warn "no PR here" end
@@ -200,7 +204,7 @@ end
 M.KEYS = {
   { "D", "draft", "draft <-> ready" },
   { "M", "merge", "merge (auto-merge on refusal)" },
-  { "C", "checkout", "check out the branch" },
+  { "C", "checkout", "check the branch out to work on" },
   { "O", "web", "open in browser" },
   { "X", "close", "close without merging" },
 }

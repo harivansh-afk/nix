@@ -6,7 +6,7 @@
   };
 
   boot.loader.systemd-boot.enable = false;
-  boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.efi.canTouchEfiVariables = false;
 
   disko.devices = {
     disk.main = {

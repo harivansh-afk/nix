@@ -100,8 +100,9 @@
           spark.security.apparmor.enable
           && spark.security.audit.enable
           && spark.security.auditd.enable
+          && spark.security.lockKernelModules
           && spark.security.protectKernelImage
-        ) "spark: apparmor, audit, auditd, and kernel image protection must stay enabled")
+        ) "spark: mandatory access, audit, and kernel mutation protections must stay enabled")
         (lib.assertMsg (
           spark.boot.kexec.enable == false
           && spark.boot.kernel.sysctl."kernel.unprivileged_bpf_disabled" == 1

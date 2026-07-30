@@ -1,6 +1,16 @@
 {
   boot = {
     kexec.enable = false;
+    kernelModules = [
+      "br_netfilter"
+      "ib_umad"
+      "nvidia_peermem"
+      "nvme_fabrics"
+      "nvme_tcp"
+      "overlay"
+      "rdma_cm"
+      "veth"
+    ];
     kernelParams = [
       "hardened_usercopy=1"
       "hash_pointers=always"
@@ -60,6 +70,7 @@
       };
     };
     protectKernelImage = true;
+    lockKernelModules = true;
   };
 
   systemd = {

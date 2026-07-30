@@ -233,6 +233,13 @@ def cmd_resolve(args) -> dict:
     for m in matches:
         m["datasets"] = datasets_for(cur, m["slug"])
         m["degree"] = degree_of(cur, m["slug"])
+    excluded = {value.lower() for value in args.exclude_dataset}
+    if excluded:
+        matches = [
+            match
+            for match in matches
+            if not excluded.intersection(value.lower() for value in match["datasets"])
+        ]
     return {"query": args.mention, "matches": matches}
 
 
@@ -362,9 +369,10 @@ def cmd_source(args) -> dict:
         join nodes c on c.slug = e.source_node_id or c.slug = e.destination_node_id
         where (e.source_node_id in %s or e.destination_node_id in %s)
           and c.type = %s and c.attributes->>'text' is not null
+          and not (coalesce(c.attributes->>'source_node_set', '') = any(%s))
         limit %s
         """,
-        (tuple(slugs), tuple(slugs), CHUNK_TYPE, args.k),
+        (tuple(slugs), tuple(slugs), CHUNK_TYPE, args.exclude_dataset, args.k),
     )
     sources = []
     for dataset, content_hash, text in cur.fetchall():
@@ -384,6 +392,7 @@ def main() -> None:
     p = sub.add_parser("resolve", help="fuzzy mention -> ranked real entities")
     p.add_argument("mention")
     p.add_argument("-k", type=int, default=8, help="max matches (default 8)")
+    p.add_argument("--exclude-dataset", action="append", default=["finance"])
     p.set_defaults(fn=cmd_resolve)
 
     p = sub.add_parser("neighbors", help="what a node connects to")
@@ -404,6 +413,7 @@ def main() -> None:
     p.add_argument("node", help="entity name or slug")
     p.add_argument("-k", type=int, default=5, help="max chunks (default 5)")
     p.add_argument("--full", action="store_true", help="do not truncate chunk text")
+    p.add_argument("--exclude-dataset", action="append", default=["finance"])
     p.set_defaults(fn=cmd_source)
 
     args = parser.parse_args()

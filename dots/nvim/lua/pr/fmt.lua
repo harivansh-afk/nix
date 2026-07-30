@@ -8,6 +8,32 @@ local M = {}
 
 local ns = vim.api.nvim_create_namespace "pr_fmt"
 
+--- Returns a `seg(segs)` that appends ONE line built from { text, group? }
+--- segments to `lines`, and one record per highlighted segment to `marks`.
+---
+--- The point is that offsets are computed from the text actually emitted and
+--- never hand-counted, so inserting or resizing a column cannot silently
+--- shift every highlight after it.
+---
+--- `mark` builds the record because the two surfaces store a highlight
+--- differently - pr.list orders it by position, pr.view by group - and that
+--- tuple shape is the caller's business, not this helper's.
+---@param lines string[] accumulator, appended one entry per `seg` call
+---@param marks any[] accumulator, appended one entry per highlighted segment
+---@param mark fun(row:integer, group:string, from:integer, to:integer):any
+---@return fun(segs: {[1]:string,[2]:string?}[])
+function M.segmenter(lines, marks, mark)
+  return function(segs)
+    local text, off = {}, 0
+    for _, sg in ipairs(segs) do
+      text[#text + 1] = sg[1]
+      if sg[2] then marks[#marks + 1] = mark(#lines, sg[2], off, off + #sg[1]) end
+      off = off + #sg[1]
+    end
+    lines[#lines + 1] = table.concat(text)
+  end
+end
+
 function M.trunc(str, w)
   if vim.fn.strdisplaywidth(str) > w then
     while vim.fn.strdisplaywidth(str) > w - 1 do

@@ -16,6 +16,7 @@
 -- and follows any colorscheme that themes fugitive.
 
 local data = require "pr.data"
+local fmt = require "pr.fmt"
 local gitstats = require "gitstats"
 
 local M = {}
@@ -109,18 +110,9 @@ function M.render(keep)
   local lines, hl, vt = {}, {}, {}
   line_map, file_rows = {}, {}
 
-  --- Build a line from { text, group? } segments; offsets computed, never
-  --- hand-counted.
-  ---@param segs {[1]:string,[2]:string?}[]
-  local function seg(segs)
-    local text, off = {}, 0
-    for _, sg in ipairs(segs) do
-      text[#text + 1] = sg[1]
-      if sg[2] then hl[#hl + 1] = { #lines, sg[2], off, off + #sg[1] } end
-      off = off + #sg[1]
-    end
-    lines[#lines + 1] = table.concat(text)
-  end
+  -- Group-then-col order, matching the { row, group, from, to } records the
+  -- hunk loop below pushes onto `hl` by hand.
+  local seg = fmt.segmenter(lines, hl, function(row, group, from, to) return { row, group, from, to } end)
 
   -- Identifier = blue in cozybox, same as the author column in pr://list.
   seg { { "Author:", "fugitiveHeader" }, { " " }, { s.pr.author and s.pr.author.login or "?", "Identifier" } }

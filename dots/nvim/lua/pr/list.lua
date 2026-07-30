@@ -96,18 +96,9 @@ local function render(prs)
   local title_w = math.max(20, width - 3 - num_w - author_w - age_w - 3 * gap)
 
   local lines, marks = {}, {}
-  --- Build a line from { text, group? } segments; offsets computed, never
-  --- hand-counted (same shape as pr.view).
-  ---@param segs {[1]:string,[2]:string?}[]
-  local function seg(segs)
-    local text, off = {}, 0
-    for _, sg in ipairs(segs) do
-      text[#text + 1] = sg[1]
-      if sg[2] then marks[#marks + 1] = { #lines, off, off + #sg[1], sg[2] } end
-      off = off + #sg[1]
-    end
-    lines[#lines + 1] = table.concat(text)
-  end
+  -- nvim_buf_set_extmark is called positionally below, so the mark keeps
+  -- col-then-group order here.
+  local seg = fmt.segmenter(lines, marks, function(row, group, from, to) return { row, from, to, group } end)
 
   for _, p in ipairs(M.order) do
     local glyph, hl = orb(p)

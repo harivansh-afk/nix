@@ -70,7 +70,7 @@
           spark.users.users.root.hashedPassword == "!"
           && spark.users.users.root.openssh.authorizedKeys.keys == [ ]
         ) "spark: root must have no password or authorized ssh keys")
-        (lib.assertMsg (spark.security.sudo.wheelNeedsPassword) "spark: wheel must authenticate before sudo")
+        (lib.assertMsg spark.security.sudo.wheelNeedsPassword "spark: wheel must authenticate before sudo")
       ];
     in
     {

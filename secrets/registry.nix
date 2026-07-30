@@ -75,10 +75,6 @@
       mode = "0400";
     };
 
-    "wifi.env" = {
-      restartUnits = [ "NetworkManager-ensure-profiles.service" ];
-    };
-
     # SimpleFIN Bridge read-only access URL for the local-only finance KB
     # namespace. KEY=value dotenv with SIMPLEFIN_ACCESS_URL=https://<creds>@... ;
     # the URL carries HTTP Basic credentials inline. Read by the kb-finance

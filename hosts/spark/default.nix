@@ -53,12 +53,29 @@
       allowUnsigned = false;
       configurationLimit = 4;
       enable = true;
+      measuredBoot = {
+        enable = true;
+        pcrs = [
+          4
+          7
+        ];
+      };
       pkiBundle = "/var/lib/sbctl";
     };
     loader.systemd-boot.editor = false;
   };
 
   security.tpm2.enable = true;
+
+  services.usbguard = {
+    enable = true;
+    implicitPolicyTarget = "reject";
+    insertedDevicePolicy = "apply-policy";
+    IPCAllowedGroups = [ ];
+    IPCAllowedUsers = [ "root" ];
+    presentDevicePolicy = "apply-policy";
+    rules = "";
+  };
 
   nixpkgs.config.cudaCapabilities = [ "12.1" ];
 

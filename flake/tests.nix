@@ -116,6 +116,23 @@
             == [ "fido2-device=auto" ]
           && !(spark.disko.devices.disk.main.content.partitions ? swap)
         ) "spark: root must use FIDO2-capable LUKS2 with no plaintext swap")
+        (lib.assertMsg (
+          spark.boot.lanzaboote.measuredBoot.enable
+          &&
+            spark.boot.lanzaboote.measuredBoot.pcrs == [
+              4
+              7
+            ]
+          && !spark.boot.loader.efi.canTouchEfiVariables
+        ) "spark: measured boot must cover UKIs and secure-boot policy with EFI writes closed")
+        (lib.assertMsg (
+          spark.services.usbguard.enable
+          && spark.services.usbguard.implicitPolicyTarget == "reject"
+          && spark.services.usbguard.rules == ""
+        ) "spark: USB devices must be rejected unless the immutable policy allows them")
+        (lib.assertMsg (
+          spark.networking.networkmanager.ensureProfiles.profiles == { }
+        ) "spark: the final profile must not provision Wi-Fi credentials")
       ];
     in
     {

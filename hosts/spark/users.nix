@@ -40,20 +40,26 @@ in
       }
     )
     // {
-      root = {
-        openssh.authorizedKeys.keys = allUsers.${username}.sshKeys;
-        hashedPasswordFile = passwordHashFile;
-      };
+      root.hashedPassword = "!";
     };
 
   services.openssh = {
     enable = true;
+    openFirewall = false;
     settings = {
-      PasswordAuthentication = true;
+      AllowAgentForwarding = false;
+      AllowTcpForwarding = false;
+      AllowUsers = enabledUsers;
+      AuthenticationMethods = "publickey";
+      GatewayPorts = "no";
       KbdInteractiveAuthentication = false;
-      PermitRootLogin = "prohibit-password";
+      MaxAuthTries = 3;
+      PasswordAuthentication = false;
+      PermitRootLogin = "no";
+      PermitTunnel = false;
+      X11Forwarding = false;
     };
   };
 
-  security.sudo.wheelNeedsPassword = false;
+  security.sudo.wheelNeedsPassword = true;
 }

@@ -5,6 +5,8 @@
       "hardened_usercopy=1"
       "hash_pointers=always"
       "init_on_alloc=1"
+      "iommu.passthrough=0"
+      "iommu.strict=1"
       "mitigations=auto,nosmt"
       "page_alloc.shuffle=1"
       "proc_mem.force_override=never"

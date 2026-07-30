@@ -111,6 +111,8 @@
         (lib.assertMsg (lib.all (parameter: lib.elem parameter spark.boot.kernelParams) [
           "hardened_usercopy=1"
           "init_on_alloc=1"
+          "iommu.passthrough=0"
+          "iommu.strict=1"
           "mitigations=auto,nosmt"
           "proc_mem.force_override=never"
           "slab_nomerge"

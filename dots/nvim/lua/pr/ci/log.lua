@@ -29,6 +29,7 @@ local TS = "^(%d%d%d%d%-%d%d%-%d%dT%d%d:%d%d:%d%d%.%d+Z )(.*)$"
 local function warn(msg) vim.notify("pr: " .. msg, vim.log.levels.WARN) end
 
 local function setup_hls()
+  ci.setup_hls()
   for group, link in pairs {
     PrCiGroup = "Title",
     PrCiCommand = "Directory",
@@ -315,6 +316,7 @@ function M.open(root, job)
   vim.wo[0][0].foldlevel = 0
   vim.wo[0][0].foldexpr = 'v:lua.require("pr.ci.log").fold(v:lnum)'
   vim.wo[0][0].foldtext = 'v:lua.require("pr.ci.log").foldtext()'
+  vim.wo[0][0].winhighlight = ci.WINBAR
   vim.wo[0][0].winbar = (" %s  %s"):format(
     ("%%#%s#%s%%*"):format(ci.HL[job.bucket] or "Comment", ci.SYM[job.bucket] or "?"),
     (job.name or "job"):gsub("%%", "%%%%")

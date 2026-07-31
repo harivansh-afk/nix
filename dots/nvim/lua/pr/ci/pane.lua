@@ -387,9 +387,11 @@ function M.open()
   ensure_buf()
   local win = pane_win()
   if win then return vim.api.nvim_set_current_win(win) end
+  ci.setup_hls()
   vim.cmd "botright split"
   vim.api.nvim_win_set_buf(0, buf)
   local w = 0
+  vim.wo[w][0].winhighlight = ci.WINBAR
   vim.wo[w][0].winfixheight = true
   vim.wo[w][0].number = false
   vim.wo[w][0].relativenumber = false

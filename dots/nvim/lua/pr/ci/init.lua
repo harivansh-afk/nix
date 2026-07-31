@@ -60,6 +60,23 @@ M.HL = {
 }
 M.RANK = { fail = 1, attention = 2, running = 3, pending = 4, pass = 5, skipped = 6 }
 
+--- Both CI surfaces put their summary in the winbar, and the default WinBar
+--- is a slab: cozybox paints it #1d2021 focused and #3c3836 UNfocused, over a
+--- #101010 Normal. A pane you glance at is unfocused almost all the time, so
+--- the header sat there as a grey block under the diff.
+---
+--- Flush with Normal instead. There is already a separator above the pane -
+--- the upper window's statusline - so a second band buys nothing, and every
+--- winbar segment carries its own group, so the text keeps its colour and
+--- only the background goes away. A link (not a copy) follows a light/dark
+--- switch for free, and `default` leaves it overridable from a colourscheme.
+---
+--- Applied per WINDOW via 'winhighlight', never by redefining WinBar: this
+--- is the pane's opinion about its own header, not about the user's editor.
+M.WINBAR = "WinBar:PrCiWinBar,WinBarNC:PrCiWinBar"
+
+function M.setup_hls() vim.api.nvim_set_hl(0, "PrCiWinBar", { link = "Normal", default = true }) end
+
 ---@return "pass"|"fail"|"running"|"pending"|"skipped"|"attention"
 function M.bucket(status, conclusion)
   local c = conclusion and tostring(conclusion):lower() or nil

@@ -66,6 +66,18 @@
         (lib.assertMsg (
           !spark.programs.mosh.openFirewall
         ) "spark: mosh must rely on the tailscale trust boundary")
+        # Forgejo's git user is the one non-human account sshd admits, and the
+        # two ways that can go wrong are opposite: drop it and every ssh push
+        # breaks (silently, until someone tries), or add it bare and a service
+        # account becomes reachable from anywhere sshd is. Both fail here.
+        (
+          let
+            allow = spark.services.openssh.settings.AllowUsers;
+            gitOrigins = lib.filter (u: lib.hasPrefix "git@" u) allow;
+          in
+          lib.assertMsg ((spark.services.forgejo.enable -> gitOrigins != [ ]) && !(lib.elem "git" allow))
+            "spark: forgejo's git user must be in AllowUsers and always source-qualified (git@loopback or git@tailnet), never a bare \"git\""
+        )
         (lib.assertMsg (
           spark.users.users.root.hashedPassword == "!"
           && spark.users.users.root.openssh.authorizedKeys.keys == [ ]

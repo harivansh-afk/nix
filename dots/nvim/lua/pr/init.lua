@@ -4,6 +4,7 @@
 --   :PR pick     pick a PR (fzf)      ]c / [c     next / prev commit
 --   <leader>gf   files view           <leader>m   cumulative <-> incremental
 --   <leader>gC   pick a commit        <leader>gA  whole-PR view
+--   G            live CI pane (on pr://files)
 --
 -- Inside either PR buffer, the verbs (pr.verbs, same keys on both):
 --   D draft <-> ready    M merge    C checkout <-> back    O browser    X close
@@ -16,6 +17,7 @@
 --   pr.verbs  the write side - one verb, both surfaces
 --   pr.view   the files buffer - THE review surface
 --   pr.tree   where a PR becomes real files (a worktree, never your checkout)
+--   pr.ci     checks, jobs and job logs (store + pr://checks + pr://job/N)
 --
 -- The files view (pr.view) is the single surface: picking a PR lands there,
 -- and every navigation re-renders it. From a file row, <CR> materialises the
@@ -49,7 +51,14 @@ local function info(msg) vim.notify("pr: " .. msg, vim.log.levels.INFO) end
 function M.render()
   if #S.commits == 0 then return warn "no PR loaded - <leader>gP first" end
   require("pr.view").open()
+  -- An open CI pane re-points itself at whatever PR is loaded now, so ]p / [p
+  -- carry it along. Closed, this is a no-op and pr.ci is never even required.
+  local pane = package.loaded["pr.ci.pane"]
+  if pane then pane.follow() end
 end
+
+--- The CI pane for the loaded PR (pr://checks). G on pr://files.
+function M.checks() require("pr.ci.pane").toggle() end
 
 M.files = M.render
 

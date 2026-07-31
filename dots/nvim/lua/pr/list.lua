@@ -26,14 +26,15 @@ local function warn(msg) vim.notify("pr: " .. msg, vim.log.levels.WARN) end
 
 --- CI state as a colored orb. Plain UTF-8 - no icon font required (nonicons
 --- glyphs are PUA codepoints that collide with Nerd Fonts: hello bluetooth).
-local ORB = {
-  success = { "●", "DiagnosticOk" },
-  failure = { "●", "DiagnosticError" },
-  pending = { "●", "DiagnosticWarn" },
-}
+---
+--- The colour comes from pr.ci's bucket table, the same one the pr://checks
+--- pane paints its rows with, so the rollup here and the per-job detail
+--- there can never disagree about what green means. Only the SHAPE differs:
+--- a rollup is one filled orb, a job row carries a glyph per state.
+local BUCKET = { success = "pass", failure = "fail", pending = "running" }
 local function orb(p)
-  local o = p.ci and ORB[p.ci]
-  if o then return o[1], o[2] end
+  local b = p.ci and BUCKET[p.ci]
+  if b then return "●", require("pr.ci").HL[b] end
   return "○", "Comment" -- no CI on this PR
 end
 
@@ -254,7 +255,7 @@ local generation = 0
 --- refetch only on explicit refresh). First open and R fetch.
 ---
 --- Two-phase load: the fast metadata list renders immediately, then the CI
---- states (the slow half - see data.ci) trail in and recolor the orbs.
+--- states (the slow half - see pr.ci.api) trail in and recolor the orbs.
 ---@param refresh? boolean
 function M.open(refresh)
   local root = data.root()
@@ -281,7 +282,7 @@ function M.open(refresh)
     render(prs)
     if vim.api.nvim_get_current_buf() == buf then focus_current() end
 
-    data.ci(root, function(map)
+    require("pr.ci").rollup_all(root, function(map)
       if gen ~= generation or not map or not (buf and vim.api.nvim_buf_is_valid(buf)) then return end
       local changed = false
       for _, p in ipairs(M.order) do

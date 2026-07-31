@@ -72,13 +72,19 @@ in
       "whisper.service"
       "tailscaled.service"
     ];
-    wants = [ "whisper.service" ];
+    wants = [
+      "whisper.service"
+      "tailscaled.service"
+    ];
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
+      ExecStartPre = "${pkgs.tailscale}/bin/tailscale wait --timeout=2m";
       ExecStart = "${pkgs.tailscale}/bin/tailscale serve --bg ${toString port}";
       ExecStop = "${pkgs.tailscale}/bin/tailscale serve reset";
+      Restart = "on-failure";
+      RestartSec = 5;
     };
   };
 }

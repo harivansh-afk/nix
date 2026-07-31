@@ -2,6 +2,9 @@
 -- Diff content always comes from LOCAL refs (see refspec below), never the network.
 -- `gh` is used only for PR metadata (titles, authors, base branch) and for
 -- the write verbs at the bottom of this file (draft, merge, close, checkout).
+--
+-- Checks, jobs and job logs are NOT here: they live in pr.ci.api, which is
+-- the one place that speaks to a forge's Actions API.
 
 local M = {}
 
@@ -120,8 +123,12 @@ end
 
 --- Ref -> sha, THE cache-key ingredient. One call per render buys automatic
 --- invalidation when a ref moves outside this plugin (fetch in a terminal).
-function M.resolve(root, ref)
-  local out = git { "-C", root, "rev-parse", "--short", ref }
+---
+--- `full` asks for the whole 40 chars: forge APIs match a head sha exactly
+--- (Forgejo's ?head_sha= filter does), so pr.ci needs the long form even
+--- though every cache key here is happier short.
+function M.resolve(root, ref, full)
+  local out = git { "-C", root, "rev-parse", full and "--verify" or "--short", ref }
   return out and out[1] or ref
 end
 
@@ -154,38 +161,11 @@ local function forge_json(cmd, root, forge, cb)
   end)
 end
 
---- One ci state from gh's statusCheckRollup (CheckRun {status, conclusion}
---- and StatusContext {state} entries mixed): any failure wins, any
---- in-flight check means pending, otherwise success. nil = no CI at all.
----@return "success"|"failure"|"pending"|nil
-local function ci_rollup(checks)
-  if type(checks) ~= "table" or #checks == 0 then return nil end
-  local state = "success"
-  for _, ch in ipairs(checks) do
-    local s = tostring(ch.conclusion or ch.state or ""):upper()
-    if ch.status and ch.status ~= "COMPLETED" then s = "PENDING" end
-    if s == "FAILURE" or s == "ERROR" or s == "TIMED_OUT" or s == "ACTION_REQUIRED" then return "failure" end
-    if s == "PENDING" or s == "EXPECTED" or s == "" then state = "pending" end
-    -- SKIPPED / NEUTRAL / CANCELLED / SUCCESS don't demote the rollup.
-  end
-  return state
-end
-
---- tea's `ci` field is the Gitea commit-status state as a string
---- ("success", "failure", "error", "pending", "warning", "" for none).
----@return "success"|"failure"|"pending"|nil
-local function ci_tea(s)
-  s = tostring(s or ""):lower()
-  if s == "success" then return "success" end
-  if s == "failure" or s == "error" then return "failure" end
-  if s == "pending" or s == "warning" then return "pending" end
-  return nil
-end
-
 --- PR list, forge-agnostic. Metadata only - async, never blocks the UI.
 --- Deliberately NO CI here: the status rollup is the slow half of the list
 --- call (measured: gh on neovim/neovim 0.8s bare -> 11s + HTTP 504 with
---- statusCheckRollup). M.ci fetches states behind the rendered list.
+--- statusCheckRollup). Every CI query lives in pr.ci.api instead, and
+--- pr.list paints the orbs from pr.ci.rollup_all behind this render.
 --- Results are normalized to the gh shape:
 ---   { number, title, author = { login }, baseRefName, headRefName,
 ---     isDraft, updatedAt }
@@ -239,31 +219,6 @@ function M.prs(root, cb)
       }
     end
     cb(prs)
-  end)
-end
-
---- CI states alone - the slow call M.prs skips. Returns number -> state.
----@param cb fun(ci?: table<integer, "success"|"failure"|"pending">, err?: string)
-function M.ci(root, cb)
-  local forge = M.forge(root)
-  local cmd
-  if forge == "gh" then
-    cmd = { "gh", "pr", "list", "--limit", "100", "--json", "number,statusCheckRollup" }
-  else
-    cmd = { "tea", "pr", "list", "--output", "json", "--limit", "100", "--fields", "index,ci" }
-  end
-
-  forge_json(cmd, root, forge, function(decoded, err)
-    if not decoded then return cb(nil, err) end
-    local map = {}
-    for _, p in ipairs(decoded) do
-      if forge == "gh" then
-        map[p.number] = ci_rollup(p.statusCheckRollup)
-      else
-        map[tonumber(p.index) or -1] = ci_tea(p.ci)
-      end
-    end
-    cb(map)
   end)
 end
 

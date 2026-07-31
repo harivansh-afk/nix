@@ -2,7 +2,8 @@
 --
 -- One row per file ("M path", letter semantics identical to fugitive),
 -- <Tab>/= expands the file's hunks inline, <CR> opens the real file out of a
--- PR worktree (pr.tree), dd/dv opens the full diffs.nvim review at that file.
+-- PR worktree (pr.tree), dd/dv opens the full diffs.nvim review at that file,
+-- G drops the live CI pane in under it (pr.ci.pane).
 -- The buffer is a pure function of require("pr").state plus the `expanded`
 -- set: every change rebuilds it wholesale.
 --
@@ -313,6 +314,7 @@ local HELP = {
   { "]f / [f", "next / prev file" },
   { "]c / [c", "next / prev commit" },
   { "]p / [p", "next / prev PR" },
+  { "G", "CI checks pane" },
   { "-", "PR list" },
   { "<leader>m", "cumulative <-> incremental" },
   { "<leader>gC", "pick commit" },
@@ -394,6 +396,10 @@ local function ensure_buf()
   vim.keymap.set("n", "[f", function() file_step(-1) end, o)
   vim.keymap.set("n", "R", function() require("pr").reload() end, o)
   vim.keymap.set("n", "-", function() require("pr.list").open() end, o)
+  -- G, buffer-local to THIS surface only: the CI pane belongs to a loaded
+  -- PR, and pr://list has no single PR to show checks for. Note that it
+  -- shadows goto-last-line here; ]f walks files and gg/{count}G still work.
+  vim.keymap.set("n", "G", function() require("pr.ci.pane").toggle() end, o)
   vim.keymap.set("n", "g?", help, o)
   vim.keymap.set("n", "q", "<cmd>silent! buffer #<cr>", o)
   require("pr.verbs").attach(buf)

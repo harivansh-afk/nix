@@ -31,6 +31,7 @@ map("n", "<c-p>", pr "list", { desc = "pr: PR list" })
 map("n", "]p", step_pr_or_builtin(1, "]p"), { desc = "pr: next PR / paste-indent" })
 map("n", "[p", step_pr_or_builtin(-1, "[p"), { desc = "pr: prev PR / paste-indent" })
 map("n", "<leader>gf", pr "files", { desc = "pr: files view" })
+map("n", "<leader>ci", pr "checks", { desc = "pr: CI checks pane" })
 map("n", "<leader>gC", pr "pick_commit", { desc = "pr: pick commit in PR" })
 map("n", "<leader>m", pr "toggle_mode", { desc = "pr: cumulative <-> incremental" })
 map("n", "<leader>gA", pr "whole", { desc = "pr: whole PR view" })
@@ -55,12 +56,22 @@ vim.api.nvim_create_autocmd("BufReadCmd", {
     mod.reload()
   end,
 })
+--- `:e` on the CI pane asks the forge again, which is exactly what R does.
+vim.api.nvim_create_autocmd("BufReadCmd", {
+  pattern = "pr://checks",
+  callback = function()
+    local pane = require "pr.ci.pane"
+    if pane.is_open() then return pane.refresh() end
+    pane.open()
+  end,
+})
 
 local SUBS = {
   list = "list",
   pick = "pick_pr",
   commit = "pick_commit",
   files = "files",
+  checks = "checks",
   mode = "toggle_mode",
   whole = "whole",
   reload = "reload",

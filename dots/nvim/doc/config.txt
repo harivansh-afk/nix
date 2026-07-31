@@ -56,7 +56,6 @@ Options: >
         rust_analyzer.lua
         ts_ls.lua
       plugins/
-        ci.lua                  ci.nvim GitHub Actions viewer
         editor.lua              Autopairs, surround, ufo, preview
         fzf.lua                 Fzf-lua fuzzy finder
         git.lua                 Fugitive, gitsigns, diffs.nvim
@@ -64,6 +63,8 @@ Options: >
         canola.lua              Canola file explorer
         treesitter.lua          Treesitter + textobjects
         ui.lua                  Cozybox, statusline, nonicons
+      pr/                       PR review flow (pr://list, pr://files)
+        ci/                     Checks pane and job logs (pr://checks)
       statusline.lua            Native statusline renderer
     after/
       plugin/
@@ -98,7 +99,6 @@ Plugins are declared with vim.pack and loaded through lz.n.
     tpope/vim-fugitive              Git commands
     lewis6991/gitsigns.nvim         Git gutter signs
     barrettruth/diffs.nvim          Diff highlighting
-    barrettruth/ci.nvim             GitHub Actions CI logs
 
     windwp/nvim-autopairs           Auto-close brackets
     kylechui/nvim-surround          Surround operations

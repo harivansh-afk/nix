@@ -29,6 +29,7 @@ local surface = require "pr.surface"
 local M = {}
 
 local function warn(msg) vim.notify("pr: " .. msg, vim.log.levels.WARN) end
+local function info(msg) vim.notify("pr: " .. msg, vim.log.levels.INFO) end
 
 --- One PAGE of history, not a ceiling. The log opens at a depth that covers
 --- "what landed lately", because every row costs one CI request and priming
@@ -142,7 +143,7 @@ S = surface.new {
     { "O", "open commit in browser" },
     { "+", "50 more commits" },
     { "-", "PR list" },
-    { "R / :e", "refresh" },
+    { "R / :e", "pull + refresh" },
     { "q", "back" },
   },
   render = render,
@@ -210,6 +211,39 @@ local function more()
   end
 end
 
+--- R / :e - re-read from ORIGIN, not just re-ask CI. `:e` on a real file
+--- rereads it from disk; the log's disk is the forge, and the log is of
+--- HEAD, so fresh forge state (the PR just merged in the browser) appears
+--- only once HEAD moves: a fast-forward pull on a branch, a plain fetch when
+--- detached (there is no branch to move). Renders what it has FIRST and
+--- pulls behind it - the buffer must never sit blank while the network
+--- answers - then re-reads at the depth + has bought, CI re-asked too.
+local function reload()
+  render()
+  local function done(verb)
+    return function(ok, err)
+      if not ok then warn(verb .. " failed: " .. (err or "")) end
+      -- Even a failed pull usually completed its fetch half; re-read either
+      -- way so the buffer reflects whatever DID change.
+      load(true)
+      if ok and verb == "pull" then
+        -- HEAD moved under every open buffer; reread the unmodified ones and
+        -- let fugitive surfaces notice, exactly as pr.tree does after a move.
+        pcall(vim.cmd, "silent! checktime")
+        pcall(vim.cmd, "silent! doautocmd User FugitiveChanged")
+      end
+    end
+  end
+  local h = data.head(M.root)
+  if h.branch then
+    info("pulling " .. h.branch .. "...")
+    data.pull(M.root, done "pull")
+  else
+    info "detached HEAD - fetching origin..."
+    data.fetch(M.root, done "fetch")
+  end
+end
+
 --- Open the commit log. Cached like pr://list: the first open and R fetch,
 --- anything else re-shows what is already there.
 ---
@@ -226,7 +260,11 @@ function M.open(ref, refresh)
   S:ensure()
   S:show()
 
-  if #M.commits > 0 and M.root == root and M.ref == ref and not refresh then return end
+  if #M.commits > 0 and M.root == root and M.ref == ref then
+    -- Warm buffer: plain open just shows it, R / :e goes back to origin.
+    if refresh then reload() end
+    return
+  end
 
   -- A new target starts shallow again; R keeps whatever depth + has bought.
   if M.root ~= root or M.ref ~= ref then depth = PAGE end

@@ -67,6 +67,23 @@ function M.fetch(root, cb)
   end)
 end
 
+--- Fast-forward the current branch from origin: what `:e` means on pr://log.
+--- The log is of HEAD, so a PR merged in the browser only appears once HEAD
+--- itself moves - a fetch alone updates origin/* and changes nothing on
+--- screen. --ff-only because a surface refresh must never CREATE history: a
+--- diverged branch fails loudly instead of minting a merge commit, and a
+--- dirty tree that conflicts with the incoming files is git's refusal to
+--- surface, not ours to guess at.
+---@param cb fun(ok: boolean, err?: string)
+function M.pull(root, cb)
+  vim.system({ "git", "-C", root, "pull", "--ff-only", "--prune" }, { text = true }, function(r)
+    vim.schedule(function()
+      M.clear_cache()
+      cb(r.code == 0, vim.trim(r.stderr or ""))
+    end)
+  end)
+end
+
 --- Ref -> sha, THE cache-key ingredient. One call per render buys automatic
 --- invalidation when a ref moves outside this plugin (fetch in a terminal).
 ---

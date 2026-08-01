@@ -5,62 +5,37 @@
 -- this file knows which forge answered:
 --
 --   { id?, name, workflow?, run_id?, url?, status, conclusion?,
---     started_at?, finished_at? }   -- *_at are epoch seconds
+--     started_at?, finished_at? }   -- *_at are TRUE epoch seconds (pr.fmt)
 --
--- GitHub answers a whole commit's checks in a single GraphQL round trip, job
--- ids included. Forgejo/Gitea has no such rollup, so it takes the two-step
--- REST path: the runs for a head sha, then each run's jobs. Both endpoints
--- were verified against Forgejo 16.
+-- Two depths exist per commit, and only Forgejo distinguishes them:
+--   M.runs    the run list for one sha, ONE request  - feeds an orb
+--   M.checks  full per-job detail                    - feeds the pane
+-- GitHub answers both in a single GraphQL round trip, so there M.runs IS
+-- M.checks. Forgejo's detail costs 1 + #runs requests, which a one-character
+-- orb must not pay fifty times over.
 --
--- Two query paths exist on purpose. M.rollup_all answers N PRs in ONE call
--- and is what the pr://list orbs read; M.checks answers ONE sha in full
--- detail and is what the pane reads. Feeding the list through M.checks would
--- be N round trips - the very cost pr.data.prs was split up to avoid.
+-- The Actions RUNS API is the only CI source this plugin trusts. The
+-- combined-status endpoint (/commits/{sha}/status) - which also backs the
+-- `ci` field of `tea pr list` - was measured lying in both directions on
+-- Forgejo 16: a commit whose update-flake-lock run FAILED reported
+-- state=success, because the crashed run never posted a commit status at
+-- all; and cancelled runs reported state=failure. Runs truth and status
+-- truth cannot be mixed, or two surfaces disagree about the same commit.
+
+local fmt = require "pr.fmt"
 
 local M = {}
 
--- --------------------------------------------------------------- plumbing ---
+--- Async plumbing from the one process engine. Captured as a bare local
+--- because `run` is what this file calls a workflow run everywhere below.
+local json = require("pr.run").json
 
---- ISO-8601 UTC -> epoch seconds, in the same skewed frame as M.now. Lua has
---- no portable "UTC fields -> epoch", so both sides go through os.time (which
---- reads its table as LOCAL time) with isdst pinned: the offsets then cancel
---- exactly and a subtraction of the two is a true elapsed time. See pr.fmt.ago.
----@return integer? epoch
-function M.epoch(iso)
-  local y, mo, d, h, mi, s = tostring(iso or ""):match "(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)"
-  if not y then return nil end
-  return os.time { year = y, month = mo, day = d, hour = h, min = mi, sec = s, isdst = false }
-end
+--- ISO -> true epoch. Kept as a named export because every caller of this
+--- module already speaks api.epoch; the arithmetic lives in pr.fmt.
+M.epoch = fmt.epoch
 
---- "Now", in M.epoch's frame.
-function M.now() return os.time(os.date "!*t") end
-
----@param cb fun(out?: string, err?: string)
-local function sh(cmd, root, cb)
-  vim.system(cmd, { cwd = root, text = true }, function(r)
-    vim.schedule(function()
-      if r.code ~= 0 then
-        local e = vim.trim(r.stderr or "")
-        if e == "" then e = vim.trim(r.stdout or "") end
-        -- Both CLIs answer API failures with a JSON body carrying `message`.
-        local ok, body = pcall(vim.json.decode, e)
-        if ok and type(body) == "table" and body.message then e = body.message end
-        return cb(nil, e ~= "" and e or ("exited with code " .. r.code))
-      end
-      cb(r.stdout or "")
-    end)
-  end)
-end
-
----@param cb fun(data?: table, err?: string)
-local function json(cmd, root, cb)
-  sh(cmd, root, function(out, err)
-    if err then return cb(nil, err) end
-    local ok, decoded = pcall(vim.json.decode, out, { luanil = { object = true, array = true } })
-    if not ok or type(decoded) ~= "table" then return cb(nil, "malformed JSON from the forge") end
-    cb(decoded)
-  end)
-end
+--- True unix now - the frame every *_at above is in.
+function M.now() return os.time() end
 
 --- `{owner}`/`{repo}` are placeholders BOTH CLIs expand from the checkout, so
 --- no path here has to know the slug. On gh they expand to the BASE repo,
@@ -191,10 +166,20 @@ local function tea_jobs_of_run(root, run, cb)
   end)
 end
 
-local function tea_checks(root, sha, cb)
+--- The run list for one head sha - the single-request read the orbs pay for.
+--- Forgejo filters ?head_sha= by EXACT string, so callers must hand over the
+--- full 40 chars (pr.data rows carry `full` for precisely this).
+---@param cb fun(runs?: table[], err?: string)  { status, conclusion } each
+local function tea_runs(root, sha, cb)
   json(tea_api("/repos/{owner}/{repo}/actions/runs?head_sha=" .. sha), root, function(data, err)
     if err then return cb(nil, err) end
-    local runs = (data or {}).workflow_runs or {}
+    cb((data or {}).workflow_runs or {})
+  end)
+end
+
+local function tea_checks(root, sha, cb)
+  tea_runs(root, sha, function(runs, err)
+    if err then return cb(nil, err) end
     if #runs == 0 then return cb {} end
     -- Fan out over the runs and answer once the last one lands. A PR has one
     -- or two workflows in practice, so this is not a fan-out worth batching.
@@ -247,50 +232,34 @@ function M.job_steps(root, forge, id, cb)
   end)
 end
 
---- One rollup state per open PR: the cheap call the pr://list orbs read.
---- gh's statusCheckRollup mixes CheckRun {status, conclusion} with
---- StatusContext {state}: any failure wins, any in-flight check means
---- pending, otherwise success. nil = no CI at all on that PR.
----@return "success"|"failure"|"pending"|nil
-local function rollup_state(checks)
-  if type(checks) ~= "table" or #checks == 0 then return nil end
-  local state = "success"
-  for _, ch in ipairs(checks) do
-    local s = tostring(ch.conclusion or ch.state or ""):upper()
-    if ch.status and ch.status ~= "COMPLETED" then s = "PENDING" end
-    if s == "FAILURE" or s == "ERROR" or s == "TIMED_OUT" or s == "ACTION_REQUIRED" then return "failure" end
-    if s == "PENDING" or s == "EXPECTED" or s == "" then state = "pending" end
-    -- SKIPPED / NEUTRAL / CANCELLED / SUCCESS don't demote the rollup.
+--- The cheapest TRUTHFUL read of one commit's CI: full job detail where one
+--- request already buys it (GitHub's GraphQL), run-level summaries where
+--- detail would cost 1 + #runs requests (Forgejo). `detail` reports which
+--- arrived, so the store knows whether a pane can be served from this or
+--- must escalate to M.checks.
+---
+--- Items are always job-shaped ({ name, status, conclusion, url, *_at }); a
+--- Forgejo run stands in as one item wearing its workflow's name.
+---@param forge "gh"|"tea"
+---@param cb fun(items?: table[], detail?: boolean, err?: string)
+function M.summary(root, forge, sha, cb)
+  if forge == "gh" then
+    return gh_checks(root, sha, function(jobs, err) cb(jobs, true, err) end)
   end
-  return state
-end
-
---- tea's `ci` field is the Gitea commit-status state as a bare string
---- ("success", "failure", "error", "pending", "warning", "" for none).
-local function tea_state(s)
-  s = tostring(s or ""):lower()
-  if s == "success" then return "success" end
-  if s == "failure" or s == "error" then return "failure" end
-  if s == "pending" or s == "warning" then return "pending" end
-  return nil
-end
-
---- PR number -> rollup state, for every open PR, in one call.
----@param cb fun(map?: table<integer, string>, err?: string)
-function M.rollup_all(root, forge, cb)
-  local cmd = forge == "gh" and { "gh", "pr", "list", "--limit", "100", "--json", "number,statusCheckRollup" }
-    or { "tea", "pr", "list", "--output", "json", "--limit", "100", "--fields", "index,ci" }
-  json(cmd, root, function(rows, err)
-    if not rows then return cb(nil, err) end
-    local map = {}
-    for _, p in ipairs(rows) do
-      if forge == "gh" then
-        map[p.number] = rollup_state(p.statusCheckRollup)
-      else
-        map[tonumber(p.index) or -1] = tea_state(p.ci)
-      end
+  tea_runs(root, sha, function(runs, err)
+    if not runs then return cb(nil, nil, err) end
+    local items = {}
+    for _, r in ipairs(runs) do
+      items[#items + 1] = {
+        name = tostring(r.workflow_id or "?"):gsub("%.ya?ml$", ""),
+        status = r.status,
+        conclusion = r.conclusion,
+        url = r.html_url,
+        started_at = M.epoch(r.started),
+        finished_at = M.epoch(r.stopped),
+      }
     end
-    cb(map)
+    cb(items, false)
   end)
 end
 

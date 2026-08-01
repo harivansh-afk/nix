@@ -28,6 +28,7 @@ local function step_pr_or_builtin(delta, key)
 end
 
 map("n", "<c-p>", pr "list", { desc = "pr: PR list" })
+map("n", "<leader>gl", pr "log", { desc = "pr: commit log" })
 map("n", "]p", step_pr_or_builtin(1, "]p"), { desc = "pr: next PR / paste-indent" })
 map("n", "[p", step_pr_or_builtin(-1, "[p"), { desc = "pr: prev PR / paste-indent" })
 map("n", "<leader>gf", pr "files", { desc = "pr: files view" })
@@ -46,6 +47,10 @@ map("n", "[c", step_or_builtin(-1, "[c"), { desc = "pr: prev commit / diff jump"
 vim.api.nvim_create_autocmd("BufReadCmd", {
   pattern = "pr://list",
   callback = function() require("pr.list").open(true) end,
+})
+vim.api.nvim_create_autocmd("BufReadCmd", {
+  pattern = "pr://log",
+  callback = function() require("pr.log").open(nil, true) end,
 })
 vim.api.nvim_create_autocmd("BufReadCmd", {
   pattern = "pr://files",
@@ -68,6 +73,8 @@ vim.api.nvim_create_autocmd("BufReadCmd", {
 
 local SUBS = {
   list = "list",
+  log = "log",
+  clean = "clean",
   pick = "pick_pr",
   commit = "pick_commit",
   files = "files",
@@ -76,7 +83,6 @@ local SUBS = {
   whole = "whole",
   reload = "reload",
   refspec = "refspec",
-  clean = "clean",
 }
 
 --- Every verb is a subcommand too (:PR merge, :PR draft, ...), resolved out

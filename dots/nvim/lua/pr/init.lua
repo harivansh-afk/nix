@@ -91,6 +91,24 @@ function M.load(root, pr)
   end)
 end
 
+--- Point the flow at ONE landed commit, from pr://log. The state machine is
+--- the same as a PR's with a single commit in it, so every gesture on
+--- pr://files works unchanged - the only absent thing is `pr`, which the
+--- header renders around (see pr.view) and pr.tree keys its worktree on.
+---
+--- "incremental" is what a landed commit means: sha^..sha, what THIS commit
+--- changed, exactly the mode `]c` produces inside a PR.
+---@param commit table  a row from pr.data.log
+function M.load_commit(root, commit)
+  S.root, S.pr = root, nil
+  S.base = commit.sha .. "^"
+  S.target = commit.sha
+  S.commits = { commit }
+  S.idx = 1
+  S.mode = "incremental"
+  M.render()
+end
+
 --- Re-read the loaded PR from the remote: what `:e` and `R` mean on
 --- pr://files. `:e` on a real file rereads it from disk, so on a PR buffer
 --- it rereads the PR from origin - a force-push or a new commit lands here.
@@ -100,6 +118,9 @@ end
 function M.reload()
   if #S.commits == 0 then return warn "no PR loaded - <c-p> first" end
   M.render()
+  -- A landed commit is immutable: there is no remote state for a re-fetch to
+  -- discover, so `:e` on one is just the re-render above.
+  if not S.pr then return end
   local at = S.commits[S.idx] and S.commits[S.idx].sha
   info("refreshing #" .. S.pr.number .. "...")
   data.fetch(S.root, function(ok, err) -- clears every diff cache on the way
@@ -120,6 +141,10 @@ end
 -- --------------------------------------------------------------- pickers ---
 
 function M.list() require("pr.list").open() end
+
+--- The commit log of the default branch (pr://log) - the landed counterpart
+--- to pr://list's open work.
+function M.log() require("pr.log").open() end
 
 function M.pick_pr() require("pr.pick").pr() end
 

@@ -25,73 +25,19 @@ local function strip_wip(title)
   return title or "", false
 end
 
--- ------------------------------------------------------------------ cache ---
--- The diff between two commits is immutable, so every entry is keyed on
--- RESOLVED shas (never ref names): when origin/<base> or origin/pr/N moves,
+-- ---------------------------------------------------------------- running ---
+-- All process plumbing lives in pr.run - one engine for this file, pr.ci.api
+-- and anyone else who forks a subprocess. What stays here is the DOMAIN: the
+-- diff between two commits is immutable, so every cached slot is keyed on
+-- RESOLVED shas (never ref names); when origin/<base> or origin/pr/N moves,
 -- new shas mean new keys and stale entries are simply never hit again -
--- invalidation is structural, not bookkeeping. M.fetch clears outright (the
--- one place this plugin moves refs) and the size cap clears wholesale;
--- both are memory valves, not correctness requirements.
+-- invalidation is structural, not bookkeeping. M.fetch clears outright, the
+-- one place this plugin moves refs.
 
-local cache, cache_n = {}, 0
-local CACHE_MAX = 512
+local run = require "pr.run"
+local git, spawn, await = run.git, run.spawn, run.await
 
-local function put(key, val)
-  if cache_n >= CACHE_MAX then
-    cache, cache_n = {}, 0
-  end
-  cache[key], cache_n = val, cache_n + 1
-  return val
-end
-
---- Global flags on EVERY git call, stolen from fugitive's status runner:
---- never take the optional index lock for a read, and never octal-quote
---- non-ASCII paths (paths here must match buffer rows byte-for-byte).
-local GIT = { "git", "--no-optional-locks", "-c", "core.quotePath=false" }
-
----@param args string[]
----@return string[]? lines, string? err
-local function git(args)
-  local out = vim.fn.systemlist(vim.list_extend(vim.deepcopy(GIT), args))
-  if vim.v.shell_error ~= 0 then return nil, table.concat(out or {}, "\n") end
-  return out
-end
-
--- ------------------------------------------------------------------- jobs ---
--- Fugitive's core perf move (fugitive#Execute + fugitive#Wait): START a git
--- call the moment it is known to be needed, BLOCK only when the answer is
--- consumed. spawn() begins filling a cache slot in the background; await()
--- is the sync read, riding an in-flight job instead of forking a second
--- process. The view warms the slots the next keystroke will need.
-
-local jobs = {} ---@type table<string, {obj: vim.SystemObj, settle: fun(r: vim.SystemCompleted)}>
-
----@param key string cache slot the job fills
----@param args string[] git args
----@param parse fun(lines: string[]): any pure Lua - on_exit is a fast context
-local function spawn(key, args, parse)
-  if cache[key] ~= nil or jobs[key] then return end
-  local job = {}
-  job.settle = function(r)
-    if jobs[key] ~= job then return end -- clear_cache dropped this job
-    jobs[key] = nil
-    if r.code == 0 then put(key, parse(vim.split(r.stdout or "", "\n", { trimempty = true }))) end
-  end
-  jobs[key] = job
-  job.obj = vim.system(vim.list_extend(vim.deepcopy(GIT), args), { text = true }, job.settle)
-end
-
---- Cache read that first waits for (and settles) the in-flight job, if any.
---- settle is idempotent, so racing git's own on_exit is harmless.
-local function await(key)
-  local job = jobs[key]
-  if job then job.settle(job.obj:wait()) end
-  return cache[key]
-end
-
-function M.clear_cache()
-  cache, cache_n, jobs = {}, 0, {}
-end
+function M.clear_cache() run.clear() end
 
 ---@return string? root
 function M.root()
@@ -165,7 +111,7 @@ end
 --- Deliberately NO CI here: the status rollup is the slow half of the list
 --- call (measured: gh on neovim/neovim 0.8s bare -> 11s + HTTP 504 with
 --- statusCheckRollup). Every CI query lives in pr.ci.api instead, and
---- pr.list paints the orbs from pr.ci.rollup_all behind this render.
+--- pr.list lights the orbs from the pr.ci store behind this render.
 --- Results are normalized to the gh shape:
 ---   { number, title, author = { login }, baseRefName, headRefName,
 ---     isDraft, updatedAt }
@@ -222,24 +168,59 @@ function M.prs(root, cb)
   end)
 end
 
+--- The one `git log` line this plugin reads, and its parser: a commit from a
+--- PR range and a commit from a branch log are the SAME table, and every
+--- consumer downstream works on either without knowing which.
+--- `sha` is the short display form; `full` exists because forge APIs
+--- filter on the EXACT sha string (Forgejo's ?head_sha= does) and must never
+--- be handed an abbreviation. `ago` is git's own relative string ("24 hours
+--- ago"), which the fzf commit picker shows in full; `ts` is the same instant
+--- as unix seconds for the four-cell age column (pr.fmt.since).
+local LOG_FORMAT = "--format=%h\t%H\t%an\t%ar\t%at\t%s"
+
+---@return table[] commits  { sha, full, author, ago, ts, subject }
+local function parse_log(out)
+  local commits = {}
+  for _, line in ipairs(out or {}) do
+    local sha, full, an, ar, at, subject = line:match "^(%S+)\t(%S+)\t(.-)\t(.-)\t(%d*)\t(.*)$"
+    if sha then
+      commits[#commits + 1] = { sha = sha, full = full, author = an, ago = ar, ts = tonumber(at), subject = subject }
+    end
+  end
+  return commits
+end
+
 --- Commits of a PR, OLDEST FIRST so index 1 is the first commit authored
 --- (matches GitHub's Commits tab, and makes `]c` walk toward the tip).
 ---@return table[] commits  { sha, author, ago, subject }
 function M.commits(root, base, target)
-  local out = git {
-    "-C",
-    root,
-    "log",
-    "--reverse",
-    "--format=%h\t%an\t%ar\t%s",
-    base .. ".." .. target,
-  } or {}
-  local commits = {}
+  return parse_log(git { "-C", root, "log", "--reverse", LOG_FORMAT, base .. ".." .. target })
+end
+
+--- The latest commits on a ref, NEWEST FIRST - the reading order of a log,
+--- and deliberately the opposite of M.commits, which is oldest-first because
+--- `]c` walks a PR toward its tip. Same row shape either way.
+---@param ref string  branch, tag, or any rev
+---@param n integer
+---@return table[] commits
+function M.log(root, ref, n) return parse_log(git { "-C", root, "log", "--max-count=" .. n, LOG_FORMAT, ref }) end
+
+--- Every PR head sha this repo knows locally, in ONE git call. The pull
+--- refspec keeps refs/remotes/origin/pr/N current, so this is how pr://list
+--- gets a sha per PR without a network round trip per row. A PR opened since
+--- the last fetch is simply absent - the caller decides whether that is
+--- worth a fetch.
+---@return table<integer, string> number -> full sha
+function M.pr_heads(root)
+  -- A space separator, NOT %00: vim.fn.systemlist replaces NUL bytes with
+  -- SOH (:help system()), so a %00 field split silently never matches.
+  local out = git { "-C", root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/remotes/origin/pr" } or {}
+  local map = {}
   for _, line in ipairs(out) do
-    local sha, an, ar, subject = line:match "^(%S+)\t(.-)\t(.-)\t(.*)$"
-    if sha then commits[#commits + 1] = { sha = sha, author = an, ago = ar, subject = subject } end
+    local n, sha = line:match "^refs/remotes/origin/pr/(%d+) (%x+)$"
+    if n then map[tonumber(n)] = sha end
   end
-  return commits
+  return map
 end
 
 --- The two things `]c` can mean. This is the core semantic of the whole flow.
@@ -577,18 +558,33 @@ function M.worktree_list(root)
   return paths
 end
 
---- Browser URL for a PR, derived from origin - no subprocess round trip to
---- `gh pr view --web` just to learn a URL we already know. Both scp-style
---- (git@host:owner/repo) and ssh:// remotes normalize to https.
----@return string? url
-function M.web_url(root, number)
+--- origin as a browsable https base. Both scp-style (git@host:owner/repo) and
+--- ssh:// remotes normalize; anything that does not end up http(s) is not a
+--- URL we can open and comes back nil.
+---@return string? base
+local function web_base(root)
   local out = git { "-C", root, "remote", "get-url", "origin" }
   local url = out and out[1]
   if not url then return nil end
   url = url:gsub("%.git$", ""):gsub("^ssh://git@", "https://"):gsub("^git@([^:]+):", "https://%1/")
-  if not url:find "^https?://" then return nil end
+  return url:find "^https?://" and url or nil
+end
+
+--- Browser URL for a PR, derived from origin - no subprocess round trip to
+--- `gh pr view --web` just to learn a URL we already know.
+---@return string? url
+function M.web_url(root, number)
+  local base = web_base(root)
+  if not base then return nil end
   -- github.com/o/r/pull/N vs gitea/forgejo o/r/pulls/N.
-  return url .. (M.forge(root) == "gh" and "/pull/" or "/pulls/") .. number
+  return base .. (M.forge(root) == "gh" and "/pull/" or "/pulls/") .. number
+end
+
+--- Browser URL for a commit. Unlike PRs, both forges spell this the same way.
+---@return string? url
+function M.commit_url(root, sha)
+  local base = web_base(root)
+  return base and (base .. "/commit/" .. sha) or nil
 end
 
 return M

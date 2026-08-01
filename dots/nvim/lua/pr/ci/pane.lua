@@ -358,14 +358,23 @@ local function ensure_buf()
   vim.keymap.set("n", "g?", function() fmt.help(" pr checks ", HELP) end, o)
 end
 
---- Subscribe to the head commit of the loaded PR. The PR head is what CI
---- actually runs on, so the pane does NOT follow ]c / [c: most commits in a
---- PR were never pushed on their own and have no checks of their own either.
+--- Subscribe to what the loaded review actually runs CI on. For a PR that is
+--- its HEAD commit - the pane does NOT follow ]c / [c, because most commits
+--- in a PR were never pushed on their own and have no checks of their own.
+--- For a landed commit out of pr://log there is no PR: the commit IS the
+--- thing CI ran on, so the pane keys on it directly - the same store entry
+--- its orb in the log reads, upgraded to per-job detail by the watch.
 ---@return boolean ok
 local function subscribe()
   local s = require("pr").state
-  if not (s.root and s.pr) then return false end
-  local head = data.resolve(s.root, data.ref(s.pr.number), true)
+  if not s.root then return false end
+  local head
+  if s.pr then
+    head = data.resolve(s.root, data.ref(s.pr.number), true)
+  else
+    local c = s.commits[s.idx]
+    head = c and (c.full or data.resolve(s.root, c.sha, true))
+  end
   if not head or head == "" then return false end
   if unwatch and sha == head and root == s.root then return true end
   if unwatch then unwatch() end
@@ -383,7 +392,7 @@ local function subscribe()
 end
 
 function M.open()
-  if not subscribe() then return warn "no PR loaded - <c-p> first" end
+  if not subscribe() then return warn "nothing loaded - <c-p> first" end
   ensure_buf()
   local win = pane_win()
   if win then return vim.api.nvim_set_current_win(win) end

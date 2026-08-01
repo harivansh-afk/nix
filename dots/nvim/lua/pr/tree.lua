@@ -49,12 +49,29 @@ local function state() return require("pr").state end
 ---@return string
 function M.path_for(root, number) return root .. "/.worktrees/pr-" .. number end
 
---- The worktree for the loaded PR, or nil when no PR is loaded.
+--- The worktree for whatever is under review, or nil when nothing is.
+---
+--- A PR is keyed on its number and the worktree MOVES as `]c` walks its
+--- commits; a landed commit out of pr://log has no number, so it is keyed on
+--- its own sha instead.
+---
+--- The `pr-commit-<sha>` spelling is deliberate and must stay this exact
+--- shape: `.worktrees/` is shared with hand-made topic worktrees, and this
+--- repo already has ones called pr-verbs, pr-seg and pr-automerge. M.clean
+--- matches `pr-<digits>` and `pr-commit-<hex>` and nothing else, so a topic
+--- worktree whose name merely starts with "pr-" can never be swept up.
 ---@return string?
 function M.path()
   local s = state()
-  if not (s.root and s.pr) then return nil end
-  return M.path_for(s.root, s.pr.number)
+  if not s.root then return nil end
+  if s.pr then return M.path_for(s.root, s.pr.number) end
+  local c = s.commits[s.idx]
+  return c and (s.root .. "/.worktrees/pr-commit-" .. c.sha) or nil
+end
+
+--- Is this worktree one of ours? See the naming note on M.path.
+local function ours(wt)
+  return wt:match "/%.worktrees/pr%-%d+$" ~= nil or wt:match "/%.worktrees/pr%-commit%-%x+$" ~= nil
 end
 
 --- Is the PR already materialised at the commit under review? The common case
@@ -80,7 +97,10 @@ end
 function M.ensure(cb)
   local s = state()
   local c = s.commits[s.idx]
-  if not (s.root and c and s.pr) then return warn "no PR loaded - <c-p> first" end
+  if not (s.root and c) then return warn "nothing loaded - <c-p> first" end
+  --- "#123" for a PR, the bare sha for a landed commit: what to call the
+  --- thing being materialised, in the messages below.
+  local what = s.pr and ("#" .. s.pr.number) or c.sha
   local wt = M.path()
 
   if M.at() then return cb(wt) end
@@ -98,7 +118,7 @@ function M.ensure(cb)
   end
 
   if not vim.uv.fs_stat(wt) then
-    info(("materialising #%d @ %s..."):format(s.pr.number, c.sha))
+    info(("materialising %s @ %s..."):format(what, c.sha))
     return data.worktree_add(s.root, wt, c.sha, done(false))
   end
 
@@ -108,7 +128,7 @@ function M.ensure(cb)
   if data.dirty(wt) then
     return warn(("%s has changes - :PR clean, or commit them"):format(vim.fn.fnamemodify(wt, ":~")))
   end
-  info(("moving #%d to %s..."):format(s.pr.number, c.sha))
+  info(("moving %s to %s..."):format(what, c.sha))
   data.detach(wt, c.sha, done(true))
 end
 
@@ -154,7 +174,7 @@ function M.clean()
   if not root then return warn "not in a git repository" end
   local found = {}
   for _, wt in ipairs(data.worktree_list(root)) do
-    if wt:match "/%.worktrees/pr%-%d+$" then found[#found + 1] = wt end
+    if ours(wt) then found[#found + 1] = wt end
   end
   if #found == 0 then
     data.worktree_prune(root)

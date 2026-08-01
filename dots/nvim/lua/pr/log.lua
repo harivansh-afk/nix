@@ -30,13 +30,17 @@ local M = {}
 
 local function warn(msg) vim.notify("pr: " .. msg, vim.log.levels.WARN) end
 
---- How much history to show. Deep enough to cover "what landed lately" for
---- any repo worth watching, shallow enough that the CI fan-out stays bounded.
-local COUNT = 50
+--- One PAGE of history, not a ceiling. The log opens at a depth that covers
+--- "what landed lately", because every row costs one CI request and priming
+--- five hundred ancient commits' orbs is pure waste - and grows by another
+--- page each `+`, priming only the new rows (older entries usually answer
+--- from the store anyway).
+local PAGE = 50
 
 M.commits = {} ---@type table[] rows in display order, newest first
 M.root = nil ---@type string?
 M.ref = nil ---@type string?
+local depth = PAGE
 
 --- Declared before `render`, built at the bottom - see the note in pr.list.
 local S ---@type pr.Surface
@@ -136,6 +140,7 @@ S = surface.new {
     { "dd / dv", "full review of this commit" },
     { "G", "CI checks pane for this commit" },
     { "O", "open commit in browser" },
+    { "+", "50 more commits" },
     { "-", "PR list" },
     { "R / :e", "refresh" },
     { "q", "back" },
@@ -148,10 +153,62 @@ S = surface.new {
     vim.keymap.set("n", "dv", dive, o)
     vim.keymap.set("n", "G", checks, o)
     vim.keymap.set("n", "O", web, o)
+    vim.keymap.set("n", "+", function() M.more() end, o)
     vim.keymap.set("n", "R", function() M.open(nil, true) end, o)
     vim.keymap.set("n", "-", function() require("pr.list").open() end, o)
   end,
 }
+
+--- Light the orbs for `commits` from the store. Each landing repaints, which
+--- is cheap (the line count never changes, so the cursor holds) and means
+--- the log fills in progressively rather than waiting on the slowest answer.
+---@param commits table[]  the rows to prime - a page, never the whole log
+---@param gen integer
+---@param force? boolean
+local function light_orbs(root, commits, gen, force)
+  local shas, by_sha = {}, {}
+  for _, c in ipairs(commits) do
+    shas[#shas + 1] = c.full
+    by_sha[c.full] = c
+  end
+  require("pr.ci").prime(root, shas, function(sha, entry)
+    if not S:current(gen) then return end
+    local c = by_sha[sha]
+    if c and c.ci ~= entry.rollup then
+      c.ci = entry.rollup
+      render()
+    end
+  end, { force = force })
+end
+
+--- Load the log to the current depth and render. The one loader open and
+--- `+` share; `only` narrows the CI priming to rows that are actually new.
+---@param force? boolean  re-ask the forge even for cached entries (R)
+local function load(force)
+  local gen = S:bump()
+  local commits = data.log(M.root, M.ref, depth)
+  if #commits == 0 then return S:placeholder("no commits on " .. M.ref) end
+  local grew = #commits > #M.commits
+  local from = #M.commits
+  M.commits = commits
+  render()
+  -- On R everything re-primes; on + only the page that just appeared pays
+  -- (the earlier rows' entries are already in the store and answer free).
+  light_orbs(M.root, force and commits or vim.list_slice(commits, from + 1), gen, force)
+  return grew
+end
+
+--- +: another page of history. The log opens shallow because every row costs
+--- one CI request; depth is bought a page at a time, and sticks until the
+--- log is pointed somewhere else.
+local function more()
+  if not M.root then return end
+  depth = depth + PAGE
+  if not load(false) then
+    depth = #M.commits -- the ref ran out: do not creep past reality
+    warn("no commits past " .. #M.commits .. " on " .. M.ref)
+  end
+end
 
 --- Open the commit log. Cached like pr://list: the first open and R fetch,
 --- anything else re-shows what is already there.
@@ -171,31 +228,13 @@ function M.open(ref, refresh)
 
   if #M.commits > 0 and M.root == root and M.ref == ref and not refresh then return end
 
+  -- A new target starts shallow again; R keeps whatever depth + has bought.
+  if M.root ~= root or M.ref ~= ref then depth = PAGE end
   M.root, M.ref = root, ref
-  local gen = S:bump()
-
-  local commits = data.log(root, ref, COUNT)
-  if #commits == 0 then return S:placeholder("no commits on " .. ref) end
-  M.commits = commits
-  render()
-
-  -- Orbs trail in from the store. Each landing repaints, which is cheap (the
-  -- line count never changes, so the cursor holds) and means the log fills
-  -- in progressively rather than staying grey until the slowest answer.
-  local shas, by_sha = {}, {}
-  for _, c in ipairs(commits) do
-    shas[#shas + 1] = c.full
-    by_sha[c.full] = c
-  end
-
-  require("pr.ci").prime(root, shas, function(sha, entry)
-    if not S:current(gen) then return end
-    local c = by_sha[sha]
-    if c and c.ci ~= entry.rollup then
-      c.ci = entry.rollup
-      render()
-    end
-  end, { force = refresh })
+  M.commits = {}
+  load(refresh)
 end
+
+M.more = more
 
 return M

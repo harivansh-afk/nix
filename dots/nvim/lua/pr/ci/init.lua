@@ -3,14 +3,27 @@
 -- Entries are keyed on the COMMIT SHA, never the PR number, for the same
 -- reason pr.data keys its diff caches on resolved shas: a force-push means a
 -- new sha means a new key, so invalidation is structural rather than
--- bookkeeping. The pane and the pr://list orbs both read this store, so the
--- two surfaces cannot disagree about a check.
+-- bookkeeping.
+--
+-- THE invariant: this store is the only CI truth in the plugin. A pr://list
+-- orb is the rollup of the PR's head-sha entry, a pr://log orb is the rollup
+-- of that commit's entry, and the pane renders the same entry's jobs - so no
+-- two surfaces can disagree about the same commit, ever. (They used to: the
+-- orbs read the forge's combined-status endpoint, which was measured lying
+-- in both directions on Forgejo - see the note in pr.ci.api.)
+--
+-- An entry has two depths. `prime` fills it a whole surface at a time with
+-- the cheapest truthful read (one request per sha, bounded fan-out,
+-- incremental); `watch` - the pane - escalates to full per-job detail and
+-- polls while anything is in flight. Depth is a property of the ENTRY
+-- (e.detail), so an escalated entry serves later orbs for free.
 --
 -- Nothing here draws. pr.ci.pane renders an entry; this decides what an
 -- entry IS and when it is worth asking the forge again.
 
 local api = require "pr.ci.api"
 local data = require "pr.data"
+local run = require "pr.run"
 
 local M = {}
 
@@ -119,6 +132,7 @@ end
 ---@field root string
 ---@field state "loading"|"ready"|"error"
 ---@field err string?
+---@field detail boolean  jobs are the real per-job list, not run summaries
 ---@field jobs table[]
 ---@field counts table<string, integer>
 ---@field rollup string?  worst bucket present
@@ -222,20 +236,44 @@ local function summarize(entry, jobs)
   entry.jobs, entry.counts, entry.rollup = jobs, counts, worst
 end
 
+--- The store never grows without bound: primed entries linger as cache (a
+--- re-opened log reads them instantly), so a long session walking many repos
+--- needs a valve. Watched entries are live state, never dropped.
+local ENTRIES_MAX = 512
+
+local function ensure(root, sha)
+  local e = entries[sha]
+  if e then return e end
+  local n = 0
+  for _ in pairs(entries) do
+    n = n + 1
+  end
+  if n >= ENTRIES_MAX then
+    for k in pairs(entries) do
+      if not watching(k) then
+        stop(k)
+        entries[k], gens[k] = nil, nil
+      end
+    end
+  end
+  e = { sha = sha, root = root, state = "loading", detail = false, jobs = {}, counts = {} }
+  entries[sha] = e
+  return e
+end
+
 --- A generation counter per sha drops a response that lands after the answer
 --- it would overwrite - the same guard pr.list uses across an R mid-flight.
 function fetch(root, sha)
   gens[sha] = (gens[sha] or 0) + 1
   local gen = gens[sha]
-  local e = entries[sha] or { sha = sha, root = root, state = "loading", jobs = {}, counts = {} }
-  entries[sha] = e
+  local e = ensure(root, sha)
   api.checks(root, data.forge(root), sha, function(jobs, err)
     if gens[sha] ~= gen then return end
     e.fetched_at = api.now()
     if err then
       e.state, e.err = "error", err
     else
-      e.state, e.err = "ready", nil
+      e.state, e.err, e.detail = "ready", nil, true
       summarize(e, jobs or {})
     end
     notify(sha)
@@ -246,6 +284,10 @@ end
 
 --- Watch a commit's checks. `cb(entry)` fires on the first answer and on
 --- every change after it; the returned function unsubscribes.
+---
+--- Watching is the DETAIL depth: an entry primed with run summaries is
+--- served immediately (the pane shows run rows rather than nothing) and
+--- escalated to per-job detail in the same breath.
 ---@param cb fun(entry: pr.ci.Entry)
 ---@return fun() unwatch
 function M.watch(root, sha, cb)
@@ -259,7 +301,11 @@ function M.watch(root, sha, cb)
     vim.schedule(function()
       if subs[sha] and subs[sha][id] then cb(e) end
     end)
-    schedule(sha)
+    if e.detail then
+      schedule(sha)
+    else
+      fetch(root, sha)
+    end
   else
     fetch(root, sha)
   end
@@ -278,11 +324,58 @@ function M.get(sha) return entries[sha] end
 --- and `:e` mean on the pane.
 function M.refresh(root, sha) return fetch(root, sha) end
 
---- PR number -> rollup state for every open PR, in one call. The pr://list
---- orbs read this; see the note in pr.ci.api about why it is a separate path
---- from the per-sha detail.
----@param cb fun(map?: table<integer, string>, err?: string)
-function M.rollup_all(root, cb) api.rollup_all(root, data.forge(root), cb) end
+-- ------------------------------------------------------------------ prime ---
+
+--- Fill the store for a whole surface of commits, incrementally: one cheap
+--- truthful request per sha (see pr.ci.api.summary), bounded fan-out through
+--- pr.run.pump, `on_change(sha, entry)` per landing so orbs light up row by
+--- row instead of the surface waiting on its slowest answer.
+---
+--- There is no batch endpoint for this on either forge - a set of arbitrary
+--- commits has to be asked about one at a time. Entries already in the store
+--- answer for free unless `force` (what R means on a surface): re-open reads
+--- cache, refresh re-asks.
+---
+--- Shas must be FULL - Forgejo's ?head_sha= filters by exact string.
+---@param shas string[]
+---@param on_change fun(sha: string, entry: pr.ci.Entry)
+---@param opts? {force?: boolean, done?: fun()}
+function M.prime(root, shas, on_change, opts)
+  opts = opts or {}
+  local forge = data.forge(root)
+  local want = {}
+  for _, sha in ipairs(shas) do
+    local e = entries[sha]
+    if e and e.detail and watching(sha) then
+      -- The pane owns this sha: it polls, and a cheap re-fill would DOWNGRADE
+      -- its per-job entry to run summaries mid-look. Serve what it has.
+      on_change(sha, e)
+    elseif opts.force or not e or e.state ~= "ready" then
+      want[#want + 1] = sha
+    else
+      on_change(sha, e) -- cache answers NOW, not on some later landing
+    end
+  end
+
+  run.pump(want, function(sha, land)
+    gens[sha] = (gens[sha] or 0) + 1
+    local gen = gens[sha]
+    api.summary(root, forge, sha, function(items, detail, err)
+      land()
+      if gens[sha] ~= gen then return end
+      local e = ensure(root, sha)
+      e.fetched_at = api.now()
+      if err then
+        e.state, e.err = "error", err
+      else
+        e.state, e.err, e.detail = "ready", nil, detail or false
+        summarize(e, items or {})
+      end
+      notify(sha)
+      on_change(sha, e)
+    end)
+  end, opts.done)
+end
 
 -- ------------------------------------------------------------------ focus ---
 -- Polling a forge while nvim is not the focused window is pure waste: there

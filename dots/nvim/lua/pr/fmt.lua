@@ -54,26 +54,67 @@ function M.rjust(str, w)
   return string.rep(" ", w - vim.fn.strdisplaywidth(str)) .. str
 end
 
---- "3d" from an ISO-8601 UTC timestamp (both forges emit Z). There is no
---- portable "UTC fields -> epoch" in Lua, so both sides go through os.time,
---- which reads its table as LOCAL time - the shift cancels only if BOTH
---- sides get the same offset.
+--- ISO-8601 -> TRUE unix epoch. THE time conversion in this plugin: every
+--- age and every duration is a subtraction of two true epochs, and nothing
+--- outside this function ever parses a timestamp.
 ---
---- isdst=false is what makes that true. os.date "!*t" sets isdst=false
---- itself; leaving it off the parsed table means tm_isdst=-1, so mktime
---- GUESSES DST for that date and the two sides differ by exactly one hour
---- whenever local time is on summer time - a PR opened 3 minutes ago
---- measured 3784s and rendered "1h". Pinning both to standard time makes
---- the offsets identical and the subtraction exact, year-round.
-function M.ago(iso)
+--- Lua has no portable "UTC fields -> epoch", only os.time, which reads its
+--- table as LOCAL calendar time. So the fields go through os.time anyway,
+--- and the resulting shift is measured and removed on the spot: misread the
+--- CURRENT UTC fields the same way, and the difference between that and the
+--- real os.time() is exactly the shift (both misreadings are the same
+--- constant, so it cancels to the true epoch). This plugin once kept the
+--- shift IN and compared "skewed vs skewed" - which was exact right up until
+--- a true epoch from git's %at met the skewed now, and every commit age came
+--- out 8 hours old(er). One frame, true unix time, no cleverness.
+---
+--- isdst=false pins both misreadings to standard time; without it mktime
+--- GUESSES DST per date and summer timestamps land an hour off.
+---
+--- The trailing offset is honoured when present: GitHub emits Z, but
+--- Gitea/Forgejo emit the server's local offset ("+02:00") - dropping it
+--- would skew every age by the server's timezone.
+---@param iso string?
+---@return integer? epoch
+function M.epoch(iso)
   local y, mo, d, h, mi, sec = (iso or ""):match "(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)"
-  if not y then return "" end
-  local t = os.time { year = y, month = mo, day = d, hour = h, min = mi, sec = sec, isdst = false }
-  local dt = os.time(os.date "!*t") - t
-  if dt < 3600 then return math.max(1, math.floor(dt / 60)) .. "m" end
-  if dt < 86400 then return math.floor(dt / 3600) .. "h" end
-  if dt < 86400 * 30 then return math.floor(dt / 86400) .. "d" end
-  return math.floor(dt / 86400 / 30) .. "mo"
+  if not y then return nil end
+  local as_utc = os.time { year = y, month = mo, day = d, hour = h, min = mi, sec = sec, isdst = false }
+  local shift = os.time() - os.time(os.date "!*t") -- true now minus misread-UTC now
+  local epoch = as_utc + shift
+  local sign, oh, om = (iso or ""):match "T[%d:%.]+([+-])(%d%d):?(%d%d)"
+  if sign then epoch = epoch - (sign == "-" and -1 or 1) * (tonumber(oh) * 3600 + tonumber(om) * 60) end
+  return epoch
+end
+
+--- "3d" from an ISO-8601 timestamp: parse, then age.
+function M.ago(iso) return M.since(M.epoch(iso)) end
+
+--- The compact age of a true epoch - git's `%at`, or M.epoch's output.
+---
+--- The NUMBER is git's, exactly: this is git date.c's relative-date ladder,
+--- each rung rounding to nearest (+half-unit before the divide), so a commit
+--- `git log` calls "25 hours ago" reads 25h here and "2 days ago" reads 2d -
+--- never a floor-vs-round disagreement with the terminal one pane over. Only
+--- the suffix is compacted, because the age column has four cells and
+--- "25 hours ago" does not fit any column worth having.
+---@param epoch integer? seconds
+---@return string
+function M.since(epoch)
+  if not epoch then return "" end
+  local dt = math.max(0, os.time() - epoch)
+  if dt < 90 then return dt .. "s" end
+  local m = math.floor((dt + 30) / 60)
+  if m < 90 then return m .. "m" end
+  local h = math.floor((m + 30) / 60)
+  if h < 36 then return h .. "h" end
+  local d = math.floor((h + 12) / 24)
+  if d < 14 then return d .. "d" end
+  local w = math.floor((d + 3) / 7)
+  if w < 10 then return w .. "w" end
+  local mo = math.floor((d + 15) / 30)
+  if mo < 12 then return mo .. "mo" end
+  return math.floor((d + 183) / 365) .. "y"
 end
 
 --- g? - the fugitive gesture: a small float over the cursor, keys

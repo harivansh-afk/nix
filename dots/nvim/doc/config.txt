@@ -63,8 +63,12 @@ Options: >
         canola.lua              Canola file explorer
         treesitter.lua          Treesitter + textobjects
         ui.lua                  Cozybox, statusline, nonicons
-      pr/                       PR review flow (pr://list, pr://files)
-        ci/                     Checks pane and job logs (pr://checks)
+      pr/                       Forge flow (pr://list, pr://log, pr://files)
+        ci/                     CI store, checks pane, job logs (pr://checks)
+        run.lua                 Process engine (git, spawn/await, sh/json, pump)
+        surface.lua             Shared pr:// list buffer (list + log)
+        log.lua                 Commit log with CI orbs (pr://log)
+        tree.lua                PR worktrees, real files at a commit
       statusline.lua            Native statusline renderer
     after/
       plugin/

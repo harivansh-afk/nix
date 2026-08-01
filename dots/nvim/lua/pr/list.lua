@@ -11,32 +11,19 @@
 
 local data = require "pr.data"
 local fmt = require "pr.fmt"
+local surface = require "pr.surface"
 
 local M = {}
-
-local buf ---@type integer?
-local ns = vim.api.nvim_create_namespace "pr_list"
 
 M.order = {} ---@type table[] PRs in display order (stacks adjacent, parent first)
 M.root = nil ---@type string?
 
+--- Declared before `render`, which closes over it, and built at the bottom of
+--- the file, where `render` exists to hand it. Lua has no forward reference
+--- for one half of a mutual pair, so one of them has to be an upvalue.
+local S ---@type pr.Surface
+
 local function warn(msg) vim.notify("pr: " .. msg, vim.log.levels.WARN) end
-
--- -------------------------------------------------------------------- orb ---
-
---- CI state as a colored orb. Plain UTF-8 - no icon font required (nonicons
---- glyphs are PUA codepoints that collide with Nerd Fonts: hello bluetooth).
----
---- The colour comes from pr.ci's bucket table, the same one the pr://checks
---- pane paints its rows with, so the rollup here and the per-job detail
---- there can never disagree about what green means. Only the SHAPE differs:
---- a rollup is one filled orb, a job row carries a glyph per state.
-local BUCKET = { success = "pass", failure = "fail", pending = "running" }
-local function orb(p)
-  local b = p.ci and BUCKET[p.ci]
-  if b then return "●", require("pr.ci").HL[b] end
-  return "○", "Comment" -- no CI on this PR
-end
 
 -- ------------------------------------------------------------------ stack ---
 
@@ -84,25 +71,21 @@ end
 local last ---@type table[]?
 
 local function render(prs)
+  if not prs then return end
   last = prs
   M.order = stacked(prs)
 
   -- fzf-picker-era columns: number | title (fills the window) | author | age,
   -- author + age right-aligned against the window edge. Title absorbs
   -- whatever the fixed columns leave, truncating into "…" when narrow.
-  local win = vim.fn.bufwinid(buf)
-  local width = win ~= -1 and (vim.api.nvim_win_get_width(win) - vim.fn.getwininfo(win)[1].textoff) or vim.o.columns
-  local num_w, author_w, age_w, gap = 6, 16, 4, 2
-  -- 3 = leading space + orb + space; all widths in display cells.
-  local title_w = math.max(20, width - 3 - num_w - author_w - age_w - 3 * gap)
+  -- 3 = leading space + orb + space, 6 = the number column; display cells.
+  local title_w = surface.title_width(S:width(), 3 + 6)
 
   local lines, marks = {}, {}
-  -- nvim_buf_set_extmark is called positionally below, so the mark keeps
-  -- col-then-group order here.
-  local seg = fmt.segmenter(lines, marks, function(row, group, from, to) return { row, from, to, group } end)
+  local seg = surface.segmenter(lines, marks)
 
   for _, p in ipairs(M.order) do
-    local glyph, hl = orb(p)
+    local glyph, hl = surface.orb(p.ci)
     local connector = p.depth > 0 and (string.rep("  ", p.depth - 1) .. "└ ") or ""
     local title = fmt.trunc(connector .. (p.title or ""), title_w)
     seg {
@@ -115,28 +98,21 @@ local function render(prs)
       { title:sub(#connector + 1) },
       { string.rep(" ", math.max(0, title_w - vim.fn.strdisplaywidth(title))) },
       { "  " },
-      { fmt.rjust(p.author and p.author.login or "?", 16), "Identifier" },
+      { fmt.rjust(p.author and p.author.login or "?", surface.AUTHOR_W), "Identifier" },
       { "  " },
-      { fmt.rjust(fmt.ago(p.updatedAt), 4), "Comment" },
+      { fmt.rjust(fmt.ago(p.updatedAt), surface.AGE_W), "Comment" },
     }
   end
   if #lines == 0 then lines = { " no open PRs" } end
 
-  vim.bo[buf].modifiable = true
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  vim.bo[buf].modifiable = false
-  vim.bo[buf].modified = false -- a render is a load, never an edit (:e checks this)
-  vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
-  for _, m in ipairs(marks) do
-    vim.api.nvim_buf_set_extmark(buf, ns, m[1], m[2], { end_col = m[3], hl_group = m[4] })
-  end
+  S:paint(lines, marks)
 end
 
 --- Re-paint the last fetched set with no network call. The verbs mutate PR
 --- tables in place (draft flips a highlight, nothing else), so this is all
 --- the redraw they need.
 function M.repaint()
-  if last and buf and vim.api.nvim_buf_is_valid(buf) then render(last) end
+  if last and S:valid() then render(last) end
 end
 
 --- Force the next M.open to re-fetch, without touching the buffer now.
@@ -186,21 +162,6 @@ end
 
 -- ------------------------------------------------------------------- help ---
 
-local HELP = {
-  { "g?", "this help" },
-  { "<CR>", "review PR (pr://files)" },
-  { "]p / [p", "next / prev PR (global)" },
-  { "R / :e", "refresh" },
-  { "q", "back" },
-}
-
---- Verb rows are appended from pr.verbs so the two surfaces can never drift.
-local function help()
-  local rows = vim.deepcopy(HELP)
-  vim.list_extend(rows, require("pr.verbs").help_entries())
-  fmt.help(" pr list ", rows)
-end
-
 -- ------------------------------------------------------------------- open ---
 
 local function select()
@@ -208,54 +169,92 @@ local function select()
   if p and M.root then require("pr").load(M.root, p) end
 end
 
---- `:e pr://list` in a fresh session lands nvim on a brand new buffer
---- already wearing that name; creating our own on top would be a duplicate
---- name (E95). Adopt whatever buffer is already there instead.
-local function ensure_buf()
-  if buf and vim.api.nvim_buf_is_valid(buf) then return end
-  local cur = vim.api.nvim_get_current_buf()
-  local adopt = vim.api.nvim_buf_get_name(cur):match "pr://list$" ~= nil
-  buf = adopt and cur or vim.api.nvim_create_buf(false, true)
-  if not adopt then vim.api.nvim_buf_set_name(buf, "pr://list") end
-  vim.bo[buf].buftype = "nofile"
-  vim.bo[buf].bufhidden = "hide"
-  vim.bo[buf].swapfile = false
-  vim.bo[buf].filetype = "prlist"
-  vim.bo[buf].modifiable = false
+--- Buffer identity, options, the resize re-render, the paint and the
+--- generation guard are all pr.surface's; this supplies the rows and the keys.
+S = surface.new {
+  name = "pr://list",
+  filetype = "prlist",
+  title = " pr list ",
+  help = {
+    { "g?", "this help" },
+    { "<CR>", "review PR (pr://files)" },
+    { "L", "commit log (pr://log)" },
+    { "]p / [p", "next / prev PR (global)" },
+    { "R / :e", "refresh" },
+    { "q", "back" },
+  },
+  render = function()
+    if last then render(last) end
+  end,
+  keys = function(b)
+    local o = { buffer = b, silent = true }
+    vim.keymap.set("n", "<CR>", select, o)
+    vim.keymap.set("n", "R", function() M.open(true) end, o)
+    vim.keymap.set("n", "L", function() require("pr.log").open() end, o)
+  end,
+}
 
-  -- Columns derive from the window width: re-flow when that changes, or when
-  -- the buffer is re-shown in a differently sized window.
-  local grp = vim.api.nvim_create_augroup("pr_list_layout", { clear = true })
-  vim.api.nvim_create_autocmd({ "WinResized", "VimResized" }, {
-    group = grp,
-    callback = function()
-      if last and buf and vim.api.nvim_buf_is_valid(buf) and vim.fn.bufwinid(buf) ~= -1 then render(last) end
-    end,
-  })
-  vim.api.nvim_create_autocmd("BufWinEnter", {
-    group = grp,
-    buffer = buf,
-    callback = function()
-      if last then render(last) end
-    end,
-  })
+--- Light the orbs from the CI store, one PR at a time as answers land.
+---
+--- A PR's CI is the CI of its HEAD COMMIT, so the orb is the rollup of that
+--- sha's store entry - the exact entry the pane renders in detail, which is
+--- what makes it impossible for this orb and an open pane to disagree. Head
+--- shas come from the local origin/pr/* refs in one git call (data.pr_heads);
+--- a PR opened since the last fetch has no ref yet, so ONE background fetch
+--- heals the stragglers and primes just them.
+---@param prs table[]
+---@param gen integer
+---@param force? boolean
+local function light_orbs(root, prs, gen, force)
+  local ci = require "pr.ci"
 
-  local o = { buffer = buf, silent = true }
-  vim.keymap.set("n", "<CR>", select, o)
-  vim.keymap.set("n", "R", function() M.open(true) end, o)
-  vim.keymap.set("n", "g?", help, o)
-  vim.keymap.set("n", "q", "<cmd>silent! buffer #<cr>", o)
-  require("pr.verbs").attach(buf)
+  local function prime(list)
+    local shas, by_sha = {}, {}
+    for _, p in ipairs(list) do
+      if p.head_sha then
+        shas[#shas + 1] = p.head_sha
+        by_sha[p.head_sha] = p
+      end
+    end
+    ci.prime(root, shas, function(sha, entry)
+      if not S:current(gen) then return end
+      local p = by_sha[sha]
+      if p and p.ci ~= entry.rollup then
+        p.ci = entry.rollup
+        -- Re-render in place: the line count is unchanged, so the cursor
+        -- stays put; one repaint per landing is what "incremental" means.
+        render(prs)
+      end
+    end, { force = force })
+  end
+
+  local heads = data.pr_heads(root)
+  local missing = false
+  for _, p in ipairs(prs) do
+    p.head_sha = heads[p.number]
+    missing = missing or not p.head_sha
+  end
+  prime(prs)
+
+  if not missing then return end
+  data.fetch(root, function(ok)
+    if not (ok and S:current(gen)) then return end
+    local healed, again = data.pr_heads(root), {}
+    for _, p in ipairs(prs) do
+      if not p.head_sha and healed[p.number] then
+        p.head_sha = healed[p.number]
+        again[#again + 1] = p
+      end
+    end
+    prime(again)
+  end)
 end
-
---- Drops stale async responses after an R mid-flight.
-local generation = 0
 
 --- Open the list; the buffer caches the last fetch (guh-style: load eagerly,
 --- refetch only on explicit refresh). First open and R fetch.
 ---
 --- Two-phase load: the fast metadata list renders immediately, then the CI
---- states (the slow half - see pr.ci.api) trail in and recolor the orbs.
+--- states trail in from the store and recolor the orbs row by row.
 ---@param refresh? boolean
 function M.open(refresh)
   local root = data.root()
@@ -264,35 +263,21 @@ function M.open(refresh)
     if not data.install_refspec(root) then return warn "could not write git config" end
   end
 
-  ensure_buf()
-  if vim.api.nvim_get_current_buf() ~= buf then vim.api.nvim_win_set_buf(0, buf) end
+  S:ensure()
+  S:show()
 
   if #M.order > 0 and M.root == root and not refresh then return focus_current() end
 
   M.root = root
-  generation = generation + 1
-  local gen = generation
-  vim.bo[buf].modifiable = true
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { " loading PRs..." })
-  vim.bo[buf].modifiable = false
+  local gen = S:bump()
+  S:placeholder "loading PRs..."
 
   data.prs(root, function(prs, err)
-    if gen ~= generation or not (buf and vim.api.nvim_buf_is_valid(buf)) then return end
+    if not S:current(gen) then return end
     if not prs then return warn(err or "could not list PRs") end
     render(prs)
-    if vim.api.nvim_get_current_buf() == buf then focus_current() end
-
-    require("pr.ci").rollup_all(root, function(map)
-      if gen ~= generation or not map or not (buf and vim.api.nvim_buf_is_valid(buf)) then return end
-      local changed = false
-      for _, p in ipairs(M.order) do
-        if map[p.number] ~= p.ci then
-          p.ci, changed = map[p.number], true
-        end
-      end
-      -- Re-render in place: line count is unchanged, so the cursor stays put.
-      if changed then render(prs) end
-    end)
+    if vim.api.nvim_get_current_buf() == S.buf then focus_current() end
+    light_orbs(root, prs, gen, refresh)
   end)
 end
 

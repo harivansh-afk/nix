@@ -116,17 +116,27 @@ function M.render(keep)
   -- hunk loop below pushes onto `hl` by hand.
   local seg = fmt.segmenter(lines, hl, function(row, group, from, to) return { row, group, from, to } end)
 
+  -- Two things can be under review here: a PR out of pr://list, or a landed
+  -- commit out of pr://log. A PR carries an author, a number and a title of
+  -- its own; a commit has only what the commit says, and its "PR:" row would
+  -- be a number that does not exist. So the identity rows come from the PR
+  -- when there is one, and are simply absent when there is not - the Commit
+  -- row below already names a landed commit completely.
   -- Identifier = blue in cozybox, same as the author column in pr://list.
-  seg { { "Author:", "fugitiveHeader" }, { " " }, { s.pr.author and s.pr.author.login or "?", "Identifier" } }
-  -- Draft is carried by a GREY number, exactly as in pr://list and the fzf
-  -- picker - no "[draft]" column anywhere in this plugin.
-  seg {
-    { "PR:", "fugitiveHeader" },
-    { "     " },
-    { "#" .. s.pr.number, s.pr.isDraft and "Comment" or "fugitiveCount" },
-    { " " },
-    { s.pr.title or "" },
-  }
+  if s.pr then
+    seg { { "Author:", "fugitiveHeader" }, { " " }, { s.pr.author and s.pr.author.login or "?", "Identifier" } }
+    -- Draft is carried by a GREY number, exactly as in pr://list and the fzf
+    -- picker - no "[draft]" column anywhere in this plugin.
+    seg {
+      { "PR:", "fugitiveHeader" },
+      { "     " },
+      { "#" .. s.pr.number, s.pr.isDraft and "Comment" or "fugitiveCount" },
+      { " " },
+      { s.pr.title or "" },
+    }
+  else
+    seg { { "Author:", "fugitiveHeader" }, { " " }, { c.author or "?", "Identifier" } }
+  end
   seg {
     { "Commit:", "fugitiveHeader" },
     { " " },
@@ -149,7 +159,7 @@ function M.render(keep)
   }
   -- Stack position, when pr://list knows this PR is stacked. ]p / [p move
   -- this counter the way ]c / [c move the Mode one.
-  local stack = package.loaded["pr.list"] and require("pr.list").stack_info(s.pr.number)
+  local stack = s.pr and package.loaded["pr.list"] and require("pr.list").stack_info(s.pr.number)
   if stack then
     seg {
       { "Stack:", "fugitiveHeader" },

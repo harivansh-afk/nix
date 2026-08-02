@@ -1,0 +1,23 @@
+# jj (Jujutsu) config, linked at ~/.config/jj/config.toml.
+# Nix-managed (dots/jj/config.toml): edit here and rebuild; `jj config set
+# --user` will fail against the read-only store symlink, same as git.
+
+[user]
+name = "Harivansh Rathi"
+email = "rathiharivansh@gmail.com"
+
+# Mirror git's commit.gpgSign: ssh-sign own commits with the same key,
+# deferred to push time so local rewrites stay cheap.
+[signing]
+behavior = "own"
+backend = "ssh"
+key = "~/.ssh/id_ed25519.pub"
+
+[ui]
+default-command = "log"
+editor = "nvim"
+
+[git]
+# push new bookmarks without --allow-new
+push-new-bookmarks = true
+sign-on-push = true

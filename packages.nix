@@ -37,6 +37,7 @@ in
       fd
       gnupg
       go_1_26
+      jjui
       jujutsu
       jq
       just

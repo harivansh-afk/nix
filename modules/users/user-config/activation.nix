@@ -63,6 +63,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${configHome}/zsh/themes" \
     "${configHome}/environment.d" \
     "${configHome}/git" \
+    "${configHome}/jj" \
     "${configHome}/fzf/themes" \
     "${configHome}/ghostty/shaders" \
     "${configHome}/ghostty/themes" \
@@ -100,6 +101,9 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${dotsRoot}/git/ignore" "${configHome}/git/ignore"
   mkSymlink "${gitCredentialsInc}" "${configHome}/git/credentials.inc"
   mkSymlink "${gitDeltaThemesInc}" "${configHome}/git/delta-themes.inc"
+
+  # --- jj ---
+  mkSymlink "${dotsRoot}/jj/config.toml" "${configHome}/jj/config.toml"
 
   # --- ssh ---
   mkSymlink "${dotsRoot}/ssh/config" "${homeDirectory}/.ssh/config"

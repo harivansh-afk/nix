@@ -34,6 +34,7 @@
     ../../modules/services/mux-restore.nix
     ../../modules/services/whisper.nix
     ../../modules/services/vaultwarden.nix
+    ../../modules/services/website-counter.nix
     ../../modules/services/website.nix
     ./hardware.nix
     ./networking.nix

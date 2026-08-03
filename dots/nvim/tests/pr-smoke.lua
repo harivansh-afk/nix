@@ -44,7 +44,7 @@ for _, m in ipairs(vim.api.nvim_get_keymap "n") do
   maps[m.lhs] = true
 end
 -- mapleader is a space above, and nvim reports the lhs with it resolved.
-for _, lhs in ipairs { "]p", "[p", "]c", "[c", "]m", "[m", " 1", " 9" } do
+for _, lhs in ipairs { "]p", "[p", "]c", "[c", "]m", "[m", " 1", " 9", "<C-E>" } do
   check("global map " .. lhs, maps[lhs] == true)
 end
 
@@ -104,7 +104,7 @@ check("marks persist under their repo root", vim.deep_equal(disk[ROOT], { 366, 3
 
 -- --------------------------------------------------------------- the peek ---
 
--- <leader>0: the whole list in a float, one row per slot, with the titles the
+-- <c-e>: the whole list in a float, one row per slot, with the titles the
 -- loaded pr://list already knows.
 local list_win = vim.api.nvim_get_current_win()
 marks.peek()
@@ -157,7 +157,7 @@ local rows, seen = require("pr.surface").common_help(), {}
 for _, r in ipairs(rows) do
   seen[r[1]] = (seen[r[1]] or 0) + 1
 end
-for _, key in ipairs { "A", "]m", "[m", "<leader>1-9", "D", "M" } do
+for _, key in ipairs { "A", "]m", "[m", "<leader>1-9", "<c-e>", "D", "M" } do
   check("g? documents " .. key, seen[key] == 1)
 end
 

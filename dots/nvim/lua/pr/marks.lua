@@ -176,8 +176,8 @@ end
 
 local ns = vim.api.nvim_create_namespace "pr_marks_peek"
 
---- <leader>0: the whole fast list at once, in a float over wherever you are.
---- The counterpart to <leader>1-9, which jump to a slot you already remember.
+--- <c-e>: the whole fast list at once, in a float over wherever you are. The
+--- counterpart to <leader>1-9, which jump to a slot you already remember.
 ---
 --- Titles come from pr.list.order when the list is loaded, and are simply
 --- absent when it is not: the mark itself only ever knew the number, and a
@@ -265,7 +265,8 @@ function M.peek()
       M.peek()
     end
   end, o)
-  for _, key in ipairs { "q", "<Esc>", "<leader>0" } do
+  -- <c-e> closes what <c-e> opened, so the key is a toggle from the outside.
+  for _, key in ipairs { "q", "<Esc>", "<c-e>" } do
     vim.keymap.set("n", key, close, o)
   end
   vim.api.nvim_create_autocmd("BufLeave", { buffer = buf, once = true, callback = close })
@@ -299,7 +300,7 @@ function M.help_entries()
     out[#out + 1] = { k[1], k[3] }
   end
   out[#out + 1] = { "<leader>1-9", "jump to a marked slot" }
-  out[#out + 1] = { "<leader>0", "the whole fast list, in a float" }
+  out[#out + 1] = { "<c-e>", "the whole fast list, in a float" }
   return out
 end
 

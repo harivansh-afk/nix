@@ -25,26 +25,11 @@ local M = {}
 local function warn(msg) vim.notify("pr: " .. msg, vim.log.levels.WARN) end
 local function info(msg) vim.notify("pr: " .. msg, vim.log.levels.INFO) end
 
---- The PR a verb acts on, plus its repo root.
----@return string? root, table? pr
-local function target()
-  local list = package.loaded["pr.list"]
-  if list and vim.api.nvim_buf_get_name(0):match "pr://list$" then
-    local p = list.order[vim.fn.line "."]
-    if p and list.root then return list.root, p end
-  end
-  local s = require("pr").state
-  if s.pr and s.root then return s.root, s.pr end
-end
-
---- Re-paint whatever surfaces are live, without touching the network. Used
---- after a verb mutates the PR table in place.
-local function repaint()
-  local list = package.loaded["pr.list"]
-  if list then list.repaint() end
-  local view = package.loaded["pr.view"]
-  if view and view.active() then view.render() end
-end
+--- The PR a verb acts on, and the redraw a verb owes the surfaces once it has
+--- changed one. Both belong to the orchestrator - a mark needs the same two -
+--- so this module only names them.
+local function target() return require("pr").target() end
+local function repaint() require("pr").repaint() end
 
 --- The PR is decided - merged, closed, or handed to the forge to merge when
 --- its checks pass. Either its row is gone or the stack shape around it

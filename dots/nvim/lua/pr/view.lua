@@ -329,14 +329,15 @@ local HELP = {
   { "<leader>m", "cumulative <-> incremental" },
   { "<leader>gC", "pick commit" },
   { "<leader>gA", "whole PR view" },
-  { "R / :e", "re-fetch this PR" },
+  { "R / <c-r>", "re-fetch this PR" },
   { "q", "back" },
 }
 
---- Verb rows are appended from pr.verbs so the two surfaces can never drift.
+--- The shared rows are appended from the modules that own those keys, so the
+--- surfaces can never drift on what one does.
 local function help()
   local rows = vim.deepcopy(HELP)
-  vim.list_extend(rows, require("pr.verbs").help_entries())
+  vim.list_extend(rows, require("pr.surface").common_help())
   require("pr.fmt").help(" pr ", rows)
 end
 
@@ -404,7 +405,6 @@ local function ensure_buf()
   vim.keymap.set("n", "dv", dive, o)
   vim.keymap.set("n", "]f", function() file_step(1) end, o)
   vim.keymap.set("n", "[f", function() file_step(-1) end, o)
-  vim.keymap.set("n", "R", function() require("pr").reload() end, o)
   vim.keymap.set("n", "-", function() require("pr.list").open() end, o)
   -- G, buffer-local to THIS surface only: the CI pane belongs to a loaded
   -- PR, and pr://list has no single PR to show checks for. Note that it
@@ -412,7 +412,7 @@ local function ensure_buf()
   vim.keymap.set("n", "G", function() require("pr.ci.pane").toggle() end, o)
   vim.keymap.set("n", "g?", help, o)
   vim.keymap.set("n", "q", "<cmd>silent! buffer #<cr>", o)
-  require("pr.verbs").attach(buf)
+  require("pr.surface").common_keys(buf, function() require("pr").reload() end)
 end
 
 function M.open()

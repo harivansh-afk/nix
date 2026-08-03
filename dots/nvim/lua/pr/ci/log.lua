@@ -339,7 +339,7 @@ local HELP = {
   { "]] / [[", "next / prev group" },
   { "zR / zM", "open / close all groups" },
   { "gS", "show the raw timestamps and markers" },
-  { "R / :e", "refresh now" },
+  { "R / <c-r>", "refresh now" },
   { "q", "back" },
 }
 
@@ -371,12 +371,12 @@ function M.open(root, sha, job)
   vim.keymap.set("n", "]]", function() step(1) end, o)
   vim.keymap.set("n", "[[", function() step(-1) end, o)
   vim.keymap.set("n", "gS", timestamps, o)
-  -- R means "ask the forge again, and show me the answer whatever it is", so
-  -- it clears the repaint guard: an explicit refresh must never no-op.
-  vim.keymap.set("n", "R", function()
+  -- Refresh means "ask the forge again, and show me the answer whatever it
+  -- is", so it clears the repaint guard: it must never no-op.
+  require("pr.surface").refresh_keys(buf, function()
     painted[buf] = nil
     load(buf, true)
-  end, o)
+  end)
   vim.keymap.set("n", "q", "<cmd>silent! buffer #<cr>", o)
   vim.keymap.set("n", "g?", function() require("pr.fmt").help(" pr job ", HELP) end, o)
 

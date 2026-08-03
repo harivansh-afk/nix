@@ -334,7 +334,7 @@ local HELP = {
   { "<CR>", "open the full log" },
   { "]j / [j", "next / prev job" },
   { "O", "open this check in the browser" },
-  { "R / :e", "refresh now" },
+  { "R / <c-r>", "refresh now" },
   { "q", "close the pane" },
 }
 
@@ -359,8 +359,8 @@ local function ensure_buf()
   vim.keymap.set("n", "]j", function() step(1) end, o)
   vim.keymap.set("n", "[j", function() step(-1) end, o)
   vim.keymap.set("n", "O", web, o)
-  vim.keymap.set("n", "R", function() M.refresh() end, o)
   vim.keymap.set("n", "q", function() M.close() end, o)
+  require("pr.surface").refresh_keys(buf, function() M.refresh() end)
   vim.keymap.set("n", "g?", function() fmt.help(" pr checks ", HELP) end, o)
 end
 

@@ -815,10 +815,12 @@ let
             linkBlue = "#83a598";
             linkHover = "#9fc0b5";
             headingAccent = sharedPalette.yellowBright;
-            green = sharedPalette.green;
-            red = sharedPalette.red;
-            yellow = sharedPalette.yellow;
-            purple = sharedPalette.purple;
+            inherit (sharedPalette)
+              green
+              red
+              yellow
+              purple
+              ;
           };
       selectedBg = if mode == "light" then t.selectionBackground else t.border;
     in

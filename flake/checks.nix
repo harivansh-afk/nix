@@ -49,6 +49,11 @@
           pkgs.gnugrep
           pkgs.neovim
         ] "bash scripts/mux-smoke.sh";
+        pr = lint "pr" [
+          pkgs.bash
+          pkgs.coreutils
+          pkgs.neovim
+        ] "bash scripts/pr-smoke.sh";
         # Config lives in dots/nvim/.stylua.toml; stylua discovers it upward
         # from each file.
         stylua = lint "stylua" [ pkgs.stylua ] "stylua --check dots/nvim";

@@ -143,10 +143,11 @@ S = surface.new {
     { "O", "open commit in browser" },
     { "+", "50 more commits" },
     { "-", "PR list" },
-    { "R / :e", "pull + refresh" },
+    { "R / <c-r>", "pull + refresh" },
     { "q", "back" },
   },
   render = render,
+  refresh = function() M.open(nil, true) end,
   keys = function(b)
     local o = { buffer = b, silent = true }
     vim.keymap.set("n", "<CR>", select, o)
@@ -155,7 +156,6 @@ S = surface.new {
     vim.keymap.set("n", "G", checks, o)
     vim.keymap.set("n", "O", web, o)
     vim.keymap.set("n", "+", function() M.more() end, o)
-    vim.keymap.set("n", "R", function() M.open(nil, true) end, o)
     vim.keymap.set("n", "-", function() require("pr.list").open() end, o)
   end,
 }

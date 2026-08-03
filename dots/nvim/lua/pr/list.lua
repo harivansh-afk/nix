@@ -7,7 +7,8 @@
 -- stepping through adjacent lines.
 --
 -- Canola-style: the buffer IS the list. <CR> dives into a PR (pr://files),
--- "-" in the files view comes back up here.
+-- "-" in the files view comes back up here. A PR on the fast list (pr.marks)
+-- wears its slot digit in the gutter, left of the orb.
 
 local data = require "pr.data"
 local fmt = require "pr.fmt"
@@ -81,15 +82,23 @@ local function render(prs)
   -- 3 = leading space + orb + space, 6 = the number column; display cells.
   local title_w = surface.title_width(S:width(), 3 + 6)
 
+  -- The fast list, as a gutter digit in the cell left of the orb - the one
+  -- the row already spent on a blank, so marking a PR re-flows nothing. Past
+  -- slot 9 the digit would be two cells wide and every column after it would
+  -- shift, so it degrades to "+": a tenth mark is a fast list that is no
+  -- longer fast, and <leader>N only reaches nine anyway.
+  local slots = require("pr.marks").slots(M.root)
+
   local lines, marks = {}, {}
   local seg = surface.segmenter(lines, marks)
 
   for _, p in ipairs(M.order) do
     local glyph, hl = surface.orb(p.ci)
+    local slot = slots[p.number]
     local connector = p.depth > 0 and (string.rep("  ", p.depth - 1) .. "└ ") or ""
     local title = fmt.trunc(connector .. (p.title or ""), title_w)
     seg {
-      { " " },
+      slot and { slot < 10 and tostring(slot) or "+", "Constant" } or { " " },
       { glyph, hl },
       { " " },
       { ("#%-5d"):format(p.number), p.isDraft and "Comment" or "DiagnosticOk" }, -- grey = draft
@@ -180,16 +189,16 @@ S = surface.new {
     { "<CR>", "review PR (pr://files)" },
     { "L", "commit log (pr://log)" },
     { "]p / [p", "next / prev PR (global)" },
-    { "R / :e", "refresh" },
+    { "R / <c-r>", "refresh" },
     { "q", "back" },
   },
   render = function()
     if last then render(last) end
   end,
+  refresh = function() M.open(true) end,
   keys = function(b)
     local o = { buffer = b, silent = true }
     vim.keymap.set("n", "<CR>", select, o)
-    vim.keymap.set("n", "R", function() M.open(true) end, o)
     vim.keymap.set("n", "L", function() require("pr.log").open() end, o)
   end,
 }

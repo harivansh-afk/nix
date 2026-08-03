@@ -62,6 +62,43 @@ end
 
 M.AUTHOR_W, M.AGE_W = 16, 4
 
+-- ---------------------------------------------------------------- refresh ---
+
+--- R and <c-r>, on every pr:// buffer, each meaning exactly what `:e` means
+--- there: the list re-fetches, pr://files re-reads its PR from origin, the
+--- log pulls, the checks pane asks the forge again.
+---
+--- <c-r> is redo, which is dead in a non-modifiable nofile buffer, and these
+--- maps are buffer-local, so redo everywhere else is untouched.
+---@param buf integer
+---@param fn fun()
+function M.refresh_keys(buf, fn)
+  for _, key in ipairs { "R", "<c-r>" } do
+    vim.keymap.set("n", key, fn, { buffer = buf, silent = true, desc = "pr: refresh" })
+  end
+end
+
+--- What the three PR buffers share - pr://list, pr://log and pr://files, the
+--- last of which is not a pr.Surface: the verbs, the marks, and refresh.
+--- Attached before a surface's own keys, so a surface can still override one
+--- (pr://log does that for O). The CI buffers take refresh alone; their
+--- subject is a job, not a PR.
+---@param buf integer
+---@param refresh fun()
+function M.common_keys(buf, refresh)
+  require("pr.verbs").attach(buf)
+  require("pr.marks").attach(buf)
+  M.refresh_keys(buf, refresh)
+end
+
+--- The help rows those shared keys are worth, appended to a surface's own.
+---@return {[1]:string,[2]:string}[]
+function M.common_help()
+  local rows = require("pr.verbs").help_entries()
+  vim.list_extend(rows, require("pr.marks").help_entries())
+  return rows
+end
+
 -- --------------------------------------------------------------- surfaces ---
 
 ---@class pr.Surface
@@ -74,7 +111,7 @@ local Surface = {}
 Surface.__index = Surface
 
 --- Declare a surface. Nothing is created until :ensure.
----@param spec {name:string, filetype:string, title:string, help:table, render:fun(), keys:fun(buf:integer)}
+---@param spec {name:string, filetype:string, title:string, help:table, render:fun(), refresh:fun(), keys:fun(buf:integer)}
 ---@return pr.Surface
 function M.new(spec)
   return setmetatable({
@@ -83,6 +120,7 @@ function M.new(spec)
     title = spec.title,
     help_rows = spec.help,
     render = spec.render,
+    refresh = spec.refresh,
     keys = spec.keys,
     ns = vim.api.nvim_create_namespace("pr_" .. spec.filetype),
     buf = nil,
@@ -92,11 +130,11 @@ end
 
 function Surface:valid() return self.buf ~= nil and vim.api.nvim_buf_is_valid(self.buf) end
 
---- g? - the fugitive gesture. Verb rows are appended from pr.verbs so no two
---- surfaces can drift on what a verb key does.
+--- g? - the fugitive gesture. The shared rows are appended from the modules
+--- that own those keys, so no two surfaces can drift on what one does.
 function Surface:help()
   local rows = vim.deepcopy(self.help_rows)
-  vim.list_extend(rows, require("pr.verbs").help_entries())
+  vim.list_extend(rows, M.common_help())
   fmt.help(self.title, rows)
 end
 
@@ -135,10 +173,10 @@ function Surface:ensure()
   local o = { buffer = b, silent = true }
   vim.keymap.set("n", "g?", function() self:help() end, o)
   vim.keymap.set("n", "q", "<cmd>silent! buffer #<cr>", o)
-  -- Verbs first, surface keys second, so a surface can OVERRIDE one. pr://log
-  -- needs that for O: the verb opens a PR page, and a commit row has no PR -
-  -- it wants /commit/<sha> instead.
-  require("pr.verbs").attach(b)
+  -- Shared keys first, surface keys second, so a surface can OVERRIDE one.
+  -- pr://log needs that for O: the verb opens a PR page, and a commit row has
+  -- no PR - it wants /commit/<sha> instead.
+  M.common_keys(b, self.refresh)
   self.keys(b)
 end
 

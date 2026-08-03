@@ -9,10 +9,14 @@
 -- Inside either PR buffer, the verbs (pr.verbs, same keys on both):
 --   D draft <-> ready    M merge    C checkout <-> back    O browser    X close
 --
+-- And the fast list (pr.marks), the few PRs you are working through now:
+--   A mark / unmark      ]m / [m next / prev mark      <leader>1-9 a slot
+--
 -- Modules:
 --   pr        state + navigation + loading (this file, the orchestrator)
 --   pr.data   every git/forge query, read and write
 --   pr.list   the PR home surface (pr://list) - stacks render adjacent
+--   pr.marks  the fast list - a few PRs, slotted, ]m / [m and <leader>1-9
 --   pr.pick   the two fzf surfaces (PR list, commit list)
 --   pr.verbs  the write side - one verb, both surfaces
 --   pr.view   the files buffer - THE review surface
@@ -61,6 +65,30 @@ end
 function M.checks() require("pr.ci.pane").toggle() end
 
 M.files = M.render
+
+--- The PR the user means right now: the row under the cursor on pr://list,
+--- and otherwise whatever is loaded. Every surface-agnostic action resolves
+--- its subject here - the verbs and the marks - so "which PR" is decided in
+--- one place and the two can never disagree about it.
+---@return string? root, table? pr
+function M.target()
+  local list = package.loaded["pr.list"]
+  if list and vim.api.nvim_buf_get_name(0):match "pr://list$" then
+    local p = list.order[vim.fn.line "."]
+    if p and list.root then return list.root, p end
+  end
+  if S.pr and S.root then return S.root, S.pr end
+end
+
+--- Re-paint whatever surfaces are live, without touching the network. What a
+--- verb that mutated a PR table in place needs, and what a mark needs after
+--- changing which slot digit a row wears.
+function M.repaint()
+  local list = package.loaded["pr.list"]
+  if list then list.repaint() end
+  local view = package.loaded["pr.view"]
+  if view and view.active() then view.render() end
+end
 
 -- --------------------------------------------------------------- loading ---
 

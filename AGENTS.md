@@ -179,4 +179,29 @@ The legacy gitea-mirror Bun service has been removed. Forgejo's native mirror ta
 - `scripts/forgejo-mirror/reconcile.sh`: idempotent script that reads the manifest, deletes pull-mirror rows on push-mirror targets, creates missing push-mirrors with `use_ssh=true sync_on_commit=true interval=15m`, registers the forgejo-generated public key as a github deploy key, and flips `has_actions` per the allowlist. Run as root: `sudo FORGEJO_MIRROR_MANIFEST=/etc/forgejo-mirror/manifest.json bash scripts/forgejo-mirror/reconcile.sh [--dry-run]`.
 - `scripts/forgejo-mirror/github-ux.sh`: optional, applies the barrettruth full treatment (github description/homepage/has_* metadata, `.github/README.md` banner, redirect-pr workflow) to every push-mirror. Run on demand: `bash scripts/forgejo-mirror/github-ux.sh [--dry-run] [--only owner/name]`.
 
+### Pull-mirror credentials
+
+Inbound pull mirrors do not carry per-repo credentials. Their remote URLs are bare `https://github.com/...` and git resolves auth through a single host-scoped entry written by the forgejo `preStart` hook:
+
+```
+credential.helper = store --file /var/lib/forgejo/.git-credentials
+```
+
+The token behind it lives in its own secret, `secrets/hosts/spark/forgejo-mirror-github-token.env` (`GITHUB_TOKEN=<classic PAT with repo scope>`). It is deliberately split from `forgejo-mirror.env`, which holds the long-lived `FORGEJO_TOKEN` used by `forgejo-actions-enforce` and `avatar-backfill.sh`: the GitHub PAT is rotated on an expiry cadence and routine rotation should not touch the Forgejo API token.
+
+Rotating is one edit plus a rebuild, never per-repo work:
+
+```
+just sops-edit secrets/hosts/spark/forgejo-mirror-github-token.env
+just switch-spark
+```
+
+Generate the PAT with the **`repo`** scope and **no expiration**. A scopeless token still authenticates and still fetches public repos, so it looks healthy while every private mirror fails.
+
+Two failure modes to know about. Git only consults the credential helper on a `401`, so when the token dies, public mirrors keep syncing and only private ones break: partial symptoms, not total. And forgejo bumps `mirror_updated` even when a sync fails, so the UI shows fresh timestamps on mirrors that have not updated in months. Never trust `mirror_updated` to prove a mirror is current; compare HEAD against upstream, or grep the journal:
+
+```
+journalctl -u forgejo --since today | rg "Invalid username or token"
+```
+
 Forgejo's own `[mirror] DEFAULT_INTERVAL` is `15m` and `[queue.mirror] MAX_WORKERS` is capped at `1`. The pre-start hook in `modules/services/forgejo/default.nix` uniformly jitters every pull-mirror's `next_update_unix` to `now + (repo_id % 900s)` on each forgejo start, so 100+ mirrors never bunch into a single hour the way they did under the old gitea-mirror scheduler.

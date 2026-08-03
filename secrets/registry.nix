@@ -154,6 +154,13 @@
       restartUnits = [ "forgejo.service" ];
     };
 
+    "forgejo-mirror-github-token.env" = {
+      owner = "git";
+      group = "git";
+      mode = "0400";
+      restartUnits = [ "forgejo.service" ];
+    };
+
     "forgejo-google-oauth.env" = {
       owner = "git";
       group = "git";

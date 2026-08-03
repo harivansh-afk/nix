@@ -13,6 +13,7 @@ let
   gitCredentialFile = "/var/lib/forgejo/.git-credentials";
   smtpPasswordFile = config.sops.secrets."forgejo-smtp-password".path;
   mirrorEnvFile = config.sops.secrets."forgejo-mirror.env".path;
+  mirrorGithubTokenFile = config.sops.secrets."forgejo-mirror-github-token.env".path;
   runnerTokenFile = config.sops.secrets."forgejo-runner-token".path;
   runnerCacheRoot = "/var/cache/forgejo-runner";
 
@@ -702,7 +703,7 @@ in
   ];
 
   systemd.services.forgejo.preStart = lib.mkAfter ''
-    . ${mirrorEnvFile}
+    . ${mirrorGithubTokenFile}
     printf 'https://oauth2:%s@github.com\n' "$GITHUB_TOKEN" > ${gitCredentialFile}
     chmod 600 ${gitCredentialFile}
 

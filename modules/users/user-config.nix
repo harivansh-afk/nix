@@ -100,6 +100,7 @@ let
         ghosttyThemes
         herdrConfigs
         lazygitConfigs
+        leafThemes
         sketchybarThemes
         heliumExtJson
         heliumExtensions

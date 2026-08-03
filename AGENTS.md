@@ -110,6 +110,9 @@ inventory/
   default.nix          Typed host inventory via evalModules
   schema.nix           Host record schema
   nodes/               Per-host records (macbook, spark)
+pkgs/
+  herdr/               Local patches applied on top of the upstream herdr build
+  leaf/                leaf (terminal markdown viewer) built from the pinned upstream tag
 terraform/
   cloudflare/          Declarative Cloudflare DNS for harivan.sh via terranix
 scripts/
@@ -127,9 +130,11 @@ dots/                  Dotfile sources (nvim, karabiner, lazygit, claude command
 
 ## Theme system
 
-The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, lazygit, and the wallpaper, then pokes live nvim servers. Shell hooks in `dots/zsh/zshrc` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
+The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, lazygit, leaf, and the wallpaper, then pokes live nvim servers. Shell hooks in `dots/zsh/zshrc` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
 
 Accent constraint for agent-facing TUI roles (omp markdown headings/inline code/links): no yellow, green, or pink hues. Stay in the neutral-bright / Claude-coral (`#d97757` dark, `#af3a03` light) / muted-blue (`#5b84de` dark, `#4261a5` light) lane. Status colors (success/error/warning, diffs) keep their conventional hues.
+
+`renderLeaf` writes leaf's custom-theme TOML (every `[ui]` + `[markdown]` key upstream defines, checked against `src/theme/serde.rs`; unknown keys are silently ignored by leaf, so the set must stay exhaustive). Surfaces are `"reset"` (ratatui `Color::Reset`, i.e. the terminal's own background) so leaf paints text only; the only painted regions are the TOC selection and the search highlights. Markdown roles follow the omp lane above. Code-block tokens are the one thing the palette cannot drive: leaf takes a syntect theme *name* from its 7 bundled themes, so dark uses `base16-mocha.dark` (warmest match) and light uses `InspiredGitHub`.
 
 ## omp extensions
 

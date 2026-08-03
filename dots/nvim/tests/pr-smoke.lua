@@ -93,8 +93,29 @@ local file = vim.fs.joinpath(vim.fn.stdpath "state", "pr-marks.json")
 local disk = vim.json.decode(table.concat(vim.fn.readfile(file), "\n"))
 check("marks persist under their repo root", vim.deep_equal(disk[ROOT], { 366, 385 }), vim.inspect(disk))
 
-marks.toggle()
-vim.api.nvim_win_set_cursor(0, { 2, 0 })
+-- --------------------------------------------------------------- the peek ---
+
+-- <leader>0: the whole list in a float, one row per slot, with the titles the
+-- loaded pr://list already knows.
+local list_win = vim.api.nvim_get_current_win()
+marks.peek()
+local peek_win = vim.api.nvim_get_current_win()
+check("peek opened a float", peek_win ~= list_win and vim.api.nvim_win_get_config(peek_win).relative ~= "")
+local peek = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+check("peek has a row per mark", #peek == 2, vim.inspect(peek))
+check("peek numbers the slots", peek[1]:match "^ 1 " ~= nil, peek[1])
+check("peek carries the title", peek[1]:find("another title", 1, true) ~= nil, peek[1])
+
+-- dd drops the row under the cursor and the float comes back renumbered.
+vim.api.nvim_win_set_cursor(0, { 1, 0 })
+vim.cmd "normal dd"
+check("dd drops that mark", vim.deep_equal(marks.numbers(ROOT), { 385 }), vim.inspect(marks.numbers(ROOT)))
+peek = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+check("the peek renumbers", #peek == 1 and peek[1]:match "^ 1 " ~= nil, peek[1])
+vim.cmd "normal q"
+check("q closes the peek", vim.api.nvim_get_current_win() == list_win)
+
+vim.api.nvim_win_set_cursor(0, { 1, 0 })
 marks.toggle()
 check("toggle is its own undo", #marks.numbers(ROOT) == 0)
 disk = vim.json.decode(table.concat(vim.fn.readfile(file), "\n"))

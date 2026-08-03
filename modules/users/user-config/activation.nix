@@ -26,6 +26,7 @@
   sketchybarThemes,
   ghosttyThemes,
   lazygitConfigs,
+  leafThemes,
   herdrConfigs,
   claudeSettings,
   codexConfigSource,
@@ -70,6 +71,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${configHome}/ghostty/themes" \
     "${configHome}/lazygit" \
     "${configHome}/herdr" \
+    "${theme.paths.leafThemesDir}" \
     "${configHome}/direnv/lib" \
     "${configHome}/k9s" \
     "${configHome}/gh" \
@@ -177,6 +179,9 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${fzfThemes.light}" "${configHome}/fzf/themes/cozybox-light"
   mkSymlink "${lazygitConfigs.dark}" "${configHome}/lazygit/config-dark.yml"
   mkSymlink "${lazygitConfigs.light}" "${configHome}/lazygit/config-light.yml"
+  mkSymlink "${dotsRoot}/leaf/config.toml" "${configHome}/leaf/config.toml"
+  mkSymlink "${leafThemes.dark}" "${theme.paths.leafThemesDir}/cozybox-dark.toml"
+  mkSymlink "${leafThemes.light}" "${theme.paths.leafThemesDir}/cozybox-light.toml"
   mkSymlink "${herdrConfigs.dark}" "${configHome}/herdr/config-dark.toml"
   mkSymlink "${herdrConfigs.light}" "${configHome}/herdr/config-light.toml"
   # herdr is nix-managed (inputs.herdr); drop any installer/self-update copy
@@ -344,6 +349,7 @@ pkgs.writeShellScript "user-config-${name}" ''
            "${theme.paths.fzfDir}" \
            "${theme.paths.ghosttyDir}" \
            "${theme.paths.lazygitDir}" \
+           "${theme.paths.leafThemesDir}" \
            "${theme.paths.gitDir}" \
            "${theme.wallpapers.dir}"
 
@@ -362,6 +368,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   ln -sfn "$THEME_LAZYGIT_TARGET" "${theme.paths.lazygitCurrentFile}"
   ln -sfn "$THEME_GIT_THEME_TARGET" "${theme.paths.gitThemeCurrentFile}"
   ln -sfnT "$THEME_HERDR_TARGET" "${theme.paths.herdrCurrentFile}"
+  ln -sfn "$THEME_LEAF_TARGET" "${theme.paths.leafCurrentFile}"
 
   if [ ! -f "${theme.wallpapers.dark}" ]; then
     cp "${theme.wallpapers.staticDark}" "${theme.wallpapers.dark}"

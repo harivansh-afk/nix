@@ -93,6 +93,9 @@ let
     sketchybarCurrentFile = "${configHome}/sketchybar/themes/current";
     herdrDir = "${configHome}/herdr";
     herdrCurrentFile = "${configHome}/herdr/config.toml";
+    leafDir = "${configHome}/leaf";
+    leafThemesDir = "${configHome}/leaf/themes";
+    leafCurrentFile = "${configHome}/leaf/themes/current.toml";
   };
 
   themes = {
@@ -762,6 +765,149 @@ let
       peach = "${c.peach}"
     '';
 
+  # Custom theme file for leaf (terminal markdown viewer). Every surface is
+  # "reset" - ratatui's Color::Reset, i.e. the terminal's own background - so
+  # leaf paints text only, never blocks; the sole painted regions are the
+  # selection/search highlights that have to show position. Markdown roles
+  # follow the omp lane (neutral-bright headings, coral inline code, blue
+  # links); alerts and task/status colors keep their conventional hues.
+  renderLeaf =
+    mode:
+    let
+      t = themes.${mode};
+      c =
+        if mode == "light" then
+          {
+            base = "arctic";
+            syntax = "InspiredGitHub";
+            bright = "#282828";
+            monoHigh = "#504945";
+            monoMid = "#665c54";
+            mono = "#7c6f64";
+            dim = "#a89984";
+            border = "#c3c7c9";
+            borderStrong = "#a89984";
+            highlightBg = "#d5d5d5";
+            matchBg = "#c3c7c9";
+            coral = "#af3a03";
+            linkBlue = "#4261a5";
+            linkHover = "#2f4a80";
+            green = "#427b58";
+            red = "#c5524a";
+            yellow = "#b57614";
+            purple = "#8f3f71";
+          }
+        else
+          {
+            base = "ocean";
+            syntax = "base16-mocha.dark";
+            bright = "#ebdbb2";
+            monoHigh = "#bdae93";
+            monoMid = "#a89984";
+            mono = "#928374";
+            dim = "#7c6f64";
+            border = "#3c3836";
+            borderStrong = "#504945";
+            highlightBg = "#3c3836";
+            matchBg = "#665c54";
+            coral = "#d97757";
+            linkBlue = sharedPalette.blue;
+            linkHover = "#89a8ea";
+            green = sharedPalette.green;
+            red = sharedPalette.red;
+            yellow = sharedPalette.yellow;
+            purple = sharedPalette.purple;
+          };
+      selectedBg = if mode == "light" then t.selectionBackground else t.border;
+    in
+    ''
+      base = "${c.base}"
+      syntax = "${c.syntax}"
+
+      [ui]
+      content_bg = "reset"
+      scrollbar_hover = "${t.text}"
+      status_bg = "reset"
+      status_separator = "${c.border}"
+      status_brand_fg = "${c.coral}"
+      status_brand_bg = "reset"
+      status_filename_fg = "${t.text}"
+      status_filename_bg = "reset"
+      status_watch_fg = "${c.green}"
+      status_watch_bg = "reset"
+      status_reloaded_fg = "${c.green}"
+      status_reloaded_bg = "reset"
+      status_search_fg = "${c.coral}"
+      status_search_bg = "reset"
+      status_success_fg = "${c.green}"
+      status_success_bg = "reset"
+      status_warning_fg = "${c.yellow}"
+      status_error_fg = "${c.red}"
+      status_error_bg = "reset"
+      status_shortcut_fg = "${c.dim}"
+      status_percent_fg = "${c.mono}"
+      toc_bg = "reset"
+      toc_border = "${c.border}"
+      toc_header_fg = "${c.dim}"
+      toc_hover_fg = "${c.bright}"
+      toc_accent = "${c.coral}"
+      toc_active_bg = "${selectedBg}"
+      toc_inactive_bg = "reset"
+      toc_index_inactive = "${c.dim}"
+      toc_primary_active = "${c.bright}"
+      toc_primary_inactive = "${t.text}"
+      toc_secondary_inactive = "${c.dim}"
+      toc_secondary_text_active = "${t.text}"
+      toc_secondary_text_inactive = "${c.mono}"
+
+      [markdown]
+      text = "${t.text}"
+      strong_text = "${c.bright}"
+      heading_1 = "${c.bright}"
+      heading_2 = "${t.text}"
+      heading_3 = "${c.monoHigh}"
+      heading_4 = "${c.monoMid}"
+      heading_other = "${c.mono}"
+      heading_underline = "${c.border}"
+      rule = "${c.border}"
+      inline_code_fg = "${c.coral}"
+      inline_code_bg = "reset"
+      code_frame = "${c.border}"
+      code_label = "${c.dim}"
+      code_gutter = "${c.dim}"
+      link_icon = "${c.linkBlue}"
+      link_text = "${c.linkBlue}"
+      link_hover = "${c.linkHover}"
+      blockquote_marker = "${c.borderStrong}"
+      blockquote_text = "${c.monoMid}"
+      list_level_1 = "${c.monoMid}"
+      list_level_2 = "${c.mono}"
+      list_level_3 = "${c.dim}"
+      ordered_list = "${c.mono}"
+      table_border = "${c.border}"
+      table_separator = "${c.borderStrong}"
+      table_header = "${c.bright}"
+      table_cell = "${t.text}"
+      search_highlight_bg = "${c.highlightBg}"
+      search_match_bg = "${c.matchBg}"
+      mark_fg = "${c.bright}"
+      mark_bg = "${selectedBg}"
+      latex_inline_fg = "${c.linkBlue}"
+      latex_inline_bg = "reset"
+      latex_block_fg = "${c.linkBlue}"
+      mermaid_keyword = "${c.coral}"
+      mermaid_arrow = "${c.mono}"
+      mermaid_label = "${t.text}"
+      mermaid_block_fg = "${c.monoMid}"
+      task_checked = "${c.green}"
+      task_unchecked = "${c.dim}"
+      alert_note = "${c.linkBlue}"
+      alert_tip = "${c.green}"
+      alert_important = "${c.purple}"
+      alert_warning = "${c.yellow}"
+      alert_caution = "${c.red}"
+    '';
+
   # Shell fragment sourced by the sketchybar rc and plugins. Sketchybar wants
   # 0xAARRGGBB colors; the accent stays on the cozybox cream/yellow.
   renderSketchybar =
@@ -856,6 +1002,7 @@ in
     renderGhostty
     renderHerdrTheme
     renderLazygit
+    renderLeaf
     renderPurePrompt
     renderSketchybar
     renderZshHighlights

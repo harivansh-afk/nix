@@ -50,6 +50,11 @@ in
     light = pkgs.writeText "lazygit-config-light.yml" (lazygitBase + theme.renderLazygit "light");
   };
 
+  leafThemes = {
+    dark = pkgs.writeText "leaf-cozybox-dark.toml" (theme.renderLeaf "dark");
+    light = pkgs.writeText "leaf-cozybox-light.toml" (theme.renderLeaf "light");
+  };
+
   herdrConfigs = {
     dark = pkgs.writeText "herdr-config-dark.toml" (herdrBase + "\n" + theme.renderHerdrTheme "dark");
     light = pkgs.writeText "herdr-config-light.toml" (

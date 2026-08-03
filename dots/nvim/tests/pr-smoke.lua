@@ -76,25 +76,58 @@ local before = vim.fn.strdisplaywidth(row(2))
 vim.api.nvim_win_set_cursor(0, { 2, 0 })
 marks.toggle()
 
+-- The slot column is the cell between the PR number and the title, found
+-- from the number rather than a byte offset because the orb is multibyte:
+-- "#%-5d" is six cells, then the two-space gap.
+local function slot_cell(line, number)
+  local at = line:find("#" .. number, 1, true)
+  return at and line:sub(at + 8, at + 8)
+end
+
 check("toggle marked the row under the cursor", vim.deep_equal(marks.numbers(ROOT), { 366 }))
-check("the mark renders as its slot digit", row(2):sub(1, 1) == "1", row(2):sub(1, 20))
--- The whole reason the digit lives in the gutter: it replaces a cell the row
--- already spent on a blank, so no column downstream of it can move.
+check("the mark renders as its slot digit", slot_cell(row(2), 366) == "1", row(2):sub(1, 26))
+check("it sits immediately left of the title", row(2):find("1 another title", 1, true) ~= nil, row(2):sub(1, 30))
+-- The column is charged to the title width and spent on every row, so no
+-- column moves when a row is marked. That property is the whole placement.
 check("marking re-flows nothing", vim.fn.strdisplaywidth(row(2)) == before, before)
-check("an unmarked row keeps its blank gutter", row(1):sub(1, 1) == " ")
+check("an unmarked row keeps a blank slot", slot_cell(row(1), 385) == " ", row(1):sub(1, 26))
 
 vim.api.nvim_win_set_cursor(0, { 1, 0 })
 marks.toggle()
 check("slots are insertion order", vim.deep_equal(marks.numbers(ROOT), { 366, 385 }))
-check("the second slot renders 2", row(1):sub(1, 1) == "2", row(1):sub(1, 20))
+check("the second slot renders 2", slot_cell(row(1), 385) == "2", row(1):sub(1, 26))
 
 -- The store on disk is what the next session reads.
 local file = vim.fs.joinpath(vim.fn.stdpath "state", "pr-marks.json")
 local disk = vim.json.decode(table.concat(vim.fn.readfile(file), "\n"))
 check("marks persist under their repo root", vim.deep_equal(disk[ROOT], { 366, 385 }), vim.inspect(disk))
 
-marks.toggle()
-vim.api.nvim_win_set_cursor(0, { 2, 0 })
+-- --------------------------------------------------------------- the peek ---
+
+-- <leader>0: the whole list in a float, one row per slot, with the titles the
+-- loaded pr://list already knows.
+local list_win = vim.api.nvim_get_current_win()
+marks.peek()
+local peek_win = vim.api.nvim_get_current_win()
+check("peek opened a float", peek_win ~= list_win and vim.api.nvim_win_get_config(peek_win).relative ~= "")
+local peek = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+check("peek has a row per mark", #peek == 2, vim.inspect(peek))
+check(
+  "peek matches the list's columns",
+  slot_cell(peek[1], 366) == "1" and peek[1]:find("1 another title", 1, true) ~= nil,
+  peek[1]
+)
+
+-- dd drops the row under the cursor and the float comes back renumbered.
+vim.api.nvim_win_set_cursor(0, { 1, 0 })
+vim.cmd "normal dd"
+check("dd drops that mark", vim.deep_equal(marks.numbers(ROOT), { 385 }), vim.inspect(marks.numbers(ROOT)))
+peek = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+check("the peek renumbers", #peek == 1 and slot_cell(peek[1], 385) == "1", peek[1])
+vim.cmd "normal q"
+check("q closes the peek", vim.api.nvim_get_current_win() == list_win)
+
+vim.api.nvim_win_set_cursor(0, { 1, 0 })
 marks.toggle()
 check("toggle is its own undo", #marks.numbers(ROOT) == 0)
 disk = vim.json.decode(table.concat(vim.fn.readfile(file), "\n"))

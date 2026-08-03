@@ -10,8 +10,8 @@
 --
 -- Slots are positional and stable: slot 2 stays slot 2 until you unmark it,
 -- so <leader>2 is muscle memory rather than a guess. The slot digit renders
--- in the pr://list gutter, in the cell the orb's leading blank already
--- occupied - no column re-flows to make room for it.
+-- in its own two-cell column immediately left of the title on pr://list,
+-- spent on every row whether marked or not, so no column re-flows.
 --
 -- Marks are per repository and outlive the session (one JSON file under
 -- stdpath("state")), written on every change: a mark costs one keypress and
@@ -172,6 +172,105 @@ function M.step(delta)
   open(root, numbers[nxt])
 end
 
+-- ------------------------------------------------------------------ peek ---
+
+local ns = vim.api.nvim_create_namespace "pr_marks_peek"
+
+--- <leader>0: the whole fast list at once, in a float over wherever you are.
+--- The counterpart to <leader>1-9, which jump to a slot you already remember.
+---
+--- Titles come from pr.list.order when the list is loaded, and are simply
+--- absent when it is not: the mark itself only ever knew the number, and a
+--- float is not worth a forge call. The row still jumps - open() fetches what
+--- pr.load needs on the way.
+function M.peek()
+  local root = M.root()
+  if not root then return warn "not in a git repository" end
+  local numbers = M.numbers(root)
+  if #numbers == 0 then return warn "no marked PRs - A marks the one under the cursor" end
+
+  local by_number = {}
+  for _, p in ipairs(require("pr.list").order) do
+    by_number[p.number] = p
+  end
+  local loaded = require("pr").state.pr
+
+  local surface = require "pr.surface"
+  local lines, marks, width = {}, {}, 0
+  local seg = surface.segmenter(lines, marks)
+  for slot, number in ipairs(numbers) do
+    local p = by_number[number]
+    local glyph, hl = surface.orb(p and p.ci)
+    -- Same column order as a pr://list row, slot included, so the float reads
+    -- as that list filtered rather than as a different thing.
+    seg {
+      { " " },
+      { glyph, hl },
+      { " " },
+      { ("#%-5d"):format(number), p and p.isDraft and "Comment" or "DiagnosticOk" },
+      { "  " },
+      { tostring(slot), "Constant" },
+      { " " },
+      { p and p.title or "", loaded and loaded.number == number and "Underlined" or nil },
+      { " " },
+    }
+    width = math.max(width, vim.fn.strdisplaywidth(lines[#lines]))
+  end
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].modifiable = false
+  vim.bo[buf].bufhidden = "wipe"
+  for _, m in ipairs(marks) do
+    vim.api.nvim_buf_set_extmark(buf, ns, m[1], m[2], { end_col = m[3], hl_group = m[4] })
+  end
+
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    row = math.floor((vim.o.lines - #lines) / 2) - 1,
+    col = math.floor((vim.o.columns - width) / 2),
+    width = math.min(width, vim.o.columns - 4),
+    height = #lines,
+    style = "minimal",
+    border = "single",
+    title = " fast list ",
+    title_pos = "center",
+  })
+  vim.wo[win].cursorline = true
+  -- Land on the PR being reviewed, so <CR> out of a peek is a no-op rather
+  -- than a jump you did not ask for.
+  for slot, number in ipairs(numbers) do
+    if loaded and loaded.number == number then pcall(vim.api.nvim_win_set_cursor, win, { slot, 0 }) end
+  end
+
+  local o = { buffer = buf, silent = true, nowait = true }
+  local function close()
+    if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
+  end
+  local function jump(slot)
+    close()
+    if numbers[slot] then open(root, numbers[slot]) end
+  end
+  vim.keymap.set("n", "<CR>", function() jump(vim.fn.line ".") end, o)
+  for slot = 1, math.min(9, #numbers) do
+    vim.keymap.set("n", tostring(slot), function() jump(slot) end, o)
+  end
+  -- dd, because the rows read as a list and that is what deleting a line in a
+  -- list means. The float redraws so the slots renumber under the cursor.
+  vim.keymap.set("n", "dd", function()
+    local number = numbers[vim.fn.line "."]
+    close()
+    if number then
+      set(root, (without(M.numbers(root), number)))
+      M.peek()
+    end
+  end, o)
+  for _, key in ipairs { "q", "<Esc>", "<leader>0" } do
+    vim.keymap.set("n", key, close, o)
+  end
+  vim.api.nvim_create_autocmd("BufLeave", { buffer = buf, once = true, callback = close })
+end
+
 -- ------------------------------------------------------------------- maps ---
 
 --- The mark keys, and the one source of what each one says it does.
@@ -200,6 +299,7 @@ function M.help_entries()
     out[#out + 1] = { k[1], k[3] }
   end
   out[#out + 1] = { "<leader>1-9", "jump to a marked slot" }
+  out[#out + 1] = { "<leader>0", "the whole fast list, in a float" }
   return out
 end
 

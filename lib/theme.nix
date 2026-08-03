@@ -790,8 +790,8 @@ let
             highlightBg = "#d5d5d5";
             matchBg = "#c3c7c9";
             coral = "#af3a03";
-            linkBlue = "#4261a5";
-            linkHover = "#2f4a80";
+            linkBlue = "#076678";
+            linkHover = "#054a58";
             headingAccent = "#b57614";
             green = "#427b58";
             red = "#c5524a";
@@ -812,8 +812,8 @@ let
             highlightBg = "#3c3836";
             matchBg = "#665c54";
             coral = "#d97757";
-            linkBlue = sharedPalette.blue;
-            linkHover = "#89a8ea";
+            linkBlue = "#83a598";
+            linkHover = "#9fc0b5";
             headingAccent = sharedPalette.yellowBright;
             green = sharedPalette.green;
             red = sharedPalette.red;

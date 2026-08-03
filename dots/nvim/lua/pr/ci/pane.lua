@@ -236,7 +236,11 @@ local function fill(job)
   local api = require "pr.ci.api"
   local forge = data.forge(root)
   job.busy = true
-  if forge == "gh" and not job.steps then
+  -- Unconditional on gh: steps ARE the expansion there, so re-reading them is
+  -- how a running job's expanded row advances. Gating on `not job.steps` froze
+  -- the steps after the first fetch and then fell through to the log below,
+  -- which gh never shows for an expanded job - a wasted request per poll.
+  if forge == "gh" then
     return api.job_steps(root, forge, job.id, function(steps, err)
       job.busy = nil
       if steps then job.steps = steps end
@@ -302,7 +306,9 @@ local function enter()
     if w ~= pane then target = target or w end
   end
   if target then vim.api.nvim_set_current_win(target) end
-  require("pr.ci.log").open(root, job)
+  -- The sha travels with the job, because the log subscribes to the SAME
+  -- store entry this pane does rather than polling the job on its own.
+  require("pr.ci.log").open(root, sha, job)
 end
 
 local function web()
@@ -381,10 +387,14 @@ local function subscribe()
   root, sha, entry = s.root, head, nil
   unwatch = ci.watch(root, sha, function(e)
     entry = e
-    -- An expanded running job re-reads its tail whenever the store updates,
-    -- so the inline detail follows the log rather than freezing at open.
+    -- An expanded job re-reads its detail whenever the store updates, so the
+    -- inline tail follows the log rather than freezing at open. The store
+    -- hands back BRAND-NEW job tables every fetch, so a fresh row never
+    -- carries the steps or tail its predecessor had - which is also why this
+    -- cannot skip terminal jobs: the notify that flips a job to done is the
+    -- one that would otherwise leave an open row showing "...".
     for _, job in ipairs(e.jobs or {}) do
-      if expanded[job.id or -1] and (job.bucket == "running" or job.bucket == "pending") then fill(job) end
+      if expanded[job.id or -1] and not (job.steps or job.tail) then fill(job) end
     end
     render()
   end)

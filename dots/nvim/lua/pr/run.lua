@@ -79,22 +79,57 @@ end
 
 -- ------------------------------------------------------------------ async ---
 
---- Async subprocess -> stdout. Failures come back as ONE error string: both
---- forge CLIs answer API failures with a JSON body carrying `message`, so
---- that is unwrapped here and no caller ever parses an error twice.
+--- The HTTP verdict, when the command was asked for one.
+---
+--- `tea api` exits 0 WHATEVER the status - a 404 comes back as code 0 with
+--- the forge's error object on stdout (measured on tea 0.14/Forgejo). Left
+--- to the exit code alone, a missing log is indistinguishable from a log
+--- whose contents happen to be `{"message":...}`, and the caller paints the
+--- error as if it were the answer. `tea api -i` fixes this: the status line
+--- goes to STDERR and the body stays clean on stdout, so the status becomes
+--- the verdict. gh passes no -i, matches nothing here, and keeps being
+--- judged on its exit code, which it sets correctly.
+---
+--- The LAST status line wins: a redirect chain writes one per hop and only
+--- the final one describes the body we were handed.
+---@return integer? status
+local function http_status(stderr)
+  local last
+  for code in (stderr or ""):gmatch "HTTP/[%d%.]+ (%d%d%d)" do
+    last = code
+  end
+  return tonumber(last)
+end
+
+--- Failures come back as ONE error string. With -i the headers occupy
+--- stderr, so the forge's own words are on stdout; without it a failing CLI
+--- speaks on stderr. Either way the words are usually a JSON body carrying
+--- `message`, which is unwrapped here so no caller parses an error twice -
+--- except that Gitea answers some refusals with an EMPTY message, so the
+--- status has to stand in rather than an empty string being reported.
+---@param status integer?
+local function failure(r, status)
+  local first, second = r.stderr, r.stdout
+  if status then
+    first, second = r.stdout, r.stderr
+  end
+  local e = vim.trim(first or "")
+  if e == "" then e = vim.trim(second or "") end
+  local ok, body = pcall(vim.json.decode, e)
+  if ok and type(body) == "table" and type(body.message) == "string" and body.message ~= "" then e = body.message end
+  if e ~= "" then return e end
+  return status and ("the forge answered HTTP " .. status) or ("exited with code " .. r.code)
+end
+
+--- Async subprocess -> stdout.
 ---@param cmd string[]
 ---@param root string  cwd
 ---@param cb fun(out?: string, err?: string)
 function M.sh(cmd, root, cb)
   vim.system(cmd, { cwd = root, text = true }, function(r)
     vim.schedule(function()
-      if r.code ~= 0 then
-        local e = vim.trim(r.stderr or "")
-        if e == "" then e = vim.trim(r.stdout or "") end
-        local ok, body = pcall(vim.json.decode, e)
-        if ok and type(body) == "table" and body.message then e = body.message end
-        return cb(nil, e ~= "" and e or ("exited with code " .. r.code))
-      end
+      local status = http_status(r.stderr)
+      if r.code ~= 0 or (status and status >= 300) then return cb(nil, failure(r, status)) end
       cb(r.stdout or "")
     end)
   end)

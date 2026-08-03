@@ -20,6 +20,7 @@
   isDarwin,
   extraPackages ? [ ],
   forgeUsers ? { },
+  installMutableTools ? true,
 }:
 let
   inherit (user) name homeDirectory;
@@ -56,6 +57,7 @@ let
       customScripts
       coreutilsBin
       forgeLogins
+      installMutableTools
       ;
   };
 

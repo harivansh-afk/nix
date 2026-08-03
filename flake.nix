@@ -137,6 +137,7 @@
         ./flake/cloudflare.nix
         ./flake/devshell.nix
         ./flake/hosts.nix
+        ./flake/ix.nix
         ./flake/nixos.nix
         ./flake/omp.nix
         ./flake/portable.nix

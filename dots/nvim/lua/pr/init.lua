@@ -10,7 +10,7 @@
 --   D draft <-> ready    M merge    C checkout <-> back    O browser    X close
 --
 -- And the fast list (pr.marks), the few PRs you are working through now:
---   A mark / unmark      ]m / [m next / prev mark      <leader>1-9 a slot
+--   A mark / unmark    ]m / [m next / prev    <leader>1-9 a slot    <c-e> all
 --
 -- Modules:
 --   pr        state + navigation + loading (this file, the orchestrator)

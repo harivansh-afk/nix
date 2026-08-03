@@ -10,8 +10,8 @@
 --
 -- Slots are positional and stable: slot 2 stays slot 2 until you unmark it,
 -- so <leader>2 is muscle memory rather than a guess. The slot digit renders
--- in the pr://list gutter, in the cell the orb's leading blank already
--- occupied - no column re-flows to make room for it.
+-- in its own two-cell column immediately left of the title on pr://list,
+-- spent on every row whether marked or not, so no column re-flows.
 --
 -- Marks are per repository and outlive the session (one JSON file under
 -- stdpath("state")), written on every change: a mark costs one keypress and
@@ -201,14 +201,16 @@ function M.peek()
   for slot, number in ipairs(numbers) do
     local p = by_number[number]
     local glyph, hl = surface.orb(p and p.ci)
+    -- Same column order as a pr://list row, slot included, so the float reads
+    -- as that list filtered rather than as a different thing.
     seg {
-      { " " },
-      { tostring(slot), "Constant" },
       { " " },
       { glyph, hl },
       { " " },
       { ("#%-5d"):format(number), p and p.isDraft and "Comment" or "DiagnosticOk" },
       { "  " },
+      { tostring(slot), "Constant" },
+      { " " },
       { p and p.title or "", loaded and loaded.number == number and "Underlined" or nil },
       { " " },
     }

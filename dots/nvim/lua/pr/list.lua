@@ -8,7 +8,7 @@
 --
 -- Canola-style: the buffer IS the list. <CR> dives into a PR (pr://files),
 -- "-" in the files view comes back up here. A PR on the fast list (pr.marks)
--- wears its slot digit in the gutter, left of the orb.
+-- wears its slot digit in the column immediately left of its title.
 
 local data = require "pr.data"
 local fmt = require "pr.fmt"
@@ -79,14 +79,15 @@ local function render(prs)
   -- fzf-picker-era columns: number | title (fills the window) | author | age,
   -- author + age right-aligned against the window edge. Title absorbs
   -- whatever the fixed columns leave, truncating into "…" when narrow.
-  -- 3 = leading space + orb + space, 6 = the number column; display cells.
-  local title_w = surface.title_width(S:width(), 3 + 6)
+  -- 3 = leading space + orb + space, 6 = the number column, 2 = the fast-list
+  -- slot; display cells.
+  local title_w = surface.title_width(S:width(), 3 + 6 + 2)
 
-  -- The fast list, as a gutter digit in the cell left of the orb - the one
-  -- the row already spent on a blank, so marking a PR re-flows nothing. Past
-  -- slot 9 the digit would be two cells wide and every column after it would
-  -- shift, so it degrades to "+": a tenth mark is a fast list that is no
-  -- longer fast, and <leader>N only reaches nine anyway.
+  -- The fast list, as a digit immediately left of the title. Its two cells
+  -- are charged to title_w above and spent on every row, blank or not, so
+  -- titles stay in one column and marking a PR re-flows nothing. Past slot 9
+  -- the digit would not fit in one cell, so it degrades to "+": a tenth mark
+  -- is a fast list that is no longer fast, and <leader>N only reaches nine.
   local slots = require("pr.marks").slots(M.root)
 
   local lines, marks = {}, {}
@@ -98,11 +99,13 @@ local function render(prs)
     local connector = p.depth > 0 and (string.rep("  ", p.depth - 1) .. "└ ") or ""
     local title = fmt.trunc(connector .. (p.title or ""), title_w)
     seg {
-      slot and { slot < 10 and tostring(slot) or "+", "Constant" } or { " " },
+      { " " },
       { glyph, hl },
       { " " },
       { ("#%-5d"):format(p.number), p.isDraft and "Comment" or "DiagnosticOk" }, -- grey = draft
       { "  " },
+      slot and { slot < 10 and tostring(slot) or "+", "Constant" } or { " " },
+      { " " },
       { connector, "Constant" }, -- └ in purple (CozyboxPurple)
       { title:sub(#connector + 1) },
       { string.rep(" ", math.max(0, title_w - vim.fn.strdisplaywidth(title))) },

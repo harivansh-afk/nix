@@ -26,8 +26,9 @@ local fmt = require "pr.fmt"
 
 local M = {}
 
---- Async plumbing from the one process engine. Captured as a bare local
+--- Async plumbing from the one process engine. Captured as bare locals
 --- because `run` is what this file calls a workflow run everywhere below.
+local sh = require("pr.run").sh
 local json = require("pr.run").json
 
 --- ISO -> true epoch. Kept as a named export because every caller of this
@@ -40,8 +41,14 @@ function M.now() return os.time() end
 --- `{owner}`/`{repo}` are placeholders BOTH CLIs expand from the checkout, so
 --- no path here has to know the slug. On gh they expand to the BASE repo,
 --- which is where a fork PR's checks live.
+--- `-i` on every tea call, because tea exits 0 whatever the HTTP status: it
+--- moves the status line onto stderr (the body stays clean on stdout) and
+--- that is the only thing pr.run can judge a tea response by. Without it a
+--- 404 arrives looking exactly like a successful answer - an unstarted job's
+--- "job not started" error would be painted into the log buffer as if the
+--- forge had said it was the log.
 local function gh_api(path) return { "gh", "api", path } end
-local function tea_api(path) return { "tea", "api", path } end
+local function tea_api(path) return { "tea", "api", "-i", path } end
 
 -- ----------------------------------------------------------------- github ---
 

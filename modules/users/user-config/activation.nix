@@ -41,6 +41,7 @@
   forgeLogins,
   heliumExtJson,
   heliumExtensions,
+  installMutableTools,
   ...
 }:
 pkgs.writeShellScript "user-config-${name}" ''
@@ -427,21 +428,23 @@ pkgs.writeShellScript "user-config-${name}" ''
     ${pkgs.findutils}/bin/find "${homeDirectory}/.gnupg" -type f -exec chmod 600 {} +
   fi
 
-  export PATH="${
-    lib.makeBinPath [
-      pkgs.bash
-      pkgs.coreutils
-      pkgs.curl
-      pkgs.gnugrep
-      pkgs.gnused
-    ]
-  }:$PATH"
-  if [ ! -x "${homeDirectory}/.local/bin/omp" ]; then
-    if ! "${pkgs.curl}/bin/curl" -fsSL https://omp.sh/install \
-      | PI_INSTALL_DIR="${homeDirectory}/.local/bin" "${pkgs.bash}/bin/bash"; then
-      echo "warning: omp install failed; will retry on next switch" >&2
+  ${lib.optionalString installMutableTools ''
+    export PATH="${
+      lib.makeBinPath [
+        pkgs.bash
+        pkgs.coreutils
+        pkgs.curl
+        pkgs.gnugrep
+        pkgs.gnused
+      ]
+    }:$PATH"
+    if [ ! -x "${homeDirectory}/.local/bin/omp" ]; then
+      if ! "${pkgs.curl}/bin/curl" -fsSL https://omp.sh/install \
+        | PI_INSTALL_DIR="${homeDirectory}/.local/bin" "${pkgs.bash}/bin/bash"; then
+        echo "warning: omp install failed; will retry on next switch" >&2
+      fi
     fi
-  fi
+  ''}
 
   # --- rust-analyzer's sysroot source ---
   # rust-analyzer resolves std by READING its source, not by loading rlibs, so
@@ -467,18 +470,20 @@ pkgs.writeShellScript "user-config-${name}" ''
   fi
 
   # --- cursor-agent via the official installer ---
-  if [ ! -x "${homeDirectory}/.local/bin/cursor-agent" ]; then
-    export PATH="${
-      lib.makeBinPath [
-        pkgs.bash
-        pkgs.coreutils
-        pkgs.curl
-        pkgs.gnutar
-        pkgs.gzip
-      ]
-    }:$PATH"
-    if ! "${pkgs.curl}/bin/curl" -fsS https://cursor.com/install | "${pkgs.bash}/bin/bash"; then
-      echo "warning: cursor-agent install failed; will retry on next switch" >&2
+  ${lib.optionalString installMutableTools ''
+    if [ ! -x "${homeDirectory}/.local/bin/cursor-agent" ]; then
+      export PATH="${
+        lib.makeBinPath [
+          pkgs.bash
+          pkgs.coreutils
+          pkgs.curl
+          pkgs.gnutar
+          pkgs.gzip
+        ]
+      }:$PATH"
+      if ! "${pkgs.curl}/bin/curl" -fsS https://cursor.com/install | "${pkgs.bash}/bin/bash"; then
+        echo "warning: cursor-agent install failed; will retry on next switch" >&2
+      fi
     fi
-  fi
+  ''}
 ''

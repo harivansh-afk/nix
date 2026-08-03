@@ -40,6 +40,18 @@ Spark local inference runs Pi against `llama.cpp` on `127.0.0.1:8080`.
 
 The Cognee knowledge graph (`modules/services/kb-graph.nix`) rebuilds daily at 04:00 and renders to `/var/lib/kb/graph/index.html`. It is deliberately not served on any network or tailnet - view it from a spark shell with `open kb-graph.html` (the repo-root symlink, spark-only) which streams it to the Mac.
 
+## ix
+
+The flake's default ix target is a lightweight personal workstation. It keeps the root shell ready for `ix shell`: Claude Code, Codex, OMP, Hermes, nvim, btop, the cozybox prompt and themes, and the shared CLI/dotfile setup are present from the first activation. Spark-only hardware, GPU, server, tunnel, secret, and multi-user modules are not included.
+
+The GitHub repository is a mirror of Forgejo and is the public fetch surface ix can consume:
+
+```sh
+ix new github:harivansh-afk/nix
+```
+
+The first run builds the pinned GitHub revision into an ix template and boots it; later runs of the same revision use the regional template cache. Use `--fresh` to force a rebuild of that revision.
+
 ## Structure
 
 ```

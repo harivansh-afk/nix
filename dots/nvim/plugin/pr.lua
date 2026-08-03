@@ -48,10 +48,12 @@ map("n", "[m", nav("[m", marked, function() require("pr.marks").step(-1) end), {
 
 --- <leader>1-9: straight to a slot on the fast list, from any buffer. Nine
 --- because that is how many single keystrokes there are, and a fast list
---- longer than that is a PR list with extra steps.
+--- longer than that is a PR list with extra steps. <leader>0 shows the list
+--- itself, for when you want to look rather than remember.
 for slot = 1, 9 do
   map("n", "<leader>" .. slot, function() require("pr.marks").slot(slot) end, { desc = "pr: fast list slot " .. slot })
 end
+map("n", "<leader>0", function() require("pr.marks").peek() end, { desc = "pr: the fast list" })
 map("n", "<leader>gf", pr "files", { desc = "pr: files view" })
 map("n", "<leader>ci", pr "checks", { desc = "pr: CI checks pane" })
 map("n", "<leader>gC", pr "pick_commit", { desc = "pr: pick commit in PR" })

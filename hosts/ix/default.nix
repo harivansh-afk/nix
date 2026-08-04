@@ -25,6 +25,8 @@ in
 
   programs.zsh.enable = true;
 
+  environment.systemPackages = [ pkgs.ghostty.terminfo ];
+
   users.users.root = {
     packages = [
       self.packages.${system}.omp

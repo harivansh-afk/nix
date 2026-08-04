@@ -33,7 +33,7 @@ in
   programs.zsh.enable = true;
 
   users.users.root = {
-    packages = userConfig.packages;
+    inherit (userConfig) packages;
     shell = pkgs.zsh;
   };
 

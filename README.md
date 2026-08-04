@@ -1,82 +1,79 @@
-<p align="center">
-  <img src="assets/hero.svg" alt="system map: one flake driving a nix-darwin macbook and a NixOS DGX Spark, with edge routing, services, theme, mux, and secrets" width="100%">
-</p>
+This repo is the home for all my configs and creations.
+Everything is a single flake, declared with [flake-parts](https://github.com/hercules-ci/flake-parts) and managed by [Determinate Nix](https://docs.determinate.systems/determinate-nix/).
 
-One flake, two machines, declared with [flake-parts](https://github.com/hercules-ci/flake-parts) and managed by [Determinate Nix](https://docs.determinate.systems/determinate-nix/):
+## Tour
 
-| host | hardware | system | role |
-|---|---|---|---|
-| `macbook` | MacBook (aarch64-darwin) | nix-darwin + nix-homebrew | dev workstation |
-| `spark` | NVIDIA DGX Spark, GB10 (aarch64-linux) | NixOS | shared server |
+**`dots/`**
 
-## The tour
+- plain-file configs for ~28 tools: ghostty, zsh, git, lazygit, and more
+- no home-manager: an activation script symlinks them into place
+- my links point at the live checkout, so edits apply without a rebuild
 
-**Edge** - internet traffic hits Cloudflare (TLS terminates there), rides a cloudflared tunnel to Caddy on `127.0.0.1:80`, and gets dispatched by Host header to services bound on loopback. No open web ports, no ACME. DNS for the zone is nix too, via [terranix](https://github.com/terranix/terranix) (`just dns-plan` / `just dns-apply`).
+**`dots/nvim/`**
 
-**Services on spark** - [Forgejo](https://git.harivan.sh) with a Pierre-themed frontend, Actions runners, and push-mirrors back to GitHub; Vaultwarden; Delta; the harivan.sh site; `llama.cpp` inference on the GPU; Whisper Large v3 speech-to-text; the Hermes always-on agent; a Cognee knowledge graph with hybrid search over mail, calendar, finance, and repos; mini-loops scheduled scans; browser automation. Each one is a module in `modules/services/`.
+- `mux` - sessions, panes, and windows inside Neovim: one headless server per project, thin clients, persistence across reboots
+- `pr` - code review inside Neovim: PR list, file tree, review marks, CI status, `pr://` buffers
+- a custom statusline, git stats, and live theme switching
 
-**mux** - tmux is gone. Sessions, panes, and windows live in Neovim: one detached headless server per project, thin `--remote-ui` clients, mksession persistence across reboots, and a federated session picker across every host. `mosh spark` lands you straight in a session. The whole thing ships as a portable flake package: `nix profile add git+https://git.harivan.sh/harivansh-afk/nix#mux`.
+**`modules/services/`**
 
-**Theme** - [cozybox.nvim](https://git.harivan.sh/harivansh-afk/cozybox.nvim) is the palette for everything: `lib/theme.nix` renders configs for ghostty, fzf, lazygit, bat, zsh, omp, the prompt, and the wallpaper. `theme` flips dark/light everywhere, live, including running nvim instances.
+- [Forgejo](https://git.harivan.sh) - the canonical forge, with Actions runners and push-mirrors back to GitHub
+- `llama.cpp` - local inference on the GPU
+- Whisper Large v3 - speech-to-text
+- Hermes - an always-on local agent
+- Cognee - a knowledge graph with hybrid search over mail, calendar, finance, and repos
+- Vaultwarden - password manager
+- Delta - self-hosted todo platform
+- the harivan.sh site
 
-**Dotfiles** - no home-manager. Plain files in `dots/` are symlinked into place by an activation script: the owner's links point at the live checkout so edits apply without a rebuild, guests get the nix-store copy. 28 tools configured from one tree.
+**`lib/theme.nix`**
 
-**Secrets** - [sops-nix](https://github.com/Mic92/sops-nix) with age recipients derived from each host's SSH key. Per-admin path rules in `.sops.yaml` let friends own and rotate their secrets without being able to read anyone else's.
+- [cozybox.nvim](https://git.harivan.sh/harivansh-afk/cozybox.nvim) is the palette for everything: ghostty, fzf, lazygit, bat, zsh, omp, and the wallpaper
+- `theme` flips dark/light everywhere, live
+
+**`packages.nix`**
+
+- one shared package set for both machines
+- only truly macOS-specific things stay on Homebrew
+
+**`scripts/`**
+
+- runtime helpers (`hrd`, `ghpr`, `fork`, `iosrun`, and more), each exposed as a flake package
 
 ## Spark
 
-Spark is a shared NixOS workstation: friends who want access get a user definition in `users/`, and every user gets the shared dotfile setup from `modules/users/`.
+A shared NixOS workstation on an NVIDIA DGX Spark (GB10, aarch64-linux).
 
-NVIDIA kernel, drivers, and container support come from the upstream [nixos-dgx-spark](https://github.com/graham33/nixos-dgx-spark) module. Disks are declared with [disko](https://github.com/nix-community/disko); from-scratch provisioning goes through [nixos-anywhere](https://github.com/nix-community/nixos-anywhere).
-
-`spark` resolves on the personal tailnet and is the normal SSH/mosh entry point. It runs two Tailscale identities:
-
-- `spark-ix` on the Indexable tailnet for shared service routing and Funnel/Serve
-- `spark` on the personal tailnet for admin SSH and personal access
-
-Use `ssh spark-lan` only for direct LAN access on shared network.
-
-Spark local inference runs Pi against `llama.cpp` on `127.0.0.1:8080`.
-
-The Cognee knowledge graph (`modules/services/kb-graph.nix`) rebuilds daily at 04:00 and renders to `/var/lib/kb/graph/index.html`. It is deliberately not served on any network or tailnet - view it from a spark shell with `open kb-graph.html` (the repo-root symlink, spark-only) which streams it to the Mac.
-
-## ix
-
-The flake's default ix target is a lightweight personal workstation. It keeps the root shell ready for `ix shell`: Claude Code, Codex, OMP, Hermes, nvim, btop, the cozybox prompt and themes, and the shared CLI/dotfile setup are present from the first activation. Spark-only hardware, GPU, server, tunnel, secret, and multi-user modules are not included.
-
-The GitHub repository is a mirror of Forgejo and is the public fetch surface ix can consume:
-
-```sh
-ix new github:harivansh-afk/nix
-```
-
-The first run builds the pinned GitHub revision into an ix template and boots it; later runs of the same revision use the regional template cache. Use `--fresh` to force a rebuild of that revision.
+- friends who want access get a user definition in `users/`; everyone gets the shared dotfile setup from `modules/users/`
+- NVIDIA kernel, drivers, and container support come from the upstream [nixos-dgx-spark](https://github.com/graham33/nixos-dgx-spark) module
+- disks declared with [disko](https://github.com/nix-community/disko); from-scratch provisioning via [nixos-anywhere](https://github.com/nix-community/nixos-anywhere)
+- local inference runs Pi against `llama.cpp` on `127.0.0.1:8080`
+- the Cognee graph rebuilds daily at 04:00 and renders to `/var/lib/kb/graph/index.html`; never network-served, `open kb-graph.html` streams it to the Mac
 
 ## Structure
 
 ```
-flake.nix          entrypoint - inputs and outputs
-flake/             host assembly, devshell, args
-lib/               host metadata, theme palette
-inventory/         typed host inventory via evalModules
-hosts/             per-host config (macbook/, spark/)
-users/             multi-user definitions for spark
-dots/              app configs symlinked into XDG paths (live-editable)
-modules/           reusable modules (services, security, users/dotfiles)
-system/            shared system-level config and packages
-scripts/           runtime scripts wired via modules/users/user-config.nix
-secrets/           sops-encrypted secrets per host
-terraform/         declarative Cloudflare DNS via terranix
-assets/            readme artwork
-```
-
-## Usage
-
-```
-just switch              rebuild the current machine
-just switch-spark        rebuild spark remotely
-just check               nix flake check
-just fmt                 nixfmt-tree
-just sops-edit FILE      edit a secret
-just dns-plan            preview Cloudflare DNS changes
+flake.nix            entrypoint - inputs and outputs
+flake/               host assembly, devshell, args
+lib/                 host metadata, theme palette
+inventory/           typed host inventory via evalModules
+hosts/               per-host config
+  macbook/
+  spark/
+  ix/
+users/               multi-user definitions for spark
+dots/                app configs symlinked into XDG paths (live-editable)
+  nvim/              the Neovim setup: mux, pr, statusline
+  ...                one directory per tool
+modules/             reusable modules
+  apps/              voiceink
+  security/          sops, user isolation
+  services/          forgejo, inference, whisper, hermes, kb-*, caddy, ...
+  users/             shared dotfile and user setup
+system/              shared system-level config
+packages.nix         shared package sets (core, extras, darwin)
+scripts/             runtime helpers (hrd, ghpr, fork, iosrun, theme, ...)
+secrets/             sops-encrypted secrets per host
+terraform/           declarative Cloudflare DNS via terranix
+assets/              readme artwork
 ```

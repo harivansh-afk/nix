@@ -4,6 +4,6 @@
   },
   "theme_mode": "dark",
   "agent": {
-    "model": "gpt-5-4-xhigh-priority"
+    "model": "claude-opus-5"
   }
 }

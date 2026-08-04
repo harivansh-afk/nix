@@ -1,5 +1,4 @@
 {
-  inputs,
   lib,
   pkgs,
   self,
@@ -17,12 +16,6 @@ let
     hostname = "ix";
     isDarwin = false;
     installMutableTools = false;
-    extraPackages = [
-      self.packages.${system}.omp
-      inputs.hermes-agent.packages.${system}.default
-      pkgs.claude-code
-      pkgs.codex
-    ];
   };
 in
 {
@@ -33,7 +26,28 @@ in
   programs.zsh.enable = true;
 
   users.users.root = {
-    inherit (userConfig) packages;
+    packages = [
+      self.packages.${system}.omp
+      userConfig.nvimAliases
+    ]
+    ++ (with pkgs; [
+      bat
+      btop
+      claude-code
+      codex
+      direnv
+      eza
+      fd
+      fzf
+      gh
+      git
+      lua-language-server
+      neovim
+      ripgrep
+      stylua
+      tree-sitter
+      zoxide
+    ]);
     shell = pkgs.zsh;
   };
 

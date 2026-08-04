@@ -111,4 +111,5 @@ let
 in
 {
   inherit script packages;
+  inherit (apps) nvimAliases;
 }

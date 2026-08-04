@@ -176,7 +176,16 @@ The portable scripts (`mux`, `ga`, `ghpr`, `iosrun`, the remote connectors) buil
 
 ## ix dev VM template
 
-`ix new github:harivansh-afk/nix#ix` boots `nixosConfigurations.ix` as a throwaway x86_64-linux VM. `hosts/ix/default.nix` is the whole VM and imports nothing from `hosts/spark/`, so the subset that reaches it is exactly: the packages `mkUserConfig` returns, its dotfile activation script over `dots/`, and the four `extraPackages` (omp, hermes-agent, claude-code, codex). To add or remove something from the VM, edit that one file. `installMutableTools = false` suppresses the curl installs of omp and cursor-agent, which have no place in a cached image.
+`ix new github:harivansh-afk/nix#ix` boots `nixosConfigurations.ix` as a throwaway x86_64-linux VM. `hosts/ix/default.nix` is the whole VM and imports nothing from `hosts/spark/`. It lists `users.users.root.packages` literally instead of taking `mkUserConfig`'s set, and uses `mkUserConfig` only for the dotfile activation script over `dots/` (plus `nvimAliases`). To add or remove something from the VM, edit that one list. `installMutableTools = false` suppresses the curl installs of omp and cursor-agent, which have no place in a cached image.
+
+The literal list exists because the VM builds inside itself on 2 vCPU / 1 GiB, so every uncached derivation is compiled on the smallest machine ix hands out and there is no build timeout to stop it. `mkUserConfig`'s workstation set costs 1253 source builds and 8.6 GiB unpacked; this list costs 58 and 1.7 GiB, and the 58 are all rendered config files plus omp, claude-code and NixOS plumbing. Anything added here is paid for on every cold template build, so weigh it against that. Measure a candidate before adding it:
+
+```
+nix eval .#nixosConfigurations.ix.config.system.build.toplevel.drvPath
+nix build --dry-run <drv>^* --substituters https://cache.nixos.org
+```
+
+What was deliberately left out, and why, so it does not get re-added by reflex: `hermes-agent` (1170 source builds on its own, an uncached uv2nix tree pulling ffmpeg, ctranslate2 and onnxruntime), `leaf` (builds from source, so the VM fetches 1.6 GiB of rustc to compile one markdown viewer), `elixir_1_19` + `elixir-ls` (erlang twice, 248 MiB, and erlang's wx support drags in wxwidgets then webkitgtk), `clang` + `clang-tools` (1.4 GiB of clang and llvm libs), `pyright` + `python3` (389 MiB), `go_1_26` + `gopls` (248 MiB), `k9s` (168 MiB, no cluster to point it at), `tea` (its logins come from sops, which the VM has none of), and every `customScripts` entry (the remote connectors dial hosts a throwaway VM cannot reach, and `wallpaper-gen` pulls python + pillow for a machine with no display). `zoxide` is in the list because `dots/zsh/zshrc` runs `zoxide init zsh` unconditionally.
 
 Constraints that shaped it, all of them load-bearing:
 

@@ -71,6 +71,7 @@ flake/
   devshell.nix         Dev tools + formatter
   hosts.nix            macbook darwin configuration
   nixos.nix            spark NixOS configuration
+  ix.nix               nixosConfigurations.ix: the ix dev VM template
   scripts.nix          packages.<system> output: portable scripts (mux, ga, ghpr, connectors)
 lib/
   remotes.nix          Remote server registry: hosts for the per-remote connector commands
@@ -88,6 +89,8 @@ hosts/
     networking.nix     Wi-Fi (NetworkManager), Tailscale, firewall, zram
     users.nix          User accounts from users/ directory, SSH, sudo
     barrett/           Barrett's forgejo runners + spark-build slice (user units via activation)
+  ix/
+    default.nix        The entire ix dev VM: root dotfiles, agents, nothing else
 modules/
   users/
     user-config.nix    Shared per-user dotfile/symlink/package builder (no home-manager)
@@ -170,6 +173,21 @@ The portable scripts (`mux`, `ga`, `ghpr`, `iosrun`, the remote connectors) buil
 1. Create `users/<name>.nix` with `sshKeys`, `shell`, and `extraGroups`.
 2. The user is automatically picked up by `hosts/spark/users.nix` (account) and `modules/users/nixos.nix` (dotfiles, packages; symlinks point at the nix-store copy of `dots/`).
 3. For user-specific system config (services, slices), add a module under `hosts/spark/<name>/` and import it from `hosts/spark/default.nix`.
+
+## ix dev VM template
+
+`ix new github:harivansh-afk/nix#ix` boots `nixosConfigurations.ix` as a throwaway x86_64-linux VM. `hosts/ix/default.nix` is the whole VM and imports nothing from `hosts/spark/`, so the subset that reaches it is exactly: the packages `mkUserConfig` returns, its dotfile activation script over `dots/`, and the four `extraPackages` (omp, hermes-agent, claude-code, codex). To add or remove something from the VM, edit that one file. `installMutableTools = false` suppresses the curl installs of omp and cursor-agent, which have no place in a cached image.
+
+Constraints that shaped it, all of them load-bearing:
+
+- **`nixosConfigurations.ix`, not `ix.default`.** `ix new` first probes `ix.<attr>` and, only if that misses, builds `nixosConfigurations.<attr>.extendModules` with ix's machine profile. The probe has a hard 300s cap and must evaluate the full toplevel, which this flake's ~20 inputs cannot do cold. Exposing no `ix` output at all makes the probe miss in seconds on a missing attribute and puts the build on the `extendModules` path, which has no such timer.
+- **No `index.lib.mkDev`.** It returns a fleet result whose nodes are `{ config = ...; }` with no `extendModules`, so `ix new` cannot wrap it. Dropping it also drops an import-from-derivation (`cargo-units.nix`) that made the config impossible to evaluate on aarch64. It now evaluates locally: `nix eval .#nixosConfigurations.ix.config.system.build.toplevel.drvPath`.
+- **`boot.isContainer = true`.** ix owns the kernel, root device and console; the machine profile force-sets this in-guest. Setting it here too (same value, no conflict) is what lets the config evaluate standalone without a bootloader or `fileSystems."/"`.
+- **`#spark` is not bootable.** Wrong architecture (aarch64 vs x86_64 guests), the dgx-spark NVIDIA module, and disko's `fileSystems` by UUID, which hangs boot in systemd device timeouts. Keep the two configs separate.
+
+`ix new` resolves `github:`, `gitlab:` and `sourcehut:` only, never `git+https://git.harivan.sh/...`, so it builds the GitHub push mirror and not `origin`. Push the mirror before booting, or pin the sha (`ix new github:harivansh-afk/nix/<sha>#ix`), or you will silently get an older tree.
+
+The VM has no secrets. sops-nix on spark derives its age key from the host ed25519 key, which a fresh VM cannot have, and a template image is cached per rev and shared, so nothing secret may enter the closure. Delivering sops here means minting a separate age identity, storing the private key with `ix secret set`, and attaching it at create time with `ix new --secret-file`. Not done yet.
 
 ## Forgejo mirroring
 

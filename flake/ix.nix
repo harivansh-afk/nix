@@ -3,22 +3,12 @@
   self,
   ...
 }:
-let
-  module =
-    { pkgs, ... }:
-    {
-      imports = [ ../hosts/ix ];
-
-      environment.systemPackages = [
-        self.packages.${pkgs.stdenv.hostPlatform.system}.omp
-        inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default
-      ];
-    };
-  vm = inputs.index.lib.mkDev {
-    inherit module;
-    src = self;
-  };
-in
 {
-  flake.ix.default = vm.nixosConfigurations.dev;
+  flake.nixosConfigurations.ix = inputs.nixpkgs.lib.nixosSystem {
+    specialArgs = { inherit inputs self; };
+    modules = [
+      { nixpkgs.hostPlatform = "x86_64-linux"; }
+      ../hosts/ix
+    ];
+  };
 }

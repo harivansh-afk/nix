@@ -167,5 +167,6 @@ in
     "L+ ${hermesHome}/skills/feed-triage - - - - ${repoHermesDir}/skills/feed-triage"
     "L+ ${hermesHome}/skills/finance-relay - - - - ${repoHermesDir}/skills/finance-relay"
     "L+ ${hermesHome}/skills/read-it-later - - - - ${repoHermesDir}/skills/note-taking/read-it-later"
+    "L+ ${hermesHome}/skills/ix-morning-brief - - - - ${repoHermesDir}/skills/ix-morning-brief"
   ];
 }

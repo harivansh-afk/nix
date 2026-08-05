@@ -54,6 +54,15 @@
           pkgs.coreutils
           pkgs.neovim
         ] "bash scripts/pr-smoke.sh";
+        ix-morning-brief =
+          lint "ix-morning-brief"
+            [
+              pkgs.git
+              pkgs.python3
+            ]
+            ''
+              python -m unittest discover -s dots/hermes/skills/ix-morning-brief/tests -v
+            '';
         # Config lives in dots/nvim/.stylua.toml; stylua discovers it upward
         # from each file.
         stylua = lint "stylua" [ pkgs.stylua ] "stylua --check dots/nvim";

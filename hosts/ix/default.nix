@@ -6,6 +6,9 @@
 }:
 let
   inherit (pkgs.stdenv.hostPlatform) system;
+  nvimPack = import ../../lib/nvim-pack.nix { inherit lib pkgs; };
+  packDir = "/root/.local/share/nvim/site/pack/core/opt";
+  parserDir = "/root/.local/share/nvim/site/parser";
   userConfig = import ../../modules/users/user-config.nix {
     inherit lib pkgs;
     user = {
@@ -26,6 +29,8 @@ in
   programs.zsh.enable = true;
 
   environment.systemPackages = [ pkgs.ghostty.terminfo ];
+
+  environment.variables.IS_SANDBOX = "1";
 
   users.users.root = {
     packages = [
@@ -59,6 +64,28 @@ in
       "groups"
     ];
     text = "${userConfig.script}";
+  };
+
+  system.activationScripts.nvimPack = {
+    deps = [ "userConfig-root" ];
+    text = ''
+      mkdir -p "${packDir}" "${parserDir}"
+
+      ${lib.concatStringsSep "\n" (
+        lib.mapAttrsToList (name: src: ''
+          if [ ! -e "${packDir}/${name}" ]; then
+            cp -r ${src} "${packDir}/${name}"
+            chmod -R u+w "${packDir}/${name}"
+          fi
+        '') nvimPack.plugins
+      )}
+
+      ${lib.concatStringsSep "\n" (
+        lib.mapAttrsToList (
+          name: grammar: ''ln -sfn ${grammar}/parser "${parserDir}/${name}.so"''
+        ) nvimPack.parsers
+      )}
+    '';
   };
 
   system.stateVersion = "25.11";

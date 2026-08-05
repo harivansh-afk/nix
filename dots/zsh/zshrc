@@ -99,13 +99,18 @@ fi
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 export BUN_INSTALL="$HOME/.bun"
+# Guarded because an unguarded "$(npm prefix -g)/bin" degrades to "/bin" on any
+# box without npm on PATH at this point, which puts /bin ahead of the nix
+# profiles and shadows every nix-installed tool with whatever the base image
+# ships. That is how the ix dev VM ended up running its own nvim wrapper.
+npm_global_prefix="$(npm prefix -g 2>/dev/null)"
 typeset -U path PATH
 path=(
   "$HOME/.amp/bin"
   "$BUN_INSTALL/bin"
   "$HOME/.antigravity/antigravity/bin"
   "$HOME/.opencode/bin"
-  "$(npm prefix -g 2>/dev/null)/bin"
+  ${npm_global_prefix:+"$npm_global_prefix/bin"}
   "$HOME/.nix-profile/bin"
   "/run/wrappers/bin"
   "/etc/profiles/per-user/$USER/bin"
@@ -113,6 +118,7 @@ path=(
   "/nix/var/nix/profiles/default/bin"
   $path
 )
+unset npm_global_prefix
 if [[ -d /opt/homebrew/bin ]]; then
   path=(/opt/homebrew/bin /opt/homebrew/sbin $path)
 fi

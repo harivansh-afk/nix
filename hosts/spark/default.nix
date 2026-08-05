@@ -29,7 +29,7 @@
     ../../modules/services/kb-graph.nix
     ../../modules/services/kb-graph-query.nix
     ../../modules/services/kb-finance.nix
-    ../../modules/services/mini-loops.nix
+    ../../modules/services/hermes-loops.nix
     ../../modules/services/mosh.nix
     ../../modules/services/mux-restore.nix
     ../../modules/services/whisper.nix

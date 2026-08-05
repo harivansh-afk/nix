@@ -102,7 +102,7 @@ let
 in
 {
   # 0755 (world-traversable): the venv + state are root-owned, but the `browse`
-  # CLI and the mini-loops (which run as the user `rathi`) must be able to
+  # CLI and the loop scanners (which run as the user `rathi`) must be able to
   # traverse here and exec the venv python. 0750 root:root locked them out.
   systemd.tmpfiles.rules = [
     "d ${stateDir} 0755 root root -"

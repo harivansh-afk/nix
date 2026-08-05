@@ -56,6 +56,8 @@ let
       disabled_toolsets = [ ];
     };
     approvals.mode = "smart";
+    # Cron gather/relay scripts drive a headless browser at worst (x-feed-scan).
+    cron.script_timeout_seconds = 300;
     curator = {
       enabled = true;
       consolidate = true;
@@ -120,7 +122,16 @@ in
       NoNewPrivileges = true;
       ProtectSystem = "strict";
       ProtectHome = false;
-      ReadWritePaths = [ home ];
+      ReadWritePaths = [
+        home
+        # Cron jobs run in this process (in-process scheduler). The loops
+        # namespace takes the agent's KB notes and the finance relay marker;
+        # /var/lib/loops takes scanner state (dep-release last-seen tags);
+        # the saved namespace takes read-it-later notes.
+        "/var/lib/kb/staging/loops"
+        "/var/lib/kb/staging/saved"
+        "/var/lib/loops"
+      ];
       InaccessiblePaths = [
         "-/var/lib/kb/staging/finance"
         "-${home}/Documents/Downloads/security"
@@ -139,13 +150,22 @@ in
     ];
   };
 
+  # read-it-later files into staging/saved (kb-ingestion owns the staging root).
+  systemd.tmpfiles.rules = [
+    "d /var/lib/kb/staging/saved 0755 ${user} users -"
+  ];
+
   systemd.user.tmpfiles.users.${user}.rules = [
     "d ${hermesHome} 0700 - - -"
     "d ${hermesHome}/plugins 0700 - - -"
+    "d ${hermesHome}/skills 0700 - - -"
     "L+ ${hermesHome}/SOUL.md - - - - ${repoHermesDir}/SOUL.md"
     "L+ ${hermesHome}/AGENTS.md - - - - ${repoHermesDir}/AGENTS.md"
     "L+ ${hermesHome}/TOOLS.md - - - - ${repoHermesDir}/TOOLS.md"
     "L+ ${hermesHome}/HEARTBEAT.md - - - - ${repoHermesDir}/HEARTBEAT.md"
     "L+ ${hermesHome}/plugins/knowledge-base - - - - ${repoHermesDir}/plugins/knowledge-base"
+    "L+ ${hermesHome}/skills/feed-triage - - - - ${repoHermesDir}/skills/feed-triage"
+    "L+ ${hermesHome}/skills/finance-relay - - - - ${repoHermesDir}/skills/finance-relay"
+    "L+ ${hermesHome}/skills/read-it-later - - - - ${repoHermesDir}/skills/note-taking/read-it-later"
   ];
 }

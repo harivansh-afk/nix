@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 """dep_release_scan.py - print NEW releases of watched dependency repos as text.
 
-The gather step for the dep-release-watch mini-loop. For each repo in WATCHLIST it
+The gather step for the dep-release-watch loop. For each repo in WATCHLIST it
 queries the GitHub public API (`/repos/{owner}/{repo}/releases/latest`, no token)
 and emits a line ONLY when the latest release is newer than the one last seen.
 
     <owner/repo> <tag> | <release name> | <first ~500 chars of body> | <url>
 
-Last-seen state lives in $MINI_LOOPS_DIR/state/dep-release-watch.json so each
+Last-seen state lives in $LOOPS_DIR/state/dep-release-watch.json so each
 release is reported once. On the FIRST run (empty state) it records the current
 latest tags WITHOUT emitting anything, to avoid a flood of "new" releases that are
 just the existing latest of every repo; it prints a SKIP note to stderr.
 
 On any per-repo error (rate limit, 404, network) the repo is skipped quietly so a
 single bad repo does not break the scan. On a total failure it prints nothing and
-exits 0 - the loop treats empty gather as SKIP.
+exits 0 - the caller treats empty gather as a quiet run.
 
 Env:
-  MINI_LOOPS_DIR   state root (default /var/lib/mini-loops)
+  LOOPS_DIR   state root (default /var/lib/loops)
 """
 
 import json
@@ -46,7 +46,7 @@ WATCHLIST = [
 ]
 
 STATE_DIR = os.path.join(
-    os.environ.get("MINI_LOOPS_DIR", "/var/lib/mini-loops"), "state"
+    os.environ.get("LOOPS_DIR", "/var/lib/loops"), "state"
 )
 STATE_FILE = os.path.join(STATE_DIR, "dep-release-watch.json")
 
@@ -76,7 +76,7 @@ def _latest_release(repo: str) -> dict | None:
         url,
         headers={
             "Accept": "application/vnd.github+json",
-            "User-Agent": "mini-loops",
+            "User-Agent": "loops",
         },
     )
     try:

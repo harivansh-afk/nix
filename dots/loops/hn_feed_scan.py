@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """hn_feed_scan.py - print the Hacker News front page as text, one story a line.
 
-The gather step for the hn-life-scan mini-loop. Fetches the front page via the
+The gather step for the hn-life-scan loop. Fetches the front page via the
 Algolia HN API (no key, no browser) and emits each story as:
 
     <title> | <url or HN link> | <points>pts
 
 Deliberately a separate deterministic entrypoint (like x-feed-scan) so the loop's
 gather is a single command. On any failure it prints nothing and exits 0 - the
-loop treats empty gather as SKIP.
+caller treats empty gather as a quiet run.
 
 Env:
   HN_HITS   how many front-page stories to fetch (default 40)
@@ -29,7 +29,7 @@ def main() -> int:
         n = 40
 
     req = urllib.request.Request(
-        API.format(n=n), headers={"User-Agent": "mini-loops"}
+        API.format(n=n), headers={"User-Agent": "loops"}
     )
     try:
         with urllib.request.urlopen(req, timeout=60) as resp:

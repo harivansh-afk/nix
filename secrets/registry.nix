@@ -122,17 +122,6 @@
       restartUnits = [ "hermes-gateway.service" ];
     };
 
-    # Telegram bot token (+ TELEGRAM_ALLOWED_USERS allowlist). No longer
-    # loaded by the gateway (the agent channel moved to Photon iMessage);
-    # still read directly at run time by the mini-loop timers
-    # (dots/mini-loops/mini_loop.py) for notification delivery, so no
-    # restartUnits are needed.
-    "hermes-telegram.env" = {
-      owner = username;
-      group = "users";
-      mode = "0400";
-    };
-
     "vaultwarden.env" = {
       owner = "vaultwarden";
       group = "vaultwarden";

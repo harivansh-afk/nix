@@ -43,6 +43,9 @@ dns-plan:
 dns-apply:
     nix run .#cloudflare-dns -- apply
 
+nvim-pack-sources:
+    nix shell nixpkgs#nix-prefetch-git nixpkgs#jq -c bash scripts/nvim-pack-sources.sh
+
 # --- secrets ---
 
 sops-edit FILE:

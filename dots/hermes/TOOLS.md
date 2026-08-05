@@ -139,8 +139,11 @@ Because both sources share that entity shape, the off-hours knowledge graph can
 LINK a bank transaction to its receipt email by merchant + amount + date, giving
 you a centralized, linkable understanding of spend. This data remains
 local-only. The Hermes service cannot read its staging directory, and its KB
-commands exclude the finance dataset before ranking or source retrieval. For
-finance questions, explain that a separate local-only workflow is required.
+commands exclude the finance dataset before ranking or source retrieval. What
+you DO see is the finance loop's judged verdict: the local brain writes it to
+`staging/loops/finance-anomaly-watch/`, and your finance-anomaly-watch cron job
+relays it (see the finance-relay skill). For any finance question beyond those
+verdicts, explain that the raw data is local-only by design.
 This does not touch the finance-tax denylist below, which stays excluded.
 
 # DENYLIST / hard privacy rules

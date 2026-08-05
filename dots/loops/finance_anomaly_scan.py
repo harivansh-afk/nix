@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """finance_anomaly_scan.py - print deterministic spending anomaly CANDIDATES.
 
-The gather step for the finance-anomaly-watch mini-loop. Reads the locally-ingested
+The gather step for the finance-anomaly-watch loop. Reads the locally-ingested
 finance notes (frontmatter: date, merchant, amount, currency, account, source) and
-computes anomaly candidates in PYTHON (no LLM here - the gate decides which are
+computes anomaly candidates in PYTHON (no LLM here - the local judge decides which are
 worth surfacing). Local-only and sensitive: this only prints text to stdout for the
 loop; nothing here touches the network.
 
@@ -25,14 +25,14 @@ carries a "(price up ...)" note - we never flag price changes for non-subscripti
 spend.
 
 Already-flagged anomalies are persisted in
-$MINI_LOOPS_DIR/state/finance-anomaly-watch.json (keyed by a stable signature) so
+$LOOPS_DIR/state/finance-anomaly-watch.json (keyed by a stable signature) so
 each is reported once. UNLIKE dep-release-watch, finance SURFACES on the first run
 (empty state) so Hari sees his existing subscriptions immediately; every candidate
 is then recorded and deduped so it is reported once going forward. On any error it
-prints nothing and exits 0 (loop -> SKIP).
+prints nothing and exits 0 (a quiet run).
 
 Env:
-  MINI_LOOPS_DIR     state root (default /var/lib/mini-loops)
+  LOOPS_DIR     state root (default /var/lib/loops)
   FINANCE_KB_DIR     finance notes root (default /var/lib/kb/staging/finance)
 """
 
@@ -43,7 +43,7 @@ import sys
 from datetime import date, datetime, timedelta
 
 STATE_DIR = os.path.join(
-    os.environ.get("MINI_LOOPS_DIR", "/var/lib/mini-loops"), "state"
+    os.environ.get("LOOPS_DIR", "/var/lib/loops"), "state"
 )
 STATE_FILE = os.path.join(STATE_DIR, "finance-anomaly-watch.json")
 FINANCE_DIR = os.environ.get("FINANCE_KB_DIR", "/var/lib/kb/staging/finance")

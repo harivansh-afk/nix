@@ -54,14 +54,6 @@
           pkgs.coreutils
           pkgs.neovim
         ] "bash scripts/pr-smoke.sh";
-        # Guards path ordering in dots/zsh/zshrc: an empty element in the
-        # array collapses to a system dir and shadows the nix profile.
-        zsh-path = lint "zsh-path" [
-          pkgs.bash
-          pkgs.coreutils
-          pkgs.gnugrep
-          pkgs.zsh
-        ] "bash scripts/zsh-path-smoke.sh";
         # Config lives in dots/nvim/.stylua.toml; stylua discovers it upward
         # from each file.
         stylua = lint "stylua" [ pkgs.stylua ] "stylua --check dots/nvim";

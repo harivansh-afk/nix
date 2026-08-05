@@ -64,6 +64,7 @@ data.root = function() return ROOT end
 data.has_refspec = function() return true end
 data.prs = function(_, cb) cb(vim.deepcopy(FIXTURE)) end
 data.pr_heads = function() return {} end
+data.fetch = function(_, cb) cb(false) end
 require("pr.ci").prime = function() end
 
 list.open()

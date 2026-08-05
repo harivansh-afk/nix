@@ -50,7 +50,7 @@ let
   hermesBase = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
     extraDependencyGroups = [ "messaging" ];
   };
-  hermesVenv = hermesBase.hermesVenv;
+  inherit (hermesBase) hermesVenv;
 
   # Loop state (dep-release last-seen tags, finance flagged-anomaly set).
   # Migrated once from the old mini-loops path by the C tmpfiles rule below so

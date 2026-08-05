@@ -69,7 +69,11 @@ in
   system.activationScripts.nvimPack = {
     deps = [ "userConfig-root" ];
     text = ''
-      mkdir -p "${packDir}" "${parserDir}"
+      mkdir -p "${packDir}" "${parserDir}" /root/.config/nvim
+
+      if [ ! -e /root/.config/nvim/nvim-pack-lock.json ]; then
+        install -m 0644 ${nvimPack.lockFile} /root/.config/nvim/nvim-pack-lock.json
+      fi
 
       ${lib.concatStringsSep "\n" (
         lib.mapAttrsToList (name: src: ''

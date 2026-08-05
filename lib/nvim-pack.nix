@@ -4,16 +4,6 @@ let
 
   fetchPlugin = _name: source: pkgs.fetchgit { inherit (source) url rev hash; };
 
-  bundledParsers = [
-    "c"
-    "lua"
-    "markdown"
-    "markdown_inline"
-    "query"
-    "vim"
-    "vimdoc"
-  ];
-
   parserNames = [
     "bash"
     "css"
@@ -27,6 +17,8 @@ let
     "html"
     "javascript"
     "json"
+    "markdown"
+    "markdown_inline"
     "nix"
     "python"
     "regex"
@@ -47,5 +39,13 @@ let
 in
 {
   plugins = lib.mapAttrs fetchPlugin sources;
-  parsers = lib.genAttrs (lib.subtractLists bundledParsers parserNames) fetchParser;
+  parsers = lib.genAttrs parserNames fetchParser;
+  lockFile = pkgs.writeText "nvim-pack-lock.json" (
+    builtins.toJSON {
+      plugins = lib.mapAttrs (_: source: {
+        inherit (source) rev;
+        src = source.url;
+      }) sources;
+    }
+  );
 }

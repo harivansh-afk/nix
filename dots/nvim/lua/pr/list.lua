@@ -156,11 +156,10 @@ local function render(prs)
       { fmt.rjust(fmt.ago(p.updatedAt), surface.AGE_W), "Comment" },
     }
   end
+  -- No footer indicator while filtering - user preference: the buffer stays
+  -- rows only. The empty-list message is the one place the filter names
+  -- itself, so an all-yours-merged morning is not mistaken for no PRs at all.
   if #lines == 0 then seg { { filtering() and (" no open PRs by " .. me) or " no open PRs" } } end
-  -- A durable filter needs a visible reminder in the buffer itself, or a
-  -- fresh session quietly shows a shorter list than exists. The footer is
-  -- past M.order's range, so <CR> and friends on it are no-ops.
-  if filtering() then seg { { " ~ only your PRs - F for everyone's", "Comment" } } end
 
   S:paint(lines, marks)
 end

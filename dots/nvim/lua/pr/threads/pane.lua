@@ -30,7 +30,10 @@ local expanded = {} ---@type table<string, true>
 local rows = {} ---@type table<integer, table> lnum -> item
 local vt = {} ---@type table<integer, integer> lnum -> virt-text extmark id
 
-local MAX_HEIGHT = 15
+--- Reading prose needs more room than scanning job rows: the pane may take
+--- up to half the screen (the checks pane's fixed 12 was sized for one-line
+--- jobs). It still shrinks to fit when the conversation is short.
+local function max_height() return math.max(12, math.floor(vim.o.lines * 0.5)) end
 
 local function warn(msg) vim.notify("pr: " .. msg, vim.log.levels.WARN) end
 
@@ -181,6 +184,10 @@ local function detail(item, width)
     for _, l in ipairs(body_lines(c.body, width - 8)) do
       out[#out + 1] = { l[1] == "" and "" or ("      " .. l[1]), l[2] }
     end
+    out[#out + 1] = { "" } -- air between comments: prose needs it, job rows did not
+  end
+  while #out > 0 and out[#out][1] == "" do
+    table.remove(out)
   end
   if #out == 0 then out[1] = { "    (empty)", "Comment" } end
   return out
@@ -229,7 +236,7 @@ local function render()
     set_meta(lnum, item)
   end
 
-  if win then vim.api.nvim_win_set_height(win, math.max(1, math.min(#lines, MAX_HEIGHT))) end
+  if win then vim.api.nvim_win_set_height(win, math.max(1, math.min(#lines, max_height()))) end
   winbar()
 end
 

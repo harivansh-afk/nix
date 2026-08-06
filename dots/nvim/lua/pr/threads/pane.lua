@@ -216,6 +216,7 @@ end
 
 local function render()
   if not (buf and vim.api.nvim_buf_is_valid(buf)) then return end
+  local win = pane_win() -- resolved ONCE here; the height line below reads it
   local lines, marks = {}, {}
   rows, body_of, vt = {}, {}, {}
   local seg = fmt.segmenter(lines, marks, function(row, group, from, to) return { row, from, to, group } end)

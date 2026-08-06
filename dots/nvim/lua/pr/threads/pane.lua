@@ -36,10 +36,11 @@ local rows = {} ---@type table<integer, table> lnum -> item
 local body_of = {} ---@type table<integer, integer> content lnum -> its item's lnum
 local vt = {} ---@type table<integer, integer> lnum -> virt-text extmark id
 
---- Reading prose needs more room than scanning job rows: the pane may take
---- up to half the screen (the checks pane's fixed 12 was sized for one-line
---- jobs). It still shrinks to fit when the conversation is short.
-local function max_height() return math.max(12, math.floor(vim.o.lines * 0.5)) end
+--- The checks pane's cap, exactly - the two panes are siblings and must sit
+--- in the window the same way (a half-screen variant shipped once and read
+--- as broken). Soft wrap means long comments still show whole; anything past
+--- the cap is a scroll, and <c-w>_ is there when a thread deserves the room.
+local MAX_HEIGHT = 12
 
 local function warn(msg) vim.notify("pr: " .. msg, vim.log.levels.WARN) end
 
@@ -103,16 +104,37 @@ end
 --- them, and soft wrap ('wrap'+'linebreak', set on the window) replaces any
 --- hand-rolled re-flow.
 ---
---- The ONLY massaging is dropping what a terminal cannot draw. An image
---- becomes its alt text - and the shields.io priority badge codex opens
---- every finding with becomes a bare [P2], since "Badge" is the image
---- talking about itself - and <sub> tags go, since text here cannot shrink.
+--- The ONLY massaging is dropping what a terminal cannot draw, all of it
+--- observed in real codex review bodies. Images become their alt text (the
+--- shields.io priority badge becomes a bare [P2], since "Badge" is the
+--- image talking about itself); the inline HTML GitHub tolerates goes -
+--- <sub> cannot shrink text here, <details>/<summary> cannot fold, <br/>
+--- says nothing a newline does not. And trailing whitespace is cut because
+--- codex pads some lines to 4+ SPACES OF PURE WHITESPACE, which markdown
+--- dutifully renders as an empty code block.
 local function tidy(body)
   return (body or "")
     :gsub("\r\n?", "\n")
     :gsub("!%[(%S+) Badge%]%(%S-%)", "[%1]") -- codex severity badge -> [P2]
     :gsub("!%[([^%]]-)%]%(%S-%)", "%1") -- any other image -> its alt text
+    :gsub("<!%-%-.-%-%->", "") -- HTML comments are invisible on the forge too
+    :gsub('<a href="([^"]*)"[^>]*>(.-)</a>', "[%2](%1)") -- anchor -> markdown link
     :gsub("</?sub>", "")
+    :gsub("</?details>", "")
+    :gsub("<summary>(.-)</summary>", "%1")
+    :gsub("<br%s*/?>", "")
+    :gsub("</?p>", "\n") -- a paragraph tag is a blank line saying it in HTML
+    :gsub("[ \t]+\n", "\n") -- trailing whitespace: phantom code blocks otherwise
+    :gsub("[ \t]+$", "")
+end
+
+--- The first line of a body with something on it, AFTER tidying - the
+--- collapsed preview. Bot comments often open with pure HTML plumbing
+--- (linear's <!-- linkback -->), and a preview of invisible text is noise.
+local function preview(body)
+  for _, l in ipairs(vim.split(tidy(body), "\n", { plain = true })) do
+    if vim.trim(l) ~= "" then return l end
+  end
 end
 
 --- The one-line label a collapsed row wears.
@@ -133,12 +155,12 @@ local function label(item)
     if item.dismissed then verb = verb .. " (dismissed)" end
     segs[#segs + 1] = { item.author, "Identifier" }
     segs[#segs + 1] = { " " .. verb, item.dismissed and "Comment" or nil }
-    local first = vim.split(item.body or "", "\n", { plain = true })[1]
-    if vim.trim(first or "") ~= "" then segs[#segs + 1] = { "  " .. first, "Comment" } end
+    local first = preview(item.body)
+    if first then segs[#segs + 1] = { "  " .. first, "Comment" } end
   else
     segs[#segs + 1] = { item.author, "Identifier" }
-    local first = vim.split(item.body or "", "\n", { plain = true })[1]
-    if vim.trim(first or "") ~= "" then segs[#segs + 1] = { "  " .. first, "Comment" } end
+    local first = preview(item.body)
+    if first then segs[#segs + 1] = { "  " .. first, "Comment" } end
   end
   return segs
 end
@@ -234,7 +256,7 @@ local function render()
     set_meta(lnum, item)
   end
 
-  if win then vim.api.nvim_win_set_height(win, math.max(1, math.min(#lines, max_height()))) end
+  if win then vim.api.nvim_win_set_height(win, math.max(1, math.min(#lines, MAX_HEIGHT))) end
   winbar()
 end
 

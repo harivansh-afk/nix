@@ -5,6 +5,7 @@
 --   <leader>gf   files view           <leader>m   cumulative <-> incremental
 --   <leader>gC   pick a commit        <leader>gA  whole-PR view
 --   G            live CI pane (on pr://files)
+--   T            conversation pane (on pr://files)
 --
 -- Inside either PR buffer, the verbs (pr.verbs, same keys on both):
 --   D draft <-> ready    M merge    C checkout <-> back    O browser    X close
@@ -22,6 +23,7 @@
 --   pr.view   the files buffer - THE review surface
 --   pr.tree   where a PR becomes real files (a worktree, never your checkout)
 --   pr.ci     checks, jobs and job logs (store + pr://checks + pr://job/N)
+--   pr.threads review threads and comments (store + pr://threads)
 --
 -- The files view (pr.view) is the single surface: picking a PR lands there,
 -- and every navigation re-renders it. From a file row, <CR> materialises the
@@ -57,12 +59,18 @@ function M.render()
   require("pr.view").open()
   -- An open CI pane re-points itself at whatever PR is loaded now, so ]p / [p
   -- carry it along. Closed, this is a no-op and pr.ci is never even required.
+  -- The threads pane rides along the same way.
   local pane = package.loaded["pr.ci.pane"]
   if pane then pane.follow() end
+  local talk = package.loaded["pr.threads.pane"]
+  if talk then talk.follow() end
 end
 
 --- The CI pane for the loaded PR (pr://checks). G on pr://files.
 function M.checks() require("pr.ci.pane").toggle() end
+
+--- The conversation pane for the loaded PR (pr://threads). T on pr://files.
+function M.threads() require("pr.threads.pane").toggle() end
 
 M.files = M.render
 

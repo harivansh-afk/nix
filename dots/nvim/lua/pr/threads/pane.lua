@@ -8,8 +8,13 @@
 --   ✗ / ✓ / ○ author  a verdict, or conversation chatter
 --   ⊘                 resolved / outdated / dismissed, dim at the bottom
 --
--- <Tab> expands the full thread - every reply, body wrapped. <CR> on a
--- thread jumps to the REAL file:line in the PR worktree (pr.tree, the same
+-- <Tab> expands the full thread - every reply, rendered like the forge
+-- renders it: bodies are raw markdown and nvim's bundled treesitter markdown
+-- grammar does the styling (bold, headings, quotes, `code` spans; fenced
+-- blocks get language-injection highlighting), with conceal hiding the
+-- markers the way GitHub hides them. <Tab> anywhere INSIDE the expanded
+-- content folds it again - fugitive's inline-diff gesture. <CR> on a thread
+-- jumps to the REAL file:line in the PR worktree (pr.tree, the same
 -- materialisation <CR> on a file row uses), which is the entire point:
 -- a review comment becomes the code it is about in one keystroke. On
 -- anything without a file anchor, <CR> opens the forge's page for it.
@@ -28,6 +33,7 @@ local number, root ---@type integer?, string?
 local entry ---@type pr.threads.Entry?
 local expanded = {} ---@type table<string, true>
 local rows = {} ---@type table<integer, table> lnum -> item
+local body_of = {} ---@type table<integer, integer> content lnum -> its item's lnum
 local vt = {} ---@type table<integer, integer> lnum -> virt-text extmark id
 
 --- Reading prose needs more room than scanning job rows: the pane may take
@@ -89,39 +95,24 @@ end
 
 -- ----------------------------------------------------------------- render ---
 
---- Greedy word-wrap of a markdown body into indented display lines. Fenced
---- code keeps its own lines (wrapping code lies about it) and renders dim;
---- prose fills the pane's width.
----@return {[1]:string,[2]:string?}[] lines  text, hl
-local function body_lines(body, width)
-  local out, fenced = {}, false
-  for _, raw in ipairs(vim.split(body or "", "\n", { plain = true })) do
-    local line = raw:gsub("\r$", "")
-    if line:match "^%s*```" then
-      fenced = not fenced
-    elseif fenced then
-      out[#out + 1] = { line, "Comment" }
-    elseif vim.trim(line) == "" then
-      if #out > 0 and out[#out][1] ~= "" then out[#out + 1] = { "" } end
-    else
-      local cur
-      for _, w in ipairs(vim.split(vim.trim(line), "%s+")) do
-        if not cur then
-          cur = w
-        elseif vim.fn.strdisplaywidth(cur .. " " .. w) > width then
-          out[#out + 1] = { cur }
-          cur = w
-        else
-          cur = cur .. " " .. w
-        end
-      end
-      if cur then out[#out + 1] = { cur } end
-    end
-  end
-  while #out > 0 and out[#out][1] == "" do
-    table.remove(out)
-  end
-  return out
+--- Bodies are MARKDOWN and the pane renders them the way the forge does:
+--- through a real parser, not string munging. The buffer carries the raw
+--- body text and nvim's bundled treesitter markdown grammar (started in
+--- ensure_buf - the same machinery LSP hover docs use) styles it; conceal
+--- hides the markers (**, backticks, link urls) exactly as GitHub hides
+--- them, and soft wrap ('wrap'+'linebreak', set on the window) replaces any
+--- hand-rolled re-flow.
+---
+--- The ONLY massaging is dropping what a terminal cannot draw. An image
+--- becomes its alt text - and the shields.io priority badge codex opens
+--- every finding with becomes a bare [P2], since "Badge" is the image
+--- talking about itself - and <sub> tags go, since text here cannot shrink.
+local function tidy(body)
+  return (body or "")
+    :gsub("\r\n?", "\n")
+    :gsub("!%[(%S+) Badge%]%(%S-%)", "[%1]") -- codex severity badge -> [P2]
+    :gsub("!%[([^%]]-)%]%(%S-%)", "%1") -- any other image -> its alt text
+    :gsub("</?sub>", "")
 end
 
 --- The one-line label a collapsed row wears.
@@ -173,34 +164,39 @@ local function set_meta(lnum, item)
 end
 
 --- Detail lines under an expanded item: every comment as "author · age"
---- then its wrapped body - one comment for chatter, the whole chain for a
---- thread. Wrapped HERE, not at fetch, so a resized window re-cuts.
-local function detail(item, width)
+--- then its raw markdown body for the buffer's grammar to light up - one
+--- comment for chatter, the whole chain for a thread. Bodies are NOT
+--- indented: four leading spaces mean "code block" in markdown, so
+--- indenting prose would silently break its own rendering. The author line
+--- wears two spaces, which markdown ignores.
+local function detail(item)
   local out = {}
+  local function push(text, hl)
+    if text == "" and (#out == 0 or out[#out][1] == "") then return end -- collapse blank runs
+    out[#out + 1] = { text, hl }
+  end
   local comments = item.kind == "thread" and item.comments
     or { { author = item.author, body = item.body, ts = item.ts } }
   for _, c in ipairs(comments) do
-    out[#out + 1] = { ("    %s · %s"):format(c.author or "?", fmt.since(c.ts)), "Identifier" }
-    for _, l in ipairs(body_lines(c.body, width - 8)) do
-      out[#out + 1] = { l[1] == "" and "" or ("      " .. l[1]), l[2] }
+    push(("  %s · %s"):format(c.author or "?", fmt.since(c.ts)), "Identifier")
+    push ""
+    for _, l in ipairs(vim.split(tidy(c.body), "\n", { plain = true })) do
+      push(l)
     end
-    out[#out + 1] = { "" } -- air between comments: prose needs it, job rows did not
+    push "" -- air between comments: prose needs it, job rows did not
   end
   while #out > 0 and out[#out][1] == "" do
     table.remove(out)
   end
-  if #out == 0 then out[1] = { "    (empty)", "Comment" } end
+  if #out == 0 then out[1] = { "  (empty)", "Comment" } end
   return out
 end
 
 local function render()
   if not (buf and vim.api.nvim_buf_is_valid(buf)) then return end
   local lines, marks = {}, {}
-  rows, vt = {}, {}
+  rows, body_of, vt = {}, {}, {}
   local seg = fmt.segmenter(lines, marks, function(row, group, from, to) return { row, from, to, group } end)
-
-  local win = pane_win()
-  local width = (win and vim.api.nvim_win_get_width(win) or vim.o.columns) - 2
 
   local e = entry
   if not e or e.state == "loading" then
@@ -212,10 +208,12 @@ local function render()
   else
     for _, item in ipairs(e.items) do
       seg(label(item))
-      rows[#lines] = item
+      local header = #lines
+      rows[header] = item
       if expanded[ikey(item)] then
-        for _, d in ipairs(detail(item, width)) do
+        for _, d in ipairs(detail(item)) do
           lines[#lines + 1] = d[1]
+          body_of[#lines] = header -- content answers for its item (Tab, CR, O)
           if d[2] then marks[#marks + 1] = { #lines - 1, 0, -1, d[2] } end
         end
       end
@@ -242,14 +240,30 @@ end
 
 -- ---------------------------------------------------------------- actions ---
 
-local function item_at() return rows[vim.fn.line "."] end
+--- The item a line means: its own row, or - inside expanded content - the
+--- row it hangs under, the way a line inside fugitive's inline diff still
+--- means that file. Every action resolves here, so Tab, <CR> and O work
+--- from anywhere in a thread.
+local function item_at()
+  local l = vim.fn.line "."
+  return rows[l] or (body_of[l] and rows[body_of[l]])
+end
 
 local function toggle_row()
-  local item = item_at()
-  if not item then return end
+  local l = vim.fn.line "."
+  local header = rows[l] and l or body_of[l]
+  if not header then return end
+  local item = rows[header]
   local key = ikey(item)
   expanded[key] = not expanded[key] or nil
   render()
+  -- Collapsing pulled the content out from under the cursor; land it on the
+  -- item's own row (which may have moved), exactly where fugitive leaves it.
+  if not expanded[key] then
+    for lnum, it in pairs(rows) do
+      if it == item then return pcall(vim.api.nvim_win_set_cursor, 0, { lnum, 0 }) end
+    end
+  end
 end
 
 --- <CR>: the real thing. A thread's real thing is the code it is about -
@@ -313,6 +327,13 @@ local function ensure_buf()
   vim.bo[buf].filetype = "prthreads"
   vim.bo[buf].modifiable = false
 
+  -- The markdown grammar over the whole buffer: the plain rows pass through
+  -- it untouched (no markers, no styling), the raw bodies come out rendered
+  -- - fences even pick up language-injection highlighting, which is exactly
+  -- GitHub's look. pcall so a runtime missing the bundled parser degrades to
+  -- plain text instead of erroring the pane away.
+  pcall(vim.treesitter.start, buf, "markdown")
+
   local o = { buffer = buf, silent = true }
   vim.keymap.set("n", "<Tab>", toggle_row, o)
   vim.keymap.set("n", "=", toggle_row, o)
@@ -355,10 +376,18 @@ function M.open()
   vim.wo[w][0].winfixheight = true
   vim.wo[w][0].number = false
   vim.wo[w][0].relativenumber = false
-  vim.wo[w][0].wrap = false
   vim.wo[w][0].cursorline = true
   vim.wo[w][0].signcolumn = "no"
   vim.wo[w][0].foldcolumn = "0"
+  -- Reading options: soft wrap at word boundaries stands in for any manual
+  -- re-flow, and conceal is what turns markdown MARKERS into markdown
+  -- RENDERING (level 2 = what markdown previews use; nc so the markers stay
+  -- hidden while merely moving the cursor through them).
+  vim.wo[w][0].wrap = true
+  vim.wo[w][0].linebreak = true
+  vim.wo[w][0].breakindent = true
+  vim.wo[w][0].conceallevel = 2
+  vim.wo[w][0].concealcursor = "nc"
   render()
 end
 

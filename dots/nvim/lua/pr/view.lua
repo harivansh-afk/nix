@@ -325,6 +325,7 @@ local HELP = {
   { "]c / [c", "next / prev commit" },
   { "]p / [p", "next / prev PR" },
   { "G", "CI checks pane" },
+  { "T", "conversation pane (threads)" },
   { "-", "PR list" },
   { "<leader>m", "cumulative <-> incremental" },
   { "<leader>gC", "pick commit" },
@@ -410,6 +411,10 @@ local function ensure_buf()
   -- PR, and pr://list has no single PR to show checks for. Note that it
   -- shadows goto-last-line here; ]f walks files and gg/{count}G still work.
   vim.keymap.set("n", "G", function() require("pr.ci.pane").toggle() end, o)
+  -- T, its sibling: the conversation pane. Buffer-local for the same reason
+  -- as G - both panes belong to a LOADED PR. It shadows until-char-backward,
+  -- which has nothing to find in a rendered list anyway.
+  vim.keymap.set("n", "T", function() require("pr.threads.pane").toggle() end, o)
   vim.keymap.set("n", "g?", help, o)
   vim.keymap.set("n", "q", "<cmd>silent! buffer #<cr>", o)
   require("pr.surface").common_keys(buf, function() require("pr").reload() end)

@@ -60,6 +60,7 @@ end
 map("n", "<c-e>", function() require("pr.marks").peek() end, { desc = "pr: the fast list" })
 map("n", "<leader>gf", pr "files", { desc = "pr: files view" })
 map("n", "<leader>ci", pr "checks", { desc = "pr: CI checks pane" })
+map("n", "<leader>ct", pr "threads", { desc = "pr: conversation pane" })
 map("n", "<leader>gC", pr "pick_commit", { desc = "pr: pick commit in PR" })
 map("n", "<leader>m", pr "toggle_mode", { desc = "pr: cumulative <-> incremental" })
 map("n", "<leader>gA", pr "whole", { desc = "pr: whole PR view" })
@@ -97,6 +98,15 @@ vim.api.nvim_create_autocmd("BufReadCmd", {
     pane.open()
   end,
 })
+--- Same contract for the conversation pane.
+vim.api.nvim_create_autocmd("BufReadCmd", {
+  pattern = "pr://threads",
+  callback = function()
+    local pane = require "pr.threads.pane"
+    if pane.is_open() then return pane.refresh() end
+    pane.open()
+  end,
+})
 
 local SUBS = {
   list = "list",
@@ -106,6 +116,7 @@ local SUBS = {
   commit = "pick_commit",
   files = "files",
   checks = "checks",
+  threads = "threads",
   mode = "toggle_mode",
   whole = "whole",
   reload = "reload",

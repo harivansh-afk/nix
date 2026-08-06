@@ -9,6 +9,9 @@
 -- Canola-style: the buffer IS the list. <CR> dives into a PR (pr://files),
 -- "-" in the files view comes back up here. A PR on the fast list (pr.marks)
 -- wears its slot digit in the column immediately left of its title.
+--
+-- F flips the mine-filter: only PRs I authored. Durable (a state file, so it
+-- survives sessions) and render-time (cuts the cached fetch, never refetches).
 
 local data = require "pr.data"
 local fmt = require "pr.fmt"
@@ -25,6 +28,41 @@ M.root = nil ---@type string?
 local S ---@type pr.Surface
 
 local function warn(msg) vim.notify("pr: " .. msg, vim.log.levels.WARN) end
+
+-- ------------------------------------------------------------------- mine ---
+
+--- The mine-filter (F): show only PRs I authored. Durable across sessions -
+--- the whole setting is the existence of one empty file under stdpath state,
+--- so there is no config format to parse and nothing to migrate.
+local MINE = vim.fn.stdpath "state" .. "/pr-mine"
+
+local mine = (vim.uv or vim.loop).fs_stat(MINE) ~= nil
+
+--- My forge login, resolved once per session (pr.data.me caches by host).
+--- `false` = lookup failed; while nil (in flight) the filter stays inactive
+--- and the list renders unfiltered rather than empty.
+local me ---@type string|false|nil
+
+--- Is the filter actually filtering right now?
+local function filtering() return mine and type(me) == "string" end
+
+---@param prs table[]
+---@return table[]
+local function visible(prs)
+  if not filtering() then return prs end
+  return vim.tbl_filter(function(p) return p.author and p.author.login == me end, prs)
+end
+
+--- Resolve `me` if the filter needs it, then repaint: the list may already be
+--- on screen unfiltered when the login lands.
+local function resolve_me()
+  if not (mine and me == nil and M.root) then return end
+  data.me(M.root, function(login)
+    me = login or false
+    if not login then warn "could not resolve your forge login - showing all PRs" end
+    M.repaint()
+  end)
+end
 
 -- ------------------------------------------------------------------ stack ---
 
@@ -74,7 +112,10 @@ local last ---@type table[]?
 local function render(prs)
   if not prs then return end
   last = prs
-  M.order = stacked(prs)
+  -- The filter cuts at render time, off the LAST FETCH: toggling never costs
+  -- a network call, and F back restores everyone's PRs instantly. A filtered
+  -- parent simply promotes its children to roots in `stacked`.
+  M.order = stacked(visible(prs))
 
   -- fzf-picker-era columns: number | title (fills the window) | author | age,
   -- author + age right-aligned against the window edge. Title absorbs
@@ -115,7 +156,11 @@ local function render(prs)
       { fmt.rjust(fmt.ago(p.updatedAt), surface.AGE_W), "Comment" },
     }
   end
-  if #lines == 0 then lines = { " no open PRs" } end
+  if #lines == 0 then seg { { filtering() and (" no open PRs by " .. me) or " no open PRs" } } end
+  -- A durable filter needs a visible reminder in the buffer itself, or a
+  -- fresh session quietly shows a shorter list than exists. The footer is
+  -- past M.order's range, so <CR> and friends on it are no-ops.
+  if filtering() then seg { { " ~ only your PRs - F for everyone's", "Comment" } } end
 
   S:paint(lines, marks)
 end
@@ -181,6 +226,21 @@ local function select()
   if p and M.root then require("pr").load(M.root, p) end
 end
 
+--- F: flip the mine-filter and persist it (create or remove the state file),
+--- then repaint from the cached fetch - no network either way.
+local function toggle_mine()
+  mine = not mine
+  if mine then
+    local f = io.open(MINE, "w")
+    if f then f:close() end
+  else
+    os.remove(MINE)
+  end
+  resolve_me()
+  vim.notify("pr: " .. (mine and "only your PRs" or "everyone's PRs"), vim.log.levels.INFO)
+  M.repaint()
+end
+
 --- Buffer identity, options, the resize re-render, the paint and the
 --- generation guard are all pr.surface's; this supplies the rows and the keys.
 S = surface.new {
@@ -191,6 +251,7 @@ S = surface.new {
     { "g?", "this help" },
     { "<CR>", "review PR (pr://files)" },
     { "L", "commit log (pr://log)" },
+    { "F", "only my PRs <-> everyone's (durable)" },
     { "]p / [p", "next / prev PR (global)" },
     { "R / <c-r>", "refresh" },
     { "q", "back" },
@@ -203,6 +264,7 @@ S = surface.new {
     local o = { buffer = b, silent = true }
     vim.keymap.set("n", "<CR>", select, o)
     vim.keymap.set("n", "L", function() require("pr.log").open() end, o)
+    vim.keymap.set("n", "F", toggle_mine, { buffer = b, silent = true, desc = "pr: only my PRs <-> everyone's" })
   end,
 }
 
@@ -281,6 +343,7 @@ function M.open(refresh)
   if #M.order > 0 and M.root == root and not refresh then return focus_current() end
 
   M.root = root
+  resolve_me() -- the durable filter may be on before `me` is known
   local gen = S:bump()
   S:placeholder "loading PRs..."
 

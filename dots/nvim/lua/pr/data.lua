@@ -124,6 +124,48 @@ local function forge_json(cmd, root, forge, cb)
   end)
 end
 
+--- Host part of origin's URL, for matching a tea login to THIS remote.
+---@return string? host
+local function origin_host(root)
+  local out = git { "-C", root, "remote", "get-url", "origin" }
+  local url = (out and out[1] or ""):gsub("^%w+://", ""):gsub("^[^@/]+@", "")
+  local host = url:match "^([^/:]+)"
+  return host ~= "" and host or nil
+end
+
+--- Session cache for M.me, keyed on origin host: `false` records a failed
+--- lookup so it is not retried on every toggle.
+local me_cache = {} ---@type table<string, string|false>
+
+--- The forge login that is "me" against this repo's origin - what the
+--- pr://list mine-filter compares authors to. tea answers from its local
+--- login store (`tea whoami` has no JSON output and renders markdown, so the
+--- login LIST is matched against origin's host instead - no network); gh has
+--- no local equivalent, so it costs one `gh api user` call, once per session.
+---@param cb fun(login?: string)
+function M.me(root, cb)
+  local host = origin_host(root)
+  if not host then return cb(nil) end
+  local hit = me_cache[host]
+  if hit ~= nil then return cb(hit or nil) end
+  local function finish(login)
+    me_cache[host] = login or false
+    cb(login)
+  end
+  if M.forge(root) == "gh" then
+    return forge_json({ "gh", "api", "user" }, root, "gh", function(d) finish(d and d.login) end)
+  end
+  forge_json({ "tea", "login", "list", "--output", "json" }, root, "tea", function(rows)
+    if not rows then return finish(nil) end
+    local fallback
+    for _, l in ipairs(rows) do
+      if l.ssh_host == host or (l.url or ""):find(host, 1, true) then return finish(l.user) end
+      if l.default == "true" then fallback = l.user end
+    end
+    finish(fallback)
+  end)
+end
+
 --- PR list, forge-agnostic. Metadata only - async, never blocks the UI.
 --- Deliberately NO CI here: the status rollup is the slow half of the list
 --- call (measured: gh on neovim/neovim 0.8s bare -> 11s + HTTP 504 with

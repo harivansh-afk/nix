@@ -6,7 +6,7 @@
 id = "ix.space"
 name = "ix space"
 version = "0.1.0"
-min_herdr_version = "0.8.0"
+min_herdr_version = "0.7.5"
 description = "Every space is an ix VM: workspaces map to VMs over released ix primitives."
 platforms = ["linux"]
 

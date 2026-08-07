@@ -1,0 +1,25 @@
+# Plain herdr plugin (no fork, composes with any other plugins): workspaces
+# created by the `new` action are ix VMs; panes shell into them over the ix
+# CLI. Keybindings live in dots/herdr/ix-keys.toml, rendered into the ix
+# host's herdr config only.
+
+id = "ix.space"
+name = "ix space"
+version = "0.1.0"
+min_herdr_version = "0.8.0"
+description = "Every space is an ix VM: workspaces map to VMs over released ix primitives."
+platforms = ["linux"]
+
+[[actions]]
+id = "new"
+title = "ix: new space"
+description = "Boot a VM from the configured template and open a workspace whose panes shell into it"
+contexts = ["global"]
+command = ["@out@/bin/ix-space", "new"]
+
+[[panes]]
+id = "vms"
+title = "ix VMs"
+description = "Live status of this account's VMs"
+placement = "overlay"
+command = ["@out@/bin/ix-space", "vms"]

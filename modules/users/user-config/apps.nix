@@ -1,13 +1,17 @@
 # Assorted app configs rendered from the palette, plus the nvim command
 # aliases and the darwin-only helium managed-extension manifest.
 {
+  lib,
   pkgs,
   theme,
+  hostname,
   ...
 }:
 let
   lazygitBase = builtins.readFile ../../../dots/lazygit/config.yml;
-  herdrBase = builtins.readFile ../../../dots/herdr/config.toml;
+  herdrBase =
+    builtins.readFile ../../../dots/herdr/config.toml
+    + lib.optionalString (hostname == "ix") ("\n" + builtins.readFile ../../../dots/herdr/ix-keys.toml);
 in
 {
   nvimAliases = pkgs.runCommand "nvim-command-aliases" { } ''

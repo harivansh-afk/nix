@@ -1,5 +1,4 @@
 {
-  inputs,
   lib,
   pkgs,
   self,
@@ -7,13 +6,6 @@
 }:
 let
   inherit (pkgs.stdenv.hostPlatform) system;
-  herdrPackage = inputs.herdr.packages.${system}.default.overrideAttrs (prev: {
-    patches = (prev.patches or [ ]) ++ [
-      ../../pkgs/herdr/rounded-borders-and-mosh-selection.patch
-    ];
-  });
-  ixCli = pkgs.callPackage ../../pkgs/ix-cli { };
-  ixSpace = pkgs.callPackage ../../pkgs/herdr-ix-space { };
   nvimPack = import ../../lib/nvim-pack.nix { inherit lib pkgs; };
   packDir = "/root/.local/share/nvim/site/pack/core/opt";
   parserDir = "/root/.local/share/nvim/site/parser";
@@ -63,9 +55,6 @@ in
       self.packages.${system}.omp
       userConfig.nvimAliases
       claudeCode
-      herdrPackage
-      ixCli
-      ixSpace
     ]
     ++ (with pkgs; [
       bat
@@ -93,13 +82,6 @@ in
       "groups"
     ];
     text = "${userConfig.script}";
-  };
-
-  system.activationScripts.herdrIxSpace = {
-    deps = [ "userConfig-root" ];
-    text = ''
-      HOME=/root ${herdrPackage}/bin/herdr plugin link ${ixSpace}/share/herdr-ix-space || true
-    '';
   };
 
   system.activationScripts.nvimPack = {

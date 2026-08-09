@@ -117,8 +117,25 @@ function M.setup_integrations()
         end,
       })
 
-      vim.keymap.set("n", "<C-f>", "<cmd>FzfLua files<cr>", { buffer = bufnr })
-      vim.keymap.set("n", "<C-s>", "<cmd>FzfLua live_grep<cr>", { buffer = bufnr })
+      local function load_fzf()
+        local ok_lz, lz = pcall(require, "lz.n")
+        if ok_lz then pcall(lz.trigger_load, "ibhagwan/fzf-lua") end
+        if vim.fn.exists ":FzfLua" ~= 2 then pcall(vim.cmd.packadd, "fzf-lua") end
+        return require "fzf-lua"
+      end
+
+      local function canola_cwd()
+        local ok, canola = pcall(require, "canola")
+        if not ok then return nil end
+        return canola.get_current_dir(bufnr)
+      end
+
+      vim.keymap.set("n", "<C-f>", function()
+        load_fzf().files { cwd = canola_cwd() }
+      end, { buffer = bufnr, desc = "fzf files in canola dir" })
+      vim.keymap.set("n", "<C-s>", function()
+        load_fzf().live_grep { cwd = canola_cwd() }
+      end, { buffer = bufnr, desc = "live grep in canola dir" })
 
       vim.keymap.set("n", "gC", function()
         show_all = not show_all

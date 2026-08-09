@@ -24,6 +24,11 @@ in
       (_final: _prev: {
         inherit (inputs.nixpkgs-nushell.legacyPackages.${hostConfig.system}) nushell;
       })
+      # aerospace pinned to the latest upstream release (and, later, local
+      # performance patches); see pkgs/aerospace/default.nix for the policy.
+      (_final: prev: {
+        aerospace = import ../pkgs/aerospace { inherit prev; };
+      })
     ];
 
   programs.zsh.enable = true;

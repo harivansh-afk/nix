@@ -17,6 +17,7 @@
     ../../modules/apps/voiceink-cloud-model.nix
     ../../modules/apps/voiceink-dictionary.nix
     ./macos.nix
+    ./service-refresh.nix
   ];
 
   networking.hostName = hostname;

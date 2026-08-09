@@ -202,6 +202,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${dotsRoot}/claude/hooks/session-start.sh" "${homeDirectory}/.claude/hooks/session-start.sh"
   mkSymlink "${dotsRoot}/claude/hooks/session-id.sh" "${homeDirectory}/.claude/hooks/session-id.sh"
   mkSymlink "${dotsRoot}/claude/hooks/enforce-modern-tools.sh" "${homeDirectory}/.claude/hooks/enforce-modern-tools.sh"
+  mkSymlink "${dotsRoot}/claude/hooks/subagent-pane.sh" "${homeDirectory}/.claude/hooks/subagent-pane.sh"
 
   # --- codex: AGENTS.md symlink, config.toml seeded as a writable copy.
   # Codex rewrites ~/.codex/config.toml at runtime (hook trust, per-project

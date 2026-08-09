@@ -55,17 +55,24 @@ does this job instead of a script - use it.
 
 ### 2. Judge
 
-For each item ask one question: **does this change something for a project Hari
-is working on right now?**
+For each item ask one question: **would Hari actually care enough to be
+interrupted by this right now?** Active projects are the strongest signal, but
+his current decisions, plans, and genuine interests count too.
 
-Surface it only if you can name the specific project and state the concrete
-consequence in one sentence. A real hit looks like "the library you pin in X
-shipped the thing that unblocks Y". A fake hit looks like "this is about NixOS
-and Hari uses NixOS".
+Surface it only if you can state the concrete consequence or reason he would
+care in one sentence. A real hit looks like "the library you pin in X shipped
+the thing that unblocks Y". A fake hit looks like "this is about NixOS and Hari
+uses NixOS".
+
+This is editorial judgment, not a forwarding pipeline. You may discard any item
+at any stage, including one that technically matches a project, if it is boring,
+low-value, obvious, stale, or not worth a notification. When in doubt, drop it.
 
 Reject, without exception:
 
 - Generic tech news, hype, drama, engagement bait, hot takes.
+- Items that are relevant on paper but do not change a decision, unblock work,
+  reveal a material risk, or tell him something genuinely worth knowing.
 - Incremental releases: patch bumps, docs/CI changes, routine point releases.
   `dep-release-watch` only earns a ping for breaking changes, major new
   capabilities, significant performance wins, or security fixes that affect him.
@@ -128,14 +135,16 @@ If nothing survived, reply with exactly:
 Nothing else. No preamble, no "nothing to report today". The `[SILENT]` marker
 suppresses delivery; the run is still recorded.
 
-If something survived, send at most **three** items, one sentence each, each
-line carrying the loop label and the source ref:
+If something survived, send at most **three** items, one sentence each, with the
+source ref:
 
 ```
-[hn-life-scan] llama.cpp landed native GB10 kernels - your inference server is
-the exact target, worth a rebuild. https://news.ycombinator.com/item?id=...
+llama.cpp landed native GB10 kernels - your inference server is the exact
+target, worth a rebuild. https://news.ycombinator.com/item?id=...
 ```
 
+Write in your normal voice as a direct message from you. Never expose the cron
+job name, loop label, scanner, automation, or internal provenance in the message.
 No greeting, no sign-off, no "I found some interesting things for you". Lead
 with the substance. If one item is worth sending, send one item.
 
@@ -154,13 +163,16 @@ with the substance. If one item is worth sending, send one item.
 6. **Writing the note when nothing survived.** No survivors, no note. Just
    `[SILENT]`.
 7. **Padding to three items.** Three is a cap, not a target.
+8. **Sounding automated.** Internal loop names and bracketed labels never belong
+   in Hari's message. It should read exactly like you chose to text him.
 
 ## Verification checklist
 
 - [ ] Grounded against current repo/session activity, not a guessed project list.
-- [ ] Every surfaced item names a specific project and a concrete consequence.
+- [ ] Every surfaced item has a concrete consequence or a real reason Hari cares.
+- [ ] Applied a final editorial gut check and dropped merely relevant filler.
 - [ ] Checked prior loop notes so nothing is surfaced twice.
 - [ ] KB note written under `/var/lib/kb/staging/loops/<job-name>/` with a real
       `date -u` timestamp (only if something survived).
-- [ ] Response is either `[SILENT]` alone, or at most 3 sentences each with a
-      loop label and a URL.
+- [ ] Response is either `[SILENT]` alone, or at most 3 natural sentences with
+      URLs and no internal labels.

@@ -114,6 +114,20 @@ in
             }
           ];
         }
+        # Subagents as herdr panes: intercept the Agent tool (Task is the
+        # legacy name) and fork the session into a visible pane instead of
+        # an in-process subagent. No-op outside herdr; the spawn itself
+        # takes ~30s (claude startup + disclaimer + prompt handoff).
+        {
+          matcher = "Agent|Task";
+          hooks = [
+            {
+              type = "command";
+              command = hookCommand "subagent-pane.sh";
+              timeout = 180;
+            }
+          ];
+        }
       ];
     };
   };

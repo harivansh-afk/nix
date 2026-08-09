@@ -130,12 +130,18 @@ function M.setup_integrations()
         return canola.get_current_dir(bufnr)
       end
 
-      vim.keymap.set("n", "<C-f>", function()
-        load_fzf().files { cwd = canola_cwd() }
-      end, { buffer = bufnr, desc = "fzf files in canola dir" })
-      vim.keymap.set("n", "<C-s>", function()
-        load_fzf().live_grep { cwd = canola_cwd() }
-      end, { buffer = bufnr, desc = "live grep in canola dir" })
+      vim.keymap.set(
+        "n",
+        "<C-f>",
+        function() load_fzf().files { cwd = canola_cwd() } end,
+        { buffer = bufnr, desc = "fzf files in canola dir" }
+      )
+      vim.keymap.set(
+        "n",
+        "<C-s>",
+        function() load_fzf().live_grep { cwd = canola_cwd() } end,
+        { buffer = bufnr, desc = "live grep in canola dir" }
+      )
 
       vim.keymap.set("n", "gC", function()
         show_all = not show_all

@@ -499,7 +499,12 @@ let
       --color-primary-light-3:  #26406d;
       --color-primary-light-4:  #1d345b;
       --color-primary-light-5:  #142948;
-      --color-primary-light-6:  #0b1d36;
+      /* light-6 is the -webkit-autofill fill, painted under text coloured with
+         --color-text. This ramp runs dark (upstream's light ramp runs pale), so
+         a shade here like its neighbours gave dark-on-dark at 1.15:1 in
+         autofilled login inputs. Pale tint of the primary instead; light-4/5
+         stay dark because they back white --color-primary-contrast text. */
+      --color-primary-light-6:  #dfe6f4;
       --color-primary-light-7:  #031223;
       --color-primary-alpha-10: #4261a51a;
       --color-primary-alpha-20: #4261a533;
@@ -538,6 +543,7 @@ let
       --color-yellow-dark-1: #946011;
       --color-green-dark-1:  #356348;
       --color-blue-dark-1:   #355088;
+      --color-violet-dark-1: #7a3560;
 
       --color-success: #427b58;
       --color-info:    #4261a5;
@@ -545,15 +551,40 @@ let
       --color-error:   #c5524a;
       --color-danger:  #c5524a;
 
-      /* console palette (actions runner / job log box) - dark terminal even in light theme */
-      --color-console-fg:          #ebdbb2;
-      --color-console-fg-subtle:   #928374;
-      --color-console-bg:          #141414;
-      --color-console-border:      #3c3836;
-      --color-console-hover-bg:    #ffffff0d;
-      --color-console-active-bg:   #504945;
-      --color-console-menu-bg:     #1e1e1e;
-      --color-console-menu-border: #504945;
+      /* console palette (actions run view, .console blocks, runner registration
+         box). Upstream ships a dark console in its light theme too, which leaves
+         the whole action-view-right pane - step list, job header and log body -
+         dark on an otherwise light page. Keep it on the light surface ladder. */
+      --color-console-fg:          #282828;
+      --color-console-fg-subtle:   #62656a;
+      --color-console-bg:          #f3f3f3;
+      --color-console-border:      #b8bcbe;
+      --color-console-hover-bg:    #0000000d;
+      --color-console-active-bg:   #d0d0d0;
+      --color-console-menu-bg:     #e7e7e7;
+      --color-console-menu-border: #b8bcbe;
+
+      /* ANSI log colours. Upstream tunes these for a dark console, so on the
+         light console above 12 of 14 fall below WCAG AA (bright yellow #eaaf03
+         lands at 1.78:1). Re-cut from the accents above, darkened until every
+         entry clears 4.5:1 on --color-console-bg; "bright" reads as more
+         saturated rather than lighter, as light terminal themes do.
+         --color-ansi-white and --color-ansi-bright-white are left to upstream:
+         they resolve to the console fg vars and follow this palette already. */
+      --color-ansi-black:          #282828;
+      --color-ansi-bright-black:   #62656a;
+      --color-ansi-red:            #b0453e;
+      --color-ansi-bright-red:     #8a352f;
+      --color-ansi-green:          #3b6f4f;
+      --color-ansi-bright-green:   #2c5741;
+      --color-ansi-yellow:         #8a5a0f;
+      --color-ansi-bright-yellow:  #6d470b;
+      --color-ansi-blue:           #4261a5;
+      --color-ansi-bright-blue:    #355088;
+      --color-ansi-magenta:        #8f3f71;
+      --color-ansi-bright-magenta: #7a3560;
+      --color-ansi-cyan:           #3c7678;
+      --color-ansi-bright-cyan:    #2f5c5e;
 
       /* info banner backdrop - neutralize the upstream blue */
       --color-info-border: #b8bcbe;

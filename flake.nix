@@ -73,6 +73,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # mux: native terminal multiplexer. This flake provides the muxd session
+    # daemon package + a NixOS module; spark runs muxd so panes on the Mac app
+    # can live here over QUIC. No nixpkgs follows: the flake pins a nixpkgs
+    # carrying zig 0.16, which ghostty-vt's build needs, and overriding it can
+    # break that build (same reasoning as dgx-spark).
+    mux = {
+      url = "git+https://git.harivan.sh/harivansh-afk/mux.git?ref=main";
+    };
+
     # Upstream NixOS module for the DGX Spark hardware. Deliberately no
     # nixpkgs follows: upstream pins a known-good revision for the NVIDIA
     # kernel build, and overriding it invalidates that hash.

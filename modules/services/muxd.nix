@@ -18,6 +18,10 @@
 
   services.muxd = {
     enable = true;
+    # muxd is a per-user daemon: every pane's shell runs as this user, in
+    # their home, with their login shell. A system account gives every
+    # pane a nologin shell that exits immediately.
+    user = "rathi";
     listen = "0.0.0.0:4433";
     openFirewall = true;
   };

@@ -20,16 +20,31 @@ APP_FONT="sketchybar-app-font"
 FONT_SIZE=18.0
 APP_FONT_SIZE=20.0
 
-# Height of the notch strip: NSScreen.safeAreaInsets.top at the current
-# scaled resolution (2048x1330 on the built-in display). Re-measure with:
-#   swift -e 'import AppKit; print(NSScreen.main!.safeAreaInsets.top)'
-BAR_HEIGHT=43
+# Height of the notch strip: NSScreen.safeAreaInsets.top. It is a POINT value
+# that changes with the scaled resolution (43 @ 2048x1330, 49 @ 2294x1490), so
+# it is measured at rc time instead of hardcoded - a stale constant misaligns
+# every margin. Max across screens; ~1s swift startup, paid only on
+# load/reload. Falls back to 43 (the historical built-in value) if no screen
+# reports an inset or swift fails.
+BAR_HEIGHT="$(swift -e 'import AppKit
+print(Int(NSScreen.screens.map { $0.safeAreaInsets.top }.max() ?? 0))' 2>/dev/null)"
+case "$BAR_HEIGHT" in '' | *[!0-9]* | 0) BAR_HEIGHT=43 ;; esac
+
+# Strip-relative sizes scale from their 43pt-baseline calibrations (rounded)
+# so proportions hold at every resolution. Text sizes and the PAD_* scale stay
+# absolute: fonts are a user preference in fixed points.
+scale() { echo $((($1 * BAR_HEIGHT + 21) / 43)); }
 
 # MARGIN is the air around the floating blocks: the item height and the bar
 # edge padding both derive from it so the gap is identical top, bottom, left
-# and right (43 - 2*6 = 31).
-MARGIN=6
+# and right. 6 @ 43.
+MARGIN=$(scale 6)
 ITEM_HEIGHT=$((BAR_HEIGHT - 2 * MARGIN))
+
+# calibrated by eye against the physical display corner curve at 43pt (Apple
+# does not publish the radius and no API exposes it on macOS); scales with
+# points-per-physical-mm like everything else. 13 @ 43.
+CORNER_RADIUS=$(scale 13)
 
 # --- spacing scale (pt): every gap in the bar derives from these ---
 # PAD_EDGE   inside a block at its outer edges (also glyphless-tab padding,
@@ -54,15 +69,13 @@ sketchybar --bar \
   display=all \
   sticky=on
 
-# corner_radius 13 was calibrated by eye against the physical display corner
-# curve (Apple does not publish the radius and no API exposes it on macOS).
 # Tabs paint the main cozybox background (BAR_COLOR, #101010 dark), matching
 # the ghostty terminal background - user preference. The right section paints
 # no background at all (plain text on the wallpaper).
 sketchybar --default \
   background.drawing=off \
   background.color="$BAR_COLOR" \
-  background.corner_radius=13 \
+  background.corner_radius=$CORNER_RADIUS \
   background.height=$ITEM_HEIGHT \
   background.border_width=0 \
   icon.drawing=off \
@@ -180,6 +193,18 @@ sketchybar --add item resources right \
   label.padding_left=$PAD_ITEM \
   label.padding_right=$PAD_EDGE \
   script="$PLUGIN_DIR/stats.sh"
+
+# --- resolution watchdog ---
+# A resolution change moves safeAreaInsets.top but sketchybar fires no event
+# for it: this hidden item polls the daemon's own display frames (one ~ms
+# socket query per tick, no swift) and reloads the config - which re-measures
+# BAR_HEIGHT - when they drift from the stamp of the last load.
+sketchybar --add item display_monitor left \
+  --subscribe display_monitor display_change system_woke \
+  --set display_monitor \
+  drawing=off \
+  update_freq=10 \
+  script="$PLUGIN_DIR/display.sh"
 
 # --- init ---
 sketchybar --update

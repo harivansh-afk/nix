@@ -15,6 +15,13 @@ export PURE_GIT_PULL=0
 export PURE_GIT_UNTRACKED_DIRTY=1
 zstyle ':prompt:pure:git:stash' show yes
 
+# Pure shows user@host only when it detects ssh, but mux panes reach
+# remote hosts over muxd's QUIC relay: no SSH_CONNECTION, no utmp host
+# for the who-fallback below. Every non-darwin host here is headless
+# and reached remotely by definition (the macbook is the one seat), so
+# force pure's override there - the prompt reads rathi@spark either way.
+[[ "$OSTYPE" != darwin* ]] && export PROMPT_PURE_SSH_CONNECTION=${PROMPT_PURE_SSH_CONNECTION:-mux}
+
 _codex_source_theme_file "$(_codex_read_theme_mode)"
 
 typeset -g prompt_newline=' '

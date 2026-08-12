@@ -63,6 +63,22 @@
     clang
   ];
 
+  # System-wide git stall timeout (/etc/gitconfig). git has no default network
+  # timeout: a flake-input fetch over https://git.harivan.sh once stalled on a
+  # dead connection and hung two CI jobs (and the deploy queue) for hours.
+  # Abort any HTTP transfer that stays below 1 KB/s for 60 consecutive seconds.
+  # Covers root's nix fetches (sudo nixos-rebuild) and the gitea-runner user,
+  # which per-user gitconfig and runner env vars (stripped by sudo) do not.
+  programs.git = {
+    enable = true;
+    config = {
+      http = {
+        lowSpeedLimit = 1000;
+        lowSpeedTime = 60;
+      };
+    };
+  };
+
   # nh (Nix Helper) drives `just switch`/`switch-spark`; enable periodic GC via
   # `nh clean` (keep last 5 generations and anything newer than 7 days).
   programs.nh = {

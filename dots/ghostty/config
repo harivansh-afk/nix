@@ -1,4 +1,4 @@
-theme = "cozybox-current"
+theme = light:cozybox-light,dark:cozybox-dark
 font-family = Berkeley Mono
 font-codepoint-map = U+f101-U+f25c=nonicons
 background-opacity = 1

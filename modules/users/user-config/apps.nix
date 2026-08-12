@@ -3,6 +3,7 @@
 {
   pkgs,
   theme,
+  isDarwin,
   ...
 }:
 let
@@ -34,6 +35,8 @@ in
     dark = pkgs.writeText "fzf-cozybox-dark" (theme.renderFzf "dark");
     light = pkgs.writeText "fzf-cozybox-light" (theme.renderFzf "light");
   };
+
+  ghosttyTerminfo = (if isDarwin then pkgs.ghostty-bin else pkgs.ghostty).terminfo;
 
   ghosttyThemes = {
     dark = pkgs.writeText "ghostty-cozybox-dark" (theme.renderGhostty "dark");

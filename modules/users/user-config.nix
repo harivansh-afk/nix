@@ -97,6 +97,7 @@ let
       inherit (apps)
         btopConf
         fzfThemes
+        ghosttyTerminfo
         ghosttyThemes
         herdrConfigs
         lazygitConfigs

@@ -24,6 +24,7 @@
   btopConf,
   fzfThemes,
   sketchybarThemes,
+  ghosttyTerminfo,
   ghosttyThemes,
   lazygitConfigs,
   leafThemes,
@@ -175,6 +176,13 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${dotsRoot}/ghostty/shaders" "${configHome}/ghostty/shaders"
   mkSymlink "${ghosttyThemes.dark}" "${configHome}/ghostty/themes/cozybox-dark"
   mkSymlink "${ghosttyThemes.light}" "${configHome}/ghostty/themes/cozybox-light"
+
+  # ~/.terminfo is in ncurses' DEFAULT search path, so xterm-ghostty resolves
+  # at zsh startup even in env-scrubbed spawns (login/muxd panes) where
+  # TERMINFO/TERMINFO_DIRS are absent: Apple's ncurses caches its search path
+  # on first lookup, so the TERMINFO_DIRS exported later by set-environment
+  # cannot rescue a shell that started without a resolvable entry.
+  mkSymlink "${ghosttyTerminfo}/share/terminfo" "${homeDirectory}/.terminfo"
   mkSymlink "${fzfThemes.dark}" "${configHome}/fzf/themes/cozybox-dark"
   mkSymlink "${fzfThemes.light}" "${configHome}/fzf/themes/cozybox-light"
   mkSymlink "${lazygitConfigs.dark}" "${configHome}/lazygit/config-dark.yml"

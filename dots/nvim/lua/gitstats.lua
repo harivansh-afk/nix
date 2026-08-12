@@ -41,13 +41,21 @@ function M.setup_hls()
 end
 
 --- virt_text segments for one file row - the ONE definition of the shape.
+--- Zero counts are omitted ("+6 -0" renders as "+6"); a fully empty diff
+--- renders nothing at all.
 ---@param add integer
 ---@param del integer
 ---@param binary? boolean
 ---@return {[1]: string, [2]: string}[]
 function M.virt(add, del, binary)
   if binary then return { { "binary", "Comment" } } end
-  return { { "+" .. add, "GitStatAdd" }, { " ", "Normal" }, { "-" .. del, "GitStatDel" } }
+  local segs = {}
+  if add > 0 then segs[#segs + 1] = { "+" .. add, "GitStatAdd" } end
+  if del > 0 then
+    if #segs > 0 then segs[#segs + 1] = { " ", "Normal" } end
+    segs[#segs + 1] = { "-" .. del, "GitStatDel" }
+  end
+  return segs
 end
 
 -- ---------------------------------------------------- fugitive decoration ---
@@ -175,7 +183,7 @@ function M.fugitive(buf)
   for _, path in ipairs(untracked) do
     run({ "diff", "--numstat", "-z", "--no-index", "--", "/dev/null", path }, function(out)
       -- Record is keyed by the post-image path (== `path`); an empty diff
-      -- (empty file) still deserves an explicit +0 -0.
+      -- (empty file) keeps a 0/0 entry, which virt() renders as nothing.
       stats.untracked[path] = parse_numstat(out)[path] or { add = 0, del = 0, binary = false }
     end)
   end

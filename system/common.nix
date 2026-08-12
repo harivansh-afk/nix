@@ -39,6 +39,7 @@ in
       pkgs.ghostty.terminfo
     ]
     ++ lib.optionals hostConfig.isDarwin [
+      pkgs.ghostty-bin.terminfo
       pkgs.nh
     ];
 

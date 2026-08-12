@@ -50,7 +50,7 @@ To add a Barrett-owned secret: drop the file at `secrets/hosts/spark/barrett-<na
 - The `tmp/` directory is gitignored local scratch space. Nothing there is tracked or load-bearing.
 - Berkeley Mono is installed out-of-band. The flake only provides nerd-fonts symbol glyphs.
 - There is no home-manager. Per-user config is `modules/users/user-config.nix`: plain dotfiles in `dots/` symlinked into the home directory by an activation script that runs as the user. The repo owner's links point at the live checkout (`~/Documents/Git/nix/dots`), so dotfile edits apply without a rebuild; other users get the nix-store copy. Configs that need store paths (zsh plugins, git credential helpers, theme renders) are store-generated shims that defer to the live dots file.
-- Ghostty is installed via Homebrew cask, not nixpkgs. The flake owns only its config files.
+- Ghostty is installed via Homebrew cask, not nixpkgs. The flake owns its config files and its terminfo: `xterm-ghostty` is declarative in `system/common.nix` (`pkgs.ghostty-bin.terminfo` on darwin, `pkgs.ghostty.terminfo` on linux) so env-scrubbed shells resolve it without `TERMINFO`. Never fix terminfo imperatively via `tic` into `~/.terminfo`.
 - Karabiner config is a directory symlink to `dots/karabiner/` so Karabiner can write freely.
 - Cursor-agent, Claude, and Codex are curl-installed binaries. On NixOS they need nix-ld.
 - Devin config is seeded as a mutable copy since Devin rewrites it.

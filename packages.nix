@@ -18,6 +18,13 @@ let
   # Patching forces a source build of herdr (rust + vendored zig libghostty-vt)
   # instead of substituting the upstream artifact. Drop these once upstream
   # ships a border-style option and fixes the selection fallback.
+  # jj-ix: the patched jj that speaks the ix forge's store backend
+  # (pkgs/jj-ix). Toolchain comes from rust-overlay via mkRustBin so the
+  # main package set needs no overlay.
+  jjIxPackage = pkgs.callPackage ./pkgs/jj-ix {
+    rust-bin = inputs.rust-overlay.lib.mkRustBin { } pkgs;
+    ix-src = inputs.ix-src;
+  };
   herdrBase = inputs.herdr.packages.${system}.default or null;
   herdrPackage =
     if herdrBase == null then
@@ -102,7 +109,8 @@ in
       gwsPackage
       openspecPackage
       herdrPackage
-    ]);
+    ])
+    ++ [ jjIxPackage ];
 
   darwinExtras = with pkgs; [
     coreutils-prefixed

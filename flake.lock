@@ -816,6 +816,23 @@
         "type": "github"
       }
     },
+    "ix-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786513547,
+        "narHash": "sha256-MGX92rBQ+LZ2mrGFPs/HWQaG601jsighjMyiz64B4TI=",
+        "owner": "indexable-inc",
+        "repo": "ix",
+        "rev": "f72060016d74211e72793f295d3b8697d1994a3d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "indexable-inc",
+        "repo": "ix",
+        "rev": "f72060016d74211e72793f295d3b8697d1994a3d",
+        "type": "github"
+      }
+    },
     "launchk-src": {
       "flake": false,
       "locked": {
@@ -1564,6 +1581,7 @@
         "herdr": "herdr",
         "hermes-agent": "hermes-agent",
         "index": "index",
+        "ix-src": "ix-src",
         "mux": "mux",
         "neovim-nightly": "neovim-nightly",
         "nix-darwin": "nix-darwin",
@@ -1574,6 +1592,7 @@
         "openspec": "openspec",
         "pi-mono": "pi-mono",
         "pierrejo": "pierrejo",
+        "rust-overlay": "rust-overlay_3",
         "sops-nix": "sops-nix",
         "terranix": "terranix",
         "voiceink-src": "voiceink-src"
@@ -1613,6 +1632,26 @@
         "owner": "oxalica",
         "repo": "rust-overlay",
         "rev": "107c334f141854f563f8adf1db781dc453d92639",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "rust-overlay_3": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1786594607,
+        "narHash": "sha256-5f9qi0HFGX07xuLG4X7MVsXb6imb1pEhEhlYB+ts4Xk=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "cb8f92ed710cb8402805a509d4083418b5435edb",
         "type": "github"
       },
       "original": {

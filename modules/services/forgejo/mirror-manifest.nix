@@ -13,6 +13,15 @@ let
     "${ownedOwner}/agentikube"
   ];
 
+  # Owners (lower_name) whose pull mirrors are retired: reconcile.sh converts
+  # their mirrors to regular repos (data kept) even if the upstream is still
+  # reachable. One-way per repo: re-enabling means re-migrating as a mirror.
+  retiredMirrorOwners = [
+    "companion-inc"
+    "agentcomputerai"
+    "dueflow-co"
+  ];
+
   manifest = {
     schema = "forgejo-mirror-manifest/v1";
     forgejo_host = "git.harivan.sh";
@@ -21,6 +30,7 @@ let
     push_mirror_sync_on_commit = true;
     pull_mirror_interval = "15m";
     actions_enabled_repos = actionsEnabledRepos;
+    retired_mirror_owners = retiredMirrorOwners;
   };
 
   manifestJson = pkgs.writeText "forgejo-mirror-manifest.json" (builtins.toJSON manifest);

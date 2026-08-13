@@ -108,8 +108,9 @@ main() {
   sync_on_commit=$(jq -r '.push_mirror_sync_on_commit' "$MANIFEST")
   interval=$(jq -r '.push_mirror_interval' "$MANIFEST")
 
-  local actions_enabled
+  local actions_enabled retired_owners
   actions_enabled=$(jq -r '.actions_enabled_repos[]' "$MANIFEST")
+  retired_owners=$(jq -r '.retired_mirror_owners[]?' "$MANIFEST")
 
   # ------------------------------------------------------------------------
   # 1. Owned repos: convert pull -> push, ensure push-mirror exists
@@ -240,6 +241,9 @@ main() {
   # ------------------------------------------------------------------------
   log "phase 1b: repairing non-owned pull mirrors"
 
+  declare -A retired
+  while IFS= read -r o; do [ -n "$o" ] && retired["$o"]=1; done <<<"$retired_owners"
+
   # Abort the phase if github itself is unreachable, so a network blip can
   # never mass-convert mirrors to regular repos.
   if ! probe_as_git https://github.com/git/git.git; then
@@ -249,6 +253,13 @@ main() {
       [ -z "$rid" ] && continue
       local path="$owner/$name"
       local dir="/var/lib/forgejo/repositories/$owner/$name.git"
+
+      # Retired owners: mirroring is off by policy, upstream state irrelevant.
+      if [ -n "${retired[$owner]+x}" ]; then
+        log "  $path: owner retired; converting to regular repo (data kept)"
+        [ "$DRY" = "1" ] || sq "DELETE FROM mirror WHERE repo_id=$rid; UPDATE repository SET is_mirror=0 WHERE id=$rid;"
+        continue
+      fi
 
       local url clean
       url=$(runuser -u git -- git -C "$dir" remote get-url origin 2>/dev/null || true)

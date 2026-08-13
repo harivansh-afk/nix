@@ -23,7 +23,7 @@ let
   # main package set needs no overlay.
   jjIxPackage = pkgs.callPackage ./pkgs/jj-ix {
     rust-bin = inputs.rust-overlay.lib.mkRustBin { } pkgs;
-    ix-src = inputs.ix-src;
+    inherit (inputs) ix-src;
   };
   herdrBase = inputs.herdr.packages.${system}.default or null;
   herdrPackage =

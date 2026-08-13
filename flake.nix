@@ -109,6 +109,26 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Rust toolchains by date, for packages needing the ix repo's pinned
+    # nightly (pkgs/jj-ix). Consumed via lib.mkRustBin, not as an overlay,
+    # so the main package set stays untouched.
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # ix monorepo source for pkgs/jj-ix (the patched jj with the ix store
+    # backend - the client for the jj-native forge at forge.ix.dev). Pinned
+    # to the archived GitHub mirror's FINAL commit (2026-08-12): the forge
+    # itself is not nix-fetchable, so bumping past this pin needs a tree
+    # exported from the forge (or a fetchable public mirror, ix ADR 0006).
+    # Fetching needs `access-tokens = github.com=...` in nix.conf on the
+    # building machine (the repo is org-internal).
+    ix-src = {
+      url = "github:indexable-inc/ix/f72060016d74211e72793f295d3b8697d1994a3d";
+      flake = false;
+    };
+
     # Declarative partitioning for spark; paired with nixos-anywhere for
     # from-scratch provisioning.
     disko = {

@@ -840,11 +840,11 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1786561586,
-        "narHash": "sha256-2wahUmRvkmwzE8wc97pDTh3et/39kh3STZ7tiQcMi+E=",
+        "lastModified": 1786593735,
+        "narHash": "sha256-sz0KrKuIq6MXOSRrrhFs83F9Nla8FVqvF06b6sJfMk8=",
         "ref": "main",
-        "rev": "6a52bf146e7ed30e0fcf249c24e1357943513267",
-        "revCount": 142,
+        "rev": "f336c3150b2b17fd22096b14ec24afdb6f688342",
+        "revCount": 164,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/mux.git"
       },

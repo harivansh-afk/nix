@@ -28,7 +28,6 @@
   ghosttyThemes,
   lazygitConfigs,
   leafThemes,
-  herdrConfigs,
   claudeSettings,
   codexConfigSource,
   readXattr,
@@ -71,7 +70,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${configHome}/ghostty/shaders" \
     "${configHome}/ghostty/themes" \
     "${configHome}/lazygit" \
-    "${configHome}/herdr" \
     "${theme.paths.leafThemesDir}" \
     "${configHome}/direnv/lib" \
     "${configHome}/k9s" \
@@ -190,11 +188,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${dotsRoot}/leaf/config.toml" "${configHome}/leaf/config.toml"
   mkSymlink "${leafThemes.dark}" "${theme.paths.leafThemesDir}/cozybox-dark.toml"
   mkSymlink "${leafThemes.light}" "${theme.paths.leafThemesDir}/cozybox-light.toml"
-  mkSymlink "${herdrConfigs.dark}" "${configHome}/herdr/config-dark.toml"
-  mkSymlink "${herdrConfigs.light}" "${configHome}/herdr/config-light.toml"
-  # herdr is nix-managed (inputs.herdr); drop any installer/self-update copy
-  # that would shadow the nix binary via ~/.local/bin's PATH precedence
-  rm -f "${homeDirectory}/.local/bin/herdr"
 
   # gh rewrites its config at runtime; keep a managed copy instead of a
   # read-only store symlink
@@ -210,7 +203,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${dotsRoot}/claude/hooks/session-start.sh" "${homeDirectory}/.claude/hooks/session-start.sh"
   mkSymlink "${dotsRoot}/claude/hooks/session-id.sh" "${homeDirectory}/.claude/hooks/session-id.sh"
   mkSymlink "${dotsRoot}/claude/hooks/enforce-modern-tools.sh" "${homeDirectory}/.claude/hooks/enforce-modern-tools.sh"
-  mkSymlink "${dotsRoot}/claude/hooks/subagent-pane.sh" "${homeDirectory}/.claude/hooks/subagent-pane.sh"
 
   # --- codex: AGENTS.md symlink, config.toml seeded as a writable copy.
   # Codex rewrites ~/.codex/config.toml at runtime (hook trust, per-project
@@ -376,7 +368,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   ln -sfn "$THEME_GHOSTTY_TARGET" "${theme.paths.ghosttyCurrentFile}"
   ln -sfn "$THEME_LAZYGIT_TARGET" "${theme.paths.lazygitCurrentFile}"
   ln -sfn "$THEME_GIT_THEME_TARGET" "${theme.paths.gitThemeCurrentFile}"
-  ln -sfnT "$THEME_HERDR_TARGET" "${theme.paths.herdrCurrentFile}"
   ln -sfn "$THEME_LEAF_TARGET" "${theme.paths.leafCurrentFile}"
 
   if [ ! -f "${theme.wallpapers.dark}" ]; then

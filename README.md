@@ -66,7 +66,7 @@ modules/             reusable modules
   users/             shared dotfile and user setup
 system/              shared system-level config
 packages.nix         shared package sets (core, extras, darwin)
-scripts/             runtime helpers (hrd, ghpr, fork, iosrun, theme, ...)
+scripts/             runtime helpers (mux, ghpr, iosrun, theme, ...)
 secrets/             sops-encrypted secrets per host
 terraform/           declarative Cloudflare DNS via terranix
 assets/              readme artwork

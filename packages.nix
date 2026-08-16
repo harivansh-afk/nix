@@ -8,16 +8,6 @@ let
   inherit (pkgs.stdenv.hostPlatform) system;
   gwsPackage = inputs.googleworkspace-cli.packages.${system}.default or null;
   openspecPackage = inputs.openspec.packages.${system}.default or null;
-  # Two local fixes on top of the upstream herdr build (pkgs/herdr/*.patch):
-  #   - rounded outer pane corners; herdr hardcodes the square glyphs in
-  #     src/ui/panes.rs and exposes no border-style config key.
-  #   - visible selection/copy-mode highlight when the outer terminal never
-  #     answers herdr's OSC 10/11 color query. mosh (how `hrd` attaches) drops
-  #     that response, and the fallback painted the selection in panel_bg -
-  #     i.e. the pane's own background, so the highlight was invisible.
-  # Patching forces a source build of herdr (rust + vendored zig libghostty-vt)
-  # instead of substituting the upstream artifact. Drop these once upstream
-  # ships a border-style option and fixes the selection fallback.
   # jj-ix: the patched jj that speaks the ix forge's store backend
   # (pkgs/jj-ix). Toolchain comes from rust-overlay via mkRustBin so the
   # main package set needs no overlay.
@@ -25,14 +15,6 @@ let
     rust-bin = inputs.rust-overlay.lib.mkRustBin { } pkgs;
     inherit (inputs) ix-src;
   };
-  herdrBase = inputs.herdr.packages.${system}.default or null;
-  herdrPackage =
-    if herdrBase == null then
-      null
-    else
-      herdrBase.overrideAttrs (prev: {
-        patches = (prev.patches or [ ]) ++ [ ./pkgs/herdr/rounded-borders-and-mosh-selection.patch ];
-      });
 in
 {
   core =
@@ -108,7 +90,6 @@ in
     ++ (builtins.filter (p: p != null) [
       gwsPackage
       openspecPackage
-      herdrPackage
     ])
     ++ [ jjIxPackage ];
 

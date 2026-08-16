@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """dep_release_scan.py - print NEW releases of watched dependency repos as text.
 
-The gather step for the dep-release-watch loop. For each repo in WATCHLIST it
+An inert collector for a future quarantined ingestion pipeline. For each repo in WATCHLIST it
 queries the GitHub public API (`/repos/{owner}/{repo}/releases/latest`, no token)
 and emits a line ONLY when the latest release is newer than the one last seen.
 

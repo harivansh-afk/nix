@@ -8,7 +8,7 @@ platforms: [linux]
 metadata:
   hermes:
     tags: [finance, cron, proactive, relay]
-    related_skills: [feed-triage]
+    related_skills: []
 ---
 
 # Finance relay (finance-anomaly-watch)

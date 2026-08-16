@@ -12,7 +12,7 @@ Two modes:
   pair X needs for an authenticated read session). Useful headless.
 
 Output: storage_state.json at $BROWSER_USE_STORAGE_STATE (mode 0600), which the
-x-life-scan mini-loop loads so its feed gather is logged-in.
+inert X collector can load for authenticated ingestion.
 
 browser-use 0.13.x: BrowserSession.export_storage_state(path) extracts cookies
 via CDP (verified against 0.13.1) and writes a Playwright-compatible JSON

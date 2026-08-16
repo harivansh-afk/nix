@@ -1,0 +1,316 @@
+diff --git a/VoiceInk/Models/TranscriptionModel.swift b/VoiceInk/Models/TranscriptionModel.swift
+index 8d7b4ae..52f23eb 100644
+--- a/VoiceInk/Models/TranscriptionModel.swift
++++ b/VoiceInk/Models/TranscriptionModel.swift
+@@ -138,13 +138,17 @@ struct CustomCloudModel: TranscriptionModel, Codable {
+     let modelName: String
+     let isMultilingualModel: Bool
+     let supportedLanguages: [String: String]
++    /// Opt-in flag for realtime streaming against a self-hosted realtime endpoint.
++    let isStreamingModel: Bool?
++
++    var supportsStreaming: Bool { isStreamingModel ?? false }
+ 
+     /// API key retrieved from Keychain by model ID.
+     var apiKey: String {
+         APIKeyManager.shared.getCustomModelAPIKey(forModelId: id) ?? ""
+     }
+ 
+-    init(id: UUID = UUID(), name: String, displayName: String, description: String, apiEndpoint: String, modelName: String, isMultilingual: Bool = true, supportedLanguages: [String: String]? = nil) {
++    init(id: UUID = UUID(), name: String, displayName: String, description: String, apiEndpoint: String, modelName: String, isMultilingual: Bool = true, supportedLanguages: [String: String]? = nil, isStreamingModel: Bool? = nil) {
+         self.id = id
+         self.name = name
+         self.displayName = displayName
+@@ -153,11 +157,12 @@ struct CustomCloudModel: TranscriptionModel, Codable {
+         self.modelName = modelName
+         self.isMultilingualModel = isMultilingual
+         self.supportedLanguages = supportedLanguages ?? LanguageDictionary.forProvider(isMultilingual: isMultilingual)
++        self.isStreamingModel = isStreamingModel
+     }
+ 
+     /// Custom Codable to migrate legacy apiKey from JSON to Keychain.
+     private enum CodingKeys: String, CodingKey {
+-        case id, name, displayName, description, apiEndpoint, modelName, isMultilingualModel, supportedLanguages
++        case id, name, displayName, description, apiEndpoint, modelName, isMultilingualModel, supportedLanguages, isStreamingModel
+         case apiKey
+     }
+ 
+@@ -171,6 +176,7 @@ struct CustomCloudModel: TranscriptionModel, Codable {
+         modelName = try container.decode(String.self, forKey: .modelName)
+         isMultilingualModel = try container.decode(Bool.self, forKey: .isMultilingualModel)
+         supportedLanguages = try container.decode([String: String].self, forKey: .supportedLanguages)
++        isStreamingModel = try container.decodeIfPresent(Bool.self, forKey: .isStreamingModel)
+ 
+         if let legacyApiKey = try container.decodeIfPresent(String.self, forKey: .apiKey), !legacyApiKey.isEmpty {
+             APIKeyManager.shared.saveCustomModelAPIKey(legacyApiKey, forModelId: id)
+@@ -187,6 +193,7 @@ struct CustomCloudModel: TranscriptionModel, Codable {
+         try container.encode(modelName, forKey: .modelName)
+         try container.encode(isMultilingualModel, forKey: .isMultilingualModel)
+         try container.encode(supportedLanguages, forKey: .supportedLanguages)
++        try container.encodeIfPresent(isStreamingModel, forKey: .isStreamingModel)
+     }
+ } 
+ 
+diff --git a/VoiceInk/Transcription/Streaming/SelfHostedStreamingProvider.swift b/VoiceInk/Transcription/Streaming/SelfHostedStreamingProvider.swift
+new file mode 100644
+index 0000000..0345089
+--- /dev/null
++++ b/VoiceInk/Transcription/Streaming/SelfHostedStreamingProvider.swift
+@@ -0,0 +1,229 @@
++import Foundation
++
++/// Streaming provider for self-hosted custom cloud endpoints speaking an
++/// OpenAI-Realtime-shaped WebSocket protocol.
++///
++/// Derives the WebSocket URL from the model's batch `apiEndpoint`
++/// (e.g. `https://host/v1/audio/transcriptions` -> `wss://host/v1/realtime`).
++/// Sends audio as base64-encoded `input_audio_buffer.append` JSON frames and
++/// finalizes with `input_audio_buffer.commit`. Accumulates append-only words
++/// from `conversation.item.input_audio_transcription.delta` events; the
++/// `conversation.item.input_audio_transcription.completed` transcript replaces
++/// all accumulated partials, after which the server closes the socket.
++final class SelfHostedStreamingProvider: StreamingTranscriptionProvider {
++
++    private var webSocketTask: URLSessionWebSocketTask?
++    private var urlSession: URLSession?
++    private var eventsContinuation: AsyncStream<StreamingTranscriptionEvent>.Continuation?
++    private var receiveTask: Task<Void, Never>?
++    private var accumulatedWords: [String] = []
++    private var receivedFinalTranscript = false
++
++    private(set) var transcriptionEvents: AsyncStream<StreamingTranscriptionEvent>
++
++    init() {
++        var continuation: AsyncStream<StreamingTranscriptionEvent>.Continuation!
++        transcriptionEvents = AsyncStream { continuation = $0 }
++        eventsContinuation = continuation
++    }
++
++    deinit {
++        receiveTask?.cancel()
++        webSocketTask?.cancel(with: .normalClosure, reason: nil)
++        urlSession?.invalidateAndCancel()
++        eventsContinuation?.finish()
++    }
++
++    func connect(model: any TranscriptionModel, language: String?) async throws {
++        guard let customModel = model as? CustomCloudModel else {
++            throw StreamingTranscriptionError.connectionFailed("SelfHostedStreamingProvider requires a custom cloud model")
++        }
++
++        let url = try realtimeURL(from: customModel.apiEndpoint, language: language)
++
++        var request = URLRequest(url: url)
++        request.timeoutInterval = 10
++        let apiKey = customModel.apiKey
++        if !apiKey.isEmpty {
++            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
++        }
++
++        let session = URLSession(configuration: .default)
++        let task = session.webSocketTask(with: request)
++
++        self.urlSession = session
++        self.webSocketTask = task
++        accumulatedWords = []
++        receivedFinalTranscript = false
++        task.resume()
++
++        // Verify the WebSocket handshake completed before reporting success,
++        // so a dead endpoint triggers the batch fallback instead of hanging.
++        do {
++            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
++                task.sendPing { error in
++                    if let error {
++                        continuation.resume(throwing: error)
++                    } else {
++                        continuation.resume()
++                    }
++                }
++            }
++        } catch {
++            await disconnect()
++            throw StreamingTranscriptionError.connectionFailed(error.localizedDescription)
++        }
++
++        eventsContinuation?.yield(.sessionStarted)
++
++        receiveTask = Task { [weak self] in
++            await self?.receiveLoop()
++        }
++    }
++
++    func sendAudioChunk(_ data: Data) async throws {
++        guard let task = webSocketTask else {
++            throw StreamingTranscriptionError.notConnected
++        }
++
++        let message: [String: Any] = [
++            "type": "input_audio_buffer.append",
++            "audio": data.base64EncodedString()
++        ]
++        try await task.send(.string(try jsonString(from: message)))
++    }
++
++    func commit() async throws {
++        guard let task = webSocketTask else {
++            throw StreamingTranscriptionError.notConnected
++        }
++
++        let message: [String: Any] = ["type": "input_audio_buffer.commit"]
++        try await task.send(.string(try jsonString(from: message)))
++    }
++
++    func disconnect() async {
++        receiveTask?.cancel()
++        receiveTask = nil
++        webSocketTask?.cancel(with: .normalClosure, reason: nil)
++        webSocketTask = nil
++        urlSession?.invalidateAndCancel()
++        urlSession = nil
++        eventsContinuation?.finish()
++        accumulatedWords = []
++    }
++
++    // MARK: - Private
++
++    /// Derives the realtime WebSocket URL from the model's batch HTTP endpoint.
++    /// `https://host/v1/audio/transcriptions` becomes `wss://host/v1/realtime`.
++    private func realtimeURL(from apiEndpoint: String, language: String?) throws -> URL {
++        guard var components = URLComponents(string: apiEndpoint),
++              let host = components.host, !host.isEmpty else {
++            throw StreamingTranscriptionError.connectionFailed("Invalid API endpoint: \(apiEndpoint)")
++        }
++
++        components.scheme = (components.scheme == "http" || components.scheme == "ws") ? "ws" : "wss"
++
++        var path = components.path
++        while path.hasSuffix("/") { path.removeLast() }
++        let batchSuffix = "/audio/transcriptions"
++        if path.hasSuffix(batchSuffix) {
++            path = String(path.dropLast(batchSuffix.count)) + "/realtime"
++        } else {
++            path = "/v1/realtime"
++        }
++        components.path = path
++
++        if let language, !language.isEmpty, language.lowercased() != "auto" {
++            components.queryItems = [URLQueryItem(name: "language", value: language)]
++        } else {
++            components.queryItems = nil
++        }
++
++        guard let url = components.url else {
++            throw StreamingTranscriptionError.connectionFailed("Could not build realtime URL from: \(apiEndpoint)")
++        }
++        return url
++    }
++
++    private func jsonString(from message: [String: Any]) throws -> String {
++        let jsonData = try JSONSerialization.data(withJSONObject: message)
++        guard let jsonString = String(data: jsonData, encoding: .utf8) else {
++            throw StreamingTranscriptionError.audioConversionFailed
++        }
++        return jsonString
++    }
++
++    private func receiveLoop() async {
++        guard let task = webSocketTask else { return }
++
++        while !Task.isCancelled {
++            do {
++                let message = try await task.receive()
++                switch message {
++                case .string(let text):
++                    handleMessage(text)
++                case .data(let data):
++                    if let text = String(data: data, encoding: .utf8) {
++                        handleMessage(text)
++                    }
++                @unknown default:
++                    break
++                }
++            } catch {
++                // The server closes the socket after the final transcript;
++                // only surface errors that happen before that.
++                if !Task.isCancelled && !receivedFinalTranscript {
++                    eventsContinuation?.yield(.error(StreamingTranscriptionError.connectionFailed(error.localizedDescription)))
++                }
++                break
++            }
++
++            if receivedFinalTranscript {
++                break
++            }
++        }
++    }
++
++    private func handleMessage(_ text: String) {
++        guard let data = text.data(using: .utf8),
++              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
++              let type = json["type"] as? String else { return }
++
++        switch type {
++        case "conversation.item.input_audio_transcription.delta":
++            if let delta = json["delta"] as? String {
++                let trimmed = delta.trimmingCharacters(in: .whitespacesAndNewlines)
++                if !trimmed.isEmpty {
++                    accumulatedWords.append(trimmed)
++                }
++                eventsContinuation?.yield(.partial(text: accumulatedWords.joined(separator: " ")))
++            }
++
++        case "conversation.item.input_audio_transcription.completed":
++            if let transcript = json["transcript"] as? String {
++                // The final transcript is authoritative and replaces all partials.
++                receivedFinalTranscript = true
++                accumulatedWords = []
++                eventsContinuation?.yield(.committed(text: transcript))
++            }
++
++        case "error":
++            eventsContinuation?.yield(.error(StreamingTranscriptionError.serverError(extractErrorMessage(from: json))))
++
++        default:
++            break
++        }
++    }
++
++    private func extractErrorMessage(from json: [String: Any]) -> String {
++        if let error = json["error"] as? [String: Any] {
++            if let message = error["message"] as? String { return message }
++            if let detail = error["detail"] as? String { return detail }
++        }
++        if let error = json["error"] as? String { return error }
++        if let message = json["message"] as? String { return message }
++        return "Unknown error"
++    }
++}
+diff --git a/VoiceInk/Transcription/Streaming/StreamingTranscriptionService.swift b/VoiceInk/Transcription/Streaming/StreamingTranscriptionService.swift
+index dbab620..7491158 100644
+--- a/VoiceInk/Transcription/Streaming/StreamingTranscriptionService.swift
++++ b/VoiceInk/Transcription/Streaming/StreamingTranscriptionService.swift
+@@ -264,6 +264,9 @@ class StreamingTranscriptionService {
+             }
+             return FluidAudioStreamingProvider(fluidAudioService: fluidAudioService)
+         }
++        if model.provider == .custom {
++            return SelfHostedStreamingProvider()
++        }
+         guard let cloudProvider = CloudProviderRegistry.provider(for: model.provider),
+               let streamingProvider = cloudProvider.makeStreamingProvider(modelContext: modelContext) else {
+             fatalError("Unsupported streaming provider: \(model.provider). Check shouldUseRealtimeTranscription() before calling startStreaming().")
+diff --git a/VoiceInk/Views/AI Models/CustomProviderManagementView.swift b/VoiceInk/Views/AI Models/CustomProviderManagementView.swift
+index 66614cc..d72d92e 100644
+--- a/VoiceInk/Views/AI Models/CustomProviderManagementView.swift	
++++ b/VoiceInk/Views/AI Models/CustomProviderManagementView.swift	
+@@ -283,7 +283,8 @@ struct CustomTranscriptionModelEditorPanel: View {
+                 description: "Custom transcription model",
+                 apiEndpoint: trimmedEndpoint,
+                 modelName: trimmedModelName,
+-                isMultilingual: isMultilingual
++                isMultilingual: isMultilingual,
++                isStreamingModel: editingModel.isStreamingModel
+             )
+ 
+             customModelManager.updateCustomModel(updatedModel)

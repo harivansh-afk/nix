@@ -56,8 +56,14 @@ let
       disabled_toolsets = [ ];
     };
     approvals.mode = "smart";
-    # Cron gather/relay scripts drive a headless browser at worst (x-feed-scan).
-    cron.script_timeout_seconds = 300;
+    cron = {
+      # Cron gather/relay scripts drive a headless browser at worst (x-feed-scan).
+      script_timeout_seconds = 300;
+      # No "Cronjob Response: <name> (job_id: ...)" header + "To stop or manage
+      # this job..." footer around every loop ping - the loops already read as
+      # the agent texting, the wrapper turned them into system mail.
+      wrap_response = false;
+    };
     curator = {
       enabled = true;
       consolidate = true;
@@ -65,6 +71,10 @@ let
     };
     display = {
       busy_input_mode = "steer";
+      # The background self-improvement review still runs after every turn
+      # (memory + skill patching); only its "Self-improvement review: ..."
+      # chat bubble is off. Still logged to stdout/journal.
+      memory_notifications = "off";
       platforms.photon = {
         tool_progress = false;
         streaming = false;
@@ -81,6 +91,15 @@ let
       photon = toolsets;
     };
     plugins.enabled = [ "knowledge-base" ];
+    # Never auto-reset the photon DM session (upstream default since July 2026;
+    # the live config carried the legacy "both" = 24h idle + daily 4am, which
+    # posted a "Session automatically reset ... Model/Provider/Context" block
+    # into the chat every morning). Compression keeps a long session in
+    # bounds; /new resets by hand.
+    session_reset = {
+      mode = "none";
+      notify = false;
+    };
     skills = {
       guard_agent_created = true;
       write_approval = false;

@@ -25,7 +25,6 @@ let
       ghostty = "${theme.paths.ghosttyDir}/cozybox-dark";
       lazygit = "${theme.paths.lazygitDir}/config-dark.yml";
       leaf = "${theme.paths.leafThemesDir}/cozybox-dark.toml";
-      herdr = "${theme.paths.herdrDir}/config-dark.toml";
       gitTheme = "${gitThemeIncludes.dark}";
       darwinLazygit = "${lazygitDarwinDir}/config-dark.yml";
       sketchybar = "${theme.paths.sketchybarDir}/cozybox-dark.sh";
@@ -37,7 +36,6 @@ let
       ghostty = "${theme.paths.ghosttyDir}/cozybox-light";
       lazygit = "${theme.paths.lazygitDir}/config-light.yml";
       leaf = "${theme.paths.leafThemesDir}/cozybox-light.toml";
-      herdr = "${theme.paths.herdrDir}/config-light.toml";
       gitTheme = "${gitThemeIncludes.light}";
       darwinLazygit = "${lazygitDarwinDir}/config-light.yml";
       sketchybar = "${theme.paths.sketchybarDir}/cozybox-light.sh";
@@ -65,7 +63,6 @@ let
           THEME_GHOSTTY_TARGET='${modeAssets.light.ghostty}'
           THEME_LAZYGIT_TARGET='${modeAssets.light.lazygit}'
           THEME_LEAF_TARGET='${modeAssets.light.leaf}'
-          THEME_HERDR_TARGET='${modeAssets.light.herdr}'
           THEME_GIT_THEME_TARGET='${modeAssets.light.gitTheme}'
           THEME_DARWIN_LAZYGIT_TARGET='${modeAssets.light.darwinLazygit}'
           THEME_SKETCHYBAR_TARGET='${modeAssets.light.sketchybar}'
@@ -78,7 +75,6 @@ let
           THEME_GHOSTTY_TARGET='${modeAssets.dark.ghostty}'
           THEME_LAZYGIT_TARGET='${modeAssets.dark.lazygit}'
           THEME_LEAF_TARGET='${modeAssets.dark.leaf}'
-          THEME_HERDR_TARGET='${modeAssets.dark.herdr}'
           THEME_GIT_THEME_TARGET='${modeAssets.dark.gitTheme}'
           THEME_DARWIN_LAZYGIT_TARGET='${modeAssets.dark.darwinLazygit}'
           THEME_SKETCHYBAR_TARGET='${modeAssets.dark.sketchybar}'
@@ -124,8 +120,6 @@ let
         "@LAZYGIT_CURRENT_FILE@" = theme.paths.lazygitCurrentFile;
         "@LEAF_THEMES_DIR@" = theme.paths.leafThemesDir;
         "@LEAF_CURRENT_FILE@" = theme.paths.leafCurrentFile;
-        "@HERDR_DIR@" = theme.paths.herdrDir;
-        "@HERDR_CURRENT_FILE@" = theme.paths.herdrCurrentFile;
         "@GIT_THEME_DIR@" = theme.paths.gitDir;
         "@GIT_THEME_CURRENT_FILE@" = theme.paths.gitThemeCurrentFile;
         "@LAZYGIT_DARWIN_DIR@" = lazygitDarwinDir;

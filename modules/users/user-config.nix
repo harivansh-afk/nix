@@ -99,7 +99,6 @@ let
         fzfThemes
         ghosttyTerminfo
         ghosttyThemes
-        herdrConfigs
         lazygitConfigs
         leafThemes
         sketchybarThemes

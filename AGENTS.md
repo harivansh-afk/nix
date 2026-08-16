@@ -114,7 +114,6 @@ inventory/
   schema.nix           Host record schema
   nodes/               Per-host records (macbook, spark)
 pkgs/
-  herdr/               Local patches applied on top of the upstream herdr build
   leaf/                leaf (terminal markdown viewer) built from the pinned upstream tag
 terraform/
   cloudflare/          Declarative Cloudflare DNS for harivan.sh via terranix

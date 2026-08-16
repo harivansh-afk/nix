@@ -88,21 +88,6 @@ in
             }
           ];
         }
-        # herdr claude integration: session identity for native restore.
-        # `herdr integration install claude` drops the hook script (herdr
-        # keeps it current) but cannot register it in this read-only rendered
-        # settings.json, so the registration it would write lives here. The
-        # sh guard keeps sessions clean on hosts where the script is absent.
-        {
-          matcher = "*";
-          hooks = [
-            {
-              type = "command";
-              command = "sh -c '[ -x \"$0\" ] && exec \"$0\" session || :' ${homeDirectory}/.claude/hooks/herdr-agent-state.sh";
-              timeout = 10;
-            }
-          ];
-        }
       ];
       PreToolUse = [
         {
@@ -111,20 +96,6 @@ in
             {
               type = "command";
               command = hookCommand "enforce-modern-tools.sh";
-            }
-          ];
-        }
-        # Subagents as herdr panes: intercept the Agent tool (Task is the
-        # legacy name) and fork the session into a visible pane instead of
-        # an in-process subagent. No-op outside herdr; the spawn itself
-        # takes ~30s (claude startup + disclaimer + prompt handoff).
-        {
-          matcher = "Agent|Task";
-          hooks = [
-            {
-              type = "command";
-              command = hookCommand "subagent-pane.sh";
-              timeout = 180;
             }
           ];
         }

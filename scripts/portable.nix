@@ -16,8 +16,7 @@ let
 
   remotes = import ../lib/remotes.nix;
 
-  # Shared "name host" catalog lines, baked into mux (@MUX_REMOTES@) and
-  # hrd (@HRD_REMOTES@).
+  # Shared "name host" catalog lines, baked into mux (@MUX_REMOTES@).
   remotesText = lib.concatMapStrings (
     name:
     let
@@ -62,40 +61,6 @@ let
       replacements = {
         "@MUX_REMOTES@" = remotesText;
       };
-    };
-
-    hrd = mkScript {
-      name = "hrd";
-      file = ./bin/hrd.sh;
-      runtimeInputs =
-        with pkgs;
-        [
-          coreutils
-          gawk
-          jq
-          mosh
-          openssh
-        ]
-        ++ lib.optionals stdenv.isLinux [ util-linux ];
-      replacements = {
-        "@HRD_REMOTES@" = remotesText;
-      };
-    };
-
-    fork = mkScript {
-      name = "fork";
-      file = ./bin/fork.sh;
-      # herdr and the agent binaries (claude, codex, omp) resolve from the
-      # user PATH on purpose: herdr is the nix input's bin, the agents are
-      # installer-managed in ~/.local/bin.
-      runtimeInputs =
-        with pkgs;
-        [
-          coreutils
-          gnugrep
-          jq
-        ]
-        ++ lib.optionals stdenv.isLinux [ util-linux ]; # uuidgen (darwin: /usr/bin)
     };
 
     ga = mkScript {

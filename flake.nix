@@ -63,16 +63,6 @@
       url = "github:NousResearch/hermes-agent/v2026.7.20";
     };
 
-    # Herdr agent multiplexer, built from the upstream flake like dgx-spark:
-    # `nix flake update herdr` delivers version bumps (master is herdr's
-    # preview channel; stable tags trail it). The binary is nix-managed, so
-    # `herdr update` self-update stays unused - after an update, restart the
-    # server (`herdr server stop`, then `herdr`) to pick up the new binary.
-    herdr = {
-      url = "github:ogulcancelik/herdr";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # mux: native terminal multiplexer. This flake provides the muxd session
     # daemon package + a NixOS module; spark runs muxd so panes on the Mac app
     # can live here over QUIC. No nixpkgs follows: the flake pins a nixpkgs

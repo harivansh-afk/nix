@@ -164,9 +164,9 @@ in
     "L+ ${hermesHome}/TOOLS.md - - - - ${repoHermesDir}/TOOLS.md"
     "L+ ${hermesHome}/HEARTBEAT.md - - - - ${repoHermesDir}/HEARTBEAT.md"
     "L+ ${hermesHome}/plugins/knowledge-base - - - - ${repoHermesDir}/plugins/knowledge-base"
-    "L+ ${hermesHome}/skills/feed-triage - - - - ${repoHermesDir}/skills/feed-triage"
     "L+ ${hermesHome}/skills/finance-relay - - - - ${repoHermesDir}/skills/finance-relay"
     "L+ ${hermesHome}/skills/read-it-later - - - - ${repoHermesDir}/skills/note-taking/read-it-later"
     "r! ${hermesHome}/skills/ix-morning-brief"
+    "r! ${hermesHome}/skills/feed-triage"
   ];
 }

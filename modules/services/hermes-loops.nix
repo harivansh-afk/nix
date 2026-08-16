@@ -1,24 +1,14 @@
 {
   inputs,
-  lib,
   pkgs,
   ...
 }:
 # hermes-loops.nix - Hari's proactive loops, centered on the hermes agent.
 #
-# Four loops, four hermes cron jobs, one delivery channel (photon/iMessage),
-# every run a resumable session in the agent's own history. The split is:
-# data acquisition stays deterministic, judgment goes to a model, delivery is
-# always the agent.
-#
-#   x-life-scan          every 4h   x-feed-scan (Playwright, saved X session)
-#   hn-life-scan         every 6h   hn-feed-scan (Algolia API)
-#   dep-release-watch    daily      dep-release-scan (GitHub releases + state)
-#   finance-anomaly-watch daily     finance-anomaly-scan + LOCAL qwen judge
-#
-# The three feed loops pair a gather script with the feed-triage skill: the
-# scanner's stdout is injected into the cron prompt, the agent (cloud model)
-# grounds, judges, files the KB note, and replies with the ping or [SILENT].
+# The only proactive model loop is finance-anomaly-watch. Internet-derived
+# X, HN, and release content must never be injected into the privileged agent's
+# prompt. Their deterministic scanners remain available only as inert building
+# blocks for a future quarantined ingestion pipeline.
 #
 # Finance is different because the raw data is local-only: the gateway masks
 # /var/lib/kb/staging/finance via InaccessiblePaths, and hermes' cron scheduler
@@ -135,59 +125,6 @@ let
     chmod 0600 ${xStorageState} 2>/dev/null || true
   '';
 
-  # ---------------------------------------------------------------------------
-  # Feed loops: schedule + scanner + judgment framing for the feed-triage skill.
-  # ---------------------------------------------------------------------------
-  feedLoops = {
-    x-life-scan = {
-      schedule = "0 */4 * * *";
-      gather = "x-feed-scan";
-      prompt = "Triage the posts below from Hari's X home feed against what he is working on right now.";
-    };
-    hn-life-scan = {
-      schedule = "0 */6 * * *";
-      gather = "hn-feed-scan";
-      prompt = "Triage the Hacker News front-page stories below against what Hari is working on right now.";
-    };
-    dep-release-watch = {
-      schedule = "0 7 * * *";
-      gather = "dep-release-scan";
-      prompt = "Triage the new dependency releases below. Only a genuinely major release for an active project earns a ping.";
-    };
-  };
-
-  # Gather shim per feed job: runs the scanner, injects its stdout into the
-  # cron prompt; empty stdout or a timeout prints hermes' wake gate
-  # {"wakeAgent": false} so a quiet feed skips the LLM run entirely.
-  gatherScript =
-    name: loop:
-    pkgs.writeText "${name}.py" ''
-      import json
-      import subprocess
-      import sys
-
-      GATHER = "/run/current-system/sw/bin/${loop.gather}"
-
-      try:
-          proc = subprocess.run(
-              [GATHER], capture_output=True, text=True, timeout=270
-          )
-      except subprocess.TimeoutExpired:
-          sys.stderr.write("${loop.gather}: timed out\n")
-          print(json.dumps({"wakeAgent": False}))
-          raise SystemExit(0)
-
-      if proc.stderr.strip():
-          sys.stderr.write(proc.stderr)
-
-      items = (proc.stdout or "").strip()
-      if not items:
-          print(json.dumps({"wakeAgent": False}))
-          raise SystemExit(0)
-
-      print(items)
-    '';
-
   # Relay shim for the finance job: injects verdict notes the judge wrote since
   # the last relay. The marker seeds to "newest existing" on first run so
   # history (including old mini-loop notes in the same directory) is never
@@ -226,30 +163,20 @@ let
   # ---------------------------------------------------------------------------
   cronManifest = pkgs.writeText "hermes-cron-manifest.json" (
     builtins.toJSON {
-      jobs =
-        lib.mapAttrsToList (name: loop: {
-          inherit name;
-          inherit (loop) schedule prompt;
-          skills = [ "feed-triage" ];
-          script = "${name}.py";
+      jobs = [
+        {
+          name = "finance-anomaly-watch";
+          # After finance-anomaly-judge (08:00 + up to 5min jitter) is done.
+          schedule = "45 8 * * *";
+          prompt = "Relay the finance loop verdict below to Hari.";
+          skills = [ "finance-relay" ];
+          script = "finance-anomaly-watch.py";
           deliver = "photon";
-        }) feedLoops
-        ++ [
-          {
-            name = "finance-anomaly-watch";
-            # After finance-anomaly-judge (08:00 + up to 5min jitter) is done.
-            schedule = "45 8 * * *";
-            prompt = "Relay the finance loop verdict below to Hari.";
-            skills = [ "finance-relay" ];
-            script = "finance-anomaly-watch.py";
-            deliver = "photon";
-          }
-        ];
-      scripts =
-        lib.mapAttrs' (name: loop: lib.nameValuePair "${name}.py" "${gatherScript name loop}") feedLoops
-        // {
-          "finance-anomaly-watch.py" = "${financeRelayScript}";
-        };
+        }
+      ];
+      scripts = {
+        "finance-anomaly-watch.py" = "${financeRelayScript}";
+      };
     }
   );
 in
@@ -330,9 +257,8 @@ in
     "d ${kbLoopsDir} 0755 ${user} ${group} -"
     # X session dir (rathi-owned; storage_state.json is written 0600 by the CLI).
     "d ${xSessionDir} 0700 ${user} ${group} -"
-  ]
-  ++ lib.mapAttrsToList (name: _: "d ${kbLoopsDir}/${name} 0755 ${user} ${group} -") feedLoops
-  ++ [ "d ${verdictDir} 0755 ${user} ${group} -" ];
+    "d ${verdictDir} 0755 ${user} ${group} -"
+  ];
 
   environment.systemPackages = [
     xFeedScan

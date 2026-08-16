@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """hn_feed_scan.py - print the Hacker News front page as text, one story a line.
 
-The gather step for the hn-life-scan loop. Fetches the front page via the
-Algolia HN API (no key, no browser) and emits each story as:
+An inert collector for a future quarantined ingestion pipeline. Fetches the
+front page via the Algolia HN API (no key, no browser) and emits each story as:
 
     <title> | <url or HN link> | <points>pts
 

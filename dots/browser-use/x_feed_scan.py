@@ -4,8 +4,8 @@
 DETERMINISTIC scrape: loads the captured storage_state (cookies) into a headless
 Chromium via Playwright and reads the home timeline DOM directly. NO LLM is used
 here - the browser-use agentic loop was too slow on the local brain (every
-navigation step timed out at 75s). The LLM only judges relevance later, in the
-mini-loop runner. This is the gather step for the x-life-scan mini-loop.
+navigation step timed out at 75s). This collector is not scheduled or connected
+to Hermes; it is retained for a future quarantined ingestion pipeline.
 
 Output: one post per line, formatted "<author> | <text on one line> | <url>".
 If no logged-in session is available (no storage_state, or it lacks auth_token),

@@ -32,7 +32,14 @@
 }:
 let
   src = inputs.voiceink-src;
-  rev = src.rev or src.narHash or "unknown";
+  # Local patch: streaming provider for self-hosted realtime endpoints (the
+  # spark whisper server's /v1/realtime WebSocket). Rebuilds are keyed on
+  # rev+patch so editing the patch triggers a rebuild.
+  patch = ./../../dots/voiceink/streaming-provider.patch;
+  rev =
+    (src.rev or src.narHash or "unknown")
+    + "-"
+    + builtins.substring 0 12 (builtins.hashFile "sha256" patch);
   home = "/Users/${username}";
   build = "${home}/Library/Caches/voiceink-build";
   app = "/Applications/VoiceInk.app";
@@ -137,6 +144,7 @@ let
     echo "VoiceInk: building ${rev} from source (first run pulls whisper.cpp)..."
     rm -rf "${build}/src" && mkdir -p "${build}/src"
     cp -R "${src}/." "${build}/src/" && chmod -R u+w "${build}/src"
+    patch -p1 -d "${build}/src" < ${patch}
     make -C "${build}/src" local
     # `make local` also dittos a copy into ~/Downloads; one install, not two.
     rm -rf "${home}/Downloads/VoiceInk.app"

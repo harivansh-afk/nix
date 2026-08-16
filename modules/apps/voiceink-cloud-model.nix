@@ -14,6 +14,10 @@ let
     apiEndpoint = "https://spark-ix.tail368802.ts.net/v1/audio/transcriptions";
     modelName = "openai/whisper-large-v3";
     isMultilingualModel = true;
+    # Enables the SelfHostedStreamingProvider (local VoiceInk patch): audio
+    # streams to wss://.../v1/realtime while recording, batch upload stays as
+    # the fallback.
+    isStreamingModel = true;
     supportedLanguages = {
       auto = "Auto-detect";
       en = "English";

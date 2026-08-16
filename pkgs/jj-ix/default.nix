@@ -51,6 +51,16 @@ rustPlatform.buildRustPackage {
     };
   };
 
+  # The repo's .cargo/config.toml routes every rustc call through
+  # .cargo/rustc-wrapper, a dev-shell guard script. Two problems in nix
+  # sandboxes: its `#!/usr/bin/env bash` shebang has no /usr/bin/env on
+  # Linux (exec fails with ENOENT), and on Darwin the guard aborts unless
+  # IX_CARGO_ENVIRONMENT=nix is set.
+  postPatch = ''
+    patchShebangs .cargo/rustc-wrapper
+  '';
+  env.IX_CARGO_ENVIRONMENT = "nix";
+
   nativeBuildInputs = [ pkg-config ];
 
   # Dev-deps pull jj-server from the ix root workspace; the binary is what

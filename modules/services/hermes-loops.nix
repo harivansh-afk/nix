@@ -6,7 +6,7 @@
 }:
 # hermes-loops.nix - Hari's proactive loops, centered on the hermes agent.
 #
-# Five loops, five hermes cron jobs, one delivery channel (photon/iMessage),
+# Four loops, four hermes cron jobs, one delivery channel (photon/iMessage),
 # every run a resumable session in the agent's own history. The split is:
 # data acquisition stays deterministic, judgment goes to a model, delivery is
 # always the agent.
@@ -15,15 +15,6 @@
 #   hn-life-scan         every 6h   hn-feed-scan (Algolia API)
 #   dep-release-watch    daily      dep-release-scan (GitHub releases + state)
 #   finance-anomaly-watch daily     finance-anomaly-scan + LOCAL qwen judge
-#   ix-morning-brief     every 10m  09:00 Pacific gate + mobile HTML brief
-#
-# ix-morning-brief is the odd one out schedule-wise: hermes cron has no
-# timezone field and the host runs UTC, so the job ticks every ten minutes and the
-# scanner itself is the DST-safe clock (ZoneInfo America/Los_Angeles, wake at
-# 09:00 local, once per local day). The agent pairs it with the
-# ix-morning-brief skill: synthesize content JSON from the gathered delta,
-# render it with ix-morning-brief-render, and deliver one self-contained HTML
-# file over photon. Delta state advances only after a successful render.
 #
 # The three feed loops pair a gather script with the feed-triage skill: the
 # scanner's stdout is injected into the cron prompt, the agent (cloud model)
@@ -61,7 +52,7 @@ let
   };
   inherit (hermesBase) hermesVenv;
 
-  # Loop state (release dedupe, finance verdicts, and morning-brief delta).
+  # Loop state (release dedupe and finance verdicts).
   # Migrated once from the old mini-loops path by the C tmpfiles rule below so
   # dedupe state survives and nothing is re-surfaced; drop that rule (and
   # /var/lib/mini-loops) after the first rebuild has run everywhere.
@@ -72,11 +63,6 @@ let
   kbLoopsDir = "/var/lib/kb/staging/loops";
   financeDir = "/var/lib/kb/staging/finance";
   verdictDir = "${kbLoopsDir}/finance-anomaly-watch";
-
-  # Morning-brief output, content JSON, and success state.
-  briefDir = "${stateDir}/ix-morning-brief";
-  briefSkillDir = ../../dots/hermes/skills/ix-morning-brief;
-  ixCheckout = "${home}/Documents/Git/indexable/ix";
 
   # Local brain (modules/services/inference.nix).
   brainUrl = "http://127.0.0.1:18080/v1/chat/completions";
@@ -127,31 +113,6 @@ let
     export LOOPS_DIR="''${LOOPS_DIR:-${stateDir}}"
     export FINANCE_KB_DIR="''${FINANCE_KB_DIR:-${financeDir}}"
     exec ${scanPython}/bin/python ${../../dots/loops/finance_anomaly_scan.py}
-  '';
-
-  # Morning-brief gather: git fetch + delta + gh enrichment, and the 9am-local
-  # wake gate. Deterministic; prints {"wakeAgent": false} outside the window.
-  ixMorningBriefScan = pkgs.writeShellScriptBin "ix-morning-brief-scan" ''
-    export PATH=${
-      lib.makeBinPath [
-        pkgs.git
-        pkgs.gh
-      ]
-    }:$PATH
-    export LOOPS_DIR="''${LOOPS_DIR:-${stateDir}}"
-    export IX_CHECKOUT="''${IX_CHECKOUT:-${ixCheckout}}"
-    exec ${scanPython}/bin/python ${briefSkillDir}/scripts/gather.py
-  '';
-
-  # The agent runs the renderer with synthesized content JSON. --advance moves
-  # the delta state only after the self-contained HTML file is written.
-  ixMorningBriefRender = pkgs.writeShellScriptBin "ix-morning-brief-render" ''
-    export BRIEF_TEMPLATE=${briefSkillDir}/templates/brief.html
-    export BRIEF_STATE=${briefDir}/state.json
-    export IX_CHECKOUT=${ixCheckout}
-    export IX_REPO_SLUG=indexable-inc/ix
-    export LOOPS_DIR="''${LOOPS_DIR:-${stateDir}}"
-    exec ${scanPython}/bin/python ${briefSkillDir}/scripts/render.py "$@"
   '';
 
   # browse-x-login: capture a logged-in X session as storage_state.json.
@@ -283,22 +244,11 @@ let
             script = "finance-anomaly-watch.py";
             deliver = "photon";
           }
-          {
-            name = "ix-morning-brief";
-            # The scanner wakes the agent only during 09:00 Pacific and the
-            # success marker suppresses the remaining ticks that hour.
-            schedule = "*/10 * * * *";
-            prompt = "Compose and deliver this morning's ix brief from the gather payload below.";
-            skills = [ "ix-morning-brief" ];
-            script = "ix-morning-brief.py";
-            deliver = "photon";
-          }
         ];
       scripts =
         lib.mapAttrs' (name: loop: lib.nameValuePair "${name}.py" "${gatherScript name loop}") feedLoops
         // {
           "finance-anomaly-watch.py" = "${financeRelayScript}";
-          "ix-morning-brief.py" = "${gatherScript "ix-morning-brief" { gather = "ix-morning-brief-scan"; }}";
         };
     }
   );
@@ -382,11 +332,7 @@ in
     "d ${xSessionDir} 0700 ${user} ${group} -"
   ]
   ++ lib.mapAttrsToList (name: _: "d ${kbLoopsDir}/${name} 0755 ${user} ${group} -") feedLoops
-  ++ [
-    "d ${verdictDir} 0755 ${user} ${group} -"
-    "d ${briefDir} 0700 ${user} ${group} -"
-    "d ${briefDir}/work 0700 ${user} ${group} -"
-  ];
+  ++ [ "d ${verdictDir} 0755 ${user} ${group} -" ];
 
   environment.systemPackages = [
     xFeedScan
@@ -394,7 +340,5 @@ in
     depReleaseScan
     financeAnomalyScan
     browseXLogin
-    ixMorningBriefScan
-    ixMorningBriefRender
   ];
 }

@@ -693,6 +693,7 @@ in
 {
   imports = [
     ./mirror-manifest.nix
+    ./mirror-forge.nix
     pierreForgejo.nixosModule
   ];
 

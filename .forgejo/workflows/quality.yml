@@ -30,7 +30,13 @@ jobs:
   flake-check:
     name: Flake Check
     runs-on: native
-    timeout-minutes: 30
+    # 60 rather than 30: every push also fires deploy.yml's Switch Spark on
+    # this same single runner host, a 40-minute nixos-rebuild that starves a
+    # concurrent flake check into a timeout (e624de183: check dead at 30m02s
+    # while the switch it raced succeeded at 41m). The timeout is a hang
+    # guard, not a perf budget; a check that loses the CPU race to a deploy
+    # is not a broken flake.
+    timeout-minutes: 60
     needs: changes
     if: ${{ needs.changes.outputs.quality == 'true' }}
     steps:

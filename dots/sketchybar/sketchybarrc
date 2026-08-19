@@ -23,11 +23,15 @@ APP_FONT_SIZE=20.0
 # Height of the notch strip: NSScreen.safeAreaInsets.top. It is a POINT value
 # that changes with the scaled resolution (43 @ 2048x1330, 49 @ 2294x1490), so
 # it is measured at rc time instead of hardcoded - a stale constant misaligns
-# every margin. Max across screens; ~1s swift startup, paid only on
-# load/reload. Falls back to 43 (the historical built-in value) if no screen
-# reports an inset or swift fails.
-BAR_HEIGHT="$(swift -e 'import AppKit
-print(Int(NSScreen.screens.map { $0.safeAreaInsets.top }.max() ?? 0))' 2>/dev/null)"
+# every margin. Max across screens, via `notch-inset`: a tiny AppKit binary
+# compiled by nix (hosts/macbook/notch-inset, on the agent PATH through
+# services.sketchybar.extraPackages), ~10ms. This used to be `swift -e`, which
+# JIT-compiles through xcodebuild: at a cold login it blocked this rc for
+# minutes (2026-08-18: swift-frontend still running 5 min in) so nothing below
+# ever ran and the bar came up empty at default geometry. Never call swift
+# here. Falls back to 43 (the historical built-in value) if no screen reports
+# an inset or the helper is missing.
+BAR_HEIGHT="$(notch-inset 2>/dev/null)"
 case "$BAR_HEIGHT" in '' | *[!0-9]* | 0) BAR_HEIGHT=43 ;; esac
 
 # Strip-relative sizes scale from their 43pt-baseline calibrations (rounded)
@@ -92,6 +96,15 @@ sketchybar --default \
 # Static shells only; plugins/spaces.sh renders all of them in one batch per
 # event (one process per event instead of one per workspace - keeps it fast).
 sketchybar --add event aerospace_workspace_change
+
+# aerospace and sketchybar are sibling launchd agents started together at
+# login; without a server `list-workspaces` prints nothing and the loop would
+# build zero tabs. Wait (bounded, 30s) for readiness - bar geometry above is
+# already applied, so nothing visible is delayed.
+for _ in $(seq 1 60); do
+  aerospace list-workspaces --all >/dev/null 2>&1 && break
+  sleep 0.5
+done
 
 for sid in $(aerospace list-workspaces --all); do
   # tab internals are visually compensated for font side bearings (digits

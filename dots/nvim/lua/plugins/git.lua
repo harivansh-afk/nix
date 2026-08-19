@@ -3,7 +3,7 @@ vim.pack.add({
   -- barrettruth deleted his forge.nvim; the public fork is the source now.
   -- Upstream gone means GitHub answers the anonymous clone with an auth
   -- prompt, which kills vim.pack on any box doing a fresh install.
-  "https://github.com/harivansh-afk/forge.nvim",
+  "https://github.com/barrettruth/forge.nvim",
   "https://github.com/barrettruth/diffs.nvim",
 }, { load = function() end })
 

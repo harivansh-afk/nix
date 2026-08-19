@@ -5,6 +5,14 @@
   ...
 }:
 let
+  # Notch strip height (NSScreen.safeAreaInsets.top) for the sketchybar rc.
+  # A compiled AppKit binary because `swift -e` JIT-compiles via xcodebuild and
+  # blocked the rc for minutes at a cold login (see dots/sketchybar/sketchybarrc).
+  notchInset = pkgs.runCommandCC "notch-inset" { } ''
+    mkdir -p $out/bin
+    $CC -fobjc-arc -framework AppKit -o $out/bin/notch-inset ${./notch-inset/notch-inset.m}
+  '';
+
   loginApps = [
     "Raycast"
     "PastePal"
@@ -66,8 +74,15 @@ in
     extraPackages = [
       pkgs.aerospace
       pkgs.sketchybar-app-font # icon_map.sh for the workspace tab app icons
+      notchInset # bar height measurement, see the rc
     ];
   };
+
+  # AeroSpace as a nix-darwin launchd agent (KeepAlive, wait4path /nix/store),
+  # reading the live-edited dots toml (settings = {} -> no --config-path). The
+  # toml sets start-at-login = false: AeroSpace's own SMAppService login item
+  # plus a leftover home-manager agent used to start two instances at login.
+  services.aerospace.enable = true;
 
   # app icon glyphs for the sketchybar workspace tabs
   fonts.packages = [ pkgs.sketchybar-app-font ];
@@ -139,6 +154,15 @@ in
         KeepAlive = false;
         AbandonProcessGroup = true;
         EnvironmentVariables.PATH = "/run/current-system/sw/bin:/usr/bin:/bin";
+      };
+
+      # Log the sketchybar daemon's stdout/stderr (rc failures, plugin errors):
+      # nix-darwin's services.sketchybar sets no log path, so the 2026-08-18
+      # empty-bar login left nothing to read. Merged with the module's own
+      # serviceConfig.
+      sketchybar.serviceConfig = {
+        StandardOutPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar.log";
+        StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar.log";
       };
     };
 

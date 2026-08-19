@@ -1,6 +1,10 @@
 # AeroSpace config, linked at ~/.config/aerospace/aerospace.toml. Live-edited;
 # reload with alt-shift-semicolon r (service mode).
-start-at-login = true
+# Started by the nix-darwin launchd agent (services.aerospace in
+# hosts/macbook/macos.nix), NOT by AeroSpace's own SMAppService login item:
+# with both enabled two instances raced at every login. `false` also makes
+# AeroSpace unregister its login item on next start (Sources/.../startAtLogin.swift).
+start-at-login = false
 
 enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true

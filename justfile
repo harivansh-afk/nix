@@ -27,8 +27,9 @@ switch:
         ;;
     esac
 
+# nh >= 4.4 shells out to nom for remote builds (nh-remote), so it rides along.
 switch-spark:
-    nix run nixpkgs#nh -- os switch . -H spark \
+    nix shell nixpkgs#nh nixpkgs#nix-output-monitor -c nh os switch . -H spark \
       --target-host rathi@spark \
       --build-host rathi@spark
 

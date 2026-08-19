@@ -106,7 +106,16 @@ let
       rsync -a --delete --exclude=/.jj --exclude=/.git "$ws/" "$gitdir/"
 
       cd "$gitdir"
-      git add -A
+      # -f: the forge tree carries files that are TRACKED in jj but match a
+      # .gitignore somewhere above them (upstream view trees ship their own
+      # ignores: nix ignores build/, ghostty/linux/mesa similar - 872 files
+      # measured 2026-08-19). A bare `git add -A` silently drops those from
+      # every snapshot, which shipped an incomplete tree to forgejo AND to the
+      # index public mirror (nix-ix failed to build there: views/nix/src/
+      # libstore/build/*.cc missing). Everything rsynced here came from the jj
+      # materialization, so it is forge-tracked by construction; force-add all
+      # of it.
+      git add -A -f
       if git diff --cached --quiet; then
         echo "tree unchanged at $rev; nothing to push"
         exit 0

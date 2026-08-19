@@ -57,6 +57,9 @@
       "karabiner-elements"
       "raycast"
       "riptide-beta"
+      # T3 Code desktop app (auto_updates cask; the spark server is nix,
+      # modules/services/t3code.nix).
+      "t3-code"
       # voiceink: built from source instead (free path); see
       # modules/apps/voiceink.nix. The cask is the paid distribution.
     ];

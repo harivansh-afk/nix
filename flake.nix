@@ -13,6 +13,13 @@
     # nushell builds clean from the main nixpkgs on darwin.
     nixpkgs-nushell.url = "github:NixOS/nixpkgs/01fbdeef22b76df85ea168fbfe1bfd9e63681b30";
 
+    # Separate nixpkgs pin used only for the t3code server on spark
+    # (modules/services/t3code.nix): the main pin lags the T3 Code release
+    # cadence and the desktop app is a self-updating cask, so the server
+    # tracks nixos-unstable (hydra-cached for aarch64-linux) and gets bumped
+    # with `nix flake update nixpkgs-t3code` when the app warns about skew.
+    nixpkgs-t3code.url = "github:NixOS/nixpkgs/nixos-unstable";
+
     # Module system for the flake's own outputs (everything under flake/).
     flake-parts.url = "github:hercules-ci/flake-parts";
 

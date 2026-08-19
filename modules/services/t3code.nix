@@ -41,6 +41,17 @@ in
       PermitOpen 127.0.0.1:3773
   '';
 
+  # sshd on spark has AllowTcpForwarding off globally (hosts/spark/users.nix);
+  # the desktop launcher is exactly a `ssh -L <local>:127.0.0.1:3773`, so
+  # rathi gets LOCAL forwarding back, pinned to this one loopback port - the
+  # narrowest thing that makes the tunnel work. Match blocks must trail the
+  # main config, which is what extraConfig is.
+  services.openssh.extraConfig = ''
+    Match User rathi
+      AllowTcpForwarding local
+      PermitOpen 127.0.0.1:3773
+  '';
+
   systemd.user.services.t3code = {
     description = "T3 Code server (loopback; reached over the desktop app's ssh tunnel)";
     wantedBy = [ "default.target" ];

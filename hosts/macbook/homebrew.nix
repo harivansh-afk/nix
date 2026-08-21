@@ -1,10 +1,13 @@
 # Homebrew (taps, formulae, casks) on the macbook, via nix-homebrew.
-# Policy: every cask on this machine is declared here. cleanup is still
-# "none" while the manual-install backlog (~30 apps in /Applications not yet
-# adopted as casks) is worked through; the end state is cleanup = "zap" +
-# HOMEBREW_BUNDLE_CLEANUP_NO_MAS=1 so this list becomes the single source of
-# truth. Flip only after `brew bundle cleanup` (dry run) prints nothing you
-# want to keep - zap also trashes app data dirs from the cask's zap stanza.
+# This list IS the machine's cask state: cleanup = "zap" uninstalls (and
+# purges the zap stanza of) anything installed but not declared here, so
+# adding/removing a GUI app is an edit + switch. Mac App Store apps are
+# excluded from cleanup (HOMEBREW_BUNDLE_CLEANUP_NO_MAS) since no masApps
+# are declared. Manual /Applications installs that brew does not own are
+# never touched: Raycast Beta (no cask exists; self-updates) and Docker.app
+# (adoption fails on macOS app-protection while it runs, and a forced
+# reinstall re-does the privileged helper; it self-updates). VoiceInk and
+# Mux.app are built from source (modules/apps/voiceink.nix, ~/Documents/Git/mux).
 _: {
   homebrew = {
     enable = true;
@@ -12,7 +15,8 @@ _: {
     onActivation = {
       autoUpdate = false;
       upgrade = false;
-      cleanup = "none";
+      cleanup = "zap";
+      extraEnv.HOMEBREW_BUNDLE_CLEANUP_NO_MAS = "1";
     };
 
     # Third-party taps must be trusted: Homebrew 6 enables
@@ -37,19 +41,33 @@ _: {
     # to reliably dump the clipboard image as PNG for the spark -> mac pull.
     # NEVER `omp` here: omp is installer-managed in ~/.local/bin (CLAUDE.md);
     # a brew omp shadows it on PATH (removed 2026-08-21 after exactly that).
+    # CLI tools otherwise live in nix (packages.nix), not brew.
     brews = [
       "pngpaste"
     ];
 
     casks = [
+      "beeper"
       "cap"
+      "chatgpt"
+      "claude"
+      "codex"
+      "conductor"
       "ghostty"
+      "granola"
       "helium-browser"
       "humanlayer"
       "karabiner-elements"
+      "linear"
+      "minecraft"
+      "opencode-desktop"
       "periphery"
-      "raycast"
       "riptide-beta"
+      "screen-studio"
+      "signal"
+      "slack"
+      "stolendata-mpv"
+      "superhuman"
       # T3 Code desktop app (auto_updates cask; the spark server is nix,
       # modules/services/t3code.nix).
       "t3-code"
@@ -57,8 +75,11 @@ _: {
       # tailnet node on this mac; see hosts/macbook/services.nix for why
       # nix-darwin's services.tailscale is deliberately not used.
       "tailscale-app"
-      # Dia browser (was a manual-ish install; cask-owned since the audit).
+      "telegram"
       "thebrowsercompany-dia"
+      "typora"
+      "visual-studio-code"
+      "zed"
       # voiceink: built from source instead (free path); see
       # modules/apps/voiceink.nix. The cask is the paid distribution.
     ];

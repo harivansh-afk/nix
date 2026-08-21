@@ -106,6 +106,7 @@ hosts/
     defaults.nix       System defaults (dock, finder, keyboard, screenshots, loginwindow)
     homebrew.nix       Taps, formulae, casks (every cask on the machine is declared)
     services.nix       Every launchd unit (aerospace, sketchybar, mux-restore, limit.maxfiles); the only service manager
+    startup-guard.nix  Enforces login-item allowlist, warns on undeclared launchd plists (daily + login + switch)
   spark/
     default.nix        Base NixOS config, nix-ld, kernel hardening
     hardware.nix       DGX Spark module + disko disk layout

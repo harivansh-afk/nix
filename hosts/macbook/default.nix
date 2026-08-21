@@ -22,6 +22,7 @@
     ./defaults.nix
     ./homebrew.nix
     ./services.nix
+    ./startup-guard.nix
   ];
 
   networking.hostName = hostname;

@@ -9,6 +9,7 @@
 let
   userConfig = import ./user-config.nix {
     inherit lib pkgs hostname;
+    skillSources.mattpocock = inputs.mattpocock-skills;
     isDarwin = true;
     user = {
       name = username;

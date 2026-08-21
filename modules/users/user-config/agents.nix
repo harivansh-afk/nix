@@ -20,24 +20,17 @@ let
     inherit name;
     path = "${dotsRoot}/agents/skills/${name}";
   }) (skillDirs ../../../dots/agents/skills);
-  # code-review collides with the Claude Code bundled skill of the same name.
-  pocockSkip = [ "code-review" ];
+  # Opt-in allowlist: each upstream skill costs context on every turn (its
+  # description is always loaded), so add one here only after reading it.
+  pocockPick = [
+    "productivity/writing-for-agents"
+    "engineering/research"
+  ];
   pocockSkills = lib.optionals (skillSources ? mattpocock) (
-    lib.concatMap
-      (
-        bucket:
-        let
-          dir = "${skillSources.mattpocock}/skills/${bucket}";
-        in
-        map (name: {
-          inherit name;
-          path = "${dir}/${name}";
-        }) (builtins.filter (n: !(builtins.elem n pocockSkip)) (skillDirs dir))
-      )
-      [
-        "engineering"
-        "productivity"
-      ]
+    map (rel: {
+      name = baseNameOf rel;
+      path = "${skillSources.mattpocock}/skills/${rel}";
+    }) pocockPick
   );
 
   jsonFormat = pkgs.formats.json { };

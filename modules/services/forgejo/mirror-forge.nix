@@ -146,8 +146,13 @@ in
       User = username;
       Group = "users";
       ExecStart = lib.getExe forgeSnapshotMirror;
-      # Materializing 170k+ files can take a while on a cold cache.
-      TimeoutStartSec = "45min";
+      # Materializing 170k+ files can take a while on a cold cache, and
+      # recovering from op-head divergence after killed runs re-fetches
+      # hundreds of MB from the forge - killing at 45min restarted that
+      # recovery from scratch every hour (2026-08-21 wedge). The hourly
+      # timer coalesces triggers while a run is still activating, so a
+      # long timeout only delays the next run, never stacks them.
+      TimeoutStartSec = "3h";
       Nice = 10;
       IOSchedulingClass = "idle";
     };

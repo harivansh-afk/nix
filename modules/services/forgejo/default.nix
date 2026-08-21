@@ -739,6 +739,25 @@ in
     printf 'https://oauth2:%s@github.com\n' "$GITHUB_TOKEN" > ${gitCredentialFile}
     chmod 600 ${gitCredentialFile}
 
+    # The credential file above is NOT enough for pull mirrors: Forgejo 16
+    # runs mirror fetches without consulting [git.config] credential.helper
+    # (observed 2026-08-21: every github mirror 401ed "could not read
+    # Username" while a freshly migrated repo with auth_token embedded in
+    # remote.origin.url synced fine). Embed the current token into every
+    # github.com mirror remote here instead - re-applied on each start, so
+    # rotating the sops secret propagates on the next restart.
+    for repo in /var/lib/forgejo/repositories/*/*.git; do
+      [ -d "$repo" ] || continue
+      url=$(${pkgs.git}/bin/git -C "$repo" config remote.origin.url 2>/dev/null) || continue
+      case "$url" in
+        https://github.com/*) path="''${url#https://github.com/}" ;;
+        https://*@github.com/*) path="''${url#https://*@github.com/}" ;;
+        *) continue ;;
+      esac
+      ${pkgs.git}/bin/git -C "$repo" config remote.origin.url \
+        "https://oauth2:$GITHUB_TOKEN@github.com/$path"
+    done
+
     export FORGEJO_WORK_DIR=/var/lib/forgejo
     export FORGEJO_CUSTOM=/var/lib/forgejo/custom
     CONFIG=/var/lib/forgejo/custom/conf/app.ini

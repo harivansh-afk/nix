@@ -198,6 +198,11 @@ pkgs.writeShellScript "user-config-${name}" ''
   # --- claude ---
   mkSymlink "${dotsRoot}/claude/CLAUDE.md" "${homeDirectory}/.claude/CLAUDE.md"
   mkSymlink "${dotsRoot}/claude/commands" "${homeDirectory}/.claude/commands"
+  # skills/ is vendored: unslop is a byte-for-byte copy of
+  # github.com/cursor/plugins pstack/skills/unslop/SKILL.md (no lockfile,
+  # no `npx skills add` state to drift). The whole dir is linked so a
+  # `skills add` into ~/.claude/skills lands in the repo too.
+  mkSymlink "${dotsRoot}/claude/skills" "${homeDirectory}/.claude/skills"
   mkSymlink "${claudeSettings}" "${homeDirectory}/.claude/settings.json"
   mkSymlink "${dotsRoot}/claude/statusline.sh" "${homeDirectory}/.claude/statusline.sh"
   mkSymlink "${dotsRoot}/claude/hooks/session-start.sh" "${homeDirectory}/.claude/hooks/session-start.sh"

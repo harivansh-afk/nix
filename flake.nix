@@ -94,19 +94,6 @@
       url = "github:graham33/nixos-dgx-spark";
     };
 
-    # pi agent NixOS module (hosts/spark/pi.nix).
-    pi-mono = {
-      url = "github:lukasl-dev/pi-mono.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # indexable-inc monorepo, consumed as a source tree for the pi-harness
-    # extension (hosts/spark/pi.nix).
-    index = {
-      url = "github:indexable-inc/index";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # Pierre-themed Forgejo frontend (modules/services/forgejo). Hosted on
     # this same Forgejo instance, so flake updates need read access to it.
     pierrejo = {

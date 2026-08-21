@@ -40,7 +40,7 @@
     ../../modules/services/website.nix
     ./hardware.nix
     ./networking.nix
-    ./pi.nix
+    ./omp.nix
     ./barrett
     ./users.nix
   ]

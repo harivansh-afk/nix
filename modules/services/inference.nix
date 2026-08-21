@@ -9,15 +9,35 @@ let
     pythonPackages.hf-transfer
   ]);
 
-  hfRepo = "unsloth/Qwen3.6-35B-A3B-GGUF";
-  quant = "UD-Q4_K_XL";
-  modelDir = "/var/lib/llama-cpp/models/qwen3.6-35b-a3b";
-  modelFile = "Qwen3.6-35B-A3B-${quant}.gguf";
-  modelPath = "${modelDir}/${modelFile}";
-  downloadModel = pkgs.writeShellScript "download-qwen3.6-35b-a3b-gguf" ''
+  qwenRepo = "unsloth/Qwen3.6-35B-A3B-GGUF";
+  qwenDir = "/var/lib/llama-cpp/models/qwen3.6-35b-a3b";
+  qwenFile = "Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf";
+  qwenPath = "${qwenDir}/${qwenFile}";
+
+  huihuiRepo = "huihui-ai/Huihui-Qwen3.8-27B-abliterated-GGUF";
+  huihuiDir = "/var/lib/llama-cpp/models/huihui-qwen3.8-27b-abliterated";
+  huihuiFile = "Huihui-Qwen3.8-27B-abliterated-Q4_K.gguf";
+  huihuiPath = "${huihuiDir}/${huihuiFile}";
+
+  modelPresets = pkgs.writeText "llama-cpp-models.ini" ''
+    version = 1
+
+    [qwen3.6-35b-a3b]
+    model = ${qwenPath}
+    reasoning = off
+    reasoning-budget = 0
+
+    [huihui-qwen3.8-27b-abliterated]
+    model = ${huihuiPath}
+  '';
+
+  downloadModels = pkgs.writeShellScript "download-llama-cpp-models" ''
     set -euo pipefail
-    if [ ! -s "${modelPath}" ]; then
-      ${huggingfaceCli}/bin/hf download ${hfRepo} --include "${modelFile}" --local-dir "${modelDir}"
+    if [ ! -s "${qwenPath}" ]; then
+      ${huggingfaceCli}/bin/hf download ${qwenRepo} --include "${qwenFile}" --local-dir "${qwenDir}"
+    fi
+    if [ ! -s "${huihuiPath}" ]; then
+      ${huggingfaceCli}/bin/hf download ${huihuiRepo} --include "${huihuiFile}" --local-dir "${huihuiDir}"
     fi
   '';
 in
@@ -31,8 +51,9 @@ in
     settings = {
       host = "127.0.0.1";
       port = 18080;
-      model = modelPath;
-      alias = "qwen3.6-35b-a3b";
+      "models-preset" = modelPresets;
+      "models-max" = 2;
+      "models-autoload" = true;
       "ctx-size" = 65536;
       parallel = 1;
       "n-gpu-layers" = 99;
@@ -40,20 +61,20 @@ in
       mlock = true;
       jinja = true;
       "flash-attn" = "on";
-      reasoning = "off";
-      "reasoning-budget" = 0;
+      "sleep-idle-seconds" = 300;
       temp = "0.7";
       "top-p" = "0.8";
       "top-k" = 20;
-      "presence-penalty" = "1.5";
       "min-p" = "0.0";
+      "presence-penalty" = "1.5";
     };
   };
 
   systemd.tmpfiles.rules = [
     "d /var/lib/llama-cpp 0755 root root -"
     "d /var/lib/llama-cpp/models 0755 root root -"
-    "d ${modelDir} 0755 root root -"
+    "d ${qwenDir} 0755 root root -"
+    "d ${huihuiDir} 0755 root root -"
     "d /var/lib/llama-cpp/huggingface 0755 root root -"
     "w /sys/block/nvme0n1/queue/read_ahead_kb - - - - 8192"
   ];
@@ -66,7 +87,7 @@ in
     };
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = downloadModel;
+      ExecStart = downloadModels;
     };
   };
 

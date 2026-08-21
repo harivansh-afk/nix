@@ -96,6 +96,7 @@ let
         ompConfigSource
         ompModesSource
         ompMcpSource
+        ompModelsSource
         ompReadXattr
         ompWriteXattr
         ;

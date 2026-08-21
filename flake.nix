@@ -59,6 +59,14 @@
       flake = false;
     };
 
+    # Matt Pocock's agent skills (engineering + productivity buckets). Linked
+    # into ~/.agents/skills by the user activation script; bump with
+    # `nix flake update mattpocock-skills`.
+    mattpocock-skills = {
+      url = "github:mattpocock/skills";
+      flake = false;
+    };
+
     # Neovim nightly overlay, applied on darwin only: there is no binary
     # cache for aarch64-linux, so spark stays on the nixpkgs neovim.
     neovim-nightly = {

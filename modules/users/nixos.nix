@@ -3,6 +3,7 @@
   pkgs,
   hostname,
   username,
+  inputs,
   ...
 }:
 let
@@ -14,6 +15,7 @@ let
     name:
     import ./user-config.nix {
       inherit lib pkgs hostname;
+      skillSources.mattpocock = inputs.mattpocock-skills;
       isDarwin = false;
       user = {
         inherit name;

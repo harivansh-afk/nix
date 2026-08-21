@@ -37,6 +37,7 @@ let
   hermesHome = "${home}/.hermes";
 
   repoHermesDir = "${home}/Documents/Git/nix/dots/hermes";
+  agentInstructions = import ../../lib/agent-instructions.nix { inherit pkgs; };
 
   toolsets = [
     "all"
@@ -179,7 +180,7 @@ in
     "d ${hermesHome}/plugins 0700 - - -"
     "d ${hermesHome}/skills 0700 - - -"
     "L+ ${hermesHome}/SOUL.md - - - - ${repoHermesDir}/SOUL.md"
-    "L+ ${hermesHome}/AGENTS.md - - - - ${repoHermesDir}/AGENTS.md"
+    "L+ ${hermesHome}/AGENTS.md - - - - ${agentInstructions.hermes}"
     "L+ ${hermesHome}/TOOLS.md - - - - ${repoHermesDir}/TOOLS.md"
     "L+ ${hermesHome}/HEARTBEAT.md - - - - ${repoHermesDir}/HEARTBEAT.md"
     "L+ ${hermesHome}/plugins/knowledge-base - - - - ${repoHermesDir}/plugins/knowledge-base"

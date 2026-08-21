@@ -6,7 +6,7 @@
 #   env.nix         session environment (XDG dirs, tool homes)
 #   shell.nix       zsh shims + prompt/highlight themes
 #   git.nix         credential helpers + delta themes
-#   agents.nix      claude settings + codex seed metadata
+#   agents.nix      claude/codex/omp settings, rendered instructions, skills
 #   apps.nix        btop/fzf/ghostty/lazygit/nvim aliases/helium
 #   tea.nix         tea login fragment
 #   packages.nix    the package set
@@ -21,6 +21,7 @@
   extraPackages ? [ ],
   forgeUsers ? { },
   installMutableTools ? true,
+  skillSources ? { },
 }:
 let
   inherit (user) name homeDirectory;
@@ -58,6 +59,7 @@ let
       coreutilsBin
       forgeLogins
       installMutableTools
+      skillSources
       ;
   };
 
@@ -84,6 +86,9 @@ let
       inherit (git) gitCredentialsInc gitDeltaThemesInc;
       inherit (agents)
         claudeSettings
+        claudeMd
+        codexAgentsMd
+        agentSkills
         codexConfigSource
         readXattr
         writeXattr

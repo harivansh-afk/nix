@@ -29,6 +29,9 @@
   lazygitConfigs,
   leafThemes,
   claudeSettings,
+  claudeMd,
+  codexAgentsMd,
+  agentSkills,
   codexConfigSource,
   readXattr,
   writeXattr,
@@ -82,6 +85,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${configHome}/gcloud/configurations" \
     "${configHome}/tea" \
     "${homeDirectory}/.claude/hooks" \
+    "${homeDirectory}/.agents" \
     "${homeDirectory}/.codex" \
     "${homeDirectory}/.omp/agent/themes" \
     "${homeDirectory}/.omp/agent/extensions" \
@@ -195,24 +199,22 @@ pkgs.writeShellScript "user-config-${name}" ''
   cp -f "${dotsRoot}/gh/config.yml" "${configHome}/gh/config.yml"
   chmod u+w "${configHome}/gh/config.yml"
 
-  # --- claude ---
-  mkSymlink "${dotsRoot}/claude/CLAUDE.md" "${homeDirectory}/.claude/CLAUDE.md"
-  # skills/ is vendored: unslop is a byte-for-byte copy of
-  # github.com/cursor/plugins pstack/skills/unslop/SKILL.md (no lockfile,
-  # no `npx skills add` state to drift). The whole dir is linked so a
-  # `skills add` into ~/.claude/skills lands in the repo too.
-  mkSymlink "${dotsRoot}/claude/skills" "${homeDirectory}/.claude/skills"
+  # --- agents: instructions rendered from dots/agents/ (lib/agent-instructions.nix),
+  # skills from one link farm shared by every harness ---
+  mkSymlink "${claudeMd}" "${homeDirectory}/.claude/CLAUDE.md"
+  mkSymlink "${agentSkills}" "${homeDirectory}/.agents/skills"
+  mkSymlink "${agentSkills}" "${homeDirectory}/.claude/skills"
   mkSymlink "${claudeSettings}" "${homeDirectory}/.claude/settings.json"
   mkSymlink "${dotsRoot}/claude/statusline.sh" "${homeDirectory}/.claude/statusline.sh"
   mkSymlink "${dotsRoot}/claude/hooks/session-start.sh" "${homeDirectory}/.claude/hooks/session-start.sh"
   mkSymlink "${dotsRoot}/claude/hooks/session-id.sh" "${homeDirectory}/.claude/hooks/session-id.sh"
 
-  # --- codex: AGENTS.md symlink, config.toml seeded as a writable copy.
+  # --- codex: AGENTS.md rendered, config.toml seeded as a writable copy.
   # Codex rewrites ~/.codex/config.toml at runtime (hook trust, per-project
   # trust_level, model NUX counters), so it cannot be a read-only nix-store
   # symlink. Only reseed when the managed source changes (tracked via an
   # extended attribute) so runtime mutations survive every switch. ---
-  mkSymlink "${dotsRoot}/codex/AGENTS.md" "${homeDirectory}/.codex/AGENTS.md"
+  mkSymlink "${codexAgentsMd}" "${homeDirectory}/.codex/AGENTS.md"
 
   target="${homeDirectory}/.codex/config.toml"
   source="${codexConfigSource}"

@@ -829,6 +829,22 @@
         "type": "github"
       }
     },
+    "mattpocock-skills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787309793,
+        "narHash": "sha256-FPAAotNqA5aHrFDlj/XddoLs4TDKi+4J5H/mvevlOlk=",
+        "owner": "mattpocock",
+        "repo": "skills",
+        "rev": "5b15a47f2d7150f545fbcacbfe381787fc0230dc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mattpocock",
+        "repo": "skills",
+        "type": "github"
+      }
+    },
     "mux": {
       "inputs": {
         "flake-utils": "flake-utils_2",
@@ -1576,6 +1592,7 @@
         "hermes-agent": "hermes-agent",
         "index": "index",
         "ix-src": "ix-src",
+        "mattpocock-skills": "mattpocock-skills",
         "mux": "mux",
         "neovim-nightly": "neovim-nightly",
         "nix-darwin": "nix-darwin",

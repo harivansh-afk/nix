@@ -2,11 +2,44 @@
   lib,
   pkgs,
   homeDirectory,
+  dotsRoot,
   isDarwin,
   theme,
+  skillSources,
   ...
 }:
 let
+  agentInstructions = import ../../../lib/agent-instructions.nix { inherit pkgs; };
+
+  # ~/.agents/skills is a store directory of symlinks: repo-local skills point
+  # at the live dots checkout (editable without a rebuild), upstream skills at
+  # their pinned flake input. Claude Code only scans ~/.claude/skills, Codex
+  # scans ~/.agents/skills; both are linked to this one farm.
+  skillDirs = dir: builtins.filter (n: n != "README.md") (builtins.attrNames (builtins.readDir dir));
+  localSkills = map (name: {
+    inherit name;
+    path = "${dotsRoot}/agents/skills/${name}";
+  }) (skillDirs ../../../dots/agents/skills);
+  # code-review collides with the Claude Code bundled skill of the same name.
+  pocockSkip = [ "code-review" ];
+  pocockSkills = lib.optionals (skillSources ? mattpocock) (
+    lib.concatMap
+      (
+        bucket:
+        let
+          dir = "${skillSources.mattpocock}/skills/${bucket}";
+        in
+        map (name: {
+          inherit name;
+          path = "${dir}/${name}";
+        }) (builtins.filter (n: !(builtins.elem n pocockSkip)) (skillDirs dir))
+      )
+      [
+        "engineering"
+        "productivity"
+      ]
+  );
+
   jsonFormat = pkgs.formats.json { };
   yamlFormat = pkgs.formats.yaml { };
   hookCommand = hook: "${homeDirectory}/.claude/hooks/${hook}";
@@ -55,6 +88,10 @@ let
   };
 in
 {
+  claudeMd = agentInstructions.claude;
+  codexAgentsMd = agentInstructions.codex;
+  agentSkills = pkgs.linkFarm "agent-skills" (localSkills ++ pocockSkills);
+
   claudeSettings = jsonFormat.generate "claude-settings.json" {
     "$schema" = "https://json.schemastore.org/claude-code-settings.json";
     env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";

@@ -47,6 +47,9 @@ To add a Barrett-owned secret: drop the file at `secrets/hosts/spark/barrett-<na
 - Pull requests for this repo go to Forgejo (`origin`, git.harivan.sh), never GitHub. The `github` remote is a push-mirror target only; its redirect-pr workflow auto-closes PRs opened there. Create PRs with `tea pr create --login harivan --repo harivansh-afk/nix --base main --head <branch>`.
 - For multiline PR bodies, pass a real file's contents to `tea pr create --description` (or `gh --body-file -` when working on actual GitHub repos). Do not pass escaped `\\n` text; it renders as literal backslash-n. After creating or editing a PR, verify the rendered body before calling it done.
 - Install spark from scratch with `just spark-install user@host`.
+- Prefer common package definitions across macbook and spark; keep only truly macOS-specific Homebrew and GUI integrations Darwin-only.
+- Cursor CLI and `cursor-agent` come from the official installer: `curl https://cursor.com/install -fsS | bash`.
+- Bugfix PRs keep the diff minimal and exclude unrelated changes.
 - The `tmp/` directory is gitignored local scratch space. Nothing there is tracked or load-bearing.
 - Berkeley Mono is installed out-of-band. The flake only provides nerd-fonts symbol glyphs.
 - There is no home-manager. Per-user config is `modules/users/user-config.nix`: plain dotfiles in `dots/` symlinked into the home directory by an activation script that runs as the user. The repo owner's links point at the live checkout (`~/Documents/Git/nix/dots`), so dotfile edits apply without a rebuild; other users get the nix-store copy. Configs that need store paths (zsh plugins, git credential helpers, theme renders) are store-generated shims that defer to the live dots file.
@@ -61,6 +64,23 @@ To add a Barrett-owned secret: drop the file at `secrets/hosts/spark/barrett-<na
 - Do not create sibling worktree directories such as `/home/rathi/Documents/Git/nix-<topic>` or global worktree directories such as `~/wt/<repo>/<topic>`.
 - Create worktrees with plain Git from the main checkout: `git worktree add .worktrees/<topic> -b <branch> main`.
 - Keep the main checkout on `main` unless the user explicitly asks otherwise.
+
+## Agent instructions
+
+Instructions for every agent harness are layered in `dots/agents/` and rendered by `lib/agent-instructions.nix`:
+
+| Part | Read by | Holds |
+|------|---------|-------|
+| `core.md` | every agent | who Hari is, machines, forge, knowledge base, how to work with him |
+| `coding.md` | Claude Code, Codex, omp | tooling, git conventions, the `unslop` skill, spark CLI tools |
+| `claude.md` | Claude Code | Claude-only steering (prose questions, outcome-first replies, delegation) |
+| `hermes.md` | Hermes | the concierge role, loops, model, native KB tools |
+
+Rendered outputs: `~/.claude/CLAUDE.md` (core + coding + claude), `~/.codex/AGENTS.md` (core + coding), `~/.hermes/AGENTS.md` (core + hermes). A fact that is true for two parts moves up to `core.md`; a repo-specific fact belongs in that repo's `AGENTS.md` (this file), which `CLAUDE.md` imports with `@AGENTS.md`.
+
+Skills: `dots/agents/skills/<name>/SKILL.md` are repo-owned (`unslop`); the `mattpocock-skills` flake input supplies the engineering and productivity buckets. `modules/users/user-config/agents.nix` builds one link farm from both and the activation script links it to `~/.agents/skills` (Codex, and anything agentskills.io-compatible) and `~/.claude/skills` (Claude Code). Add a skill by dropping a directory into `dots/agents/skills/`; upgrade upstream with `nix flake update mattpocock-skills`. Hermes keeps its own skills under `dots/hermes/skills/`.
+
+Hooks live in `dots/claude/hooks/` and are registered in `agents.nix`; omp reuses them through `dots/omp/extensions/claude-hooks.ts`.
 
 ## Module layout
 
@@ -127,7 +147,7 @@ users/
   default.nix          User registry
   rathi.nix            SSH keys + groups for rathi
   barrett.nix          SSH keys + groups for barrett
-dots/                  Dotfile sources (nvim, karabiner, lazygit, claude skills, etc.)
+dots/                  Dotfile sources (nvim, karabiner, lazygit, agents/ instructions + skills, etc.)
 ```
 
 ## Theme system
@@ -253,3 +273,19 @@ journalctl -u forgejo --since today | rg "Invalid username or token"
 ```
 
 Forgejo's own `[mirror] DEFAULT_INTERVAL` is `15m` and `[queue.mirror] MAX_WORKERS` is capped at `1`. The pre-start hook in `modules/services/forgejo/default.nix` uniformly jitters every pull-mirror's `next_update_unix` to `now + (repo_id % 900s)` on each forgejo start, so 100+ mirrors never bunch into a single hour the way they did under the old gitea-mirror scheduler.
+
+## indexable-inc/ix mirroring
+
+Source of truth is the jj-native ix forge (RPC `https://forge.ix.dev:8447/rpc`, UI `https://forge.ix.dev:8448/`, tailnet), not GitHub: github.com/indexable-inc/ix is archived and is never synced from. Clone with `jj-ix ix clone --server https://forge.ix.dev:8447/rpc --repo ix <dir>` and pass `--config 'signing.behavior=drop'` (the ix backend rejects commit signing). The forge has no whole-repo git egress, so `git.harivan.sh/indexable-inc/ix` is a regular repo kept current by pushing snapshot commits of forge `main` (tree from a jj-ix clone, parent = previous snapshot, message carries the forge commit id).
+
+## Hermes agent
+
+Hermes is the local-brain life concierge (`modules/services/hermes.nix`). Optimize its setup for the fewest non-overlapping tools and recall surfaces; when two features overlap in role, cut one. Recall is exactly three surfaces: built-in `memory` (injected identity and preferences, write-only), `kb_search` (Hari's own data), and `session_search` (past conversations). A second agent-authored memory store (`holographic`, `fact_store`) overlaps the first two and confuses the model.
+
+## Knowledge base and ingestion
+
+PostgreSQL + pgvector (`kb_vec`) for fast vector search plus a Cognee knowledge graph (Kuzu) rebuilt off-hours and rendered to `/var/lib/kb/graph/index.html` (not network-exposed; view via tunnel). Connectors stage normalized markdown into `/var/lib/kb/staging/<source>/`; the hourly `kb-ingest` embeds staging into pgvector. New sources are connectors following that pattern. Current sources: gmail, calendar, forgejo, `~/Documents/Downloads` (denylist-enforced), scheduled research missions (HN now, X gated on browser-use).
+
+## Privacy and finance
+
+Bank transactions (SimpleFIN, read-only token via sops) and charge or receipt emails feed one local-only finance namespace so a transaction links to its receipt in the graph (merchant, amount, date). It never leaves the machine. The ingestion denylist is enforced in code: `~/Documents/Downloads/{security, documents/finance-tax, documents/travel-identity, documents/legal-business}`. The finance carve-out covers transaction and charge data only; tax documents stay excluded.

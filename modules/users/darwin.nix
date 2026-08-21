@@ -3,6 +3,7 @@
   pkgs,
   hostname,
   username,
+  inputs,
   ...
 }:
 let

@@ -127,7 +127,7 @@ users/
   default.nix          User registry
   rathi.nix            SSH keys + groups for rathi
   barrett.nix          SSH keys + groups for barrett
-dots/                  Dotfile sources (nvim, karabiner, lazygit, claude commands, etc.)
+dots/                  Dotfile sources (nvim, karabiner, lazygit, claude skills, etc.)
 ```
 
 ## Theme system

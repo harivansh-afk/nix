@@ -89,17 +89,6 @@ in
           ];
         }
       ];
-      PreToolUse = [
-        {
-          matcher = "Bash";
-          hooks = [
-            {
-              type = "command";
-              command = hookCommand "enforce-modern-tools.sh";
-            }
-          ];
-        }
-      ];
     };
   };
 

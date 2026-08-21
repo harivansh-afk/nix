@@ -197,7 +197,6 @@ pkgs.writeShellScript "user-config-${name}" ''
 
   # --- claude ---
   mkSymlink "${dotsRoot}/claude/CLAUDE.md" "${homeDirectory}/.claude/CLAUDE.md"
-  mkSymlink "${dotsRoot}/claude/commands" "${homeDirectory}/.claude/commands"
   # skills/ is vendored: unslop is a byte-for-byte copy of
   # github.com/cursor/plugins pstack/skills/unslop/SKILL.md (no lockfile,
   # no `npx skills add` state to drift). The whole dir is linked so a
@@ -207,7 +206,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${dotsRoot}/claude/statusline.sh" "${homeDirectory}/.claude/statusline.sh"
   mkSymlink "${dotsRoot}/claude/hooks/session-start.sh" "${homeDirectory}/.claude/hooks/session-start.sh"
   mkSymlink "${dotsRoot}/claude/hooks/session-id.sh" "${homeDirectory}/.claude/hooks/session-id.sh"
-  mkSymlink "${dotsRoot}/claude/hooks/enforce-modern-tools.sh" "${homeDirectory}/.claude/hooks/enforce-modern-tools.sh"
 
   # --- codex: AGENTS.md symlink, config.toml seeded as a writable copy.
   # Codex rewrites ~/.codex/config.toml at runtime (hook trust, per-project

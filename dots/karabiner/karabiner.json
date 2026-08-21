@@ -51,7 +51,7 @@
             ]
           },
           {
-            "description": "Option + J = Scroll Down (14 lines)",
+            "description": "Option + J = Page Down",
             "manipulators": [
               {
                 "from": {
@@ -63,27 +63,16 @@
                   }
                 },
                 "to": [
-                  { "key_code": "down_arrow" },
-                  { "key_code": "down_arrow" },
-                  { "key_code": "down_arrow" },
-                  { "key_code": "down_arrow" },
-                  { "key_code": "down_arrow" },
-                  { "key_code": "down_arrow" },
-                  { "key_code": "down_arrow" },
-                  { "key_code": "down_arrow" },
-                  { "key_code": "down_arrow" },
-                  { "key_code": "down_arrow" },
-                  { "key_code": "down_arrow" },
-                  { "key_code": "down_arrow" },
-                  { "key_code": "down_arrow" },
-                  { "key_code": "down_arrow" }
+                  {
+                    "key_code": "page_down"
+                  }
                 ],
                 "type": "basic"
               }
             ]
           },
           {
-            "description": "Option + K = Scroll Up (14 lines)",
+            "description": "Option + K = Page Up",
             "manipulators": [
               {
                 "from": {
@@ -95,20 +84,9 @@
                   }
                 },
                 "to": [
-                  { "key_code": "up_arrow" },
-                  { "key_code": "up_arrow" },
-                  { "key_code": "up_arrow" },
-                  { "key_code": "up_arrow" },
-                  { "key_code": "up_arrow" },
-                  { "key_code": "up_arrow" },
-                  { "key_code": "up_arrow" },
-                  { "key_code": "up_arrow" },
-                  { "key_code": "up_arrow" },
-                  { "key_code": "up_arrow" },
-                  { "key_code": "up_arrow" },
-                  { "key_code": "up_arrow" },
-                  { "key_code": "up_arrow" },
-                  { "key_code": "up_arrow" }
+                  {
+                    "key_code": "page_up"
+                  }
                 ],
                 "type": "basic"
               }

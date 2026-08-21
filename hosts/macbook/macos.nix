@@ -78,12 +78,6 @@ in
     ];
   };
 
-  # AeroSpace as a nix-darwin launchd agent (KeepAlive, wait4path /nix/store),
-  # reading the live-edited dots toml (settings = {} -> no --config-path). The
-  # toml sets start-at-login = false: AeroSpace's own SMAppService login item
-  # plus a leftover home-manager agent used to start two instances at login.
-  services.aerospace.enable = true;
-
   # app icon glyphs for the sketchybar workspace tabs
   fonts.packages = [ pkgs.sketchybar-app-font ];
 
@@ -154,6 +148,27 @@ in
         KeepAlive = false;
         AbandonProcessGroup = true;
         EnvironmentVariables.PATH = "/run/current-system/sw/bin:/usr/bin:/bin";
+      };
+
+      # AeroSpace as a hand-declared launchd agent, NOT nix-darwin's
+      # services.aerospace: that module always renders its own `settings` to a
+      # store toml and passes `--config-path`, which overrides the ~/.config
+      # lookup. Verified 2026-08-21: the running instance had loaded a 16-line
+      # default config with ZERO keybindings while the 174-line dots toml sat
+      # unread. This agent passes no --config-path so AeroSpace reads
+      # ~/.config/aerospace/aerospace.toml (symlinked to dots, live-edited,
+      # reloaded in-app via service mode). The toml sets start-at-login = false
+      # so AeroSpace's own SMAppService login item never races this agent.
+      aerospace.serviceConfig = {
+        ProgramArguments = [
+          "/bin/sh"
+          "-c"
+          "/bin/wait4path /nix/store && exec ${pkgs.aerospace}/Applications/AeroSpace.app/Contents/MacOS/AeroSpace"
+        ];
+        RunAtLoad = true;
+        KeepAlive = true;
+        StandardOutPath = "/Users/${config.system.primaryUser}/Library/Logs/aerospace.log";
+        StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/aerospace.log";
       };
 
       # Log the sketchybar daemon's stdout/stderr (rc failures, plugin errors):

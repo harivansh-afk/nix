@@ -101,8 +101,11 @@ system/
   packages.nix         Extra packages + fonts
 hosts/
   macbook/
-    default.nix        Homebrew casks, user setup
-    macos.nix          System defaults (dock, finder, keyboard, screenshots, login items, tailscale)
+    default.nix        Facts + imports only (hostname, user, stateVersion)
+    apps.nix           GUI apps nix launches at login (apps with their own launch-at-login are NOT duplicated here)
+    defaults.nix       System defaults (dock, finder, keyboard, screenshots, loginwindow)
+    homebrew.nix       Taps, formulae, casks (every cask on the machine is declared)
+    services.nix       Every launchd unit (aerospace, sketchybar, mux-restore, limit.maxfiles); the only service manager
   spark/
     default.nix        Base NixOS config, nix-ld, kernel hardening
     hardware.nix       DGX Spark module + disko disk layout

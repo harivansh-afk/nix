@@ -1,3 +1,5 @@
+# macbook: facts and file selection only. Behavior lives in the sibling
+# concern files (defaults / services / apps / homebrew) and shared modules.
 {
   inputs,
   pkgs,
@@ -16,7 +18,10 @@
     ../../modules/apps/voiceink.nix
     ../../modules/apps/voiceink-cloud-model.nix
     ../../modules/apps/voiceink-dictionary.nix
-    ./macos.nix
+    ./apps.nix
+    ./defaults.nix
+    ./homebrew.nix
+    ./services.nix
   ];
 
   networking.hostName = hostname;
@@ -31,37 +36,5 @@
   system.configurationRevision = self.rev or self.dirtyRev or null;
   system.stateVersion = 6;
 
-  homebrew = {
-    enable = true;
-
-    onActivation = {
-      autoUpdate = false;
-      upgrade = false;
-      cleanup = "none";
-    };
-
-    taps = [
-      "humanlayer/humanlayer"
-    ];
-
-    # CLI formulae. pngpaste is used by the `pasteimg` helper (dots/bin/pasteimg)
-    # to reliably dump the clipboard image as PNG for the spark -> mac pull.
-    brews = [
-      "pngpaste"
-    ];
-
-    casks = [
-      "cap"
-      "ghostty"
-      "helium-browser"
-      "karabiner-elements"
-      "raycast"
-      "riptide-beta"
-      # T3 Code desktop app (auto_updates cask; the spark server is nix,
-      # modules/services/t3code.nix).
-      "t3-code"
-      # voiceink: built from source instead (free path); see
-      # modules/apps/voiceink.nix. The cask is the paid distribution.
-    ];
-  };
+  security.pam.services.sudo_local.touchIdAuth = true;
 }

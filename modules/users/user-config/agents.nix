@@ -58,7 +58,7 @@ let
   # (dots/omp/extensions/modes.ts). Each bundle REPLACES modelRoles wholesale
   # when applied. Role syntax: provider/model[:thinking][,fallback...].
   # `default` drives the main session model; `task` is what subagents resolve
-  # at spawn time (the task agent's model is `pi/task`).
+  # at spawn time (the task agent resolves the `task` role).
   ompModes = {
     default = {
       description = "fable-5 high main, gpt-5.6-sol low subagents";
@@ -67,11 +67,18 @@ let
         task = "openai-codex/gpt-5.6-sol:low";
       };
     };
+    local = {
+      description = "Huihui Qwen 3.8 main, Qwen 3.6 task agents";
+      roles = {
+        default = "spark-local/huihui-qwen3.8-27b-abliterated:medium";
+        task = "spark-local/qwen3.6-35b-a3b";
+      };
+    };
   };
 
   # MCP servers for omp (~/.omp/agent/mcp.json). `index` is ix-mcp, the
   # indexable Python-kernel MCP server; the `ix-mcp` on PATH is the spark-only
-  # wrapper around the live checkout (hosts/spark/pi.nix), so the entry is
+  # wrapper around the live checkout (hosts/spark/omp.nix), so the entry is
   # emitted only off-darwin.
   ompMcpServers = lib.optionalAttrs (!isDarwin) {
     index = {
@@ -138,6 +145,39 @@ in
 
   ompMcpSource = jsonFormat.generate "omp-mcp.json" { mcpServers = ompMcpServers; };
 
+  ompModelsSource = yamlFormat.generate "omp-models.yml" {
+    providers.spark-local = {
+      baseUrl = "http://127.0.0.1:18080/v1";
+      api = "openai-completions";
+      auth = "none";
+      compat = {
+        supportsStore = false;
+        supportsDeveloperRole = false;
+        supportsReasoningEffort = false;
+        supportsStrictMode = false;
+        maxTokensField = "max_tokens";
+      };
+      models = [
+        {
+          id = "qwen3.6-35b-a3b";
+          name = "Qwen 3.6 35B A3B UD-Q4_K_XL";
+          reasoning = false;
+          input = [ "text" ];
+          contextWindow = 65536;
+          maxTokens = 32768;
+        }
+        {
+          id = "huihui-qwen3.8-27b-abliterated";
+          name = "Huihui Qwen 3.8 27B Abliterated Q4_K";
+          reasoning = true;
+          input = [ "text" ];
+          contextWindow = 65536;
+          maxTokens = 32768;
+        }
+      ];
+    };
+  };
+
   ompConfigSource = yamlFormat.generate "omp-config.yml" {
     theme = {
       dark = "cozybox-dark";
@@ -154,6 +194,7 @@ in
     };
     symbolPreset = "unicode";
     display.shimmer = "disabled";
+    disabledProviders = [ "llama.cpp" ];
     todo.enabled = false;
     # Seed matches the `default` mode so a config reseed lands on it.
     modelRoles = ompModes.default.roles;

@@ -30,6 +30,9 @@
         lib.optional (m != null) (lib.toInt (builtins.head m))
       ) (lib.attrValues spark.services.caddy.virtualHosts);
 
+      llamaSettings = spark.services.llama-cpp.settings;
+      llamaPreset = builtins.readFile llamaSettings."models-preset";
+
       invariants = [
         (lib.assertMsg (proxiedPorts != [ ])
           "spark: expected at least one caddy reverse_proxy backend; the port-extraction regex may have rotted"
@@ -66,6 +69,16 @@
         (lib.assertMsg (
           !spark.programs.mosh.openFirewall
         ) "spark: mosh must rely on the tailscale trust boundary")
+        (lib.assertMsg (
+          !(llamaSettings ? model)
+          && llamaSettings."models-max" == 2
+          && llamaSettings."models-autoload"
+          && llamaSettings."sleep-idle-seconds" == 300
+        ) "spark: llama.cpp must run as the bounded autoloading model router")
+        (lib.assertMsg (
+          lib.hasInfix "[qwen3.6-35b-a3b]" llamaPreset
+          && lib.hasInfix "[huihui-qwen3.8-27b-abliterated]" llamaPreset
+        ) "spark: llama.cpp presets must retain both local models")
         # Forgejo's git user is the one non-human account sshd admits, and the
         # two ways that can go wrong are opposite: drop it and every ssh push
         # breaks (silently, until someone tries), or add it bare and a service

@@ -10,13 +10,9 @@
 #   secrets/user/<name>            - per-admin-user (decrypts on every host
 #                                    the admin can SSH-as).
 #   secrets/hosts/<host>/<name>    - host-bound (decrypts only on that host).
-#                                    Per-user variants on a host use
-#                                    `<user>-<name>` so the regex picks up
-#                                    the right recipient set.
 
 keys:
   - &admin_macbook age1m0nf8gmkeptnqrl8qdjcvz8jkt2zxpn9jcqs6424say4c332p4qqv5yf3a
-  - &admin_laptop_barrett age1avg36skretl5rqx553kktq3w2m28lnzc4054t3rjsujhlw90l9cs4l4nuq
   - &host_spark age1nz862qmyaa337s7pmw60pawgfu5z0und9y75vhwkk6txgfrqeujquf3xaj
 
 creation_rules:
@@ -24,12 +20,6 @@ creation_rules:
     key_groups:
       - age:
           - *admin_macbook
-          - *host_spark
-  - path_regex: secrets/hosts/spark/barrett-[^/]+$
-    key_groups:
-      - age:
-          - *admin_macbook
-          - *admin_laptop_barrett
           - *host_spark
   - path_regex: secrets/hosts/spark/[^/]+$
     key_groups:

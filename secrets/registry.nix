@@ -170,10 +170,5 @@
       mode = "0400";
       restartUnits = [ "gitea-runner-netty.service" ];
     };
-
-    "barrett-forgejo-runner-token" = {
-      owner = "barrett";
-      mode = "0400";
-    };
   };
 }

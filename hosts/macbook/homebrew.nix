@@ -68,12 +68,6 @@ _: {
       "slack"
       "stolendata-mpv"
       "superhuman"
-      # T3 Code desktop app (auto_updates cask; the spark server is nix,
-      # modules/services/t3code.nix).
-      "t3-code"
-      # Tailscale GUI (Standalone variant): the network extension IS the
-      # tailnet node on this mac; see hosts/macbook/services.nix for why
-      # nix-darwin's services.tailscale is deliberately not used.
       "tailscale-app"
       "telegram"
       "thebrowsercompany-dia"

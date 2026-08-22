@@ -86,9 +86,8 @@ flake/
   hosts.nix            macbook darwin configuration
   nixos.nix            spark NixOS configuration
   ix.nix               nixosConfigurations.ix: the ix dev VM template
-  scripts.nix          packages.<system> output: portable scripts (ga, ghpr, connectors)
+  scripts.nix          packages.<system> output: portable scripts (ga, ghpr, iosrun, spark)
 lib/
-  remotes.nix          Remote server registry: hosts for the per-remote connector commands
   theme.nix            Cozybox theme: colors, renderers for ghostty/fzf/lazygit/pure-prompt/bat/zsh-highlights
 system/
   common.nix           Shared nix settings, overlays, base packages
@@ -135,7 +134,7 @@ terraform/
   cloudflare/          Declarative Cloudflare DNS for harivan.sh via terranix
 scripts/
   default.nix          Full script set for user profiles (portable + theme, wallpaper-gen)
-  portable.nix         Home-independent scripts (ga, ghpr, iosrun, remote connectors)
+  portable.nix         Home-independent scripts (ga, ghpr, iosrun, spark)
   bin/                 Script sources wired by default.nix
   lib/                 Helpers (wallpaper-gen.py)
   forgejo-mirror/      Mirror reconciliation against /etc/forgejo-mirror/manifest.json (run on demand)
@@ -163,9 +162,9 @@ Accent constraint for agent-facing TUI roles (omp markdown headings/inline code/
 
 Terminal sessions, panes, and persistence are the job of Mux.app and muxd (`~/Documents/Git/mux`); spark runs the daemon via `modules/services/muxd.nix`. Nothing in this repo multiplexes terminals.
 
-The portable scripts (`ga`, `ghpr`, `iosrun`, the remote connectors) build without a home directory (`scripts/portable.nix`) and are exposed as flake `packages`, so hosts not managed by this flake can install them with `nix profile add git+https://git.harivan.sh/harivansh-afk/nix#<name>`.
+The portable scripts (`ga`, `ghpr`, `iosrun`, `spark`) build without a home directory (`scripts/portable.nix`) and are exposed as flake `packages`, so hosts not managed by this flake can install them with `nix profile add git+https://git.harivan.sh/harivansh-afk/nix#<name>`.
 
-`lib/remotes.nix` maps a command name to `{ host }` per server. `scripts/portable.nix` renders each entry into a connector command (via `scripts/bin/remote.sh`) that lands in every user's profile: `spark`, `macbook`, or `dev6` opens a shell over `mosh <host>`; `--ssh` forces `ssh -t` for UDP-hostile networks. Transport config (hostnames, keys, ControlMaster) stays in the live-edited `dots/ssh/config`; ssh, scp, and git are never wrapped. To add a server: one entry in `lib/remotes.nix` plus its `Host` block in `dots/ssh/config`.
+`spark` (`scripts/bin/spark.sh`) is the one connector command: it opens a shell over `mosh spark`, and `--ssh` forces `ssh -t` for UDP-hostile networks. Every other host is reached with plain `ssh <host>`. Transport config (hostnames, keys, ControlMaster) stays in the live-edited `dots/ssh/config`; ssh, scp, and git are never wrapped.
 
 ## Hermes loops
 
@@ -209,7 +208,7 @@ nix eval .#nixosConfigurations.ix.config.system.build.toplevel.drvPath
 nix build --dry-run <drv>^* --substituters https://cache.nixos.org
 ```
 
-What was deliberately left out, and why, so it does not get re-added by reflex: `hermes-agent` (1170 source builds on its own, an uncached uv2nix tree pulling ffmpeg, ctranslate2 and onnxruntime), `leaf` (builds from source, so the VM fetches 1.6 GiB of rustc to compile one markdown viewer), `elixir_1_19` + `elixir-ls` (erlang twice, 248 MiB, and erlang's wx support drags in wxwidgets then webkitgtk), `clang` + `clang-tools` (1.4 GiB of clang and llvm libs), `pyright` + `python3` (389 MiB), `go_1_26` + `gopls` (248 MiB), `k9s` (168 MiB, no cluster to point it at), `tea` (its logins come from sops, which the VM has none of), and every `customScripts` entry (the remote connectors dial hosts a throwaway VM cannot reach, and `wallpaper-gen` pulls python + pillow for a machine with no display). `zoxide` is in the list because `dots/zsh/zshrc` runs `zoxide init zsh` unconditionally.
+What was deliberately left out, and why, so it does not get re-added by reflex: `hermes-agent` (1170 source builds on its own, an uncached uv2nix tree pulling ffmpeg, ctranslate2 and onnxruntime), `leaf` (builds from source, so the VM fetches 1.6 GiB of rustc to compile one markdown viewer), `elixir_1_19` + `elixir-ls` (erlang twice, 248 MiB, and erlang's wx support drags in wxwidgets then webkitgtk), `clang` + `clang-tools` (1.4 GiB of clang and llvm libs), `pyright` + `python3` (389 MiB), `go_1_26` + `gopls` (248 MiB), `k9s` (168 MiB, no cluster to point it at), `tea` (its logins come from sops, which the VM has none of), and every `customScripts` entry (`spark` dials a host a throwaway VM cannot reach, and `wallpaper-gen` pulls python + pillow for a machine with no display). `zoxide` is in the list because `dots/zsh/zshrc` runs `zoxide init zsh` unconditionally.
 
 `environment.systemPackages` holds one entry, `pkgs.ghostty.terminfo`, and it has to be there rather than in the root package list: NixOS builds `TERMINFO_DIRS` from `environment.pathsToLink`, which only covers the system profile. Ghostty exports `TERM=xterm-ghostty`, `ix shell` carries that value into the guest, and a guest with no matching terminfo entry gives you `can't find terminal definition for xterm-ghostty`, a zsh line editor that cannot position the cursor (keystrokes echo doubled) and a `clear` that refuses to run. The cost is 2.2 KiB: `terminfo` is a separate output of the ghostty derivation and cache.nixos.org has it, so nothing builds ghostty itself. Any other terminal that sets an exotic `TERM` needs its own entry here, or `environment.enableAllTerminfo = true` if the list ever grows past a couple.
 

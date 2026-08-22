@@ -41,12 +41,11 @@ o.updatetime = 250
 o.mouse = "a"
 o.clipboard = "unnamedplus"
 
--- Clipboard on hosts without a local clipboard tool (e.g. headless mux
--- servers on spark): emit OSC 52 through nvim_ui_send, which forwards the
--- sequence to the attached --remote-ui client's terminal. Always use the
--- `c` selector: mosh-server 1.4 silently drops every other one. Paste
--- returns the local yank cache instead of querying the terminal, since
--- OSC 52 reads do not survive mosh; paste the OS clipboard with cmd-v.
+-- Clipboard on hosts without a clipboard tool (nvim in a pane on spark):
+-- write the yank to the terminal's clipboard with OSC 52 through
+-- nvim_ui_send, always with the `c` selector. Paste returns the local yank
+-- cache instead of querying the terminal, because the terminal asks before
+-- serving clipboard reads; paste the OS clipboard with cmd-v.
 local has_clip_tool = vim.fn.has "mac" == 1
   or (vim.env.WAYLAND_DISPLAY and vim.fn.executable "wl-copy" == 1)
   or (vim.env.DISPLAY and (vim.fn.executable "xclip" == 1 or vim.fn.executable "xsel" == 1))

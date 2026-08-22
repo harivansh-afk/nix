@@ -14,24 +14,6 @@ let
       );
     };
 
-  remotes = import ../lib/remotes.nix;
-
-  remotePackages = lib.mapAttrs (
-    name: remote:
-    mkScript {
-      inherit name;
-      file = ./bin/remote.sh;
-      runtimeInputs = [
-        pkgs.mosh
-        pkgs.openssh
-      ];
-      replacements = {
-        "@NAME@" = name;
-        "@HOST@" = remote.host;
-      };
-    }
-  ) remotes;
-
   packages = {
     ga = mkScript {
       name = "ga";
@@ -60,8 +42,16 @@ let
         coreutils
       ];
     };
-  }
-  // remotePackages;
+
+    spark = mkScript {
+      name = "spark";
+      file = ./bin/spark.sh;
+      runtimeInputs = with pkgs; [
+        mosh
+        openssh
+      ];
+    };
+  };
 in
 {
   inherit mkScript packages;

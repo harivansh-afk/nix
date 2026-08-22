@@ -20,10 +20,10 @@ APP_FONT="sketchybar-app-font"
 FONT_SIZE=18.0
 APP_FONT_SIZE=20.0
 
-# Height of the notch strip: NSScreen.safeAreaInsets.top. It is a POINT value
-# that changes with the scaled resolution (43 @ 2048x1330, 49 @ 2294x1490), so
-# it is measured at rc time instead of hardcoded - a stale constant misaligns
-# every margin. Max across screens, via `notch-inset`: a tiny AppKit binary
+# External displays use the same 32pt height that aerospace reserves for them.
+# Notched displays override that base with NSScreen.safeAreaInsets.top, a POINT
+# value that changes with the scaled resolution (43 @ 2048x1330, 49 @
+# 2294x1490). Max across screens, via `notch-inset`: a tiny AppKit binary
 # compiled by nix (hosts/macbook/notch-inset, on the agent PATH through
 # services.sketchybar.extraPackages), ~10ms. This used to be `swift -e`, which
 # JIT-compiles through xcodebuild: at a cold login it blocked this rc for
@@ -31,19 +31,20 @@ APP_FONT_SIZE=20.0
 # ever ran and the bar came up empty at default geometry. Never call swift
 # here. Falls back to 43 (the historical built-in value) if no screen reports
 # an inset or the helper is missing.
-BAR_HEIGHT="$(notch-inset 2>/dev/null)"
-case "$BAR_HEIGHT" in '' | *[!0-9]* | 0) BAR_HEIGHT=43 ;; esac
+BAR_HEIGHT=32
+NOTCH_BAR_HEIGHT="$(notch-inset 2>/dev/null)"
+case "$NOTCH_BAR_HEIGHT" in '' | *[!0-9]* | 0) NOTCH_BAR_HEIGHT=43 ;; esac
 
-# Strip-relative sizes scale from their 43pt-baseline calibrations (rounded)
-# so proportions hold at every resolution. Text sizes and the PAD_* scale stay
-# absolute: fonts are a user preference in fixed points.
+# Item geometry derives from the external bar height, so the same blocks render
+# on every display. A notched display gets extra transparent air around them.
+# Text sizes and the PAD_* scale stay absolute: fonts are a user preference in
+# fixed points.
 scale() { echo $((($1 * BAR_HEIGHT + 21) / 43)); }
 
-# MARGIN is the air around the floating blocks: the item height and the bar
-# edge padding both derive from it so the gap is identical top, bottom, left
-# and right. 6 @ 43.
-MARGIN=$(scale 6)
-ITEM_HEIGHT=$((BAR_HEIGHT - 2 * MARGIN))
+# The vertical margin scales with the base bar height. Per-display horizontal
+# edge spacers below derive their widths from the actual rendered bar height.
+VERTICAL_MARGIN=$(scale 6)
+ITEM_HEIGHT=$((BAR_HEIGHT - 2 * VERTICAL_MARGIN))
 
 # calibrated by eye against the physical display corner curve at 43pt (Apple
 # does not publish the radius and no API exposes it on macOS); scales with
@@ -64,12 +65,13 @@ TAB_GAP=6
 sketchybar --bar \
   position=top \
   height=$BAR_HEIGHT \
+  notch_display_height=$NOTCH_BAR_HEIGHT \
   color=0x00000000 \
   corner_radius=0 \
   margin=0 \
   y_offset=0 \
-  padding_left=$MARGIN \
-  padding_right=$MARGIN \
+  padding_left=0 \
+  padding_right=0 \
   display=all \
   sticky=on
 
@@ -91,6 +93,49 @@ sketchybar --default \
   label.color="$TEXT_COLOR" \
   label.padding_left=$PAD_TIGHT \
   label.padding_right=$PAD_ITEM
+
+# --- per-display edge spacing ---
+# Bar padding is global even when notch_display_height gives each display a
+# different height. One display-associated spacer on each edge lets every bar
+# use its own vertical margin as its horizontal margin too:
+#   edge = (actual display bar height - item height) / 2
+# The display watchdog reloads this rc after monitor or resolution changes, so
+# the spacers are rebuilt from the new bounding rectangles.
+display_ids="$(
+  sketchybar --query displays |
+    sed -n 's/.*"arrangement-id":\([0-9][0-9]*\).*/\1/p'
+)"
+
+for did in $display_ids; do
+  for side in left right; do
+    sketchybar --add item "edge.$side.$did" "$side" \
+      --set "edge.$side.$did" \
+      display="$did" \
+      width=1 \
+      background.drawing=off \
+      icon.drawing=off \
+      label.drawing=off
+  done
+
+  display_height="$(
+    sketchybar --query "edge.left.$did" |
+      awk -v display="\"display-$did\"" '
+        $0 ~ display { found = 1 }
+        found && /"size":/ {
+          split($0, parts, ",")
+          gsub(/[^0-9.]/, "", parts[2])
+          printf "%.0f\n", parts[2]
+          exit
+        }
+      '
+  )"
+  case "$display_height" in '' | *[!0-9]*) display_height=$BAR_HEIGHT ;; esac
+
+  edge_padding=$(((display_height - ITEM_HEIGHT) / 2))
+  [ "$edge_padding" -ge 0 ] || edge_padding=0
+  sketchybar --set "edge.left.$did" width="$edge_padding" \
+    --set "edge.right.$did" width="$edge_padding"
+done
 
 # --- left section: floating workspace tabs ---
 # Static shells only; plugins/spaces.sh renders all of them in one batch per

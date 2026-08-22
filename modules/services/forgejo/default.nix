@@ -1034,7 +1034,6 @@ in
     "L+ /var/lib/forgejo/custom/templates/custom/footer.tmpl - - - - ${forgejoWeb.templates}/custom/footer.tmpl"
     "L+ /var/lib/forgejo/custom/templates/repo/diff/box.tmpl - - - - ${pierreForgejo.templates}/repo/diff/box.tmpl"
     "L+ /var/lib/forgejo/custom/templates/repo/view_file.tmpl - - - - ${forgejoWeb.templates}/repo/view_file.tmpl"
-    "L+ /var/lib/forgejo/custom/templates/repo/commit_header.tmpl - - - - ${forgejoWeb.templates}/repo/commit_header.tmpl"
     "L+ /var/lib/forgejo/custom/templates/mail/auth/activate.tmpl - - - - ${forgejoMailActivateTmpl}"
     "L+ /var/lib/forgejo/custom/templates/mail/auth/reset_passwd.tmpl - - - - ${forgejoMailResetPasswdTmpl}"
     "L+ /var/lib/forgejo/custom/templates/mail/auth/activate_email.tmpl - - - - ${forgejoMailActivateEmailTmpl}"

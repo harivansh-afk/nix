@@ -86,7 +86,7 @@
 
       # The everyday CLI set from packages.nix base list, with the wrapped
       # tools above in place of the bare packages, plus the portable scripts
-      # (mux, ga, ghpr, per-remote shortcuts) that are already flake packages
+      # (ga, ghpr, per-remote shortcuts) that are already flake packages
       # individually.
       tools = pkgs.buildEnv {
         name = "portable-tools";

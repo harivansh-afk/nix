@@ -16,15 +16,6 @@ let
 
   remotes = import ../lib/remotes.nix;
 
-  # Shared "name host" catalog lines, baked into mux (@MUX_REMOTES@).
-  remotesText = lib.concatMapStrings (
-    name:
-    let
-      remote = remotes.${name};
-    in
-    "${name} ${remote.host}\n"
-  ) (lib.attrNames remotes);
-
   remotePackages = lib.mapAttrs (
     name: remote:
     mkScript {
@@ -42,27 +33,6 @@ let
   ) remotes;
 
   packages = {
-    mux = mkScript {
-      name = "mux";
-      file = ./bin/mux.sh;
-      runtimeInputs =
-        with pkgs;
-        [
-          coreutils
-          fzf
-          gawk
-          git
-          gnugrep
-          gnused
-          openssh
-          zoxide
-        ]
-        ++ lib.optionals stdenv.isLinux [ util-linux ];
-      replacements = {
-        "@MUX_REMOTES@" = remotesText;
-      };
-    };
-
     ga = mkScript {
       name = "ga";
       file = ./bin/ga.sh;

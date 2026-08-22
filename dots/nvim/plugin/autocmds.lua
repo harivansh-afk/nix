@@ -61,11 +61,10 @@ api.nvim_create_autocmd("VimResized", {
 -- Terminals open ready to type, and panes you were typing in resume
 -- terminal-mode when you navigate back. <Esc> is never mapped: it always
 -- reaches the program. Leaving terminal-mode and the window in one action
--- (prefix pane-nav) keeps the insert intent via b:term_leaving; an explicit
--- copy-mode entry (<c-b>[) sticks until you re-enter it (i, a, or G).
--- Programmatic leaves (mux view switching, via b:term_programmatic) also
--- keep the intent. Leaving with intent parks the cursor on the last line so
--- background panes tail their output.
+-- keeps the insert intent via b:term_leaving; an explicit <c-\><c-n> sticks
+-- until you re-enter it (i, a, or G).
+-- Leaving with intent parks the cursor on the last line so background panes
+-- tail their output.
 api.nvim_create_autocmd("TermOpen", {
   group = augroup,
   callback = function(args)
@@ -84,10 +83,6 @@ api.nvim_create_autocmd("TermLeave", {
   group = augroup,
   callback = function(args)
     local buf = args.buf
-    if vim.b[buf].term_programmatic then
-      vim.b[buf].term_programmatic = nil
-      return
-    end
     vim.b[buf].term_insert = false
     vim.b[buf].term_leaving = true
     vim.schedule(function()

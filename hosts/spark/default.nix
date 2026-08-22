@@ -30,7 +30,6 @@
     ../../modules/services/kb-finance.nix
     ../../modules/services/hermes-loops.nix
     ../../modules/services/mosh.nix
-    ../../modules/services/mux-restore.nix
     ../../modules/services/muxd.nix
     ../../modules/services/whisper.nix
     ../../modules/services/vaultwarden.nix

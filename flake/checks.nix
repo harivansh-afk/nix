@@ -41,14 +41,6 @@
           pkgs.shfmt
           pkgs.findutils
         ] "shfmt -i 2 -d scripts $(find dots -mindepth 1 -maxdepth 1 ! -name zsh)";
-        mux = lint "mux" [
-          pkgs.bash
-          pkgs.coreutils
-          pkgs.gawk
-          pkgs.git
-          pkgs.gnugrep
-          pkgs.neovim
-        ] "bash scripts/mux-smoke.sh";
         pr = lint "pr" [
           pkgs.bash
           pkgs.coreutils

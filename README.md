@@ -14,7 +14,6 @@ Everything is a single flake, declared with [flake-parts](https://github.com/her
 
 **`dots/nvim/`**
 
-- `mux` - sessions, panes, and windows inside Neovim: one headless server per project, thin clients, persistence across reboots
 - `pr` - code review inside Neovim: PR list, file tree, review marks, CI status, `pr://` buffers
 
 **`modules/services/`**
@@ -57,7 +56,7 @@ hosts/               per-host config
   ix/
 users/               multi-user definitions for spark
 dots/                app configs symlinked into XDG paths (live-editable)
-  nvim/              the Neovim setup: mux, pr, statusline
+  nvim/              the Neovim setup: pr, statusline
   ...                one directory per tool
 modules/             reusable modules
   apps/              voiceink
@@ -66,7 +65,7 @@ modules/             reusable modules
   users/             shared dotfile and user setup
 system/              shared system-level config
 packages.nix         shared package sets (core, extras, darwin)
-scripts/             runtime helpers (mux, ghpr, iosrun, theme, ...)
+scripts/             runtime helpers (ghpr, iosrun, theme, ...)
 secrets/             sops-encrypted secrets per host
 terraform/           declarative Cloudflare DNS via terranix
 assets/              readme artwork

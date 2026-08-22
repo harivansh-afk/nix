@@ -83,24 +83,6 @@ in
       StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/aerospace.log";
     };
 
-    # Respawn mux sessions at login. mux already writes a `.restore` marker
-    # per live server (removed on stop/kill); this agent only triggers
-    # `mux restore` so marked sessions come back before a terminal is opened.
-    # TMPDIR is resolved explicitly because mux derives its socket dir from it
-    # on darwin and the agent must agree with login shells. AbandonProcessGroup
-    # keeps the spawned nvim servers alive after the agent exits.
-    mux-restore.serviceConfig = {
-      ProgramArguments = [
-        "/bin/sh"
-        "-c"
-        ''export TMPDIR="''${TMPDIR:-$(getconf DARWIN_USER_TEMP_DIR)}"; exec /run/current-system/sw/bin/mux restore''
-      ];
-      RunAtLoad = true;
-      KeepAlive = false;
-      AbandonProcessGroup = true;
-      EnvironmentVariables.PATH = "/run/current-system/sw/bin:/usr/bin:/bin";
-    };
-
     # Log the sketchybar daemon's stdout/stderr (rc failures, plugin errors):
     # nix-darwin's services.sketchybar sets no log path, so the 2026-08-18
     # empty-bar login left nothing to read. Merged with the module's own

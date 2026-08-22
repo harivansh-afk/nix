@@ -30,6 +30,14 @@ exec-on-workspace-change = [
 check-further-callbacks = true
 run = 'layout tiling'
 
+[[on-window-detected]]
+if.app-id = 'com.apple.finder'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.apple.systempreferences'
+run = 'layout floating'
+
 [gaps]
 inner.horizontal = 0
 inner.vertical = 0

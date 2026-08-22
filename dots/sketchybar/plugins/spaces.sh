@@ -40,7 +40,7 @@ for sid in 1 2 3 4 5 6 7 8 9; do
   # (e.g. a tab frozen on the old accent after a config change)
   if [ "$sid" = "$focused" ]; then
     # same surface background as every tab; only the number lights up pink
-    # (the mux pointer purple) and goes bold
+    # and goes bold
     args+=(--set "space.$sid" drawing=on
       background.color="$BAR_COLOR"
       icon.color="$PINK_COLOR"

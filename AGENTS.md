@@ -86,7 +86,7 @@ flake/
   hosts.nix            macbook darwin configuration
   nixos.nix            spark NixOS configuration
   ix.nix               nixosConfigurations.ix: the ix dev VM template
-  scripts.nix          packages.<system> output: portable scripts (mux, ga, ghpr, connectors)
+  scripts.nix          packages.<system> output: portable scripts (ga, ghpr, connectors)
 lib/
   remotes.nix          Remote server registry: hosts for the per-remote connector commands
   theme.nix            Cozybox theme: colors, renderers for ghostty/fzf/lazygit/pure-prompt/bat/zsh-highlights
@@ -99,7 +99,7 @@ hosts/
     apps.nix           GUI apps nix launches at login (apps with their own launch-at-login are NOT duplicated here)
     defaults.nix       System defaults (dock, finder, keyboard, screenshots, loginwindow)
     homebrew.nix       Taps, formulae, casks (every cask on the machine is declared)
-    services.nix       Every launchd unit (aerospace, sketchybar, mux-restore, limit.maxfiles); the only service manager
+    services.nix       Every launchd unit (aerospace, sketchybar, limit.maxfiles); the only service manager
     startup-guard.nix  Enforces login-item allowlist, warns on undeclared launchd plists (daily + login + switch)
   spark/
     default.nix        Base NixOS config, nix-ld, kernel hardening
@@ -135,7 +135,7 @@ terraform/
   cloudflare/          Declarative Cloudflare DNS for harivan.sh via terranix
 scripts/
   default.nix          Full script set for user profiles (portable + theme, wallpaper-gen)
-  portable.nix         Home-independent scripts (mux, ga, ghpr, iosrun, remote connectors)
+  portable.nix         Home-independent scripts (ga, ghpr, iosrun, remote connectors)
   bin/                 Script sources wired by default.nix
   lib/                 Helpers (wallpaper-gen.py)
   forgejo-mirror/      Mirror reconciliation against /etc/forgejo-mirror/manifest.json (run on demand)
@@ -159,13 +159,13 @@ Accent constraint for agent-facing TUI roles (omp markdown headings/inline code/
 
 `claude-purple/` follows the same entry + lazy `core/` split. Tool-call headings use the separate `toolTitle` token (claude-purple); `accent` stays coral for header descriptions, paths, and grep's per-file result headers. The extension patches the Theme prototype (and `DEFAULT_SHIMMER_PALETTE`) so the tool dots, the search dots, and the loader spinner/shimmer crest also render claude-purple, read live from `getColorHex("statusLinePath")` (the prompting-bar path shares that lane in `lib/theme.nix`).
 
-## Remote sessions (mux)
+## Remote sessions
 
-tmux is gone. Its three jobs (persistence, panes/windows, session switching) live in Neovim: `scripts/bin/mux.sh` packages the `mux` command, which runs one detached `nvim --headless --listen <socket>` server per project (git/jj root) and attaches thin `nvim --remote-ui` clients to it. The in-editor layer is `dots/nvim/lua/mux/` (activated only when the launcher sets `MUX=1`): tagged view tabpages (edit/vcs/ai/zsh; ai runs `omp`), untagged tabs as plain tmux-style windows (auto-renamed to the shell's live cwd basename via OSC 7 emitted from zshrc), a tabline status bar (visible by default; `<c-b>\` toggles it), mksession snapshots (5-minute autosave + save-on-exit, restored on next start), and `:connect`-based project switching. Bindings mirror the old tmux config: `<c-b>` prefix, `h/j/k/l` panes, `-`/`'` splits, `c` new window, `x` kill pane, `z` zoom pane, `[` copy mode (terminal normal mode; `<Esc>` is never mapped and always reaches the program, `G` jumps to the tail and resumes typing), `n`/`p` window cycle, `y` last buffer, `H/J/K/L` session cycling, `f` project picker (local), `F` all-hosts picker, `d` detach, `\` toggle tab bar. `mux stop` keeps a session resumable -- listings show its root as a plain dir and opening it restores the snapshot (pickers and `mux list` only ever show live sessions and openable dirs, never stopped/dead rows); `mux kill` deletes it; `mux restore` revives marked sessions after a reboot. Servers on spark need `users.users.<name>.linger = true` so they survive logout.
+Terminal sessions, panes, and persistence are the job of Mux.app and muxd (`~/Documents/Git/mux`); spark runs the daemon via `modules/services/muxd.nix`. Nothing in this repo multiplexes terminals.
 
-The portable scripts (`mux`, `ga`, `ghpr`, `iosrun`, the remote connectors) build without a home directory (`scripts/portable.nix`) and are exposed as flake `packages`, so hosts not managed by this flake install mux directly: `nix profile add git+https://git.harivan.sh/harivansh-afk/nix#mux` (or reference `packages.<system>.mux` from a consuming flake). Never shim `scripts/bin/mux.sh` into `~/.local/bin` by hand: the raw file has no shebang and none of its runtime dependencies; only the wrapped package works.
+The portable scripts (`ga`, `ghpr`, `iosrun`, the remote connectors) build without a home directory (`scripts/portable.nix`) and are exposed as flake `packages`, so hosts not managed by this flake can install them with `nix profile add git+https://git.harivan.sh/harivansh-afk/nix#<name>`.
 
-`lib/remotes.nix` maps a command name to `{ host }` per server. `scripts/default.nix` renders each entry into a connector command (via `scripts/bin/remote.sh`) that lands in every user's profile: `spark`, `macbook`, or `dev6` runs `mosh <host> -- mux`; an optional project arg (`spark ix`) is forwarded and resolved on the remote against its `mux list` (live sessions + zoxide dirs), jumping straight into that project's session; `--ssh` forces `ssh -t` for UDP-hostile networks. The same catalog is baked into the `mux` package for `mux list --all` (pretty on a tty, TSV when piped), `mux list --hosts` (per-host reachability probes), `mux pick --all` (fzf hop from any shell), and the in-nvim `<c-b>F` federated picker (local rows use `:connect`; remote rows write a hop file and detach so the client shell execs the connector). Bare `ssh <host>` / `mosh <host>` from zsh also auto-run the remote `mux`. Transport config (hostnames, keys, ControlMaster) stays in the live-edited `dots/ssh/config`; scp and git are never wrapped. To add a server: one entry in `lib/remotes.nix` plus its `Host` block in `dots/ssh/config`.
+`lib/remotes.nix` maps a command name to `{ host }` per server. `scripts/portable.nix` renders each entry into a connector command (via `scripts/bin/remote.sh`) that lands in every user's profile: `spark`, `macbook`, or `dev6` opens a shell over `mosh <host>`; `--ssh` forces `ssh -t` for UDP-hostile networks. Transport config (hostnames, keys, ControlMaster) stays in the live-edited `dots/ssh/config`; ssh, scp, and git are never wrapped. To add a server: one entry in `lib/remotes.nix` plus its `Host` block in `dots/ssh/config`.
 
 ## Hermes loops
 

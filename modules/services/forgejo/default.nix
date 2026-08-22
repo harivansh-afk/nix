@@ -758,13 +758,6 @@ in
         "https://oauth2:$GITHUB_TOKEN@github.com/$path"
     done
 
-    if [ ! -f /var/lib/forgejo/signing/id_ed25519 ]; then
-      mkdir -p /var/lib/forgejo/signing
-      chmod 700 /var/lib/forgejo/signing
-      ${pkgs.openssh}/bin/ssh-keygen -t ed25519 -N "" \
-        -C "forgejo@${rootDomain}" -f /var/lib/forgejo/signing/id_ed25519
-    fi
-
     export FORGEJO_WORK_DIR=/var/lib/forgejo
     export FORGEJO_CUSTOM=/var/lib/forgejo/custom
     CONFIG=/var/lib/forgejo/custom/conf/app.ini
@@ -923,6 +916,14 @@ in
   };
 
   systemd.services.forgejo.serviceConfig.ExecStartPre = lib.mkBefore [
+    (pkgs.writeShellScript "forgejo-signing-key" ''
+      if [ ! -f /var/lib/forgejo/signing/id_ed25519 ]; then
+        mkdir -p /var/lib/forgejo/signing
+        chmod 700 /var/lib/forgejo/signing
+        ${pkgs.openssh}/bin/ssh-keygen -t ed25519 -N "" \
+          -C "forgejo@${rootDomain}" -f /var/lib/forgejo/signing/id_ed25519
+      fi
+    '')
     normalizeForgejoMirrorSchedule.outPath
   ];
   systemd.services.forgejo.serviceConfig.LoadCredential = lib.mkAfter (

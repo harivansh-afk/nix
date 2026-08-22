@@ -29,15 +29,9 @@ sops-nix with age encryption derived from each host's ed25519 SSH key. Secret fi
 `.sops.yaml` recipient anchors are derived via `ssh-to-age`:
 
 - `admin_macbook` — Hari's macbook SSH pubkey, edits everything.
-- `admin_laptop_barrett` — Barrett's laptop SSH pubkey, edits only `secrets/hosts/spark/barrett-*`.
 - `host_spark` — Spark's `/etc/ssh/ssh_host_ed25519_key.pub`, decrypts at activation.
 
-Path-regex split:
-
-- `secrets/hosts/spark/barrett-[^/]+$` → `admin_macbook` + `admin_laptop_barrett` + `host_spark`. Used for secrets Barrett owns and rotates from his side (currently `barrett-forgejo-runner-token`).
-- `secrets/hosts/spark/[^/]+$` → `admin_macbook` + `host_spark`. Default for everything else.
-
-To add a Barrett-owned secret: drop the file at `secrets/hosts/spark/barrett-<name>`; the `barrett-` prefix routes it through the 3-recipient rule automatically. No `.sops.yaml` edit needed.
+`secrets/hosts/spark/[^/]+$` encrypts secrets for `admin_macbook` and `host_spark`.
 
 ## Conventions
 
@@ -112,7 +106,6 @@ hosts/
     hardware.nix       DGX Spark module + disko disk layout
     networking.nix     Wi-Fi (NetworkManager), Tailscale, firewall, zram
     users.nix          User accounts from users/ directory, SSH, sudo
-    barrett/           Barrett's forgejo runners + spark-build slice (user units via activation)
   ix/
     default.nix        The entire ix dev VM: root dotfiles, agents, nothing else
 modules/
@@ -122,7 +115,6 @@ modules/
     darwin.nix         nix-darwin adapter: primary user, live dots
   security/
     sops.nix           sops-nix setup, age key from SSH host key
-    user-isolation.nix Per-user cgroup memory caps for shared accounts on spark
   services/
     caddy.nix          Reverse proxy on loopback, loopbackVhost helper
     cloudflared.nix    Cloudflare tunnel to Caddy
@@ -150,7 +142,6 @@ scripts/
 users/
   default.nix          User registry
   rathi.nix            SSH keys + groups for rathi
-  barrett.nix          SSH keys + groups for barrett
 dots/                  Dotfile sources (nvim, karabiner, lazygit, agents/ instructions + skills, etc.)
 ```
 

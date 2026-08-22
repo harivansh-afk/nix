@@ -45,10 +45,9 @@ in
     description = "T3 Code server (loopback; reached over the desktop app's ssh tunnel)";
     wantedBy = [ "default.target" ];
     after = [ "network.target" ];
-    # systemd.user.services is global to every user manager on the box, and
-    # spark also runs the barrett user (hosts/spark/barrett): without this
-    # gate his instance raced ours for 127.0.0.1:3773 (observed 2026-08-19,
-    # EADDRINUSE crash loop). One server, one user, one port.
+    # systemd.user.services is global to every user manager on the box. Keep
+    # this server pinned to rathi so another user cannot race it for
+    # 127.0.0.1:3773.
     unitConfig.ConditionUser = "rathi";
     serviceConfig = {
       ExecStart = "${t3code}/bin/t3 serve --host 127.0.0.1 --port 3773 --base-dir %h/.t3";

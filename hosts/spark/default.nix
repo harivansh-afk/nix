@@ -14,7 +14,6 @@
     ../../system/packages.nix
     inputs.sops-nix.nixosModules.sops
     ../../modules/security/sops.nix
-    ../../modules/security/user-isolation.nix
     ../../modules/users/nixos.nix
     ../../modules/services/browser-use.nix
     ../../modules/services/caddy.nix
@@ -41,7 +40,6 @@
     ./hardware.nix
     ./networking.nix
     ./omp.nix
-    ./barrett
     ./users.nix
   ]
   ++ lib.optional (builtins.pathExists ./hardware-configuration.nix) ./hardware-configuration.nix;

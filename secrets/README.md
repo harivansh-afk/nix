@@ -15,7 +15,7 @@ docs; this file is the quick reference.
 - `hosts/<host>/<name>` - host-bound secrets, decrypted only on that host.
 
 Recipient routing lives in `.sops.yaml` (path regex per host / per user). See
-`AGENTS.md` "Secrets" for the recipient anchors and the `barrett-` prefix rule.
+`AGENTS.md` "Secrets" for the recipient anchors.
 
 ## Add a secret
 

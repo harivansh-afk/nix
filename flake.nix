@@ -46,7 +46,7 @@
     # VoiceInk dictation app, built from source on macbook (GPLv3). The
     # prebuilt cask is the paid path; building from source with `make local`
     # (ad-hoc signing, no Apple Developer account) is the free path. Pinned
-    # source only: it is an Xcode app, not a flake. See modules/apps/voiceink.nix.
+    # source only: it is an Xcode app, not a flake. See hosts/macbook/voiceink.nix.
     voiceink-src = {
       url = "github:Beingpax/VoiceInk";
       flake = false;
@@ -87,7 +87,7 @@
       url = "github:graham33/nixos-dgx-spark";
     };
 
-    # Pierre-themed Forgejo frontend (modules/services/forgejo). Hosted on
+    # Pierre-themed Forgejo frontend (hosts/spark/services/forgejo). Hosted on
     # this same Forgejo instance, so flake updates need read access to it.
     pierrejo = {
       url = "git+https://git.harivan.sh/harivansh-afk/pierrejo.git?ref=main";

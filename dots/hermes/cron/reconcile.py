@@ -15,7 +15,7 @@ next_run_at computation, normalization, and file locking are all first-party -
 nothing here reimplements hermes semantics, and the running gateway (which
 re-reads jobs.json every scheduler tick) picks changes up on its own.
 
-Manifest shape ($HERMES_CRON_MANIFEST, written by modules/services/hermes-loops.nix):
+Manifest shape ($HERMES_CRON_MANIFEST, written by hosts/spark/services/hermes-loops.nix):
 
   {
     "jobs": [

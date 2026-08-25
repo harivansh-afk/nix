@@ -11,7 +11,7 @@ knowledge base.
 | `kb_graph.py` | Read-only entity resolution and source lookup over Cognee's graph |
 | `ingest.py` | Legacy direct Cognee corpus ingestion utility |
 | `denylist.txt` | One denied path-segment per line |
-| `modules/services/kb-ingest.nix` | NixOS module providing `kb-search` and the vector indexer |
+| `hosts/spark/services/kb-ingest.nix` | NixOS module providing `kb-search` and the vector indexer |
 
 ## Active architecture
 

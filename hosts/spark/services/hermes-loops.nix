@@ -54,7 +54,7 @@ let
   financeDir = "/var/lib/kb/staging/finance";
   verdictDir = "${kbLoopsDir}/finance-anomaly-watch";
 
-  # Local brain (modules/services/inference.nix).
+  # Local brain (hosts/spark/services/inference.nix).
   brainUrl = "http://127.0.0.1:18080/v1/chat/completions";
   brainModel = "qwen3.6-35b-a3b";
 
@@ -86,23 +86,23 @@ let
     export PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers}
     export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
     export HOME="''${HOME:-${browserUseDir}}"
-    exec ${playwrightPython}/bin/python ${../../dots/browser-use/x_feed_scan.py}
+    exec ${playwrightPython}/bin/python ${../../../dots/browser-use/x_feed_scan.py}
   '';
 
   hnFeedScan = pkgs.writeShellScriptBin "hn-feed-scan" ''
-    exec ${scanPython}/bin/python ${../../dots/loops/hn_feed_scan.py}
+    exec ${scanPython}/bin/python ${../../../dots/loops/hn_feed_scan.py}
   '';
 
   depReleaseScan = pkgs.writeShellScriptBin "dep-release-scan" ''
     export LOOPS_DIR="''${LOOPS_DIR:-${stateDir}}"
-    exec ${scanPython}/bin/python ${../../dots/loops/dep_release_scan.py}
+    exec ${scanPython}/bin/python ${../../../dots/loops/dep_release_scan.py}
   '';
 
   # Local-only and sensitive: reads the staged finance notes, no network.
   financeAnomalyScan = pkgs.writeShellScriptBin "finance-anomaly-scan" ''
     export LOOPS_DIR="''${LOOPS_DIR:-${stateDir}}"
     export FINANCE_KB_DIR="''${FINANCE_KB_DIR:-${financeDir}}"
-    exec ${scanPython}/bin/python ${../../dots/loops/finance_anomaly_scan.py}
+    exec ${scanPython}/bin/python ${../../../dots/loops/finance_anomaly_scan.py}
   '';
 
   # browse-x-login: capture a logged-in X session as storage_state.json.
@@ -121,7 +121,7 @@ let
     export BROWSER_USE_STORAGE_STATE=${xStorageState}
     export HOME="''${HOME:-${browserUseDir}}"
     export BROWSER_USE_SETUP_LOGGING=false
-    ${browserUseVenv}/bin/python ${../../dots/browser-use/x_login.py}
+    ${browserUseVenv}/bin/python ${../../../dots/browser-use/x_login.py}
     chmod 0600 ${xStorageState} 2>/dev/null || true
   '';
 
@@ -198,7 +198,7 @@ in
       RemainAfterExit = true;
       User = user;
       WorkingDirectory = home;
-      ExecStart = "${hermesVenv}/bin/python ${../../dots/hermes/cron/reconcile.py}";
+      ExecStart = "${hermesVenv}/bin/python ${../../../dots/hermes/cron/reconcile.py}";
     };
   };
 
@@ -220,7 +220,7 @@ in
       Type = "oneshot";
       User = user;
       Group = group;
-      ExecStart = "${scanPython}/bin/python ${../../dots/loops/finance_judge.py}";
+      ExecStart = "${scanPython}/bin/python ${../../../dots/loops/finance_judge.py}";
       TimeoutStartSec = "600";
 
       NoNewPrivileges = true;

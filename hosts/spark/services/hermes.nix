@@ -37,7 +37,7 @@ let
   hermesHome = "${home}/.hermes";
 
   repoHermesDir = "${home}/Documents/Git/nix/dots/hermes";
-  agentInstructions = import ../../lib/agent-instructions.nix { inherit pkgs; };
+  agentInstructions = import ../../../lib/agent-instructions.nix { inherit pkgs; };
 
   toolsets = [
     "all"

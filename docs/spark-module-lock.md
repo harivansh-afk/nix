@@ -9,7 +9,7 @@ The lock is the practical boundary while NVIDIA's out-of-tree GPU modules remain
 Boot the candidate with a local console and the previous generation available. Before approving the PR, verify:
 
 1. `sysctl kernel.modules_disabled` returns `1`.
-2. `nvidia`, `nvidia_drm`, `nvidia_modeset`, `nvidia_uvm`, and `nvidia_peermem` are loaded.
+2. `nvidia`, `nvidia_drm`, `nvidia_modeset`, and `nvidia_uvm` are loaded. `nvidia_peermem` is deliberately absent: it needs MOFED's PeerDirect API, which this upstream-derived kernel does not carry, so its init returns EINVAL. GPUDirect RDMA on this driver uses the dma-buf path instead.
 3. CUDA, inference, ConnectX-7 Ethernet, RDMA, and GPUDirect pass.
 4. Wi-Fi, Tailscale, Podman bridge networking, Forgejo builds, and zram pass.
 5. Required filesystems and trusted peripherals work without a late `modprobe`.

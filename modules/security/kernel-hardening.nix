@@ -4,7 +4,6 @@
     kernelModules = [
       "br_netfilter"
       "ib_umad"
-      "nvidia_peermem"
       "nvme_fabrics"
       "nvme_tcp"
       "overlay"
@@ -28,6 +27,7 @@
       "fs.protected_fifos" = 2;
       "fs.protected_regular" = 2;
       "fs.suid_dumpable" = 0;
+      "kernel.apparmor_restrict_unprivileged_userns" = 0;
       "kernel.dmesg_restrict" = 1;
       "kernel.kptr_restrict" = 2;
       "kernel.unprivileged_bpf_disabled" = 1;

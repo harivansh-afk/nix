@@ -17,6 +17,10 @@
       "overlay"
       "rdma_cm"
       "veth"
+      "xt_addrtype"
+      "xt_comment"
+      "xt_multiport"
+      "xt_nat"
     ];
     kernelParams = [
       "hardened_usercopy=1"

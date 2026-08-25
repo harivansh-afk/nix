@@ -13,6 +13,7 @@
     ../../system/common.nix
     ../../system/packages.nix
     inputs.sops-nix.nixosModules.sops
+    ../../modules/security/kernel-hardening.nix
     ../../modules/security/sops.nix
     ../../modules/users/nixos.nix
     ../../modules/services/browser-use.nix
@@ -86,14 +87,6 @@
   };
 
   system.configurationRevision = self.rev or self.dirtyRev or null;
-
-  boot.specialFileSystems."/proc".options = [ "hidepid=invisible" ];
-
-  boot.kernel.sysctl = {
-    "kernel.yama.ptrace_scope" = 2;
-    "kernel.dmesg_restrict" = 1;
-    "kernel.kptr_restrict" = 2;
-  };
 
   system.stateVersion = "25.11";
 

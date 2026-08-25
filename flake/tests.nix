@@ -96,6 +96,30 @@
           && spark.users.users.root.openssh.authorizedKeys.keys == [ ]
         ) "spark: root must have no password or authorized ssh keys")
         (lib.assertMsg spark.security.sudo.wheelNeedsPassword "spark: wheel must authenticate before sudo")
+        (lib.assertMsg (
+          spark.security.apparmor.enable
+          && spark.security.audit.enable
+          && spark.security.auditd.enable
+          && spark.security.protectKernelImage
+        ) "spark: apparmor, audit, auditd, and kernel image protection must stay enabled")
+        (lib.assertMsg (
+          spark.boot.kexec.enable == false
+          && spark.boot.kernel.sysctl."kernel.unprivileged_bpf_disabled" == 1
+          && spark.boot.kernel.sysctl."dev.tty.ldisc_autoload" == 0
+          && spark.boot.kernel.sysctl."fs.suid_dumpable" == 0
+        ) "spark: kernel mutation and information-exposure controls drifted")
+        (lib.assertMsg (lib.all (parameter: lib.elem parameter spark.boot.kernelParams) [
+          "hardened_usercopy=1"
+          "init_on_alloc=1"
+          "mitigations=auto,nosmt"
+          "proc_mem.force_override=never"
+          "slab_nomerge"
+        ]) "spark: required kernel hardening parameters are missing")
+        (lib.assertMsg (
+          spark.systemd.sleep.settings.Sleep.AllowSuspend == false
+          && spark.systemd.sleep.settings.Sleep.AllowHibernation == false
+          && spark.systemd.services.systemd-coredump.enable == false
+        ) "spark: sleep states and core dumps must stay disabled")
       ];
     in
     {

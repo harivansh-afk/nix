@@ -31,6 +31,8 @@
       "mitigations=auto,nosmt"
       "page_alloc.shuffle=1"
       "panic=10"
+      "sbsa_gwdt.action=1"
+      "sbsa_gwdt.timeout=30"
       "proc_mem.force_override=never"
       "randomize_kstack_offset=on"
       "slab_nomerge"

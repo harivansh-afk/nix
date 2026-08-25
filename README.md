@@ -16,7 +16,7 @@ Everything is a single flake, declared with [flake-parts](https://github.com/her
 
 - `pr` - code review inside Neovim: PR list, file tree, review marks, CI status, `pr://` buffers
 
-**`modules/services/`**
+**`hosts/spark/services/`**
 
 - [Forgejo](https://git.harivan.sh) - my git
 - llama.cpp - local model inference
@@ -29,7 +29,7 @@ Everything is a single flake, declared with [flake-parts](https://github.com/her
 
 - [cozybox.nvim](https://git.harivan.sh/harivansh-afk/cozybox.nvim) is my custom palette for all my software
 
-**`packages.nix`**
+**`pkgs/sets.nix`**
 
 - one shared package set for both machines
 - only truly macOS-specific things stay on Homebrew, rest is nix
@@ -47,26 +47,23 @@ My NixOS workstation ( NVIDIA DGX Spark [GB10, aarch64-linux])
 
 ```
 flake.nix            entrypoint - inputs and outputs
-flake/               host assembly, devshell, args
-lib/                 host metadata, theme palette
-inventory/           typed host inventory via evalModules
-hosts/               per-host config
-  macbook/
-  spark/
-  ix/
+flake/               host assembly, packages, devshell, args (incl. the host records)
+lib/                 theme palette, remote registry, nvim plugin pinning
+hosts/               per-host config; everything single-host lives here
+  macbook/           darwin defaults, homebrew, launchd services, voiceink
+  spark/             NixOS base + services/ (forgejo, inference, whisper, hermes, kb-*, caddy, ...)
+  ix/                the throwaway dev VM template
 users/               multi-user definitions for spark
 dots/                app configs symlinked into XDG paths (live-editable)
   nvim/              the Neovim setup: pr, statusline
   ...                one directory per tool
-modules/             reusable modules
-  apps/              voiceink
-  security/          sops, user isolation
-  services/          forgejo, inference, whisper, hermes, kb-*, caddy, ...
+modules/             genuinely shared modules
+  common.nix         nix settings, overlays, the shared package set
+  security/          sops
   users/             shared dotfile and user setup
-system/              shared system-level config
-packages.nix         shared package sets (core, extras, darwin)
-scripts/             runtime helpers (ghpr, iosrun, theme, ...)
+pkgs/                derivations: package sets, leaf, jj-ix, packaged scripts
+scripts/             run-by-hand ops scripts (forgejo-mirror, CI smoke tests)
 secrets/             sops-encrypted secrets per host
 terraform/           declarative Cloudflare DNS via terranix
-assets/              readme artwork
+assets/              readme artwork, wallpapers
 ```

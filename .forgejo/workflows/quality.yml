@@ -25,6 +25,7 @@ jobs:
               - "justfile"
               - "dots/**"
               - "scripts/**"
+              - "pkgs/**"
               - ".forgejo/workflows/**"
 
   flake-check:

@@ -14,7 +14,7 @@ let
       );
     };
 
-  remotes = import ../lib/remotes.nix;
+  remotes = import ../../lib/remotes.nix;
 
   remotePackages = lib.mapAttrs (
     name: remote:

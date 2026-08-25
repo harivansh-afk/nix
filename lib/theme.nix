@@ -1,5 +1,5 @@
 # Theme palette and per-app renderers. Takes the user's home directory
-# instead of a home-manager config: every consumer (scripts/default.nix,
+# instead of a home-manager config: every consumer (pkgs/scripts/default.nix,
 # modules/users/*) passes the target user's homeDirectory explicitly, and
 # the XDG paths are derived from it (both platforms use the default
 # ~/.config and ~/.local/state locations).

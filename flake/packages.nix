@@ -1,5 +1,7 @@
-# Portable, config-carrying tool wrappers: `nix run .#<name>` (or, from any
-# machine, `nix run git+https://git.harivan.sh/harivansh-afk/nix.git#<name>`)
+# Flake packages: the portable scripts (ga, ghpr, the per-remote
+# connectors) plus portable, config-carrying tool wrappers. `nix run
+# .#<name>` (or, from any machine,
+# `nix run git+https://git.harivan.sh/harivansh-afk/nix.git#<name>`)
 # launches the tool with this repo's config, no host activation layer
 # required. `nix shell <flake>#tools` (or `nix profile install`) drops the
 # whole everyday CLI set into a fresh VM in one command.
@@ -8,6 +10,8 @@
   perSystem =
     { pkgs, ... }:
     let
+      portableScripts = (import ../pkgs/scripts/portable.nix { inherit lib pkgs; }).packages;
+
       nvimPackages = import ../lib/nvim-packages.nix { inherit lib pkgs; };
 
       # renderLazygit only emits colors; homeDirectory feeds the other
@@ -84,10 +88,10 @@
         '';
       };
 
-      # The everyday CLI set from packages.nix base list, with the wrapped
-      # tools above in place of the bare packages, plus the portable scripts
-      # (ga, ghpr, per-remote shortcuts) that are already flake packages
-      # individually.
+      # The everyday CLI set from the pkgs/sets.nix base list, with the
+      # wrapped tools above in place of the bare packages, plus the portable
+      # scripts (ga, ghpr, per-remote shortcuts) that are already flake
+      # packages individually.
       tools = pkgs.buildEnv {
         name = "portable-tools";
         paths = [
@@ -109,11 +113,11 @@
           ripgrep
           tea
         ])
-        ++ builtins.attrValues (import ../scripts/portable.nix { inherit lib pkgs; }).packages;
+        ++ builtins.attrValues portableScripts;
       };
     in
     {
-      packages = {
+      packages = portableScripts // {
         inherit
           btop
           lazygit

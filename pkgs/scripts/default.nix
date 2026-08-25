@@ -4,7 +4,7 @@
   pkgs,
 }:
 let
-  theme = import ../lib/theme.nix { inherit homeDirectory; };
+  theme = import ../../lib/theme.nix { inherit homeDirectory; };
 
   gitThemeIncludes = {
     dark = pkgs.writeText "git-theme-dark.inc" (theme.renderGitThemeInclude "dark");

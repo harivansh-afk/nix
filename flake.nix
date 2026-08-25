@@ -159,8 +159,7 @@
         ./flake/ix.nix
         ./flake/nixos.nix
         ./flake/omp.nix
-        ./flake/portable.nix
-        ./flake/scripts.nix
+        ./flake/packages.nix
         ./flake/tests.nix
         ./flake/user-config.nix
       ];

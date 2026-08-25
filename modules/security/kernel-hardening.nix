@@ -1,4 +1,12 @@
+{ lib, ... }:
 {
+  security.lsm = lib.mkForce [
+    "landlock"
+    "yama"
+    "apparmor"
+    "bpf"
+  ];
+
   boot = {
     kexec.enable = false;
     kernelModules = [

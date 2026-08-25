@@ -123,6 +123,12 @@
           && spark.systemd.sleep.settings.Sleep.AllowHibernation == false
           && spark.systemd.services.systemd-coredump.enable == false
         ) "spark: sleep states and core dumps must stay disabled")
+        (lib.assertMsg (
+          lib.elem "apparmor" spark.security.lsm
+          &&
+            lib.lists.findFirstIndex (m: m == "apparmor") 0 spark.security.lsm
+            < lib.lists.findFirstIndex (m: m == "bpf") (lib.length spark.security.lsm) spark.security.lsm
+        ) "spark: apparmor must precede bpf in the LSM list or audit config changes fail")
       ];
     in
     {

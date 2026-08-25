@@ -101,13 +101,6 @@
       restartUnits = [ "cloudflared-tunnel-64bce32c-6613-459c-bb68-262d73e1b78f.service" ];
     };
 
-    "delta.env" = {
-      owner = username;
-      group = "users";
-      mode = "0400";
-      restartUnits = [ "delta.service" ];
-    };
-
     # Photon (Spectrum) credentials for the Hermes gateway's iMessage channel:
     # PHOTON_PROJECT_ID / PHOTON_PROJECT_SECRET plus the PHOTON_ALLOWED_USERS
     # allowlist and PHOTON_HOME_CHANNEL (cron/notification DM target).

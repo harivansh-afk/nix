@@ -20,7 +20,7 @@ Both are declared in `inventory/nodes/` and assembled in `flake/hosts.nix` (darw
 
 Internet traffic hits Cloudflare edge (TLS termination), then cloudflared tunnel delivers plain HTTP to Caddy on 127.0.0.1:80. Caddy dispatches by Host header to backend services, each bound to 127.0.0.1 on their own port. No ACME, no public firewall ports for web traffic.
 
-Services: Forgejo (`git.harivan.sh`), Vaultwarden (`vault.harivan.sh`), Delta (`delta.harivan.sh`).
+Services: Forgejo (`git.harivan.sh`), Vaultwarden (`vault.harivan.sh`).
 
 ### Secrets
 
@@ -118,7 +118,6 @@ modules/
   services/
     caddy.nix          Reverse proxy on loopback, loopbackVhost helper
     cloudflared.nix    Cloudflare tunnel to Caddy
-    delta.nix          Delta todo app service
     inference.nix      Local llama.cpp inference server (GPU)
     mosh.nix           Mosh UDP server config
     whisper.nix        GPU speech-to-text server

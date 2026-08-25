@@ -129,6 +129,16 @@
             lib.lists.findFirstIndex (m: m == "apparmor") 0 spark.security.lsm
             < lib.lists.findFirstIndex (m: m == "bpf") (lib.length spark.security.lsm) spark.security.lsm
         ) "spark: apparmor must precede bpf in the LSM list or audit config changes fail")
+        (lib.assertMsg (
+          spark.boot.lanzaboote.enable
+          && !spark.boot.lanzaboote.allowUnsigned
+          && spark.boot.lanzaboote.configurationLimit == 4
+          && !spark.boot.loader.systemd-boot.enable
+          && !spark.boot.loader.systemd-boot.editor
+        ) "spark: lanzaboote must install signed UKIs with no boot editor")
+        (lib.assertMsg (
+          spark.boot.initrd.systemd.enable && spark.security.tpm2.enable
+        ) "spark: verified boot requires the systemd initrd and TPM2 userspace")
       ];
     in
     {

@@ -41,7 +41,7 @@ _: {
     # to reliably dump the clipboard image as PNG for the spark -> mac pull.
     # NEVER `omp` here: omp is installer-managed in ~/.local/bin (CLAUDE.md);
     # a brew omp shadows it on PATH (removed 2026-08-21 after exactly that).
-    # CLI tools otherwise live in nix (packages.nix), not brew.
+    # CLI tools otherwise live in nix (pkgs/sets.nix), not brew.
     brews = [
       "pngpaste"
     ];

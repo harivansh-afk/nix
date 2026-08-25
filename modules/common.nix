@@ -7,12 +7,12 @@
   ...
 }:
 let
-  packageSets = import ../packages.nix { inherit inputs lib pkgs; };
+  packageSets = import ../pkgs/sets.nix { inherit inputs lib pkgs; };
   homeDirectory = if hostConfig.isDarwin then "/Users/${username}" else "/home/${username}";
 in
 {
   # Shared with darwin's determinateNix.customSettings; see
-  # system/nix-settings.nix for why there are two consumers.
+  # modules/nix-settings.nix for why there are two consumers.
   nix.settings = import ./nix-settings.nix username;
 
   nixpkgs.config.allowUnfree = true;
@@ -35,13 +35,19 @@ in
   # install the package directly.
   environment.systemPackages =
     packageSets.core
+    ++ packageSets.extras
     ++ lib.optionals hostConfig.isLinux [
       pkgs.ghostty.terminfo
     ]
-    ++ lib.optionals hostConfig.isDarwin [
-      pkgs.ghostty-bin.terminfo
-      pkgs.nh
-    ];
+    ++ lib.optionals hostConfig.isDarwin (
+      packageSets.darwinExtras
+      ++ [
+        pkgs.ghostty-bin.terminfo
+        pkgs.nh
+      ]
+    );
+
+  fonts.packages = packageSets.fonts;
 
   environment.variables = {
     EDITOR = "nvim";

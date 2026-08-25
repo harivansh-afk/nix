@@ -31,7 +31,7 @@ let
             enable = true;
             # Same attrset spark uses for nix.settings; Determinate owns
             # nix.conf on darwin, so it is fed in through customSettings.
-            customSettings = import ../system/nix-settings.nix host.username;
+            customSettings = import ../modules/nix-settings.nix host.username;
           };
         }
       ];

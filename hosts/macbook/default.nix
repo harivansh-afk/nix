@@ -10,8 +10,7 @@
 }:
 {
   imports = [
-    ../../system/common.nix
-    ../../system/packages.nix
+    ../../modules/common.nix
     inputs.sops-nix.darwinModules.sops
     ../../modules/security/sops.nix
     ../../modules/users/darwin.nix

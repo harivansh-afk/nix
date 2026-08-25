@@ -11,8 +11,7 @@
     inputs.disko.nixosModules.disko
     inputs.dgx-spark.nixosModules.dgx-spark
     inputs.lanzaboote.nixosModules.lanzaboote
-    ../../system/common.nix
-    ../../system/packages.nix
+    ../../modules/common.nix
     inputs.sops-nix.nixosModules.sops
     ../../modules/security/kernel-hardening.nix
     ../../modules/security/sops.nix

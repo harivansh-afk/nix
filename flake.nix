@@ -9,7 +9,7 @@
     # Separate nixpkgs pin used only for nushell on darwin: the nushell test
     # suite hits EPERM failures in the darwin sandbox on newer revs, and a
     # dedicated pin avoids that without invalidating the spark NVIDIA kernel
-    # hash. Drop the pin (system/common.nix overlay goes with it) once
+    # hash. Drop the pin (modules/common.nix overlay goes with it) once
     # nushell builds clean from the main nixpkgs on darwin.
     nixpkgs-nushell.url = "github:NixOS/nixpkgs/01fbdeef22b76df85ea168fbfe1bfd9e63681b30";
 
@@ -27,13 +27,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # `gws` CLI, consumed in packages.nix extras.
+    # `gws` CLI, consumed in pkgs/sets.nix extras.
     googleworkspace-cli = {
       url = "github:googleworkspace/cli";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # OpenSpec CLI, consumed in packages.nix extras.
+    # OpenSpec CLI, consumed in pkgs/sets.nix extras.
     openspec = {
       url = "github:Fission-AI/OpenSpec";
     };

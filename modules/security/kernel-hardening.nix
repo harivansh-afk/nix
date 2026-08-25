@@ -30,6 +30,7 @@
       "iommu.strict=1"
       "mitigations=auto,nosmt"
       "page_alloc.shuffle=1"
+      "panic=10"
       "proc_mem.force_override=never"
       "randomize_kstack_offset=on"
       "slab_nomerge"

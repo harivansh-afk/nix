@@ -21,14 +21,10 @@
     ./services/cloudflared.nix
     ./services/forgejo
     ./services/inference.nix
-    ./services/hermes.nix
     ./services/knowledge-base.nix
     ./services/kb-ingest.nix
     ./services/kb-ingestion.nix
-    ./services/kb-graph.nix
     ./services/kb-graph-query.nix
-    ./services/kb-finance.nix
-    ./services/hermes-loops.nix
     ./services/mosh.nix
     ./services/muxd.nix
     ./services/whisper.nix

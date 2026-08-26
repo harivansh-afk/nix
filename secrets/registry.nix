@@ -79,17 +79,6 @@
       restartUnits = [ "NetworkManager-ensure-profiles.service" ];
     };
 
-    # SimpleFIN Bridge read-only access URL for the local-only finance KB
-    # namespace. KEY=value dotenv with SIMPLEFIN_ACCESS_URL=https://<creds>@... ;
-    # the URL carries HTTP Basic credentials inline. Read by the kb-finance
-    # SimpleFIN connector (hosts/spark/services/kb-finance.nix), which runs as rathi.
-    # The connector no-ops cleanly when this secret is absent.
-    "simplefin.env" = {
-      owner = username;
-      group = "users";
-      mode = "0400";
-    };
-
     "tailscale-ix-authkey" = {
       owner = "root";
       mode = "0400";
@@ -99,20 +88,6 @@
     "cloudflared.json" = {
       mode = "0444";
       restartUnits = [ "cloudflared-tunnel-64bce32c-6613-459c-bb68-262d73e1b78f.service" ];
-    };
-
-    # Photon (Spectrum) credentials for the Hermes gateway's iMessage channel:
-    # PHOTON_PROJECT_ID / PHOTON_PROJECT_SECRET plus the PHOTON_ALLOWED_USERS
-    # allowlist and PHOTON_HOME_CHANNEL (cron/notification DM target).
-    # KEY=value dotenv, loaded as the gateway unit's EnvironmentFile
-    # (hosts/spark/services/hermes.nix). Owned by rathi (the gateway runs as
-    # rathi). Fail-closed: only allowlisted numbers (or pairing-approved
-    # senders) can talk to the agent.
-    "hermes-photon.env" = {
-      owner = username;
-      group = "users";
-      mode = "0400";
-      restartUnits = [ "hermes-gateway.service" ];
     };
 
     "vaultwarden.env" = {

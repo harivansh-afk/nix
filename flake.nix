@@ -67,10 +67,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hermes-agent = {
-      url = "github:NousResearch/hermes-agent/v2026.7.20";
-    };
-
     # mux: native terminal multiplexer. This flake provides the muxd session
     # daemon package + a NixOS module; spark runs muxd so panes on the Mac app
     # can live here over QUIC. No nixpkgs follows: the flake pins a nixpkgs

@@ -18,8 +18,4 @@ in
     "core"
     "coding"
   ];
-  hermes = render "hermes-AGENTS.md" [
-    "core"
-    "hermes"
-  ];
 }

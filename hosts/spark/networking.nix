@@ -21,27 +21,53 @@ in
     dns = "systemd-resolved";
     ensureProfiles = {
       environmentFiles = [ config.sops.secrets."wifi.env".path ];
-      profiles.spark-wifi = {
-        connection = {
-          id = "spark-wifi";
-          type = "wifi";
-          autoconnect = true;
+      profiles = {
+        spark-wifi = {
+          connection = {
+            id = "spark-wifi";
+            type = "wifi";
+            autoconnect = true;
+            autoconnect-priority = 10;
+          };
+          wifi = {
+            band = "a";
+            mode = "infrastructure";
+            powersave = 2;
+            ssid = "$WIFI_SSID";
+          };
+          wifi-security = {
+            auth-alg = "open";
+            key-mgmt = "wpa-psk";
+            psk = "$WIFI_PSK";
+          };
+          ipv4.method = "auto";
+          ipv6 = {
+            addr-gen-mode = "stable-privacy";
+            method = "auto";
+          };
         };
-        wifi = {
-          bssid = "58:FB:96:A1:58:41";
-          mode = "infrastructure";
-          powersave = 2;
-          ssid = "$WIFI_SSID";
-        };
-        wifi-security = {
-          auth-alg = "open";
-          key-mgmt = "wpa-psk";
-          psk = "$WIFI_PSK";
-        };
-        ipv4.method = "auto";
-        ipv6 = {
-          addr-gen-mode = "stable-privacy";
-          method = "auto";
+        spark-wifi-fallback = {
+          connection = {
+            id = "spark-wifi-fallback";
+            type = "wifi";
+            autoconnect = true;
+            autoconnect-priority = 0;
+          };
+          wifi = {
+            mode = "infrastructure";
+            powersave = 2;
+            ssid = "$WIFI_SSID";
+          };
+          wifi-security = {
+            auth-alg = "open";
+            key-mgmt = "wpa-psk";
+            psk = "$WIFI_PSK";
+          };
+          ipv4.method = "auto";
+          ipv6 = {
+            addr-gen-mode = "stable-privacy";
+            method = "auto";
+          };
         };
       };
     };

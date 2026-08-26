@@ -124,6 +124,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     mkSymlink "${dotsRoot}/bin/macbook-open" "${homeDirectory}/.local/bin/macbook-open"
     mkSymlink "${dotsRoot}/xdg/macbook-open.desktop" "${homeDirectory}/.local/share/applications/macbook-open.desktop"
     mkSymlink "${dotsRoot}/xdg/mimeapps.list" "${configHome}/mimeapps.list"
+    mkSymlink "${dotsRoot}/hypr" "${configHome}/hypr"
   ''}
 
   # --- nvim: keep the config directory writable for vim.pack's lockfile,

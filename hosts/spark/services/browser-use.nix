@@ -56,7 +56,7 @@ let
     set -euo pipefail
     export PATH=${runtimeBins}:$PATH
 
-    install -m0644 ${./../../dots/browser-use/run_task.py} ${runner}
+    install -m0644 ${./../../../dots/browser-use/run_task.py} ${runner}
 
     if [ "$(cat ${stateDir}/.req-version 2>/dev/null || true)" != "${reqVersion}" ] || [ ! -x ${venv}/bin/python ]; then
       uv venv --clear --python ${python}/bin/python3.12 ${venv}

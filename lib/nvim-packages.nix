@@ -1,6 +1,6 @@
 # LSPs and tools the dots/nvim config expects on PATH. Shared between the
 # per-user package set (modules/users/user-config/packages.nix) and the
-# portable `nix run .#nvim` wrapper (flake/portable.nix).
+# portable `nix run .#nvim` wrapper (flake/packages.nix).
 { lib, pkgs }:
 (with pkgs; [
   bat

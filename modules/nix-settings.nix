@@ -1,7 +1,7 @@
 # The single definition of the nix.conf settings both hosts share.
 #
 # Two consumers, two mechanisms:
-# - spark (NixOS): system/common.nix sets these as `nix.settings`.
+# - spark (NixOS): modules/common.nix sets these as `nix.settings`.
 # - macbook (darwin): Determinate Nix owns /etc/nix/nix.conf, so
 #   flake/hosts.nix passes the same attrset as
 #   `determinateNix.customSettings` (per AGENTS.md, nix.settings is not

@@ -1,3 +1,7 @@
+# The host registry. Two machines do not need a typed inventory layer:
+# each record carries the facts the flake wiring consumes (kind, system,
+# username) plus the values derived from them. Everything else about a
+# host lives in hosts/<name>/.
 {
   self,
   inputs,
@@ -5,7 +9,41 @@
   ...
 }:
 let
-  hosts = import ../inventory { inherit lib; };
+  mkHost =
+    name:
+    {
+      kind,
+      system,
+      username,
+    }:
+    let
+      isDarwin = kind == "darwin";
+    in
+    {
+      inherit
+        isDarwin
+        kind
+        name
+        system
+        username
+        ;
+      hostname = name;
+      isLinux = !isDarwin;
+      homeDirectory = if isDarwin then "/Users/${username}" else "/home/${username}";
+    };
+
+  hosts = lib.mapAttrs mkHost {
+    macbook = {
+      kind = "darwin";
+      system = "aarch64-darwin";
+      username = "rathi";
+    };
+    spark = {
+      kind = "nixos";
+      system = "aarch64-linux";
+      username = "rathi";
+    };
+  };
 
   mkPkgs =
     system:

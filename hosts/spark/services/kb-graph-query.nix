@@ -18,7 +18,7 @@
 # contract are documented for agents in dots/hermes/TOOLS.md.
 
 let
-  kbDotsDir = "${../../dots/kb}";
+  kbDotsDir = "${../../../dots/kb}";
 
   # Same dedicated python as kb-search: psycopg2 + stdlib urllib only, NOT the
   # root-only cognee venv, so `kb-graph` runs unprivileged for rathi / Hermes.

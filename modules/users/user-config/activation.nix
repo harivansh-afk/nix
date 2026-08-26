@@ -465,7 +465,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   # with no rust-src component every std type is simply unknown: no hover, no
   # completion, no goto-definition into the standard library. `cargo build`
   # keeps working the whole time, so it reads as "the LSP is broken" rather
-  # than "a component is missing". packages.nix installs rust-analyzer and
+  # than "a component is missing". pkgs/sets.nix installs rust-analyzer and
   # rustup but a toolchain COMPONENT is not something nix declares, so this is
   # the step that keeps the pair usable.
   #

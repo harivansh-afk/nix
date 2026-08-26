@@ -8,11 +8,6 @@ note: |
   msg` evaluates to `true` iff the cond holds and emits `msg` otherwise; combine it
   with `assert` to both fail the eval and tell the operator what went wrong.
   REPO: Use `assert lib.assertMsg <cond> "<area>: <why>";`.
-# inventory/default.nix forces a list of invariants that each already carry
-# their own lib.assertMsg (the assertMsg throw fires before the outer assert
-# could fail opaquely); the bare assert there is only the forcing point.
-ignores:
-  - "inventory/default.nix"
 rule:
   kind: assert_expression
   not:

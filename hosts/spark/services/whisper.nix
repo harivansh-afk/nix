@@ -24,7 +24,7 @@ let
     set -euo pipefail
     export PATH=${runtimeBins}:$PATH
 
-    install -m0644 ${./../../dots/whisper/server.py} ${server}
+    install -m0644 ${./../../../dots/whisper/server.py} ${server}
 
     if [ "$(cat ${stateDir}/.req-version 2>/dev/null || true)" != "${reqVersion}" ] || [ ! -x ${venv}/bin/python ]; then
       uv venv --python ${python}/bin/python3.12 ${venv}

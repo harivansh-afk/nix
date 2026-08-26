@@ -5,7 +5,7 @@
 #   connectors (per source) --> /var/lib/kb/staging/<source>/*.md --> kb-ingest
 # Each connector is a small timer-driven job that pulls from an app API and
 # writes normalized markdown into the staging area. The existing kb-ingest
-# service (modules/services/kb-ingest.nix) then indexes staging + the local
+# service (hosts/spark/services/kb-ingest.nix) then indexes staging + the local
 # corpus into Cognee, incrementally (denylist + content-hash state still apply).
 #
 # Connectors run as rathi (they use the user's `gws` Google Workspace creds);
@@ -43,7 +43,7 @@ let
   # denylist in code; see that file and CLAUDE.md.
   downloadsConnector = pkgs.writeShellScript "kb-connector-downloads" ''
     set -uo pipefail
-    exec ${downloadsPython}/bin/python ${../../dots/kb/downloads_connector.py}
+    exec ${downloadsPython}/bin/python ${../../../dots/kb/downloads_connector.py}
   '';
 
   # gws needs the OAuth client (from the gws.env sops secret, exposed under the

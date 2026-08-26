@@ -11,7 +11,7 @@ let
   # jj-ix: the patched jj that speaks the ix forge's store backend
   # (pkgs/jj-ix). Toolchain comes from rust-overlay via mkRustBin so the
   # main package set needs no overlay.
-  jjIxPackage = pkgs.callPackage ./pkgs/jj-ix {
+  jjIxPackage = pkgs.callPackage ./jj-ix {
     rust-bin = inputs.rust-overlay.lib.mkRustBin { } pkgs;
     inherit (inputs) ix-src;
   };

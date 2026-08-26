@@ -37,7 +37,7 @@ let
   cacheHome = "${homeDirectory}/.cache";
 
   theme = import ../../lib/theme.nix { inherit homeDirectory; };
-  customScripts = import ../../scripts { inherit homeDirectory lib pkgs; };
+  customScripts = import ../../pkgs/scripts { inherit homeDirectory lib pkgs; };
   coreutilsBin = "${pkgs.coreutils}/bin";
 
   base = {

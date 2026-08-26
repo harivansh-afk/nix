@@ -9,7 +9,7 @@ Two hosts, one flake:
 | `macbook` | nix-darwin | aarch64-darwin | Dev workstation |
 | `spark` | NixOS | aarch64-linux | NVIDIA DGX Spark server |
 
-Both are declared in `inventory/nodes/` and assembled in `flake/hosts.nix` (darwin) and `flake/nixos.nix` (nixos). The `flake/args.nix` module wires shared args (`hosts`, `mkSpecialArgs`) consumed by both host builders; each host's primary `username` comes from its inventory record.
+Both are declared as host records in `flake/args.nix` and assembled in `flake/hosts.nix` (darwin) and `flake/nixos.nix` (nixos). The same args module wires the shared args (`hosts`, `mkSpecialArgs`) consumed by both host builders; each host's primary `username` comes from its record.
 
 ### Host topology
 
@@ -47,7 +47,7 @@ sops-nix with age encryption derived from each host's ed25519 SSH key. Secret fi
 - The `tmp/` directory is gitignored local scratch space. Nothing there is tracked or load-bearing.
 - Berkeley Mono is installed out-of-band. The flake only provides nerd-fonts symbol glyphs.
 - There is no home-manager. Per-user config is `modules/users/user-config.nix`: plain dotfiles in `dots/` symlinked into the home directory by an activation script that runs as the user. The repo owner's links point at the live checkout (`~/Documents/Git/nix/dots`), so dotfile edits apply without a rebuild; other users get the nix-store copy. Configs that need store paths (zsh plugins, git credential helpers, theme renders) are store-generated shims that defer to the live dots file.
-- Ghostty is installed via Homebrew cask, not nixpkgs. The flake owns its config files and its terminfo: `xterm-ghostty` is declarative in `system/common.nix` (`pkgs.ghostty-bin.terminfo` on darwin, `pkgs.ghostty.terminfo` on linux) so env-scrubbed shells resolve it without `TERMINFO`. Never fix terminfo imperatively via `tic` into `~/.terminfo`.
+- Ghostty is installed via Homebrew cask, not nixpkgs. The flake owns its config files and its terminfo: `xterm-ghostty` is declarative in `modules/common.nix` (`pkgs.ghostty-bin.terminfo` on darwin, `pkgs.ghostty.terminfo` on linux) so env-scrubbed shells resolve it without `TERMINFO`. Never fix terminfo imperatively via `tic` into `~/.terminfo`.
 - Karabiner config is a directory symlink to `dots/karabiner/` so Karabiner can write freely.
 - Cursor-agent, Claude, and Codex are curl-installed binaries. On NixOS they need nix-ld.
 - Devin config is seeded as a mutable copy since Devin rewrites it.
@@ -81,18 +81,24 @@ Hooks live in `dots/claude/hooks/` and are registered in `agents.nix`; omp reuse
 ```
 flake.nix              Inputs + flake-parts structure
 flake/
-  args.nix             Shared args: host records, builders
+  args.nix             Host records (the two machines) + shared builders (mkPkgs, mkSpecialArgs)
   devshell.nix         Dev tools + formatter
   hosts.nix            macbook darwin configuration
   nixos.nix            spark NixOS configuration
   ix.nix               nixosConfigurations.ix: the ix dev VM template
-  scripts.nix          packages.<system> output: portable scripts (ga, ghpr, connectors)
+  packages.nix         packages.<system> output: portable scripts (ga, ghpr, connectors) + tool wrappers
 lib/
   remotes.nix          Remote server registry: hosts for the per-remote connector commands
   theme.nix            Cozybox theme: colors, renderers for ghostty/fzf/lazygit/pure-prompt/bat/zsh-highlights
-system/
-  common.nix           Shared nix settings, overlays, base packages
-  packages.nix         Extra packages + fonts
+modules/
+  common.nix           Shared nix settings, overlays, the shared package set, fonts
+  nix-settings.nix     nix.conf settings both hosts share (nix.settings on spark, determinateNix.customSettings on darwin)
+  users/
+    user-config.nix    Shared per-user dotfile/symlink/package builder (no home-manager)
+    nixos.nix          NixOS adapter: every user in users/, owner gets live dots
+    darwin.nix         nix-darwin adapter: primary user, live dots
+  security/
+    sops.nix           sops-nix setup, age key from SSH host key
 hosts/
   macbook/
     default.nix        Facts + imports only (hostname, user, stateVersion)
@@ -101,52 +107,47 @@ hosts/
     homebrew.nix       Taps, formulae, casks (every cask on the machine is declared)
     services.nix       Every launchd unit (aerospace, sketchybar, limit.maxfiles); the only service manager
     startup-guard.nix  Enforces login-item allowlist, warns on undeclared launchd plists (daily + login + switch)
+    voiceink*.nix      VoiceInk built from source, cloud model, dictionary
   spark/
-    default.nix        Base NixOS config, nix-ld, kernel hardening
+    default.nix        Base NixOS config, nix-ld, verified boot
     hardware.nix       DGX Spark module + disko disk layout
+    kernel-hardening.nix  Running-kernel boundary: module lock, sysctls, LSM order
     networking.nix     Wi-Fi (NetworkManager), Tailscale, firewall, zram
     users.nix          User accounts from users/ directory, SSH, sudo
+    services/          Every spark service; single-host, so they live with the host
+      caddy.nix        Reverse proxy on loopback, loopbackVhost helper
+      cloudflared.nix  Cloudflare tunnel to Caddy
+      inference.nix    Local llama.cpp inference server (GPU)
+      mosh.nix         Mosh UDP server config
+      whisper.nix      GPU speech-to-text server
+      vaultwarden.nix  Vaultwarden password manager
+      website.nix      Static site for harivan.sh served via Caddy
+      forgejo/         Forgejo server, cozybox themes, mirror manifest, Actions runner
   ix/
     default.nix        The entire ix dev VM: root dotfiles, agents, nothing else
-modules/
-  users/
-    user-config.nix    Shared per-user dotfile/symlink/package builder (no home-manager)
-    nixos.nix          NixOS adapter: every user in users/, owner gets live dots
-    darwin.nix         nix-darwin adapter: primary user, live dots
-  security/
-    sops.nix           sops-nix setup, age key from SSH host key
-  services/
-    caddy.nix          Reverse proxy on loopback, loopbackVhost helper
-    cloudflared.nix    Cloudflare tunnel to Caddy
-    inference.nix      Local llama.cpp inference server (GPU)
-    mosh.nix           Mosh UDP server config
-    whisper.nix        GPU speech-to-text server
-    vaultwarden.nix    Vaultwarden password manager
-    website.nix        Static site for harivan.sh served via Caddy
-    forgejo/           Forgejo server, cozybox themes, mirror manifest, Actions runner
-inventory/
-  default.nix          Typed host inventory via evalModules
-  schema.nix           Host record schema
-  nodes/               Per-host records (macbook, spark)
 pkgs/
+  sets.nix             Shared package sets (core, extras, darwinExtras, fonts) for modules/common.nix
   leaf/                leaf (terminal markdown viewer) built from the pinned upstream tag
+  jj-ix/               Patched jj with the ix store backend
+  scripts/
+    default.nix        Full script set for user profiles (portable + theme, wallpaper-gen)
+    portable.nix       Home-independent scripts (ga, ghpr, iosrun, remote connectors)
+    bin/               Script sources wired by default.nix
+    lib/               Helpers (wallpaper-gen.py)
 terraform/
   cloudflare/          Declarative Cloudflare DNS for harivan.sh via terranix
 scripts/
-  default.nix          Full script set for user profiles (portable + theme, wallpaper-gen)
-  portable.nix         Home-independent scripts (ga, ghpr, iosrun, remote connectors)
-  bin/                 Script sources wired by default.nix
-  lib/                 Helpers (wallpaper-gen.py)
   forgejo-mirror/      Mirror reconciliation against /etc/forgejo-mirror/manifest.json (run on demand)
 users/
   default.nix          User registry
   rathi.nix            SSH keys + groups for rathi
+assets/                Readme artwork + the static wallpapers
 dots/                  Dotfile sources (nvim, karabiner, lazygit, agents/ instructions + skills, etc.)
 ```
 
 ## Theme system
 
-The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, lazygit, leaf, and the wallpaper, then pokes live nvim servers. Shell hooks in `dots/zsh/zshrc` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
+The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `pkgs/scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, lazygit, leaf, and the wallpaper, then pokes live nvim servers. Shell hooks in `dots/zsh/zshrc` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
 
 Accent constraint for agent-facing TUI roles (omp markdown headings/inline code/links): no yellow, green, or pink hues. Stay in the neutral-bright / Claude-coral (`#d97757` dark, `#af3a03` light) / muted-blue (`#5b84de` dark, `#4261a5` light) lane. Status colors (success/error/warning, diffs) keep their conventional hues.
 
@@ -160,15 +161,15 @@ Accent constraint for agent-facing TUI roles (omp markdown headings/inline code/
 
 ## Remote sessions
 
-Terminal sessions, panes, and persistence are the job of Mux.app and muxd (`~/Documents/Git/mux`); spark runs the daemon via `modules/services/muxd.nix`. Nothing in this repo multiplexes terminals.
+Terminal sessions, panes, and persistence are the job of Mux.app and muxd (`~/Documents/Git/mux`); spark runs the daemon via `hosts/spark/services/muxd.nix`. Nothing in this repo multiplexes terminals.
 
-The portable scripts (`ga`, `ghpr`, `iosrun`, the remote connectors) build without a home directory (`scripts/portable.nix`) and are exposed as flake `packages`, so hosts not managed by this flake can install them with `nix profile add git+https://git.harivan.sh/harivansh-afk/nix#<name>`.
+The portable scripts (`ga`, `ghpr`, `iosrun`, the remote connectors) build without a home directory (`pkgs/scripts/portable.nix`) and are exposed as flake `packages`, so hosts not managed by this flake can install them with `nix profile add git+https://git.harivan.sh/harivansh-afk/nix#<name>`.
 
-`lib/remotes.nix` maps a command name to `{ host }` per server. `scripts/portable.nix` renders each entry into a connector command (via `scripts/bin/remote.sh`) that lands in every user's profile: `spark`, `macbook`, or `dev6` opens a shell over `mosh <host>`; `--ssh` forces `ssh -t` for UDP-hostile networks. Transport config (hostnames, keys, ControlMaster) stays in the live-edited `dots/ssh/config`; ssh, scp, and git are never wrapped. To add a server: one entry in `lib/remotes.nix` plus its `Host` block in `dots/ssh/config`.
+`lib/remotes.nix` maps a command name to `{ host }` per server. `pkgs/scripts/portable.nix` renders each entry into a connector command (via `pkgs/scripts/bin/remote.sh`) that lands in every user's profile: `spark`, `macbook`, or `dev6` opens a shell over `mosh <host>`; `--ssh` forces `ssh -t` for UDP-hostile networks. Transport config (hostnames, keys, ControlMaster) stays in the live-edited `dots/ssh/config`; ssh, scp, and git are never wrapped. To add a server: one entry in `lib/remotes.nix` plus its `Host` block in `dots/ssh/config`.
 
 ## Hermes loops
 
-`modules/services/hermes-loops.nix` deliberately forbids autonomous internet-to-agent paths. The old X, Hacker News, dependency-release, and ix morning-brief cron jobs are removed so untrusted network content cannot be injected into the privileged Hermes prompt. The deterministic scanner binaries remain inert local building blocks for a future quarantined ingestion pipeline; they are not scheduled and do not write to the KB.
+`hosts/spark/services/hermes-loops.nix` deliberately forbids autonomous internet-to-agent paths. The old X, Hacker News, dependency-release, and ix morning-brief cron jobs are removed so untrusted network content cannot be injected into the privileged Hermes prompt. The deterministic scanner binaries remain inert local building blocks for a future quarantined ingestion pipeline; they are not scheduled and do not write to the KB.
 
 Finance splits judgment off because the raw data is local-only: the gateway masks `/var/lib/kb/staging/finance` via `InaccessiblePaths`, and hermes' cron scheduler runs in the gateway process, so no cron job - whatever model it is pinned to - can read it. `finance-anomaly-judge.service` (daily timer, outside that sandbox, `IPAddressDeny=any` + `IPAddressAllow=localhost` so it provably cannot exfiltrate) runs the scanner and has the local qwen brain (`127.0.0.1:18080`, `qwen3.6-35b-a3b`) write a judged briefing into `staging/loops/finance-anomaly-watch/` - the brain annotates and ranks but never drops a candidate (an earlier LLM skeptic dropped legitimate subscriptions as "normal spending", which is the one failure mode this loop must not have). The `finance-anomaly-watch` cron job then relays new verdicts with the `finance-relay` skill: hermes sees only the local model's result, never the raw transactions, and the pings still come from the agent like everything else.
 
@@ -185,7 +186,7 @@ Sandbox interplay to keep in mind: the finance relay executes inside `hermes-gat
 
 ## Adding a new service on spark
 
-1. Create `modules/services/<name>.nix`.
+1. Create `hosts/spark/services/<name>.nix`.
 2. Add the sops secret: create `secrets/hosts/spark/<name>.env`, encrypt with `just sops-edit`, and register it in `secrets/registry.nix`.
 3. Use `loopbackVhost` from caddy.nix: `services.caddy.virtualHosts."http://<domain>" = loopbackVhost <port>;`.
 4. Import the new module in `hosts/spark/default.nix`.
@@ -237,7 +238,7 @@ The VM has no secrets. sops-nix on spark derives its age key from the host ed255
 
 The legacy gitea-mirror Bun service has been removed. Forgejo's native mirror tables (`mirror` for inbound pulls, `push_mirror` for outbound pushes) are the source of truth. Two files drive the system:
 
-- `modules/services/forgejo/mirror-manifest.nix`: policy-only config (intervals, `owned_owner`, the small `no_mirror` set, the `actions_enabled_repos` allowlist). No repo inventory is checked into nix; the actual list of repos to mirror is discovered at runtime by querying forgejo's own database. Rendered to `/etc/forgejo-mirror/manifest.json` at activation.
+- `hosts/spark/services/forgejo/mirror-manifest.nix`: policy-only config (intervals, `owned_owner`, the small `no_mirror` set, the `actions_enabled_repos` allowlist). No repo inventory is checked into nix; the actual list of repos to mirror is discovered at runtime by querying forgejo's own database. Rendered to `/etc/forgejo-mirror/manifest.json` at activation.
 - `scripts/forgejo-mirror/reconcile.sh`: idempotent script that reads the manifest, deletes pull-mirror rows on push-mirror targets, creates missing push-mirrors with `use_ssh=true sync_on_commit=true interval=15m`, registers the forgejo-generated public key as a github deploy key, and flips `has_actions` per the allowlist. Run as root: `sudo FORGEJO_MIRROR_MANIFEST=/etc/forgejo-mirror/manifest.json bash scripts/forgejo-mirror/reconcile.sh [--dry-run]`.
 - `scripts/forgejo-mirror/github-ux.sh`: optional, applies the barrettruth full treatment (github description/homepage/has_* metadata, `.github/README.md` banner, redirect-pr workflow) to every push-mirror. Run on demand: `bash scripts/forgejo-mirror/github-ux.sh [--dry-run] [--only owner/name]`.
 
@@ -266,7 +267,7 @@ Two failure modes to know about. Git only consults the credential helper on a `4
 journalctl -u forgejo --since today | rg "Invalid username or token"
 ```
 
-Forgejo's own `[mirror] DEFAULT_INTERVAL` is `15m` and `[queue.mirror] MAX_WORKERS` is capped at `1`. The pre-start hook in `modules/services/forgejo/default.nix` uniformly jitters every pull-mirror's `next_update_unix` to `now + (repo_id % 900s)` on each forgejo start, so 100+ mirrors never bunch into a single hour the way they did under the old gitea-mirror scheduler.
+Forgejo's own `[mirror] DEFAULT_INTERVAL` is `15m` and `[queue.mirror] MAX_WORKERS` is capped at `1`. The pre-start hook in `hosts/spark/services/forgejo/default.nix` uniformly jitters every pull-mirror's `next_update_unix` to `now + (repo_id % 900s)` on each forgejo start, so 100+ mirrors never bunch into a single hour the way they did under the old gitea-mirror scheduler.
 
 ## indexable-inc/ix mirroring
 
@@ -274,7 +275,7 @@ Source of truth is the jj-native ix forge (RPC `https://forge.ix.dev:8447/rpc`, 
 
 ## Hermes agent
 
-Hermes is the local-brain life concierge (`modules/services/hermes.nix`). Optimize its setup for the fewest non-overlapping tools and recall surfaces; when two features overlap in role, cut one. Recall is exactly three surfaces: built-in `memory` (injected identity and preferences, write-only), `kb_search` (Hari's own data), and `session_search` (past conversations). A second agent-authored memory store (`holographic`, `fact_store`) overlaps the first two and confuses the model.
+Hermes is the local-brain life concierge (`hosts/spark/services/hermes.nix`). Optimize its setup for the fewest non-overlapping tools and recall surfaces; when two features overlap in role, cut one. Recall is exactly three surfaces: built-in `memory` (injected identity and preferences, write-only), `kb_search` (Hari's own data), and `session_search` (past conversations). A second agent-authored memory store (`holographic`, `fact_store`) overlaps the first two and confuses the model.
 
 ## Knowledge base and ingestion
 

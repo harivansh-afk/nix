@@ -10,14 +10,13 @@
 }:
 {
   imports = [
-    ../../system/common.nix
-    ../../system/packages.nix
+    ../../modules/common.nix
     inputs.sops-nix.darwinModules.sops
     ../../modules/security/sops.nix
     ../../modules/users/darwin.nix
-    ../../modules/apps/voiceink.nix
-    ../../modules/apps/voiceink-cloud-model.nix
-    ../../modules/apps/voiceink-dictionary.nix
+    ./voiceink.nix
+    ./voiceink-cloud-model.nix
+    ./voiceink-dictionary.nix
     ./apps.nix
     ./defaults.nix
     ./homebrew.nix

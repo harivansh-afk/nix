@@ -7,7 +7,7 @@
 # never touched: Raycast Beta (no cask exists; self-updates) and Docker.app
 # (adoption fails on macOS app-protection while it runs, and a forced
 # reinstall re-does the privileged helper; it self-updates). VoiceInk and
-# Mux.app are built from source (modules/apps/voiceink.nix, ~/Documents/Git/mux).
+# Mux.app are built from source (hosts/macbook/voiceink.nix, ~/Documents/Git/mux).
 _: {
   homebrew = {
     enable = true;
@@ -41,7 +41,7 @@ _: {
     # to reliably dump the clipboard image as PNG for the spark -> mac pull.
     # NEVER `omp` here: omp is installer-managed in ~/.local/bin (CLAUDE.md);
     # a brew omp shadows it on PATH (removed 2026-08-21 after exactly that).
-    # CLI tools otherwise live in nix (packages.nix), not brew.
+    # CLI tools otherwise live in nix (pkgs/sets.nix), not brew.
     brews = [
       "pngpaste"
     ];
@@ -75,7 +75,7 @@ _: {
       "visual-studio-code"
       "zed"
       # voiceink: built from source instead (free path); see
-      # modules/apps/voiceink.nix. The cask is the paid distribution.
+      # hosts/macbook/voiceink.nix. The cask is the paid distribution.
     ];
   };
 }

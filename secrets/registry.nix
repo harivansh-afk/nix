@@ -82,7 +82,7 @@
     # SimpleFIN Bridge read-only access URL for the local-only finance KB
     # namespace. KEY=value dotenv with SIMPLEFIN_ACCESS_URL=https://<creds>@... ;
     # the URL carries HTTP Basic credentials inline. Read by the kb-finance
-    # SimpleFIN connector (modules/services/kb-finance.nix), which runs as rathi.
+    # SimpleFIN connector (hosts/spark/services/kb-finance.nix), which runs as rathi.
     # The connector no-ops cleanly when this secret is absent.
     "simplefin.env" = {
       owner = username;
@@ -105,7 +105,7 @@
     # PHOTON_PROJECT_ID / PHOTON_PROJECT_SECRET plus the PHOTON_ALLOWED_USERS
     # allowlist and PHOTON_HOME_CHANNEL (cron/notification DM target).
     # KEY=value dotenv, loaded as the gateway unit's EnvironmentFile
-    # (modules/services/hermes.nix). Owned by rathi (the gateway runs as
+    # (hosts/spark/services/hermes.nix). Owned by rathi (the gateway runs as
     # rathi). Fail-closed: only allowlisted numbers (or pairing-approved
     # senders) can talk to the agent.
     "hermes-photon.env" = {

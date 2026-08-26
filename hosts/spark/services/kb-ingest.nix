@@ -23,7 +23,7 @@
 let
   # The dots/kb scripts, pulled from the nix store (reproducible, world-readable
   # so both the root ingest service and the rathi-run kb-search can exec them).
-  kbDotsDir = "${../../dots/kb}";
+  kbDotsDir = "${../../../dots/kb}";
 
   # Dedicated python for kb_vec.py (only needs psycopg2 + stdlib urllib). Avoids
   # the root-only cognee venv (/var/lib/cognee/venv is 0750), so kb-search works

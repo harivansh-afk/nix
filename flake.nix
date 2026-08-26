@@ -9,7 +9,7 @@
     # Separate nixpkgs pin used only for nushell on darwin: the nushell test
     # suite hits EPERM failures in the darwin sandbox on newer revs, and a
     # dedicated pin avoids that without invalidating the spark NVIDIA kernel
-    # hash. Drop the pin (system/common.nix overlay goes with it) once
+    # hash. Drop the pin (modules/common.nix overlay goes with it) once
     # nushell builds clean from the main nixpkgs on darwin.
     nixpkgs-nushell.url = "github:NixOS/nixpkgs/01fbdeef22b76df85ea168fbfe1bfd9e63681b30";
 
@@ -27,13 +27,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # `gws` CLI, consumed in packages.nix extras.
+    # `gws` CLI, consumed in pkgs/sets.nix extras.
     googleworkspace-cli = {
       url = "github:googleworkspace/cli";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # OpenSpec CLI, consumed in packages.nix extras.
+    # OpenSpec CLI, consumed in pkgs/sets.nix extras.
     openspec = {
       url = "github:Fission-AI/OpenSpec";
     };
@@ -46,7 +46,7 @@
     # VoiceInk dictation app, built from source on macbook (GPLv3). The
     # prebuilt cask is the paid path; building from source with `make local`
     # (ad-hoc signing, no Apple Developer account) is the free path. Pinned
-    # source only: it is an Xcode app, not a flake. See modules/apps/voiceink.nix.
+    # source only: it is an Xcode app, not a flake. See hosts/macbook/voiceink.nix.
     voiceink-src = {
       url = "github:Beingpax/VoiceInk";
       flake = false;
@@ -87,7 +87,7 @@
       url = "github:graham33/nixos-dgx-spark";
     };
 
-    # Pierre-themed Forgejo frontend (modules/services/forgejo). Hosted on
+    # Pierre-themed Forgejo frontend (hosts/spark/services/forgejo). Hosted on
     # this same Forgejo instance, so flake updates need read access to it.
     pierrejo = {
       url = "git+https://git.harivan.sh/harivansh-afk/pierrejo.git?ref=main";
@@ -159,8 +159,7 @@
         ./flake/ix.nix
         ./flake/nixos.nix
         ./flake/omp.nix
-        ./flake/portable.nix
-        ./flake/scripts.nix
+        ./flake/packages.nix
         ./flake/tests.nix
         ./flake/user-config.nix
       ];

@@ -1,35 +1,7 @@
 # scripts
 
-Runtime scripts for the flake. Two categories: scripts packaged into the
-environment via `default.nix`, and scripts run by hand.
-
-## Packaged scripts (wired)
-
-`default.nix` builds these with `pkgs.writeShellApplication` and exposes them as
-`commonPackages`. `modules/users/user-config.nix` adds them to each user's
-packages, so they land on `PATH` on every host. Sources live in `bin/`.
-
-| Command        | Source                | Purpose                                      |
-|----------------|-----------------------|----------------------------------------------|
-| `theme`        | `bin/theme.sh`        | Switch cozybox dark/light, relink theme assets |
-| `ga`           | `bin/ga.sh`           | Git add helper                               |
-| `ghpr`         | `bin/ghpr.sh`         | Open/create GitHub PR                        |
-| `iosrun`       | `bin/iosrun.sh`       | iOS simulator run helper                     |
-| `wallpaper-gen`| `bin/wallpaper-gen.sh`| Generate themed wallpapers (uses `lib/wallpaper-gen.py`) |
-
-Each entry in `lib/remotes.nix` additionally renders `bin/remote.sh` into a
-per-remote connector command (`spark`, `macbook`, `dev6`, `dev1`, `dev2`,
-`dev3`, `hil1`, `hil2`, `vin1`, `vin2`) that opens a shell on the remote over
-mosh (`--ssh` for ssh).
-
-`default.nix` also exports `themeAssetsText`, consumed by the theme-activation
-block in `modules/users/user-config/`.
-
-## Helpers (`lib/`)
-
-Not standalone commands. Referenced by other config:
-
-- `wallpaper-gen.py` - Python backing the `wallpaper-gen` command.
+Run-by-hand and CI helper scripts. Nothing here is packaged into a user
+environment; the packaged script builders live in `pkgs/scripts/`.
 
 ## Run-by-hand scripts (`forgejo-mirror/`)
 
@@ -40,8 +12,11 @@ Not wired into any package or unit. Run manually as documented in `AGENTS.md`:
 - `github-ux.sh` - apply GitHub-side metadata/banners to push-mirrors. Run on demand.
 - `avatar-backfill.sh` - backfill Forgejo mirror-owner org avatars from GitHub. Dry-run by default; use `--apply` to write through the Forgejo API.
 
-## Adding a packaged script
+## Repo tooling
 
-1. Drop the source in `bin/`.
-2. Add an `mkScript` entry to `commonPackages` (or `darwinPackages` /
-   `linuxPackages`) in `default.nix`.
+- `pr-smoke.sh` - smoke test for the nvim `pr` review tooling; runs as the
+  `pr` flake check.
+- `nvim-pack-sources.sh` - regenerate `dots/nvim/pack-sources.json` from the
+  local nvim-pack lock; run via `just nvim-pack-sources`.
+- `omp/claude-hooks-smoke.sh` - catch omp extension-API drift in the Claude
+  bridges after an omp version bump.

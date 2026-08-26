@@ -11,31 +11,30 @@
     inputs.disko.nixosModules.disko
     inputs.dgx-spark.nixosModules.dgx-spark
     inputs.lanzaboote.nixosModules.lanzaboote
-    ../../system/common.nix
-    ../../system/packages.nix
+    ../../modules/common.nix
     inputs.sops-nix.nixosModules.sops
-    ../../modules/security/kernel-hardening.nix
     ../../modules/security/sops.nix
     ../../modules/users/nixos.nix
-    ../../modules/services/browser-use.nix
-    ../../modules/services/caddy.nix
-    ../../modules/services/cloudflared.nix
-    ../../modules/services/forgejo
-    ../../modules/services/inference.nix
-    ../../modules/services/hermes.nix
-    ../../modules/services/knowledge-base.nix
-    ../../modules/services/kb-ingest.nix
-    ../../modules/services/kb-ingestion.nix
-    ../../modules/services/kb-graph.nix
-    ../../modules/services/kb-graph-query.nix
-    ../../modules/services/kb-finance.nix
-    ../../modules/services/hermes-loops.nix
-    ../../modules/services/mosh.nix
-    ../../modules/services/muxd.nix
-    ../../modules/services/whisper.nix
-    ../../modules/services/vaultwarden.nix
-    ../../modules/services/website-counter.nix
-    ../../modules/services/website.nix
+    ./kernel-hardening.nix
+    ./services/browser-use.nix
+    ./services/caddy.nix
+    ./services/cloudflared.nix
+    ./services/forgejo
+    ./services/inference.nix
+    ./services/hermes.nix
+    ./services/knowledge-base.nix
+    ./services/kb-ingest.nix
+    ./services/kb-ingestion.nix
+    ./services/kb-graph.nix
+    ./services/kb-graph-query.nix
+    ./services/kb-finance.nix
+    ./services/hermes-loops.nix
+    ./services/mosh.nix
+    ./services/muxd.nix
+    ./services/whisper.nix
+    ./services/vaultwarden.nix
+    ./services/website-counter.nix
+    ./services/website.nix
     ./hardware.nix
     ./networking.nix
     ./omp.nix

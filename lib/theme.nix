@@ -1,5 +1,5 @@
 # Theme palette and per-app renderers. Takes the user's home directory
-# instead of a home-manager config: every consumer (scripts/default.nix,
+# instead of a home-manager config: every consumer (pkgs/scripts/default.nix,
 # modules/users/*) passes the target user's homeDirectory explicitly, and
 # the XDG paths are derived from it (both platforms use the default
 # ~/.config and ~/.local/state locations).
@@ -74,8 +74,8 @@ let
     dark = "${homeDirectory}/Pictures/Screensavers/wallpaper-dark.png";
     light = "${homeDirectory}/Pictures/Screensavers/wallpaper-light.png";
     current = "${homeDirectory}/Pictures/Screensavers/wallpaper.png";
-    staticDark = ./wallpapers/topography-dark.png;
-    staticLight = ./wallpapers/topography-light.png;
+    staticDark = ../assets/wallpapers/topography-dark.png;
+    staticLight = ../assets/wallpapers/topography-light.png;
     generation = wallpaperGeneration;
   };
   paths = {

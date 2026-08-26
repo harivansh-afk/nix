@@ -102,6 +102,7 @@ let
         ;
       inherit (apps)
         btopConf
+        btopThemes
         fzfThemes
         ghosttyTerminfo
         ghosttyThemes

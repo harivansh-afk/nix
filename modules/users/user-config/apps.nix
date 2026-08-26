@@ -23,12 +23,17 @@ in
   # build for, so baking the eval-time hostname in labels every node with
   # the build host's name.
   btopConf = pkgs.writeText "btop.conf" ''
-    color_theme = "ayu"
+    color_theme = "cozybox-current"
     custom_cpu_name = "@HOSTNAME@"
     rounded_corners = False
     theme_background = False
     vim_keys = True
   '';
+
+  btopThemes = {
+    dark = pkgs.writeText "btop-cozybox-dark.theme" (theme.renderBtop "dark");
+    light = pkgs.writeText "btop-cozybox-light.theme" (theme.renderBtop "light");
+  };
 
   fzfThemes = {
     dark = pkgs.writeText "fzf-cozybox-dark" (theme.renderFzf "dark");

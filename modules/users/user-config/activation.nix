@@ -22,6 +22,7 @@
   gitCredentialsInc,
   gitDeltaThemesInc,
   btopConf,
+  btopThemes,
   fzfThemes,
   sketchybarThemes,
   ghosttyTerminfo,
@@ -81,7 +82,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${configHome}/graphite" \
     "${configHome}/npm" \
     "${configHome}/python" \
-    "${configHome}/btop" \
+    "${theme.paths.btopThemesDir}" \
     "${configHome}/devin" \
     "${configHome}/gcloud/configurations" \
     "${configHome}/tea" \
@@ -169,6 +170,8 @@ pkgs.writeShellScript "user-config-${name}" ''
   rm -f "${configHome}/btop/btop.conf"
   ${pkgs.gnused}/bin/sed "s/@HOSTNAME@/$(uname -n)/" "${btopConf}" \
     > "${configHome}/btop/btop.conf"
+  mkSymlink "${btopThemes.dark}" "${theme.paths.btopThemesDir}/cozybox-dark.theme"
+  mkSymlink "${btopThemes.light}" "${theme.paths.btopThemesDir}/cozybox-light.theme"
   mkSymlink "${dotsRoot}/k9s/views.yaml" "${configHome}/k9s/views.yaml"
   mkSymlink "${dotsRoot}/direnv/direnv.toml" "${configHome}/direnv/direnv.toml"
   mkSymlink "${pkgs.nix-direnv}/share/nix-direnv/direnvrc" "${configHome}/direnv/lib/nix-direnv.sh"
@@ -358,6 +361,7 @@ pkgs.writeShellScript "user-config-${name}" ''
            "${theme.paths.ghosttyDir}" \
            "${theme.paths.lazygitDir}" \
            "${theme.paths.leafThemesDir}" \
+           "${theme.paths.btopThemesDir}" \
            "${theme.paths.gitDir}" \
            "${theme.wallpapers.dir}"
 
@@ -376,6 +380,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   ln -sfn "$THEME_LAZYGIT_TARGET" "${theme.paths.lazygitCurrentFile}"
   ln -sfn "$THEME_GIT_THEME_TARGET" "${theme.paths.gitThemeCurrentFile}"
   ln -sfn "$THEME_LEAF_TARGET" "${theme.paths.leafCurrentFile}"
+  ln -sfn "$THEME_BTOP_TARGET" "${theme.paths.btopCurrentFile}"
 
   if [ ! -f "${theme.wallpapers.dark}" ]; then
     cp "${theme.wallpapers.staticDark}" "${theme.wallpapers.dark}"

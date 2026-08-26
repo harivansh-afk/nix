@@ -94,6 +94,8 @@ let
     leafDir = "${configHome}/leaf";
     leafThemesDir = "${configHome}/leaf/themes";
     leafCurrentFile = "${configHome}/leaf/themes/current.toml";
+    btopThemesDir = "${configHome}/btop/themes";
+    btopCurrentFile = "${configHome}/btop/themes/cozybox-current.theme";
   };
 
   themes = {
@@ -843,6 +845,86 @@ let
       alert_caution = "${c.red}"
     '';
 
+  # btop theme file. main_bg stays empty so btop paints on the terminal
+  # background (btop.conf has theme_background off). btop reads the theme
+  # once at startup and has no reload signal, so a mode toggle shows up in
+  # the next btop, not the running one.
+  renderBtop =
+    mode:
+    let
+      t = themes.${mode};
+      c =
+        if mode == "light" then
+          {
+            accent = "#b57614";
+            box = "#928374";
+            inactive = "#a89984";
+            red = "#c5524a";
+            orange = "#af3a03";
+            yellow = "#b57614";
+            green = "#427b58";
+            aqua = "#689d6a";
+            blue = "#076678";
+          }
+        else
+          {
+            accent = sharedPalette.yellow;
+            box = "#504945";
+            inactive = "#665c54";
+            orange = "#d65d0e";
+            inherit (sharedPalette)
+              red
+              yellow
+              green
+              aqua
+              blue
+              ;
+          };
+    in
+    ''
+      theme[main_bg]=""
+      theme[main_fg]="${t.foreground}"
+      theme[title]="${t.foreground}"
+      theme[hi_fg]="${c.accent}"
+      theme[selected_bg]="${t.selectionBackground}"
+      theme[selected_fg]="${t.purple}"
+      theme[inactive_fg]="${c.inactive}"
+      theme[graph_text]="${t.mutedText}"
+      theme[proc_misc]="${c.green}"
+      theme[cpu_box]="${c.box}"
+      theme[mem_box]="${c.box}"
+      theme[net_box]="${c.box}"
+      theme[proc_box]="${c.box}"
+      theme[div_line]="${c.box}"
+      theme[temp_start]="${c.green}"
+      theme[temp_mid]="${c.yellow}"
+      theme[temp_end]="${c.red}"
+      theme[cpu_start]="${c.green}"
+      theme[cpu_mid]="${c.yellow}"
+      theme[cpu_end]="${c.red}"
+      theme[free_start]="${c.red}"
+      theme[free_mid]="${c.yellow}"
+      theme[free_end]="${c.green}"
+      theme[cached_start]="${c.blue}"
+      theme[cached_mid]="${c.aqua}"
+      theme[cached_end]="${c.green}"
+      theme[available_start]="${c.red}"
+      theme[available_mid]="${c.orange}"
+      theme[available_end]="${c.yellow}"
+      theme[used_start]="${c.green}"
+      theme[used_mid]="${c.orange}"
+      theme[used_end]="${c.red}"
+      theme[download_start]="${c.green}"
+      theme[download_mid]="${c.aqua}"
+      theme[download_end]="${c.blue}"
+      theme[upload_start]="${c.red}"
+      theme[upload_mid]="${c.orange}"
+      theme[upload_end]="${c.yellow}"
+      theme[process_start]="${c.green}"
+      theme[process_mid]="${c.orange}"
+      theme[process_end]="${c.red}"
+    '';
+
   # Shell fragment sourced by the sketchybar rc and plugins. Sketchybar wants
   # 0xAARRGGBB colors; the accent stays on the cozybox cream/yellow.
   renderSketchybar =
@@ -932,6 +1014,7 @@ in
     deltaTheme
     ompTheme
     paths
+    renderBtop
     renderFzf
     renderGitThemeInclude
     renderGhostty

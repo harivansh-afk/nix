@@ -1012,11 +1012,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1787786534,
-        "narHash": "sha256-IIsREuAoevIpyWzOU4VBoCt4Sh5iJ08NhQFrbBRlGcs=",
+        "lastModified": 1787788170,
+        "narHash": "sha256-2YV0APd7NcVQFQMILT5b496j6ZskzqAOABTrUq5XEHg=",
         "ref": "main",
-        "rev": "823b9758eb4ed2df0bd3ba578b9805820c10c0b3",
-        "revCount": 47,
+        "rev": "d172f134fb142e4ad6d5c604a3fedefbc84ad4ff",
+        "revCount": 48,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/pierrejo.git"
       },

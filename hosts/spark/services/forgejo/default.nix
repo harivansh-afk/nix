@@ -911,6 +911,7 @@ in
     after = [ "pierre-ssr.service" ];
     wants = [ "pierre-ssr.service" ];
     serviceConfig.Environment = [
+      "PIERRE_FILE_TREE=true"
       "PIERRE_SSR_SOCKET=${config.services.pierre-ssr.socketPath}"
     ];
   };

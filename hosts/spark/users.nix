@@ -67,7 +67,7 @@ in
     openFirewall = false;
     settings = {
       AllowAgentForwarding = false;
-      AllowTcpForwarding = false;
+      AllowTcpForwarding = true;
       AllowUsers = enabledUsers ++ lib.optionals config.services.forgejo.enable gitSshOrigins;
       AuthenticationMethods = "publickey";
       GatewayPorts = "no";

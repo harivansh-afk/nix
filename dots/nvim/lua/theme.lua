@@ -125,7 +125,22 @@ function M.apply(mode)
 
   if vim.o.background ~= next_mode then vim.o.background = next_mode end
 
+  -- nvim-web-devicons picks its dark/light colour table when it is first
+  -- required and only swaps on OptionSet, which does not fire for the
+  -- background change during startup: without this, fzf-lua and canola ship
+  -- the dark-variant icon colours (#DDDDDD-style near-white) on a light
+  -- background. Refresh before the colorscheme so nonicons' ColorScheme hook
+  -- re-applies its glyphs over the fresh tables.
+  if package.loaded["nvim-web-devicons"] then pcall(require("nvim-web-devicons").refresh) end
+
   if vim.g.cozybox_theme_mode ~= next_mode or vim.g.colors_name ~= next_scheme then vim.cmd.colorscheme(next_scheme) end
+
+  -- fzf-lua caches its own icon table keyed only on background, so a
+  -- refreshed devicons set is never re-read; drop the cache after nonicons'
+  -- scheduled re-override so the next picker rebuilds it.
+  vim.schedule(function()
+    if package.loaded["fzf-lua.devicons"] then pcall(require("fzf-lua.devicons").unload) end
+  end)
 
   vim.g.cozybox_theme_mode = next_mode
   apply_terminal_palette(next_mode)

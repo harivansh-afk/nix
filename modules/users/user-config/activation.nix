@@ -117,7 +117,8 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${dotsRoot}/ssh/config" "${homeDirectory}/.ssh/config"
 
   # --- bin: standalone helper scripts ---
-  mkSymlink "${dotsRoot}/bin/pasteimg" "${homeDirectory}/.local/bin/pasteimg"
+  # pasteimg was folded into the wl-paste shim; clear the stale link.
+  rm -f "${homeDirectory}/.local/bin/pasteimg"
   ${lib.optionalString (!isDarwin) ''
     mkdir -p "${homeDirectory}/.local/share/applications"
     mkSymlink "${dotsRoot}/bin/open" "${homeDirectory}/.local/bin/open"

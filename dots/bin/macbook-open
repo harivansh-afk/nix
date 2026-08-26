@@ -3,7 +3,7 @@
 # The xdg handler side of the house: macbook-open.desktop declares this as the
 # handler command and ~/.config/mimeapps.list (dots/xdg/mimeapps.list) routes
 # browserable mimetypes to it, so xdg-open - and everything that shells out to
-# it - lands on the Mac. Mirror of pasteimg: one SSH call over Tailscale, no
+# it - lands on the Mac. Mirror of the clipboard shims: one SSH call over Tailscale, no
 # daemon, dials out itself so it works from mosh sessions too. Linked at
 # ~/.local/bin/macbook-open on Linux hosts.
 #

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # wl-paste - clipboard shim for headless spark. Answers the wl-clipboard CLI
-# by proxying to the Mac's pasteboard over SSH, the same transport pasteimg
-# uses (one call, no daemon, ControlMaster makes repeats cheap).
+# by proxying to the Mac's pasteboard over SSH: one call, no daemon,
+# ControlMaster makes repeats cheap. The xclip shim delegates its image
+# fetches here, so this file is the one place the extraction lives.
 #
 # Why: Claude Code and other TUIs read clipboard images by running
 # `wl-paste -l` then `wl-paste --type image/png` on the machine they run on.
@@ -56,9 +57,42 @@ if $list; then
   exit 0
 fi
 
+# Image extraction, run in the Mac shell. Streams PNG bytes to stdout;
+# diagnostics go to stderr. pngpaste first (fast, writes PNG directly),
+# then osascript across common clipboard flavors with sips converting
+# the result to PNG. Single quotes are the point: every expansion below
+# belongs to the remote shell.
+# shellcheck disable=SC2016
+remote='
+set -u
+out="$(mktemp -t clipimg).png"
+cleanup() { rm -f "$out" "${src:-}"; }
+trap cleanup EXIT
+
+if command -v pngpaste >/dev/null 2>&1; then
+  if pngpaste "$out" >/dev/null 2>&1 && [ -s "$out" ]; then
+    cat "$out"; exit 0
+  fi
+fi
+
+src="$(mktemp -t clipimg)"
+for flavor in "«class PNGf»" "TIFF picture" "GIF picture" "JPEG picture"; do
+  if osascript -e "set f to (open for access POSIX file \"$src\" with write permission)" \
+    -e "write (the clipboard as $flavor) to f" \
+    -e "close access f" >/dev/null 2>&1 && [ -s "$src" ]; then
+    if sips -s format png "$src" --out "$out" >/dev/null 2>&1 && [ -s "$out" ]; then
+      cat "$out"; exit 0
+    fi
+  fi
+  : >"$src"
+done
+
+exit 3
+'
+
 case "$mime" in
 image/*)
-  exec pasteimg -
+  exec ssh -n -o BatchMode=yes -o ConnectTimeout=8 "$mac" "$remote"
   ;;
 "" | text/* | TEXT | STRING | UTF8_STRING)
   exec ssh -n -o BatchMode=yes -o ConnectTimeout=8 "$mac" pbpaste

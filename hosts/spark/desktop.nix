@@ -22,7 +22,7 @@
   ];
 
   environment.systemPackages = [
-    pkgs.firefox
+    pkgs.firefox-bin
     pkgs.ghostty
   ];
 

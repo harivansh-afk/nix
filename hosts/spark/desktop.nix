@@ -18,8 +18,24 @@
 
   boot.kernelModules = [
     "hid_generic"
+    "uinput"
     "usbhid"
   ];
+
+  services.keyd = {
+    enable = true;
+    keyboards.default = {
+      ids = [ "*" ];
+      settings.main = {
+        capslock = "overload(control, esc)";
+        esc = "grave";
+        leftalt = "leftmeta";
+        leftmeta = "leftalt";
+        rightalt = "rightmeta";
+        rightmeta = "rightalt";
+      };
+    };
+  };
 
   environment.systemPackages = [
     pkgs.firefox-bin

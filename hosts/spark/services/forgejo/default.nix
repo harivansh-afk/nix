@@ -657,6 +657,7 @@ let
   pierreForgejo = inputs.pierrejo.lib.mkPierreForgejo { inherit pkgs; };
   forgejoWeb = import ./web.nix {
     inherit
+      forgejoPackage
       lib
       pierreForgejo
       pkgs
@@ -1032,7 +1033,9 @@ in
     "d /var/lib/forgejo/custom/templates/mail/auth 0750 git git -"
     "L+ /var/lib/forgejo/custom/templates/custom/header.tmpl - - - - ${forgejoWeb.templates}/custom/header.tmpl"
     "L+ /var/lib/forgejo/custom/templates/custom/footer.tmpl - - - - ${forgejoWeb.templates}/custom/footer.tmpl"
+    "L+ /var/lib/forgejo/custom/templates/repo/commit_header.tmpl - - - - ${forgejoWeb.templates}/repo/commit_header.tmpl"
     "L+ /var/lib/forgejo/custom/templates/repo/diff/box.tmpl - - - - ${pierreForgejo.templates}/repo/diff/box.tmpl"
+    "L+ /var/lib/forgejo/custom/templates/repo/shabox_badge.tmpl - - - - ${forgejoWeb.templates}/repo/shabox_badge.tmpl"
     "L+ /var/lib/forgejo/custom/templates/repo/view_file.tmpl - - - - ${forgejoWeb.templates}/repo/view_file.tmpl"
     "L+ /var/lib/forgejo/custom/templates/mail/auth/activate.tmpl - - - - ${forgejoMailActivateTmpl}"
     "L+ /var/lib/forgejo/custom/templates/mail/auth/reset_passwd.tmpl - - - - ${forgejoMailResetPasswdTmpl}"

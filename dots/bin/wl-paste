@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# wl-paste - clipboard shim for headless spark. Answers the wl-clipboard CLI
+# by proxying to the Mac's pasteboard over SSH, the same transport pasteimg
+# uses (one call, no daemon, ControlMaster makes repeats cheap).
+#
+# Why: Claude Code and other TUIs read clipboard images by running
+# `wl-paste -l` then `wl-paste --type image/png` on the machine they run on.
+# On spark that clipboard does not exist; the one that matters is the Mac's.
+# With this shim first in PATH those calls come back with the Mac clipboard,
+# so image paste works inside remote sessions. Delete it when Claude Code
+# ships the Kitty clipboard protocol (OSC 5522): mux already serves that
+# end to end and does it with a permission prompt, which this bypasses.
+#
+# Supported calls (the shapes Claude Code uses, plus text for convenience):
+#   wl-paste -l | --list-types             print available MIME types
+#   wl-paste [--no-newline] [-t|--type MIME]   print contents (image -> PNG)
+# The primary selection does not exist here and fails.
+#
+# Env:
+#   PASTEIMG_HOST   ssh host/alias of the Mac (default: macbook)
+#
+# Exit codes: 0 ok, 1 nothing to serve / unsupported request.
+set -euo pipefail
+
+mac="${PASTEIMG_HOST:-macbook}"
+
+list=false
+mime=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+  -l | --list-types) list=true ;;
+  -t | --type)
+    mime="${2:-}"
+    shift
+    ;;
+  --type=*) mime="${1#--type=}" ;;
+  -p | --primary) exit 1 ;;
+  -s | --seat) shift ;;
+  *) ;;
+  esac
+  shift
+done
+
+# One remote call reports what the pasteboard can serve. `clipboard info`
+# lists flavor classes without transferring data, so listing stays cheap;
+# every image flavor is advertised as image/png because the fetch path
+# (pasteimg) always converts to PNG.
+if $list; then
+  out="$(ssh -n -o BatchMode=yes -o ConnectTimeout=8 "$mac" '
+    osascript -e "clipboard info" 2>/dev/null | grep -qE "PNGf|TIFF|JPEG|GIF" && echo image/png
+    [ -n "$(pbpaste 2>/dev/null | head -c 1)" ] && echo text/plain
+    true
+  ')"
+  [ -n "$out" ] || exit 1
+  printf '%s\n' "$out"
+  exit 0
+fi
+
+case "$mime" in
+image/*)
+  exec pasteimg -
+  ;;
+"" | text/* | TEXT | STRING | UTF8_STRING)
+  exec ssh -n -o BatchMode=yes -o ConnectTimeout=8 "$mac" pbpaste
+  ;;
+*)
+  exit 1
+  ;;
+esac

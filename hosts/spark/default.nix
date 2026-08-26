@@ -32,6 +32,7 @@
     ./services/website-counter.nix
     ./services/website.nix
     ./hardware.nix
+    ./desktop.nix
     ./networking.nix
     ./omp.nix
     ./users.nix

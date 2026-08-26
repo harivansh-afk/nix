@@ -31,8 +31,9 @@ Host spark-lan
   ServerAliveInterval 60
   ServerAliveCountMax 3
 
-# Reverse reach from spark -> mac over Tailscale, used by `pasteimg` to pull
-# the Mac clipboard image. Harmless on the Mac itself (never dialed there).
+# Reverse reach from spark -> mac over Tailscale, used by the clipboard
+# shims (dots/bin/wl-paste, dots/bin/xclip) to serve the Mac clipboard.
+# Harmless on the Mac itself (never dialed there).
 Host macbook
   HostName 100.96.2.106
   User rathi

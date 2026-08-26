@@ -37,7 +37,7 @@ _: {
       }
     ];
 
-    # CLI formulae. pngpaste is used by the `pasteimg` helper (dots/bin/pasteimg)
+    # CLI formulae. pngpaste is used by the clipboard shims (dots/bin/wl-paste)
     # to reliably dump the clipboard image as PNG for the spark -> mac pull.
     # NEVER `omp` here: omp is installer-managed in ~/.local/bin (CLAUDE.md);
     # a brew omp shadows it on PATH (removed 2026-08-21 after exactly that).

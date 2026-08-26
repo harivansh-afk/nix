@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # xclip - clipboard shim for headless spark, the X11 twin of the wl-paste
 # shim (Claude Code falls back to xclip when wl-paste yields nothing).
-# Proxies to the Mac's pasteboard over SSH like pasteimg. See wl-paste for
-# the full why; delete both when Claude Code ships the Kitty clipboard
-# protocol (OSC 5522).
+# Proxies to the Mac's pasteboard over SSH; image fetches delegate to the
+# wl-paste shim, which owns the extraction. See wl-paste for the full why;
+# delete both when Claude Code ships the Kitty clipboard protocol
+# (OSC 5522).
 #
 # Supported calls:
 #   xclip -selection clipboard -t TARGETS -o    print available MIME types
@@ -58,7 +59,7 @@ if [ "$dir" = "out" ]; then
   fi
   case "$mime" in
   image/*)
-    exec pasteimg -
+    exec wl-paste --type "$mime"
     ;;
   "" | text/* | TEXT | STRING | UTF8_STRING)
     exec ssh -n -o BatchMode=yes -o ConnectTimeout=8 "$mac" pbpaste

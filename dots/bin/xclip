@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# xclip - clipboard shim for headless spark, the X11 twin of the wl-paste
+# shim (Claude Code falls back to xclip when wl-paste yields nothing).
+# Proxies to the Mac's pasteboard over SSH like pasteimg. See wl-paste for
+# the full why; delete both when Claude Code ships the Kitty clipboard
+# protocol (OSC 5522).
+#
+# Supported calls:
+#   xclip -selection clipboard -t TARGETS -o    print available MIME types
+#   xclip -selection clipboard [-t MIME] -o     print contents (image -> PNG)
+#   xclip -selection clipboard [-t text/*] -i   set the Mac clipboard (text)
+# The primary selection does not exist here and fails, as do image writes:
+# there is no image-aware pbcopy to hand them to.
+#
+# Env:
+#   PASTEIMG_HOST   ssh host/alias of the Mac (default: macbook)
+#
+# Exit codes: 0 ok, 1 nothing to serve / unsupported request.
+set -euo pipefail
+
+mac="${PASTEIMG_HOST:-macbook}"
+
+sel="clipboard"
+mime=""
+dir="in"
+while [ $# -gt 0 ]; do
+  case "$1" in
+  -selection | -sel)
+    sel="${2:-clipboard}"
+    shift
+    ;;
+  -t | -target)
+    mime="${2:-}"
+    shift
+    ;;
+  -o | -out) dir="out" ;;
+  -i | -in) dir="in" ;;
+  *) ;;
+  esac
+  shift
+done
+
+case "$sel" in
+c*) ;;
+*) exit 1 ;;
+esac
+
+if [ "$dir" = "out" ]; then
+  if [ "$mime" = "TARGETS" ]; then
+    out="$(ssh -n -o BatchMode=yes -o ConnectTimeout=8 "$mac" '
+      osascript -e "clipboard info" 2>/dev/null | grep -qE "PNGf|TIFF|JPEG|GIF" && echo image/png
+      [ -n "$(pbpaste 2>/dev/null | head -c 1)" ] && echo text/plain
+      true
+    ')"
+    [ -n "$out" ] || exit 1
+    printf '%s\n' "$out"
+    exit 0
+  fi
+  case "$mime" in
+  image/*)
+    exec pasteimg -
+    ;;
+  "" | text/* | TEXT | STRING | UTF8_STRING)
+    exec ssh -n -o BatchMode=yes -o ConnectTimeout=8 "$mac" pbpaste
+    ;;
+  *)
+    exit 1
+    ;;
+  esac
+fi
+
+case "$mime" in
+"" | text/* | TEXT | STRING | UTF8_STRING)
+  exec ssh -o BatchMode=yes -o ConnectTimeout=8 "$mac" pbcopy
+  ;;
+*)
+  exit 1
+  ;;
+esac

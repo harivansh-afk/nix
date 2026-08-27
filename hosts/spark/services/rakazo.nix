@@ -77,14 +77,6 @@ let
   '';
 in
 {
-  virtualisation = {
-    docker.enable = true;
-    # OCI services use Podman directly; reserve the Docker-compatible socket
-    # for Rakazo's Dockerode-based sandbox supervisor.
-    podman.dockerCompat = lib.mkForce false;
-    podman.dockerSocket.enable = lib.mkForce false;
-  };
-
   users.groups.rakazo = { };
   users.users = {
     rakazo = {
@@ -94,7 +86,7 @@ in
     rakazo-sandbox = {
       isSystemUser = true;
       group = "rakazo";
-      extraGroups = [ "docker" ];
+      extraGroups = [ "podman" ];
     };
   };
 
@@ -158,31 +150,31 @@ in
     };
 
     rakazo-sandbox-supervisor = {
-      description = "Rakazo Docker computer supervisor";
+      description = "Rakazo computer supervisor";
       after = [
-        "docker.service"
+        "podman.socket"
         "rakazo-secrets.service"
       ];
       requires = [
-        "docker.service"
+        "podman.socket"
         "rakazo-secrets.service"
       ];
       wantedBy = [ "multi-user.target" ];
       environment = commonEnvironment // {
         SUPERVISOR_HOST = "127.0.0.1";
         SUPERVISOR_PORT = toString supervisorPort;
-        DOCKER_SOCKET = "/var/run/docker.sock";
+        DOCKER_SOCKET = "/run/podman/podman.sock";
         RAKAZO_COMPUTER_IMAGE = computerImage;
         RAKAZO_COMPUTER_CONTEXT = "${appRoot}/infra/sandboxes/computer";
         SANDBOX_SCREEN_HOST = "127.0.0.1";
       };
       serviceConfig = serviceConfig // {
         User = "rakazo-sandbox";
-        SupplementaryGroups = [ "docker" ];
+        SupplementaryGroups = [ "podman" ];
         ExecStart = "${node} ${tsx} ${appRoot}/infra/sandboxes/supervisor/src/index.ts";
         ReadWritePaths = [
           stateDir
-          "/var/run/docker.sock"
+          "/run/podman/podman.sock"
         ];
       };
     };

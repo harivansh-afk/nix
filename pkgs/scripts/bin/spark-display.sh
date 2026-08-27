@@ -123,7 +123,7 @@ converge() {
   if [ -n "$lan" ]; then
     cur=$(spark_ctl cat /var/lib/spark-cast/host 2>/dev/null || true)
     if [ "$cur" != "$lan" ]; then
-      spark_ctl "printf '%s' '$lan' > /var/lib/spark-cast/host" 2>/dev/null || true
+      printf '%s' "$lan" | spark_ctl "cat > /var/lib/spark-cast/host" 2>/dev/null || true
       note "publishing lan ip $lan"
       return 0
     fi

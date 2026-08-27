@@ -613,11 +613,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1787865968,
-        "narHash": "sha256-tqPeIKXOWaAmzTedZe7alVI+rRISi5qzXN68LU3st8M=",
+        "lastModified": 1787866697,
+        "narHash": "sha256-RcxuyV6VxJg9Zbgk+9O+jTw7cPiAS4oI/RBEnl2EgsU=",
         "ref": "refs/heads/main",
-        "rev": "dea0ce76522fd7d5b679220a529e809ae78d878f",
-        "revCount": 1,
+        "rev": "93da87401c5ede7311d1e112c8ab1e8fb264596b",
+        "revCount": 2,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/nap"
       },

@@ -32,6 +32,10 @@ _: {
         trusted = true;
       }
       {
+        name = "lizardbyte/homebrew"; # sunshine
+        trusted = true;
+      }
+      {
         name = "peripheryapp/periphery";
         trusted = true;
       }
@@ -42,7 +46,13 @@ _: {
     # NEVER `omp` here: omp is installer-managed in ~/.local/bin (CLAUDE.md);
     # a brew omp shadows it on PATH (removed 2026-08-21 after exactly that).
     # CLI tools otherwise live in nix (pkgs/sets.nix), not brew.
+    # sunshine is the cast host for spark-display (streams the DeskPad
+    # virtual display to spark's monitor via Moonlight). LizardByte ships it
+    # as a formula only, no cask. One-time setup after install: run Sunshine,
+    # grant Screen Recording, set web-UI creds (localhost:47990), point
+    # output_name at DeskPad's display id, then `brew services start sunshine`.
     brews = [
+      "lizardbyte/homebrew/sunshine"
       "pngpaste"
     ];
 
@@ -53,6 +63,7 @@ _: {
       "claude"
       "codex"
       "conductor"
+      "deskpad"
       "ghostty"
       "granola"
       "helium-browser"

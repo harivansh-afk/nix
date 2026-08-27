@@ -25,6 +25,7 @@
     ./services/kb-ingest.nix
     ./services/kb-ingestion.nix
     ./services/kb-graph-query.nix
+    ./services/moonlight.nix
     ./services/mosh.nix
     ./services/muxd.nix
     ./services/whisper.nix

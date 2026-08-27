@@ -68,6 +68,8 @@
       flake = false;
     };
 
+    hermes-agent.url = "github:NousResearch/hermes-agent";
+
     # Neovim nightly overlay, applied on darwin only: there is no binary
     # cache for aarch64-linux, so spark stays on the nixpkgs neovim.
     neovim-nightly = {

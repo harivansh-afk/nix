@@ -29,6 +29,7 @@
 {
   user = {
     "anthropic.env" = { };
+    "hermes-backend-token" = { };
     "antithesis.env" = { };
     "linear.env" = { };
     "graphite.env" = { };

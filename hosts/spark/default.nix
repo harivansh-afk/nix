@@ -19,6 +19,7 @@
     ./services/caddy.nix
     ./services/cloudflared.nix
     ./services/forgejo
+    ./services/hermes.nix
     ./services/inference.nix
     ./services/knowledge-base.nix
     ./services/kb-ingest.nix

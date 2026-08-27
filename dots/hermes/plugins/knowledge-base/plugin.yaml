@@ -1,0 +1,5 @@
+name: knowledge-base
+version: "1.0"
+description: Read-only hybrid retrieval from Hari's local personal knowledge base
+provides_tools:
+  - kb_search

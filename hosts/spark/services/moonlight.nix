@@ -26,19 +26,22 @@ let
   # failed unit failed the whole activation - deploys #6262/#6266). Both
   # hooks are best-effort with a hard timeout: a missed force costs one
   # lit console, never a wedged stop or a failed switch.
+  # tee, not `sh -c 'echo > f'`: the unit PATH has no sh (deploy #6277
+  # logged `timeout: failed to run command 'sh'`), and timeout needs a
+  # child process to bound the potentially-blocking sysfs write.
   connector = "/sys/class/drm/card1-HDMI-A-1/status";
   monitorOff = pkgs.writeShellApplication {
     name = "monitor-off";
     runtimeInputs = [ pkgs.coreutils ];
     text = ''
-      timeout 10 sh -c 'echo off > ${connector}' || true
+      echo off | timeout 10 tee ${connector} >/dev/null || true
     '';
   };
   monitorOn = pkgs.writeShellApplication {
     name = "monitor-on";
     runtimeInputs = [ pkgs.coreutils ];
     text = ''
-      timeout 10 sh -c 'echo on > ${connector}' || true
+      echo on | timeout 10 tee ${connector} >/dev/null || true
     '';
   };
 
@@ -99,12 +102,23 @@ in
   # box, so every nixos-rebuild switch started the kiosk unasked (cast off,
   # monitor lit) and raced its own activation - both deploy failures on
   # 2026-08-27 were this. Empty wants makes the unit strictly on-demand.
+  # The hooks carry systemd's "+" prefix: cage-tty1 runs as User=moonlight
+  # and Exec hooks inherit that, so without it every connector write died
+  # on EPERM behind the || true - the force-on in ExecStartPre had never
+  # actually executed (deploy #6277's journal: "Permission denied").
+  # SuccessExitStatus=SIGKILL: the kiosk is stopped by SIGKILL on purpose,
+  # and without this every stop left the unit "failed", which also failed
+  # any activation that stopped it. stopIfChanged=false keeps switches
+  # from interrupting a live cast at all - unit changes apply on the next
+  # natural kiosk restart.
   systemd.services."cage-tty1" = {
     wantedBy = lib.mkForce [ ];
+    stopIfChanged = false;
     serviceConfig = {
       KillSignal = "SIGKILL";
-      ExecStartPre = lib.getExe monitorOn;
-      ExecStopPost = lib.getExe monitorOff;
+      SuccessExitStatus = "SIGKILL";
+      ExecStartPre = "+${lib.getExe monitorOn}";
+      ExecStopPost = "+${lib.getExe monitorOff}";
     };
   };
 

@@ -16,6 +16,7 @@
 #   login (the old open-karabiner-elements agent) did nothing for remapping.
 {
   config,
+  lib,
   pkgs,
   ...
 }:
@@ -27,6 +28,15 @@ let
     mkdir -p $out/bin
     $CC -fobjc-arc -framework AppKit -o $out/bin/notch-inset ${./notch-inset/notch-inset.m}
   '';
+
+  home = "/Users/${config.system.primaryUser}";
+  customScripts = import ../../pkgs/scripts {
+    homeDirectory = home;
+    inherit (pkgs) lib;
+    inherit pkgs;
+  };
+  sparkDisplay = customScripts.darwinPackages.spark-display;
+  sunshineBin = "/opt/homebrew/opt/sunshine/bin/sunshine";
 in
 {
   launchd.daemons."limit.maxfiles" = {
@@ -91,5 +101,60 @@ in
       StandardOutPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar.log";
       StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar.log";
     };
+
+    # Sunshine: the spark-display cast host. Binary from the brew formula
+    # (homebrew.nix), service owned HERE - never `brew services start
+    # sunshine` and never run `sunshine` in a terminal: a second instance
+    # steals the ports and leaves the agent instance deaf (bit us live:
+    # web UI 404, pairing connection-refused). KeepAlive restarts crashes;
+    # ~/.config/sunshine/sunshine.conf is rewritten by spark-display's
+    # convergence loop (output_name tracks the virtual display's drifting
+    # CGDirectDisplayID), so it is deliberately not a nix-rendered file.
+    sunshine.serviceConfig = {
+      ProgramArguments = [
+        "/bin/sh"
+        "-c"
+        "/bin/wait4path ${sunshineBin} && exec ${sunshineBin} ${home}/.config/sunshine/sunshine.conf"
+      ];
+      RunAtLoad = true;
+      KeepAlive = true;
+      StandardOutPath = "${home}/Library/Logs/sunshine.log";
+      StandardErrorPath = "${home}/Library/Logs/sunshine.log";
+    };
+
+    # spark-cast: the umbrella. `spark-display on` touches
+    # ~/.local/state/spark-cast/on and kicks this agent; the supervise loop
+    # converges DeskPad -> resolution -> sunshine.conf display id -> spark
+    # kiosk every 5s and tears everything down when the state file goes.
+    # PathState keeps it alive exactly while the cast is on (and resumes a
+    # cast across reboots/logins).
+    spark-cast.serviceConfig = {
+      ProgramArguments = [
+        "/bin/sh"
+        "-c"
+        "/bin/wait4path /nix/store && exec ${sparkDisplay}/bin/spark-display supervise"
+      ];
+      RunAtLoad = true;
+      KeepAlive = {
+        PathState."${home}/.local/state/spark-cast/on" = true;
+      };
+      ThrottleInterval = 5;
+      StandardOutPath = "${home}/Library/Logs/spark-cast.log";
+      StandardErrorPath = "${home}/Library/Logs/spark-cast.log";
+    };
   };
+
+  # One-time migration from `brew services start sunshine` (how the cast
+  # host was raised on setup night, before it was declared above). Two
+  # sunshine instances fight over the ports, so the brew agent must go the
+  # moment the nix one exists.
+  system.activationScripts.postActivation.text = lib.mkAfter ''
+    brewSunshinePlist="${home}/Library/LaunchAgents/homebrew.mxcl.sunshine.plist"
+    if [ -f "$brewSunshinePlist" ]; then
+      sudo -u ${config.system.primaryUser} /bin/launchctl bootout \
+        "gui/$(id -u ${config.system.primaryUser})/homebrew.mxcl.sunshine" 2>/dev/null || true
+      rm -f "$brewSunshinePlist"
+      echo "removed brew-services sunshine agent (now nix-owned)"
+    fi
+  '';
 }

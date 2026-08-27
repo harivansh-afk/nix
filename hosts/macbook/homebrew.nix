@@ -8,7 +8,31 @@
 # (adoption fails on macOS app-protection while it runs, and a forced
 # reinstall re-does the privileged helper; it self-updates). VoiceInk and
 # Mux.app are built from source (hosts/macbook/voiceink.nix, ~/Documents/Git/mux).
-_: {
+{ lib, username, ... }:
+let
+  # Homebrew 6's Brewfile-level `trusted: true` covers only the entry being
+  # installed, NOT the persistent tap-trust store: installing sunshine died
+  # live on "Refusing to load formula sunshine-beta from untrusted tap"
+  # because the formula's conflicts_with loads a SIBLING formula, and that
+  # load checks the store. `brew trust` writes the store; run it for every
+  # trusted tap before bundle so a fresh machine converges without the
+  # manual unblock.
+  trustedTaps = [
+    "can1357/tap" # riptide-beta
+    "humanlayer/humanlayer"
+    "lizardbyte/homebrew" # sunshine
+    "peripheryapp/periphery"
+  ];
+in
+{
+  system.activationScripts.preActivation.text = lib.mkAfter ''
+    if [ -x /opt/homebrew/bin/brew ]; then
+      for tap in ${toString trustedTaps}; do
+        sudo -u ${username} /opt/homebrew/bin/brew trust "$tap" >/dev/null 2>&1 || true
+      done
+    fi
+  '';
+
   homebrew = {
     enable = true;
 
@@ -22,36 +46,26 @@ _: {
     # Third-party taps must be trusted: Homebrew 6 enables
     # HOMEBREW_REQUIRE_TAP_TRUST by default and aborts activation when a
     # Brewfile references an untrusted tap's cask (hit live with periphery).
-    taps = [
-      {
-        name = "can1357/tap"; # riptide-beta
-        trusted = true;
-      }
-      {
-        name = "humanlayer/humanlayer";
-        trusted = true;
-      }
-      {
-        name = "lizardbyte/homebrew"; # sunshine
-        trusted = true;
-      }
-      {
-        name = "peripheryapp/periphery";
-        trusted = true;
-      }
-    ];
+    # The Brewfile flag alone is not enough - see trustedTaps above.
+    taps = map (name: {
+      inherit name;
+      trusted = true;
+    }) trustedTaps;
 
     # CLI formulae. pngpaste is used by the clipboard shims (dots/bin/wl-paste)
     # to reliably dump the clipboard image as PNG for the spark -> mac pull.
     # NEVER `omp` here: omp is installer-managed in ~/.local/bin (CLAUDE.md);
     # a brew omp shadows it on PATH (removed 2026-08-21 after exactly that).
     # CLI tools otherwise live in nix (pkgs/sets.nix), not brew.
-    # sunshine is the cast host for spark-display (streams the DeskPad
-    # virtual display to spark's monitor via Moonlight). LizardByte ships it
-    # as a formula only, no cask. One-time setup after install: run Sunshine,
-    # grant Screen Recording, set web-UI creds (localhost:47990), point
-    # output_name at DeskPad's display id, then `brew services start sunshine`.
+    # sunshine is the spark-display cast host: binary only - its launchd
+    # agent is declared in services.nix, NEVER via `brew services`, and its
+    # config is written by spark-display's convergence loop. One-time setup
+    # on a fresh machine: grant Screen Recording on first launch, set web-UI
+    # creds (`sunshine --creds <user> <pass>`), pair moonlight from spark.
+    # displayplacer is spark-display's display tool (resolution + the
+    # contextual display id that sunshine's output_name must track).
     brews = [
+      "displayplacer"
       "lizardbyte/homebrew/sunshine"
       "pngpaste"
     ];
@@ -63,7 +77,8 @@ _: {
       "claude"
       "codex"
       "conductor"
-      "deskpad"
+      # deskpad: built from source instead (hosts/macbook/deskpad.nix); the
+      # released cask binary lacks the ultrawide modes spark's monitor needs.
       "ghostty"
       "granola"
       "helium-browser"

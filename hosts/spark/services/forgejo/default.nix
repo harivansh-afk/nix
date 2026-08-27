@@ -1077,6 +1077,7 @@ in
         git
         gnumake
         gnused
+        gnutar
         gawk
         jq
         nix
@@ -1092,6 +1093,7 @@ in
         unzip
         uv
         wget
+        xvfb-run
         xz
         zip
       ];

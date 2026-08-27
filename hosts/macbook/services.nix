@@ -14,9 +14,11 @@
 # - karabiner: its services are SMAppService registrations owned by the app
 #   bundle, versioned with the app. Nix launching the settings window at
 #   login (the old open-karabiner-elements agent) did nothing for remapping.
+# - nap-cast + sunshine: declared by the nap flake's sender module,
+#   imported in ./nap.nix. Still nix-darwin launchd agents (org.nixos.*),
+#   just not spelled out in this file.
 {
   config,
-  lib,
   pkgs,
   ...
 }:
@@ -29,14 +31,6 @@ let
     $CC -fobjc-arc -framework AppKit -o $out/bin/notch-inset ${./notch-inset/notch-inset.m}
   '';
 
-  home = "/Users/${config.system.primaryUser}";
-  customScripts = import ../../pkgs/scripts {
-    homeDirectory = home;
-    inherit (pkgs) lib;
-    inherit pkgs;
-  };
-  sparkDisplay = customScripts.darwinPackages.spark-display;
-  sunshineBin = "/opt/homebrew/opt/sunshine/bin/sunshine";
 in
 {
   launchd.daemons."limit.maxfiles" = {
@@ -102,53 +96,5 @@ in
       StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar.log";
     };
 
-    # spark-display cast host (see AGENTS.md "Casting"). Never run sunshine
-    # any other way: a second instance steals the ports and this one goes deaf.
-    # Gated on the supervisor's sunshine-on file: sunshine serves (and its
-    # ports listen) only while the cast is up and the display id in its conf
-    # is current; on a stale id upstream silently falls back to capturing the
-    # real desktop (CGMainDisplayID), which is what this gate fails closed
-    # against. Crashes still restart while the gate is present.
-    sunshine.serviceConfig = {
-      ProgramArguments = [
-        "/bin/sh"
-        "-c"
-        "/bin/wait4path ${sunshineBin} && exec ${sunshineBin} ${home}/.config/sunshine/sunshine.conf"
-      ];
-      RunAtLoad = false;
-      KeepAlive = {
-        PathState."${home}/.local/state/spark-cast/sunshine-on" = true;
-      };
-      StandardOutPath = "${home}/Library/Logs/sunshine.log";
-      StandardErrorPath = "${home}/Library/Logs/sunshine.log";
-    };
-
-    # The spark-display convergence supervisor; PathState = alive exactly
-    # while the cast is on, resuming across reboots.
-    spark-cast.serviceConfig = {
-      ProgramArguments = [
-        "/bin/sh"
-        "-c"
-        "/bin/wait4path /nix/store && exec ${sparkDisplay}/bin/spark-display supervise"
-      ];
-      RunAtLoad = true;
-      KeepAlive = {
-        PathState."${home}/.local/state/spark-cast/on" = true;
-      };
-      ThrottleInterval = 5;
-      StandardOutPath = "${home}/Library/Logs/spark-cast.log";
-      StandardErrorPath = "${home}/Library/Logs/spark-cast.log";
-    };
   };
-
-  # One-time migration off `brew services start sunshine` (setup night).
-  system.activationScripts.postActivation.text = lib.mkAfter ''
-    brewSunshinePlist="${home}/Library/LaunchAgents/homebrew.mxcl.sunshine.plist"
-    if [ -f "$brewSunshinePlist" ]; then
-      sudo -u ${config.system.primaryUser} /bin/launchctl bootout \
-        "gui/$(id -u ${config.system.primaryUser})/homebrew.mxcl.sunshine" 2>/dev/null || true
-      rm -f "$brewSunshinePlist"
-      echo "removed brew-services sunshine agent (now nix-owned)"
-    fi
-  '';
 }

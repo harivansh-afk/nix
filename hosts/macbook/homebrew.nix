@@ -53,10 +53,9 @@ in
     # NEVER `omp` here: omp is installer-managed in ~/.local/bin (CLAUDE.md);
     # a brew omp shadows it on PATH (removed 2026-08-21 after exactly that).
     # CLI tools otherwise live in nix (pkgs/sets.nix), not brew.
-    # sunshine: binary only, agent lives in services.nix (never `brew
-    # services`). displayplacer: spark-display's display tool.
+    # sunshine: binary only, agent comes from the nap sender module (never
+    # `brew services`).
     brews = [
-      "displayplacer"
       "lizardbyte/homebrew/sunshine"
       "pngpaste"
     ];
@@ -68,7 +67,7 @@ in
       "claude"
       "codex"
       "conductor"
-      # deskpad: built from source instead (deskpad.nix); cask lacks ultrawide
+      # deskpad: built from source by the nap module; cask lacks ultrawide
       "ghostty"
       "granola"
       "helium-browser"

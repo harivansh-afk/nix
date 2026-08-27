@@ -605,6 +605,27 @@
         "url": "https://git.harivan.sh/harivansh-afk/mux.git"
       }
     },
+    "nap": {
+      "inputs": {
+        "deskpad-src": "deskpad-src",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787865968,
+        "narHash": "sha256-tqPeIKXOWaAmzTedZe7alVI+rRISi5qzXN68LU3st8M=",
+        "ref": "refs/heads/main",
+        "rev": "dea0ce76522fd7d5b679220a529e809ae78d878f",
+        "revCount": 1,
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/nap"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/nap"
+      }
+    },
     "neovim-nightly": {
       "inputs": {
         "flake-parts": "flake-parts_6",
@@ -1121,7 +1142,6 @@
     },
     "root": {
       "inputs": {
-        "deskpad-src": "deskpad-src",
         "determinate": "determinate",
         "dgx-spark": "dgx-spark",
         "disko": "disko_2",
@@ -1131,6 +1151,7 @@
         "lanzaboote": "lanzaboote",
         "mattpocock-skills": "mattpocock-skills",
         "mux": "mux",
+        "nap": "nap",
         "neovim-nightly": "neovim-nightly",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",

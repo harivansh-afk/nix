@@ -24,7 +24,7 @@
     ./services/knowledge-base.nix
     ./services/kb-ingest.nix
     ./services/kb-ingestion.nix
-    ./services/moonlight.nix
+    ./services/nap.nix
     ./services/mosh.nix
     ./services/muxd.nix
     ./services/rakazo.nix

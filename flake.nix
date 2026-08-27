@@ -52,12 +52,12 @@
       flake = false;
     };
 
-    # DeskPad virtual display, built from source on macbook: the released
-    # binary (and its cask) lacks the ultrawide modes; 3440x1440@60 exists
-    # only on main. Pinned source, not a flake. See hosts/macbook/deskpad.nix.
-    deskpad-src = {
-      url = "github:Stengo/DeskPad";
-      flake = false;
+    # Not AirPlay(tm): the mac-to-spark cast appliance (sender supervisor,
+    # receiver daemon, DeskPad build). See hosts/macbook/nap.nix and
+    # hosts/spark/services/nap.nix.
+    nap = {
+      url = "git+https://git.harivan.sh/harivansh-afk/nap";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # Matt Pocock's agent skills (engineering + productivity buckets). Linked

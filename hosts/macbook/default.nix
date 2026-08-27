@@ -14,7 +14,7 @@
     inputs.sops-nix.darwinModules.sops
     ../../modules/security/sops.nix
     ../../modules/users/darwin.nix
-    ./deskpad.nix
+    ./nap.nix
     ./voiceink.nix
     ./voiceink-cloud-model.nix
     ./voiceink-dictionary.nix

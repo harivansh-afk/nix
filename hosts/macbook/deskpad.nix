@@ -1,18 +1,7 @@
-# DeskPad (the spark-display virtual screen), built from pinned source into
-# /Applications. The released binary and its cask stop at 16:9/16:10 modes;
-# the ultrawide modes (3440x1440@60 for spark's monitor) exist only on main
-# (DeskPad/Frontend/Screen/ScreenViewController.swift), so like VoiceInk this
-# is an as-user activation build against the system Xcode, keyed on the
-# locked `deskpad-src` rev and skipped (non-fatally) when Xcode is absent.
-#
-# Same signing rationale as voiceink.nix, compressed: TCC grants pin the
-# app's designated requirement, and an ad-hoc signature pins the exact
-# cdhash, so every rebuild would orphan DeskPad's Screen Recording grant
-# (without it the preview window renders blank - the stream itself is
-# unaffected since Sunshine holds its own grant, but a blank preview reads
-# as breakage). A machine-local self-signed identity in a dedicated keychain
-# makes the requirement identifier+leaf, stable across rebuilds: the grant
-# is made once and survives.
+# DeskPad (the spark-display virtual screen) from pinned source: only main
+# has the 3440x1440@60 mode. Voiceink-pattern activation build (system
+# Xcode, skip without it) with the same stable-signing scheme so the
+# Screen Recording grant for its preview survives rebuilds.
 {
   lib,
   pkgs,
@@ -38,7 +27,7 @@ let
 
     ensure_identity() {
       if [ ! -f "${keychainPass}" ] || [ ! -f "${keychain}" ]; then
-        security delete-keychain "${keychain}" 2>/dev/null || true
+        security delete-keychain "${keychain}" 2>/dev/null || true # self-heals into a fresh identity
         rm -f "${keychain}" "${keychainPass}"
         (umask 077 && openssl rand -hex 32 >"${keychainPass}")
         security create-keychain -p "$(cat "${keychainPass}")" "${keychain}"
@@ -62,8 +51,7 @@ let
         rm -rf "$tmp"
       fi
 
-      # No `cmd | grep -q` here for the same SIGPIPE+pipefail reason as
-      # voiceink.nix: capture, then pattern-match.
+      # capture-then-match, never `| grep -q` (SIGPIPE+pipefail, see voiceink.nix)
       if [[ "$(security list-keychains -d user)" != *"deskpad-signing.keychain-db"* ]]; then
         local kcs=()
         while IFS= read -r line; do
@@ -115,9 +103,7 @@ let
     ditto "${build}/dd/Build/Products/Release/DeskPad.app" "${app}"
     sign_app
 
-    # Unregister the build-tree bundle before deleting it, or `open -a
-    # DeskPad` can resolve to the stale LaunchServices entry (bit us live:
-    # "Unable to find application named 'DeskPad'" right after an install).
+    # unregister before delete or `open -a DeskPad` resolves the stale entry
     ${lsregister} -u "${build}/dd/Build/Products/Release/DeskPad.app" >/dev/null 2>&1 || true
     rm -rf "${build}/src" "${build}/dd"
     ${lsregister} -f "${app}" >/dev/null 2>&1 || true

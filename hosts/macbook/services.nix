@@ -102,14 +102,8 @@ in
       StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar.log";
     };
 
-    # Sunshine: the spark-display cast host. Binary from the brew formula
-    # (homebrew.nix), service owned HERE - never `brew services start
-    # sunshine` and never run `sunshine` in a terminal: a second instance
-    # steals the ports and leaves the agent instance deaf (bit us live:
-    # web UI 404, pairing connection-refused). KeepAlive restarts crashes;
-    # ~/.config/sunshine/sunshine.conf is rewritten by spark-display's
-    # convergence loop (output_name tracks the virtual display's drifting
-    # CGDirectDisplayID), so it is deliberately not a nix-rendered file.
+    # spark-display cast host (see AGENTS.md "Casting"). Never run sunshine
+    # any other way: a second instance steals the ports and this one goes deaf.
     sunshine.serviceConfig = {
       ProgramArguments = [
         "/bin/sh"
@@ -122,12 +116,8 @@ in
       StandardErrorPath = "${home}/Library/Logs/sunshine.log";
     };
 
-    # spark-cast: the umbrella. `spark-display on` touches
-    # ~/.local/state/spark-cast/on and kicks this agent; the supervise loop
-    # converges DeskPad -> resolution -> sunshine.conf display id -> spark
-    # kiosk every 5s and tears everything down when the state file goes.
-    # PathState keeps it alive exactly while the cast is on (and resumes a
-    # cast across reboots/logins).
+    # The spark-display convergence supervisor; PathState = alive exactly
+    # while the cast is on, resuming across reboots.
     spark-cast.serviceConfig = {
       ProgramArguments = [
         "/bin/sh"
@@ -144,10 +134,7 @@ in
     };
   };
 
-  # One-time migration from `brew services start sunshine` (how the cast
-  # host was raised on setup night, before it was declared above). Two
-  # sunshine instances fight over the ports, so the brew agent must go the
-  # moment the nix one exists.
+  # One-time migration off `brew services start sunshine` (setup night).
   system.activationScripts.postActivation.text = lib.mkAfter ''
     brewSunshinePlist="${home}/Library/LaunchAgents/homebrew.mxcl.sunshine.plist"
     if [ -f "$brewSunshinePlist" ]; then

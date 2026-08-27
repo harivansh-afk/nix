@@ -141,13 +141,7 @@ let
     };
   };
 
-  darwinPackages = {
-    spark-display = mkScript {
-      name = "spark-display";
-      file = ./bin/spark-display.sh;
-      runtimeInputs = [ pkgs.openssh ];
-    };
-  };
+  darwinPackages = { };
 
   linuxPackages = { };
 in

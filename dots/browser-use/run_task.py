@@ -2,7 +2,7 @@
 """Run a single browser-use task headless against the local brain and print the
 final result text to stdout.
 
-This is DOM-extraction only: the local brain (qwen3.6-35b-a3b at
+This is DOM-extraction only: the local brain (qwen3.8-27b at
 127.0.0.1:18080) is text-only with no vision/mmproj, so use_vision is forced
 False - browser-use feeds the model the serialized DOM instead of screenshots.
 
@@ -11,7 +11,7 @@ it directly over CDP (no Playwright, no browser download).
 
 Env (all set by the `browse` wrapper / the nix module):
   BROWSER_USE_BRAIN_URL    OpenAI-compatible base url (default 127.0.0.1:18080/v1)
-  BROWSER_USE_BRAIN_MODEL  model id (default qwen3.6-35b-a3b)
+  BROWSER_USE_BRAIN_MODEL  model id (default qwen3.8-27b)
   BROWSER_USE_CHROMIUM     path to the chromium binary (required)
   BROWSER_USE_PROFILE_DIR  persistent user-data dir (optional, for logged-in sites)
   BROWSER_USE_STORAGE_STATE path to a cookies/storage_state json (optional)
@@ -43,7 +43,7 @@ async def _main() -> int:
         return 2
 
     base_url = _env("BROWSER_USE_BRAIN_URL", "http://127.0.0.1:18080/v1")
-    model = _env("BROWSER_USE_BRAIN_MODEL", "qwen3.6-35b-a3b")
+    model = _env("BROWSER_USE_BRAIN_MODEL", "qwen3.8-27b")
     profile_dir = _env("BROWSER_USE_PROFILE_DIR")
     storage_state = _env("BROWSER_USE_STORAGE_STATE")
     try:

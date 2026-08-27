@@ -61,7 +61,7 @@ in
 
   systemd.defaultUnit = lib.mkForce "multi-user.target";
 
-  systemd.services."cage-tty1".serviceConfig.TimeoutStopSec = 5;
+  systemd.services."cage-tty1".serviceConfig.KillSignal = "SIGKILL";
 
   security.polkit.extraConfig = ''
     polkit.addRule(function(action, subject) {

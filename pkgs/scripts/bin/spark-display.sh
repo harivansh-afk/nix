@@ -1,32 +1,13 @@
-# spark-display: one switch for casting the mac onto spark's monitor.
-#
-#   on      raise the cast (and keep it healthy until told otherwise)
-#   off     tear the cast down (monitor returns to spark's console)
-#   status  one-line state of every piece
-#
-# `on` does not run the machinery directly: it flips a state file and kicks
-# the org.nixos.spark-cast launchd agent, which runs `supervise` - a
-# convergence loop that every 5s makes reality match the desired state:
-# DeskPad running -> virtual display at native res -> Sunshine capturing the
-# *current* display id -> kiosk running on spark. Any piece dying (DeskPad
-# closed by hand, Sunshine crash, kiosk stop) is re-raised within one tick.
-# CGDirectDisplayIDs re-roll on every DeskPad relaunch and resolution change,
-# which silently pointed Sunshine at the built-in screen twice on setup
-# night; the loop resyncs sunshine.conf from displayplacer's contextual id
-# (verified equal to the id Sunshine logs) whenever it drifts.
-#
-# The resolution is only applied when wrong (applying it re-rolls the id),
-# and the arrangement origin is only set in that same rare branch, so a
-# manual rearrange in System Settings sticks.
-#
-# spark side needs no supervision: the kiosk unit's moonlight loop retries
-# every 3s on its own, and the polkit rule on spark scopes this user to
-# start/stop of exactly cage-tty1.service (no sudo over ssh).
+# spark-display on|off|status: cast the mac onto spark's monitor.
+# `on` flips a state file; the org.nixos.spark-cast agent runs `supervise`,
+# a 5s convergence loop over DeskPad -> resolution -> sunshine display id ->
+# published LAN IP -> spark kiosk. See AGENTS.md "Casting".
 
 DP=/opt/homebrew/bin/displayplacer
 STATE_DIR="$HOME/.local/state/spark-cast"
 ON_FILE="$STATE_DIR/on"
 STATUS_FILE="$STATE_DIR/status"
+UUID_FILE="$STATE_DIR/display-uuid"
 SUNSHINE_CONF="$HOME/.config/sunshine/sunshine.conf"
 APP="/Applications/DeskPad.app"
 CAST_LABEL="org.nixos.spark-cast"
@@ -48,14 +29,35 @@ note() {
   printf '%s\n' "$1" >"$STATUS_FILE"
 }
 
-# One line per virtual (non-builtin) display: "<persistent> <contextual> <res>"
-virtual_info() {
+# One line per non-builtin display: "<persistent-uuid> <contextual-id> <res> <serial>"
+displays() {
   "$DP" list | awk '
     /^Persistent screen id:/ { pid = $4 }
     /^Contextual screen id:/ { ctx = $4 }
+    /^Serial screen id:/ { ser = $4 }
     /^Type:/ { builtin = ($0 ~ /MacBook built in/) }
-    /^Resolution:/ { if (!builtin && pid != "") { print pid, ctx, $2 }; pid = "" }
+    /^Resolution:/ { if (!builtin && pid != "") { print pid, ctx, $2, ser }; pid = "" }
   '
+}
+
+# DeskPad only, never a real monitor: pin its persistent UUID on first
+# sight (DeskPad reports serial s1) and match on the pin from then on.
+deskpad_display() {
+  local all line
+  all=$(displays)
+  [ -n "$all" ] || return 0
+  if [ -f "$UUID_FILE" ]; then
+    line=$(awk -v u="$(cat "$UUID_FILE")" '$1 == u' <<<"$all" | head -1)
+    if [ -n "$line" ]; then
+      printf '%s\n' "$line"
+      return 0
+    fi
+  fi
+  line=$(awk '$4 == "s1"' <<<"$all" | head -1)
+  if [ -n "$line" ]; then
+    awk '{print $1}' <<<"$line" >"$UUID_FILE"
+    printf '%s\n' "$line"
+  fi
 }
 
 converge() {
@@ -65,14 +67,15 @@ converge() {
     return 0
   fi
 
-  local info pid ctx res
-  info=$(virtual_info | head -1)
-  if [ -z "$info" ]; then
+  local line pid ctx res
+  line=$(deskpad_display)
+  if [ -z "$line" ]; then
     note "waiting for virtual display"
     return 0
   fi
-  read -r pid ctx res <<<"$info"
+  read -r pid ctx res _ <<<"$line"
 
+  # Setting the resolution re-rolls the display id, so only when wrong.
   if [ "$res" != "$RES" ]; then
     "$DP" "id:$pid res:$RES hz:$HZ enabled:true scaling:off origin:$ORIGIN degree:0" >/dev/null 2>&1 || true
     note "setting resolution to $RES"
@@ -94,9 +97,6 @@ converge() {
     return 0
   fi
 
-  # Publish this mac's LAN IP so the kiosk can stream LAN-direct (mDNS is
-  # blocked on the office network); the kiosk falls back to tailscale when
-  # the published IP is unreachable, so a stale value only costs a retry.
   local lan cur
   lan=$(/usr/sbin/ipconfig getifaddr en0 2>/dev/null || true)
   if [ -n "$lan" ]; then

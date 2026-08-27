@@ -10,13 +10,9 @@
 # Mux.app are built from source (hosts/macbook/voiceink.nix, ~/Documents/Git/mux).
 { lib, username, ... }:
 let
-  # Homebrew 6's Brewfile-level `trusted: true` covers only the entry being
-  # installed, NOT the persistent tap-trust store: installing sunshine died
-  # live on "Refusing to load formula sunshine-beta from untrusted tap"
-  # because the formula's conflicts_with loads a SIBLING formula, and that
-  # load checks the store. `brew trust` writes the store; run it for every
-  # trusted tap before bundle so a fresh machine converges without the
-  # manual unblock.
+  # Brewfile `trusted:` does not write brew's persistent trust store, and
+  # sibling-formula loads (sunshine's conflicts_with) check the store: the
+  # preActivation `brew trust` below is what makes a fresh machine converge.
   trustedTaps = [
     "can1357/tap" # riptide-beta
     "humanlayer/humanlayer"
@@ -57,13 +53,8 @@ in
     # NEVER `omp` here: omp is installer-managed in ~/.local/bin (CLAUDE.md);
     # a brew omp shadows it on PATH (removed 2026-08-21 after exactly that).
     # CLI tools otherwise live in nix (pkgs/sets.nix), not brew.
-    # sunshine is the spark-display cast host: binary only - its launchd
-    # agent is declared in services.nix, NEVER via `brew services`, and its
-    # config is written by spark-display's convergence loop. One-time setup
-    # on a fresh machine: grant Screen Recording on first launch, set web-UI
-    # creds (`sunshine --creds <user> <pass>`), pair moonlight from spark.
-    # displayplacer is spark-display's display tool (resolution + the
-    # contextual display id that sunshine's output_name must track).
+    # sunshine: binary only, agent lives in services.nix (never `brew
+    # services`). displayplacer: spark-display's display tool.
     brews = [
       "displayplacer"
       "lizardbyte/homebrew/sunshine"
@@ -77,8 +68,7 @@ in
       "claude"
       "codex"
       "conductor"
-      # deskpad: built from source instead (hosts/macbook/deskpad.nix); the
-      # released cask binary lacks the ultrawide modes spark's monitor needs.
+      # deskpad: built from source instead (deskpad.nix); cask lacks ultrawide
       "ghostty"
       "granola"
       "helium-browser"

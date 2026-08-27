@@ -93,6 +93,26 @@ in
       StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/aerospace.log";
     };
 
+    rakazo-tunnel.serviceConfig = {
+      ProgramArguments = [
+        "/usr/bin/ssh"
+        "-NT"
+        "-o"
+        "ExitOnForwardFailure=yes"
+        "-L"
+        "127.0.0.1:18517:127.0.0.1:18517"
+        "spark"
+      ];
+      RunAtLoad = true;
+      KeepAlive = {
+        NetworkState = true;
+        SuccessfulExit = false;
+      };
+      ThrottleInterval = 5;
+      StandardOutPath = "${home}/Library/Logs/rakazo-tunnel.log";
+      StandardErrorPath = "${home}/Library/Logs/rakazo-tunnel.log";
+    };
+
     # Log the sketchybar daemon's stdout/stderr (rc failures, plugin errors):
     # nix-darwin's services.sketchybar sets no log path, so the 2026-08-18
     # empty-bar login left nothing to read. Merged with the module's own

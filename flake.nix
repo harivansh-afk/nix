@@ -68,6 +68,14 @@
       flake = false;
     };
 
+    rakazo-src = {
+      url = "github:elie222/rakazo";
+      flake = false;
+    };
+
+    # Prisma engines must exactly match Rakazo's pinned Prisma release.
+    prisma-nixpkgs.url = "github:NixOS/nixpkgs/52d58e7fb50e92b1ee2355f4e33a3ad8b04eb70f";
+
     # Neovim nightly overlay, applied on darwin only: there is no binary
     # cache for aarch64-linux, so spark stays on the nixpkgs neovim.
     neovim-nightly = {

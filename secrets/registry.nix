@@ -136,7 +136,7 @@
       owner = "gitea-runner";
       group = "gitea-runner";
       mode = "0400";
-      restartUnits = [ "gitea-runner-netty.service" ];
+      restartUnits = [ "gitea-runner-spark.service" ];
     };
   };
 }

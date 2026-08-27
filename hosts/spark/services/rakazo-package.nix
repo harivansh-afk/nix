@@ -35,6 +35,11 @@ stdenvNoCC.mkDerivation (finalAttrs: {
       --replace-fail \
         'serve({ fetch: app.fetch, port: env.port }' \
         'serve({ fetch: app.fetch, port: env.port, hostname: "127.0.0.1" }'
+    substituteInPlace packages/adapters/src/deployment-model.ts \
+      --replace-fail \
+        '    anthropic: env.ANTHROPIC_API_KEY,' \
+        '    anthropic: env.ANTHROPIC_API_KEY,
+    local: env.RAKAZO_LOCAL_MODELS?.trim() ? "local" : undefined,'
   '';
 
   buildPhase = ''

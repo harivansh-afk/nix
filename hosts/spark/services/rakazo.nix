@@ -32,6 +32,8 @@ let
     SANDBOX_SUPERVISOR_URL = "http://127.0.0.1:${toString supervisorPort}";
     AGENT_RUNTIME = "pi";
     WAKEUP_DRIVER = "graphile";
+    PI_DEFAULT_PROVIDER = "local";
+    PI_DEFAULT_MODEL = "qwen3.8-27b-nvfp4";
     RAKAZO_LOCAL_MODELS = "qwen3.8-27b-nvfp4";
     RAKAZO_LOCAL_MODELS_URL = "http://127.0.0.1:18080/v1";
     RAKAZO_LOCAL_CONTEXT_WINDOW = "65536";

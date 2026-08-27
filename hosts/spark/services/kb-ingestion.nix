@@ -4,13 +4,11 @@
 # Architecture: decouple "get the data" from "index the data".
 #   connectors (per source) --> /var/lib/kb/staging/<source>/*.md --> kb-ingest
 # Each connector is a small timer-driven job that pulls from an app API and
-# writes normalized markdown into the staging area. The existing kb-ingest
-# service (hosts/spark/services/kb-ingest.nix) then indexes staging + the local
-# corpus into Cognee, incrementally (denylist + content-hash state still apply).
+# writes normalized markdown into the staging area. The kb-ingest service then
+# rebuilds the Postgres hybrid-search index from staging.
 #
 # Connectors run as rathi (they use the user's `gws` Google Workspace creds);
-# the indexer runs as root (the Cognee venv/state under /var/lib/cognee is
-# root-owned). Staging is rathi-owned so connectors can write and root can read.
+# the indexer also runs as rathi. Staging is rathi-owned.
 #
 # gws auth: until `gws` is authenticated (browser OAuth), the connectors detect
 # the failure and exit 0 cleanly (no spam, no partial writes). They become

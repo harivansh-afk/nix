@@ -41,7 +41,6 @@ import urllib.request
 WATCHLIST = [
     "ggml-org/llama.cpp",
     "browser-use/browser-use",
-    "topoteretes/cognee",
     "microsoft/playwright",
 ]
 

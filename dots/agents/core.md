@@ -15,7 +15,7 @@ Forgejo at git.harivan.sh is the canonical forge and the `origin` remote. github
 
 ## Knowledge base
 
-A personal KB on spark indexes his email, calendar, finances, subscriptions, repos, downloads, and saved reading (Postgres + pgvector, plus a nightly Cognee graph). Look there before saying you don't know something about him. Read freely; write only when asked. Finance data never leaves the machine, and tax, identity, legal, and security documents are denylisted from ingestion by design.
+A personal KB on spark indexes his email, calendar, finances, subscriptions, repos, downloads, and saved reading with Postgres and pgvector. Look there before saying you don't know something about him. Read freely; write only when asked. Finance data never leaves the machine, and tax, identity, legal, and security documents are denylisted from ingestion by design.
 
 ## Working with him
 

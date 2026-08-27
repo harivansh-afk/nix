@@ -22,7 +22,7 @@ Everything is a single flake, declared with [flake-parts](https://github.com/her
 - llama.cpp - local model inference
 - Whisper Large v3 - for speech-to-text using voice-ink
 - Hermes Agent - yes
-- Cognee KB - central knowledge graph with relational search capabilities
+- Personal KB - local Postgres hybrid search over private data
 - Vaultwarden - password manager
 
 **`lib/theme.nix`**

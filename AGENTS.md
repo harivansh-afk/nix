@@ -195,7 +195,7 @@ Sandbox interplay to keep in mind: the finance relay executes inside `hermes-gat
 ## Key dependencies
 
 - `nixpkgs-nushell`: Separate nixpkgs pin for nushell on darwin (avoids EPERM test failures in the darwin sandbox without invalidating the spark NVIDIA kernel hash).
-- `dgx-spark`: Upstream NixOS module for DGX Spark hardware. Do not set `inputs.nixpkgs.follows` - the upstream pins nixpkgs to a known-good revision for the NVIDIA kernel build.
+- `dgx-spark`: Upstream NixOS module for DGX Spark hardware. Do not set `inputs.nixpkgs.follows` - the upstream pins nixpkgs to a known-good revision for the NVIDIA kernel build. It also makes podman the machine's only container runtime and serves the Docker-compatible API at `/run/podman/podman.sock` (`dockerCompat`, `dockerSocket.enable`, socket group `podman`); anything speaking the Docker API (dockerode, docker CLI) uses that socket. Never set `virtualisation.docker.enable` - it conflicts with the podman socket, and enabling it rewired the CI runner's unit and aborted the #479 deploy mid-switch.
 - `determinate`: Manages the Nix installation, daemon, and `/etc/nix/nix.conf`. On darwin, use `determinateNix.customSettings` instead of `nix.settings`.
 - `neovim-nightly`: Overlay applied only on darwin (no aarch64-linux binary cache).
 
@@ -248,6 +248,10 @@ Constraints that shaped it, all of them load-bearing:
 `ix new` resolves `github:`, `gitlab:` and `sourcehut:` only, never `git+https://git.harivan.sh/...`, so it builds the GitHub push mirror and not `origin`. Push the mirror before booting, or pin the sha (`ix new github:harivansh-afk/nix/<sha>#ix`), or you will silently get an older tree.
 
 The VM has no secrets. sops-nix on spark derives its age key from the host ed25519 key, which a fresh VM cannot have, and a template image is cached per rev and shared, so nothing secret may enter the closure. Delivering sops here means minting a separate age identity, storing the private key with `ix secret set`, and attaching it at create time with `ix new --secret-file`. Not done yet.
+
+## CI deploys
+
+`deploy.yml` runs `nixos-rebuild switch` on spark's own Actions runner, so the switch must never restart that runner: `gitea-runner-netty.service` is pinned `restartIfChanged = false` in `hosts/spark/services/forgejo/default.nix`. Without it, any config change that touches the runner unit (enabling docker did, via the gitea-actions-runner module's docker-label wiring) makes activation restart the runner mid-deploy; the runner's `shutdown_timeout=0s` kills its own jobs, including the nixos-rebuild driving the switch, and `switch-to-configuration` dies with its pty, leaving the system half-switched (the #479 deploy stopped postgresql and the runner this way and restarted neither). The cost: a changed runner unit lands on disk at switch but only applies on the next manual `systemctl restart gitea-runner-netty` or reboot. A cancelled sibling job on the same runner reads as a spurious failure (that is what "quality / Nix Format Check: failing after 0s" was), so check the runner journal before trusting a red X that raced a deploy.
 
 ## Forgejo mirroring
 

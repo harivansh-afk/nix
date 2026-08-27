@@ -165,15 +165,17 @@ off)
   mkdir -p "$STATE_DIR"
   rm -f "$ON_FILE"
   teardown
-  echo "cast: off (monitor back to spark console)"
+  echo "cast: off (monitor going dark)"
   ;;
 status)
   if [ -f "$ON_FILE" ]; then echo "cast: on"; else echo "cast: off"; fi
   echo "state: $(cat "$STATUS_FILE" 2>/dev/null || echo unknown)"
   if /usr/bin/pgrep -xq DeskPad; then echo "deskpad: running"; else echo "deskpad: stopped"; fi
   if /usr/bin/nc -z 127.0.0.1 47989 >/dev/null 2>&1; then echo "sunshine: listening"; else echo "sunshine: down"; fi
-  echo "kiosk: $(spark_ctl systemctl is-active cage-tty1.service 2>/dev/null || echo unreachable)"
-  echo "monitor: $(spark_ctl cat /sys/class/drm/card1-HDMI-A-1/dpms 2>/dev/null || echo unknown)"
+  kiosk=$(spark_ctl systemctl is-active cage-tty1.service 2>/dev/null || true)
+  echo "kiosk: ${kiosk:-unreachable}"
+  monitor=$(spark_ctl cat /sys/class/drm/card1-HDMI-A-1/enabled 2>/dev/null || true)
+  echo "monitor: ${monitor:-unknown}"
   ;;
 supervise)
   mkdir -p "$STATE_DIR"

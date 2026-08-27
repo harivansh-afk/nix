@@ -8,7 +8,8 @@ let
   apiPort = 18310;
   webPort = 18517;
   supervisorPort = 17091;
-  origin = "http://127.0.0.1:${toString webPort}";
+  tailscaleHost = "spark-ix.tail368802.ts.net";
+  origin = "https://${tailscaleHost}:${toString webPort}";
   stateDir = "/var/lib/rakazo";
   prismaEngines =
     inputs.prisma-nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.prisma-engines_7;
@@ -230,12 +231,34 @@ in
       environment = commonEnvironment // {
         API_PROXY_TARGET = "http://127.0.0.1:${toString apiPort}";
         WEB_PORT = toString webPort;
-        RAKAZO_HOST = "127.0.0.1";
+        RAKAZO_HOST = tailscaleHost;
         TMPDIR = "${stateDir}/tmp";
       };
       serviceConfig = serviceConfig // {
         WorkingDirectory = "${appRoot}/apps/web";
         ExecStart = "${node} ${vite} preview --configLoader runner --host 127.0.0.1 --port ${toString webPort}";
+      };
+    };
+
+    rakazo-tailscale-serve = {
+      description = "Expose Rakazo over Tailscale HTTPS";
+      after = [
+        "rakazo-web.service"
+        "tailscaled.service"
+      ];
+      wants = [
+        "rakazo-web.service"
+        "tailscaled.service"
+      ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStartPre = "${pkgs.tailscale}/bin/tailscale wait --timeout=2m";
+        ExecStart = "${pkgs.tailscale}/bin/tailscale serve --bg --https=${toString webPort} http://127.0.0.1:${toString webPort}";
+        ExecStop = "${pkgs.tailscale}/bin/tailscale serve --https=${toString webPort} off";
+        Restart = "on-failure";
+        RestartSec = 5;
       };
     };
   };

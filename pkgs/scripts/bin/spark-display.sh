@@ -94,6 +94,20 @@ converge() {
     return 0
   fi
 
+  # Publish this mac's LAN IP so the kiosk can stream LAN-direct (mDNS is
+  # blocked on the office network); the kiosk falls back to tailscale when
+  # the published IP is unreachable, so a stale value only costs a retry.
+  local lan cur
+  lan=$(/usr/sbin/ipconfig getifaddr en0 2>/dev/null || true)
+  if [ -n "$lan" ]; then
+    cur=$(spark_ctl cat /var/lib/spark-cast/host 2>/dev/null || true)
+    if [ "$cur" != "$lan" ]; then
+      spark_ctl "printf '%s' '$lan' > /var/lib/spark-cast/host" 2>/dev/null || true
+      note "publishing lan ip $lan"
+      return 0
+    fi
+  fi
+
   local kiosk
   kiosk=$(spark_ctl systemctl is-active cage-tty1.service 2>/dev/null || true)
   if [ "$kiosk" != "active" ]; then

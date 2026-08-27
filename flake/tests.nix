@@ -83,6 +83,10 @@
         (lib.assertMsg (
           lib.elem "--language-model-only" qwenContainer.cmd && lib.elem "--enforce-eager" qwenContainer.cmd
         ) "spark: text-only Qwen must skip the vision encoder and CUDA graph capture")
+        (lib.assertMsg (
+          qwenContainer.environment.HF_HUB_OFFLINE or "" == "1"
+          && lib.elem "vllm-model-download.service" spark.systemd.services."podman-qwen3-8-nvfp4".requires
+        ) "spark: Qwen weights are pre-downloaded by a oneshot; vLLM must never fetch at runtime")
         # Forgejo's git user is the one non-human account sshd admits, and the
         # two ways that can go wrong are opposite: drop it and every ssh push
         # breaks (silently, until someone tries), or add it bare and a service

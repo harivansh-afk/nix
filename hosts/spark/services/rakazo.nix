@@ -22,7 +22,7 @@ let
 
   commonEnvironment = {
     NODE_ENV = "production";
-    DATABASE_URL = "postgresql:///rakazo?host=/run/postgresql";
+    DATABASE_URL = "postgresql://rakazo@localhost/rakazo?host=/run/postgresql";
     DATA_DIR = stateDir;
     BETTER_AUTH_URL = origin;
     WEB_ORIGIN = origin;
@@ -143,7 +143,8 @@ in
       environment = commonEnvironment;
       serviceConfig = serviceConfig // {
         Type = "oneshot";
-        ExecStart = "${node} ${prisma} migrate deploy --schema ${appRoot}/packages/db/prisma/schema.prisma";
+        WorkingDirectory = "${appRoot}/packages/db";
+        ExecStart = "${node} ${prisma} migrate deploy";
         RemainAfterExit = true;
         Restart = "no";
       };

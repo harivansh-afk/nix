@@ -16,17 +16,25 @@ let
   # cage-tty1 re-probes the connector in ExecStartPre before every cast.
   # Manual recovery if the box is ever dark and unmanaged:
   #   echo detect > /sys/class/drm/card1-HDMI-A-1/status
+  # The write triggers a reprobe and can block indefinitely while DRM
+  # state is in flux (observed: ExecStopPost hung for the full 90s stop
+  # timeout during a switch-aborted start, SIGKILL, unit failed, and the
+  # failed unit failed the whole activation - deploys #6262/#6266). Both
+  # hooks are best-effort with a hard timeout: a missed force costs one
+  # lit console, never a wedged stop or a failed switch.
   connector = "/sys/class/drm/card1-HDMI-A-1/status";
   monitorOff = pkgs.writeShellApplication {
     name = "monitor-off";
+    runtimeInputs = [ pkgs.coreutils ];
     text = ''
-      echo off > ${connector}
+      timeout 10 sh -c 'echo off > ${connector}' || true
     '';
   };
   monitorOn = pkgs.writeShellApplication {
     name = "monitor-on";
+    runtimeInputs = [ pkgs.coreutils ];
     text = ''
-      echo detect > ${connector}
+      timeout 10 sh -c 'echo detect > ${connector}' || true
     '';
   };
 
@@ -82,11 +90,21 @@ in
 
   systemd.defaultUnit = lib.mkForce "multi-user.target";
 
-  systemd.services."cage-tty1".serviceConfig = {
-    KillSignal = "SIGKILL";
-    ExecStartPre = lib.getExe monitorOn;
-    ExecStopPost = lib.getExe monitorOff;
+  # Only the spark-cast supervisor ever starts the kiosk. The cage module
+  # wants it from graphical.target, and graphical.target is active on this
+  # box, so every nixos-rebuild switch started the kiosk unasked (cast off,
+  # monitor lit) and raced its own activation - both deploy failures on
+  # 2026-08-27 were this. Empty wants makes the unit strictly on-demand.
+  systemd.services."cage-tty1" = {
+    wantedBy = lib.mkForce [ ];
+    serviceConfig = {
+      KillSignal = "SIGKILL";
+      ExecStartPre = lib.getExe monitorOn;
+      ExecStopPost = lib.getExe monitorOff;
+    };
   };
+
+  systemd.targets.graphical.wants = lib.mkForce [ ];
 
   systemd.services.monitor-off = {
     wantedBy = [ "multi-user.target" ];

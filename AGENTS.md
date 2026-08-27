@@ -68,11 +68,10 @@ Instructions for every agent harness are layered in `dots/agents/` and rendered 
 | `core.md` | every agent | who Hari is, machines, forge, knowledge base, how to work with him |
 | `coding.md` | Claude Code, Codex, omp | tooling, git conventions, the `unslop` skill, spark CLI tools |
 | `claude.md` | Claude Code | Claude-only steering (prose questions, outcome-first replies, delegation) |
-| `hermes.md` | Hermes | the concierge role, loops, model, native KB tools |
 
-Rendered outputs: `~/.claude/CLAUDE.md` (core + coding + claude), `~/.codex/AGENTS.md` (core + coding), `~/.hermes/AGENTS.md` (core + hermes). A fact that is true for two parts moves up to `core.md`; a repo-specific fact belongs in that repo's `AGENTS.md` (this file), which `CLAUDE.md` imports with `@AGENTS.md`.
+Rendered outputs: `~/.claude/CLAUDE.md` (core + coding + claude), `~/.codex/AGENTS.md` (core + coding). A fact that is true for two parts moves up to `core.md`; a repo-specific fact belongs in that repo's `AGENTS.md` (this file), which `CLAUDE.md` imports with `@AGENTS.md`.
 
-Skills: `dots/agents/skills/<name>/SKILL.md` are repo-owned (`unslop`); the `mattpocock-skills` flake input supplies the engineering and productivity buckets. `modules/users/user-config/agents.nix` builds one link farm from both and the activation script links it to `~/.agents/skills` (Codex, and anything agentskills.io-compatible) and `~/.claude/skills` (Claude Code). Add a skill by dropping a directory into `dots/agents/skills/`; upgrade upstream with `nix flake update mattpocock-skills`. Hermes keeps its own skills under `dots/hermes/skills/`.
+Skills: `dots/agents/skills/<name>/SKILL.md` are repo-owned (`unslop`); the `mattpocock-skills` flake input supplies the engineering and productivity buckets. `modules/users/user-config/agents.nix` builds one link farm from both and the activation script links it to `~/.agents/skills` (Codex, and anything agentskills.io-compatible) and `~/.claude/skills` (Claude Code). Add a skill by dropping a directory into `dots/agents/skills/`; upgrade upstream with `nix flake update mattpocock-skills`.
 
 Hooks live in `dots/claude/hooks/` and are registered in `agents.nix`; omp reuses them through `dots/omp/extensions/claude-hooks.ts`.
 
@@ -177,16 +176,6 @@ The portable scripts (`ga`, `ghpr`, `iosrun`, the remote connectors) build witho
 
 `lib/remotes.nix` maps a command name to `{ host }` per server. `pkgs/scripts/portable.nix` renders each entry into a connector command (via `pkgs/scripts/bin/remote.sh`) that lands in every user's profile: `spark`, `macbook`, or `dev6` opens a shell over `mosh <host>`; `--ssh` forces `ssh -t` for UDP-hostile networks. Transport config (hostnames, keys, ControlMaster) stays in the live-edited `dots/ssh/config`; ssh, scp, and git are never wrapped. To add a server: one entry in `lib/remotes.nix` plus its `Host` block in `dots/ssh/config`.
 
-## Hermes loops
-
-`hosts/spark/services/hermes-loops.nix` deliberately forbids autonomous internet-to-agent paths. The old X, Hacker News, dependency-release, and ix morning-brief cron jobs are removed so untrusted network content cannot be injected into the privileged Hermes prompt. The deterministic scanner binaries remain inert local building blocks for a future quarantined ingestion pipeline; they are not scheduled and do not write to the KB.
-
-Finance splits judgment off because the raw data is local-only: the gateway masks `/var/lib/kb/staging/finance` via `InaccessiblePaths`, and hermes' cron scheduler runs in the gateway process, so no cron job - whatever model it is pinned to - can read it. `finance-anomaly-judge.service` (daily timer, outside that sandbox, `IPAddressDeny=any` + `IPAddressAllow=localhost` so it provably cannot exfiltrate) runs the scanner and has the local qwen brain (`127.0.0.1:18080`, `qwen3.8-27b`) write a judged briefing into `staging/loops/finance-anomaly-watch/` - the brain annotates and ranks but never drops a candidate (an earlier LLM skeptic dropped legitimate subscriptions as "normal spending", which is the one failure mode this loop must not have). The `finance-anomaly-watch` cron job then relays new verdicts with the `finance-relay` skill: hermes sees only the local model's result, never the raw transactions, and the pings still come from the agent like everything else.
-
-Job installation is declarative. `hermes-loops.nix` renders a manifest (jobs + script store paths); `hermes-cron-jobs.service` runs `dots/hermes/cron/reconcile.py` under hermes' own python env (`hermesVenv` passthru), driving hermes' `cron.jobs` module directly - create/update/remove with first-party locking, schedule parsing, and `next_run_at`; the gateway re-reads `jobs.json` every scheduler tick, so changes land without a restart. The reconciler owns only the names it installed (tracked in `~/.hermes/cron/.nix-managed.json`): jobs Hari creates via `/cron` in chat survive rebuilds, and a same-name pre-existing job is adopted. Scripts are copied (not symlinked) into `~/.hermes/scripts/` because hermes resolves script paths and rejects anything outside that directory. `deliver: "photon"` is resolved at reconcile time from `~/.hermes/channel_directory.json` to `photon:<chat_id>` (the id is a phone number; this repo is mirrored publicly), falling back to `local` with a warning until the first DM is seen.
-
-Sandbox interplay to keep in mind: the finance relay executes inside `hermes-gateway.service`, while the local judge runs outside it with raw finance access, loopback-only networking, and no internet route. Inspect the job with `hermes cron list`; trigger the judge with `sudo systemctl start finance-anomaly-judge`.
-
 ## Key dependencies
 
 - `nixpkgs-nushell`: Separate nixpkgs pin for nushell on darwin (avoids EPERM test failures in the darwin sandbox without invalidating the spark NVIDIA kernel hash).
@@ -219,7 +208,7 @@ nix eval .#nixosConfigurations.ix.config.system.build.toplevel.drvPath
 nix build --dry-run <drv>^* --substituters https://cache.nixos.org
 ```
 
-What was deliberately left out, and why, so it does not get re-added by reflex: `hermes-agent` (1170 source builds on its own, an uncached uv2nix tree pulling ffmpeg, ctranslate2 and onnxruntime), `leaf` (builds from source, so the VM fetches 1.6 GiB of rustc to compile one markdown viewer), `elixir_1_19` + `elixir-ls` (erlang twice, 248 MiB, and erlang's wx support drags in wxwidgets then webkitgtk), `clang` + `clang-tools` (1.4 GiB of clang and llvm libs), `pyright` + `python3` (389 MiB), `go_1_26` + `gopls` (248 MiB), `k9s` (168 MiB, no cluster to point it at), `tea` (its logins come from sops, which the VM has none of), and every `customScripts` entry (the remote connectors dial hosts a throwaway VM cannot reach, and `wallpaper-gen` pulls python + pillow for a machine with no display). `zoxide` is in the list because `dots/zsh/zshrc` runs `zoxide init zsh` unconditionally.
+What was deliberately left out, and why, so it does not get re-added by reflex: `leaf` (builds from source, so the VM fetches 1.6 GiB of rustc to compile one markdown viewer), `elixir_1_19` + `elixir-ls` (erlang twice, 248 MiB, and erlang's wx support drags in wxwidgets then webkitgtk), `clang` + `clang-tools` (1.4 GiB of clang and llvm libs), `pyright` + `python3` (389 MiB), `go_1_26` + `gopls` (248 MiB), `k9s` (168 MiB, no cluster to point it at), `tea` (its logins come from sops, which the VM has none of), and every `customScripts` entry (the remote connectors dial hosts a throwaway VM cannot reach, and `wallpaper-gen` pulls python + pillow for a machine with no display). `zoxide` is in the list because `dots/zsh/zshrc` runs `zoxide init zsh` unconditionally.
 
 `environment.systemPackages` holds one entry, `pkgs.ghostty.terminfo`, and it has to be there rather than in the root package list: NixOS builds `TERMINFO_DIRS` from `environment.pathsToLink`, which only covers the system profile. Ghostty exports `TERM=xterm-ghostty`, `ix shell` carries that value into the guest, and a guest with no matching terminfo entry gives you `can't find terminal definition for xterm-ghostty`, a zsh line editor that cannot position the cursor (keystrokes echo doubled) and a `clear` that refuses to run. The cost is 2.2 KiB: `terminfo` is a separate output of the ghostty derivation and cache.nixos.org has it, so nothing builds ghostty itself. Any other terminal that sets an exotic `TERM` needs its own entry here, or `environment.enableAllTerminfo = true` if the list ever grows past a couple.
 
@@ -287,14 +276,6 @@ Forgejo's own `[mirror] DEFAULT_INTERVAL` is `15m` and `[queue.mirror] MAX_WORKE
 
 Source of truth is the jj-native ix forge (RPC `https://forge.ix.dev:8447/rpc`, UI `https://forge.ix.dev:8448/`, tailnet), not GitHub: github.com/indexable-inc/ix is archived and is never synced from. Clone with `jj-ix ix clone --server https://forge.ix.dev:8447/rpc --repo ix <dir>` and pass `--config 'signing.behavior=drop'` (the ix backend rejects commit signing). The forge has no whole-repo git egress, so `git.harivan.sh/indexable-inc/ix` is a regular repo kept current by pushing snapshot commits of forge `main` (tree from a jj-ix clone, parent = previous snapshot, message carries the forge commit id).
 
-## Hermes agent
+## Removed agent machinery
 
-Hermes is the local-brain life concierge (`hosts/spark/services/hermes.nix`). Optimize its setup for the fewest non-overlapping tools and recall surfaces; when two features overlap in role, cut one. Recall is exactly three surfaces: built-in `memory` (injected identity and preferences, write-only), `kb_search` (Hari's own data), and `session_search` (past conversations). A second agent-authored memory store (`holographic`, `fact_store`) overlaps the first two and confuses the model.
-
-## Knowledge base and ingestion
-
-PostgreSQL + pgvector (`kb_vec`) for fast vector search plus a Cognee knowledge graph (Kuzu) rebuilt off-hours and rendered to `/var/lib/kb/graph/index.html` (not network-exposed; view via tunnel). Connectors stage normalized markdown into `/var/lib/kb/staging/<source>/`; the hourly `kb-ingest` embeds staging into pgvector. New sources are connectors following that pattern. Current sources: gmail, calendar, forgejo, `~/Documents/Downloads` (denylist-enforced), scheduled research missions (HN now, X gated on browser-use).
-
-## Privacy and finance
-
-Bank transactions (SimpleFIN, read-only token via sops) and charge or receipt emails feed one local-only finance namespace so a transaction links to its receipt in the graph (merchant, amount, date). It never leaves the machine. The ingestion denylist is enforced in code: `~/Documents/Downloads/{security, documents/finance-tax, documents/travel-identity, documents/legal-business}`. The finance carve-out covers transaction and charge data only; tax documents stay excluded.
+The Hermes agent, its cron loops, the photon messenger, browser-use, and the loop scanner scripts are removed from this repo. Do not re-add agent services or scheduled scanners by reflex, and do not document the KB's contents here; the KB modules under `hosts/spark/services/` are the source of truth for what runs.

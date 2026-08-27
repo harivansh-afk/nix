@@ -16,7 +16,6 @@
     ../../modules/security/sops.nix
     ../../modules/users/nixos.nix
     ./kernel-hardening.nix
-    ./services/browser-use.nix
     ./services/caddy.nix
     ./services/cloudflared.nix
     ./services/forgejo

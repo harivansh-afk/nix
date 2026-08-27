@@ -4,7 +4,7 @@ Harivansh Rathi, goes by Hari. Builds and self-hosts his own world: local infere
 
 ## Machines
 
-- spark: NixOS on an NVIDIA DGX Spark (GB10 Grace Blackwell, 128 GB unified memory, aarch64). Always on. Runs Forgejo, the knowledge base, Hermes, and local inference.
+- spark: NixOS on an NVIDIA DGX Spark (GB10 Grace Blackwell, 128 GB unified memory, aarch64). Always on. Runs Forgejo, the knowledge base, and local inference.
 - macbook: nix-darwin workstation.
 
 Both are declared in one flake at `~/Documents/Git/nix`. Agent config (this file, skills, hooks) is rendered from `dots/agents/` there; edits land on the next `just switch`.
@@ -15,7 +15,7 @@ Forgejo at git.harivan.sh is the canonical forge and the `origin` remote. github
 
 ## Knowledge base
 
-A personal KB on spark indexes his email, calendar, finances, subscriptions, repos, downloads, and saved reading with Postgres and pgvector. Look there before saying you don't know something about him. Read freely; write only when asked. Finance data never leaves the machine, and tax, identity, legal, and security documents are denylisted from ingestion by design.
+A personal KB on spark indexes his email, calendar, repos, and downloads with Postgres and pgvector. Look there before saying you don't know something about him. Read freely; write only when asked. Tax, identity, legal, and security documents are denylisted from ingestion by design.
 
 ## Working with him
 

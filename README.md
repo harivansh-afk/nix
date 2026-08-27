@@ -21,8 +21,6 @@ Everything is a single flake, declared with [flake-parts](https://github.com/her
 - [Forgejo](https://git.harivan.sh) - my git
 - llama.cpp - local model inference
 - Whisper Large v3 - for speech-to-text using voice-ink
-- Hermes Agent - yes
-- Personal KB - local Postgres hybrid search over private data
 - Vaultwarden - password manager
 
 **`lib/theme.nix`**
@@ -51,7 +49,7 @@ flake/               host assembly, packages, devshell, args (incl. the host rec
 lib/                 theme palette, remote registry, nvim plugin pinning
 hosts/               per-host config; everything single-host lives here
   macbook/           darwin defaults, homebrew, launchd services, voiceink
-  spark/             NixOS base + services/ (forgejo, inference, whisper, hermes, kb-*, caddy, ...)
+  spark/             NixOS base + services/ (forgejo, inference, whisper, caddy, ...)
   ix/                the throwaway dev VM template
 users/               multi-user definitions for spark
 dots/                app configs symlinked into XDG paths (live-editable)

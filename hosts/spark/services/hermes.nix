@@ -1,13 +1,21 @@
 { config, inputs, ... }:
+let
+  stateDir = "/home/rathi/.local/state/hermes";
+in
 {
   imports = [ inputs.hermes-agent.nixosModules.default ];
+
+  systemd.tmpfiles.rules = [
+    "L+ ${stateDir}/.hermes/plugins/knowledge-base - - - - /home/rathi/Documents/Git/nix/dots/hermes/plugins/knowledge-base"
+    "L+ ${stateDir}/workspace/kb-staging - - - - /var/lib/kb/staging"
+  ];
 
   services.hermes-agent = {
     enable = true;
     user = "rathi";
     group = "users";
     createUser = false;
-    stateDir = "/home/rathi/.local/state/hermes";
+    inherit stateDir;
     addToSystemPackages = true;
 
     environmentFiles = [ config.sops.secrets."anthropic.env".path ];

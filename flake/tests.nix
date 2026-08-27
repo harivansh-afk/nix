@@ -32,6 +32,7 @@
 
       llamaSettings = spark.services.llama-cpp.settings;
       llamaPreset = builtins.readFile llamaSettings."models-preset";
+      qwenContainer = spark.virtualisation.oci-containers.containers.qwen3-8-nvfp4;
 
       invariants = [
         (lib.assertMsg (proxiedPorts != [ ])
@@ -79,6 +80,9 @@
           lib.hasInfix "[huihui-qwen3.8-27b-abliterated]" llamaPreset
           && !(lib.hasInfix "[qwen3.6-35b-a3b]" llamaPreset)
         ) "spark: llama.cpp must retain only the unchained local model")
+        (lib.assertMsg (
+          lib.elem "--language-model-only" qwenContainer.cmd && lib.elem "--enforce-eager" qwenContainer.cmd
+        ) "spark: text-only Qwen must skip the vision encoder and CUDA graph capture")
         # Forgejo's git user is the one non-human account sshd admits, and the
         # two ways that can go wrong are opposite: drop it and every ssh push
         # breaks (silently, until someone tries), or add it bare and a service

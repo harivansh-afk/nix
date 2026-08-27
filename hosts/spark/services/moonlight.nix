@@ -9,6 +9,19 @@
   ...
 }:
 let
+  # Blanking the VT drops the fbcon framebuffer into DPMS off, so the
+  # monitor sleeps instead of showing the console. cage relights the
+  # output itself when it takes DRM master (wlroots enables the connector
+  # on modeset), so there is no unblank counterpart.
+  blank = pkgs.writeShellApplication {
+    name = "monitor-blank";
+    runtimeInputs = [ pkgs.util-linux ];
+    text = ''
+      exec </dev/tty1 >/dev/tty1
+      setterm --term linux --blank force
+    '';
+  };
+
   kiosk = pkgs.writeShellApplication {
     name = "moonlight-kiosk";
     runtimeInputs = [
@@ -61,7 +74,25 @@ in
 
   systemd.defaultUnit = lib.mkForce "multi-user.target";
 
-  systemd.services."cage-tty1".serviceConfig.KillSignal = "SIGKILL";
+  systemd.services."cage-tty1".serviceConfig = {
+    KillSignal = "SIGKILL";
+    ExecStopPost = lib.getExe blank;
+  };
+
+  # The monitor is dark whenever the kiosk is not running: blanked at boot
+  # (after getty settles, so its terminal reset cannot undo the blank) and
+  # re-blanked by ExecStopPost after every cast. consoleblank re-blanks
+  # after any stray unblank; a keyboard-less console has none in practice.
+  boot.kernelParams = [ "consoleblank=15" ];
+
+  systemd.services.monitor-blank = {
+    wantedBy = [ "multi-user.target" ];
+    after = [ "getty.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = lib.getExe blank;
+    };
+  };
 
   security.polkit.extraConfig = ''
     polkit.addRule(function(action, subject) {

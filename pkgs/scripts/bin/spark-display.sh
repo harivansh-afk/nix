@@ -173,6 +173,7 @@ status)
   if /usr/bin/pgrep -xq DeskPad; then echo "deskpad: running"; else echo "deskpad: stopped"; fi
   if /usr/bin/nc -z 127.0.0.1 47989 >/dev/null 2>&1; then echo "sunshine: listening"; else echo "sunshine: down"; fi
   echo "kiosk: $(spark_ctl systemctl is-active cage-tty1.service 2>/dev/null || echo unreachable)"
+  echo "monitor: $(spark_ctl cat /sys/class/drm/card1-HDMI-A-1/dpms 2>/dev/null || echo unknown)"
   ;;
 supervise)
   mkdir -p "$STATE_DIR"

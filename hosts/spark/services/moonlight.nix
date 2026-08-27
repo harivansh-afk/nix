@@ -12,10 +12,14 @@ let
   # A VT blank does not reach DPMS on this NVIDIA fbcon (tested live:
   # setterm --blank force as root, dpms stayed On), so the monitor is put
   # to sleep by forcing the DRM connector off, which drops the HDMI link
-  # unconditionally. The force is sticky - wlroots cannot undo it - so
-  # cage-tty1 re-probes the connector in ExecStartPre before every cast.
-  # Manual recovery if the box is ever dark and unmanaged:
-  #   echo detect > /sys/class/drm/card1-HDMI-A-1/status
+  # unconditionally. The counterpart is force-connected, never `detect`:
+  # after a force-off, nvidia-drm's reprobe reads disconnected with the
+  # monitor attached (tested live: cage came up with zero outputs and
+  # moonlight streamed into a placeholder screen), so probing can never
+  # be trusted to relight. Forcing is sticky in both directions and
+  # wlroots cannot undo it; cage-tty1 forces on in ExecStartPre before
+  # every cast. Manual recovery if the box is ever dark and unmanaged:
+  #   echo on > /sys/class/drm/card1-HDMI-A-1/status
   # The write triggers a reprobe and can block indefinitely while DRM
   # state is in flux (observed: ExecStopPost hung for the full 90s stop
   # timeout during a switch-aborted start, SIGKILL, unit failed, and the
@@ -34,7 +38,7 @@ let
     name = "monitor-on";
     runtimeInputs = [ pkgs.coreutils ];
     text = ''
-      timeout 10 sh -c 'echo detect > ${connector}' || true
+      timeout 10 sh -c 'echo on > ${connector}' || true
     '';
   };
 

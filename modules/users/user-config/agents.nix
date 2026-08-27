@@ -68,10 +68,10 @@ let
       };
     };
     local = {
-      description = "Huihui Qwen 3.8 main, Qwen 3.6 task agents";
+      description = "Qwen 3.8 NVFP4 main, unchained Qwen 3.8 task agents";
       roles = {
-        default = "spark-local/huihui-qwen3.8-27b-abliterated:medium";
-        task = "spark-local/qwen3.6-35b-a3b";
+        default = "spark-local/qwen3.8-27b-nvfp4:medium";
+        task = "spark-unchained/huihui-qwen3.8-27b-abliterated:medium";
       };
     };
   };
@@ -152,20 +152,34 @@ in
       auth = "none";
       compat = {
         supportsStore = false;
+        supportsDeveloperRole = true;
+        supportsReasoningEffort = true;
+        supportsStrictMode = false;
+        maxTokensField = "max_tokens";
+      };
+      models = [
+        {
+          id = "qwen3.8-27b-nvfp4";
+          name = "Qwen 3.8 27B NVFP4";
+          reasoning = true;
+          input = [ "text" ];
+          contextWindow = 65536;
+          maxTokens = 32768;
+        }
+      ];
+    };
+    providers.spark-unchained = {
+      baseUrl = "http://127.0.0.1:18081/v1";
+      api = "openai-completions";
+      auth = "none";
+      compat = {
+        supportsStore = false;
         supportsDeveloperRole = false;
         supportsReasoningEffort = false;
         supportsStrictMode = false;
         maxTokensField = "max_tokens";
       };
       models = [
-        {
-          id = "qwen3.6-35b-a3b";
-          name = "Qwen 3.6 35B A3B UD-Q4_K_XL";
-          reasoning = false;
-          input = [ "text" ];
-          contextWindow = 65536;
-          maxTokens = 32768;
-        }
         {
           id = "huihui-qwen3.8-27b-abliterated";
           name = "Huihui Qwen 3.8 27B Abliterated Q4_K";

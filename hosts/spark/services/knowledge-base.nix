@@ -9,7 +9,7 @@ let
   #   3. Cognee (uv venv)        -> GraphRAG, configured FULLY LOCAL
   #
   # The brain LLM is already served by inference.nix at 127.0.0.1:18080/v1
-  # (alias "qwen3.6-35b-a3b"); this module never starts another LLM.
+  # (alias "qwen3.8-27b-nvfp4"); this module never starts another LLM.
   #
   # Ports (all 127.0.0.1, off well-known ports per CLAUDE.md):
   #   embeddings = 18200, (reranker reserved 18210), cognee-api reserved 18300,
@@ -87,9 +87,9 @@ let
   # and docs.cognee.ai (see notes at bottom of file). LiteLLM routes LLM and
   # embedding calls, so model names carry an "openai/" provider prefix.
   cogneeEnv = {
-    # LLM -> the local brain at inference.nix (Qwen3.6) over OpenAI-compatible.
+    # LLM -> the local brain at inference.nix (Qwen3.8) over OpenAI-compatible.
     LLM_PROVIDER = "custom";
-    LLM_MODEL = "openai/qwen3.6-35b-a3b";
+    LLM_MODEL = "openai/qwen3.8-27b-nvfp4";
     LLM_ENDPOINT = "http://127.0.0.1:18080/v1";
     LLM_API_KEY = ".";
 

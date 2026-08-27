@@ -9,50 +9,75 @@ let
     pythonPackages.hf-transfer
   ]);
 
-  qwenRepo = "unsloth/Qwen3.6-35B-A3B-GGUF";
-  qwenDir = "/var/lib/llama-cpp/models/qwen3.6-35b-a3b";
-  qwenFile = "Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf";
-  qwenPath = "${qwenDir}/${qwenFile}";
+  qwenModel = "unsloth/Qwen3.8-27B-NVFP4";
+  qwenAlias = "qwen3.8-27b-nvfp4";
+  # vLLM main is required for Qwen3.8 NVFP4. Pin the multi-arch image digest;
+  # Podman selects its linux/arm64 manifest on spark.
+  vllmImage = "vllm/vllm-openai@sha256:c96082d33456ceeae7ec0d4faf2b5e47fb806a103decf94f9fbc9b35fd7d6b25";
 
-  huihuiRepo = "huihui-ai/Huihui-Qwen3.8-27B-abliterated-GGUF";
-  huihuiDir = "/var/lib/llama-cpp/models/huihui-qwen3.8-27b-abliterated";
-  huihuiFile = "Huihui-Qwen3.8-27B-abliterated-Q4_K.gguf";
-  huihuiPath = "${huihuiDir}/${huihuiFile}";
+  unchainedRepo = "huihui-ai/Huihui-Qwen3.8-27B-abliterated-GGUF";
+  unchainedDir = "/var/lib/llama-cpp/models/huihui-qwen3.8-27b-abliterated";
+  unchainedFile = "Huihui-Qwen3.8-27B-abliterated-Q4_K.gguf";
+  unchainedPath = "${unchainedDir}/${unchainedFile}";
 
   modelPresets = pkgs.writeText "llama-cpp-models.ini" ''
     version = 1
 
-    [qwen3.6-35b-a3b]
-    model = ${qwenPath}
-    reasoning = off
-    reasoning-budget = 0
-
     [huihui-qwen3.8-27b-abliterated]
-    model = ${huihuiPath}
+    model = ${unchainedPath}
   '';
 
-  downloadModels = pkgs.writeShellScript "download-llama-cpp-models" ''
+  downloadUnchained = pkgs.writeShellScript "download-llama-cpp-model" ''
     set -euo pipefail
-    if [ ! -s "${qwenPath}" ]; then
-      ${huggingfaceCli}/bin/hf download ${qwenRepo} --include "${qwenFile}" --local-dir "${qwenDir}"
-    fi
-    if [ ! -s "${huihuiPath}" ]; then
-      ${huggingfaceCli}/bin/hf download ${huihuiRepo} --include "${huihuiFile}" --local-dir "${huihuiDir}"
+    if [ ! -s "${unchainedPath}" ]; then
+      ${huggingfaceCli}/bin/hf download ${unchainedRepo} --include "${unchainedFile}" --local-dir "${unchainedDir}"
     fi
   '';
 in
 {
   services.ollama.enable = lib.mkForce false;
 
+  # The main model uses its native NVFP4 weights. llama.cpp cannot load this
+  # format, so keep the unchained GGUF on a separate loopback-only server.
+  virtualisation.oci-containers = {
+    backend = "podman";
+    containers.qwen3-8-nvfp4 = {
+      image = vllmImage;
+      ports = [ "127.0.0.1:18080:8000" ];
+      volumes = [ "/var/lib/vllm/huggingface:/root/.cache/huggingface" ];
+      extraOptions = [
+        "--device=nvidia.com/gpu=all"
+        "--ipc=host"
+      ];
+      cmd = [
+        qwenModel
+        "--served-model-name"
+        qwenAlias
+        "--trust-remote-code"
+        "--gpu-memory-utilization"
+        "0.5"
+        "--max-model-len"
+        "65536"
+        "--max-num-seqs"
+        "2"
+        "--enable-prefix-caching"
+        "--enable-auto-tool-choice"
+        "--tool-call-parser"
+        "qwen3_coder"
+        "--reasoning-parser"
+        "qwen3"
+      ];
+    };
+  };
+
   services.llama-cpp = {
     enable = true;
     package = llamaCpp;
-
     settings = {
       host = "127.0.0.1";
-      port = 18080;
+      port = 18081;
       "models-preset" = modelPresets;
-      "models-max" = 2;
+      "models-max" = 1;
       "models-autoload" = true;
       "ctx-size" = 65536;
       parallel = 1;
@@ -73,9 +98,12 @@ in
   systemd.tmpfiles.rules = [
     "d /var/lib/llama-cpp 0755 root root -"
     "d /var/lib/llama-cpp/models 0755 root root -"
-    "d ${qwenDir} 0755 root root -"
-    "d ${huihuiDir} 0755 root root -"
+    "d ${unchainedDir} 0755 root root -"
     "d /var/lib/llama-cpp/huggingface 0755 root root -"
+    "d /var/lib/vllm 0755 root root -"
+    "d /var/lib/vllm/huggingface 0755 root root -"
+    # The old main model is no longer managed or served.
+    "R /var/lib/llama-cpp/models/qwen3.6-35b-a3b - - - -"
     "w /sys/block/nvme0n1/queue/read_ahead_kb - - - - 8192"
   ];
 
@@ -87,7 +115,7 @@ in
     };
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = downloadModels;
+      ExecStart = downloadUnchained;
     };
   };
 

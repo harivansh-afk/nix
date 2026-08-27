@@ -4,7 +4,7 @@ Harivansh Rathi, goes by Hari. Builds and self-hosts his own world: local infere
 
 ## Machines
 
-- spark: NixOS on an NVIDIA DGX Spark (GB10 Grace Blackwell, 128 GB unified memory, aarch64). Always on. Runs Forgejo, the knowledge base, and local inference.
+- spark: NixOS on an NVIDIA DGX Spark (GB10 Grace Blackwell, 128 GB unified memory, aarch64). Always on. Runs Forgejo, the knowledge base, Hermes, and local inference.
 - macbook: nix-darwin workstation.
 
 Both are declared in one flake at `~/Documents/Git/nix`. Agent config (this file, skills, hooks) is rendered from `dots/agents/` there; edits land on the next `just switch`.

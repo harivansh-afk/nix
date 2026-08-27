@@ -9,16 +9,24 @@
   ...
 }:
 let
-  # Blanking the VT drops the fbcon framebuffer into DPMS off, so the
-  # monitor sleeps instead of showing the console. cage relights the
-  # output itself when it takes DRM master (wlroots enables the connector
-  # on modeset), so there is no unblank counterpart.
-  blank = pkgs.writeShellApplication {
-    name = "monitor-blank";
-    runtimeInputs = [ pkgs.util-linux ];
+  # A VT blank does not reach DPMS on this NVIDIA fbcon (tested live:
+  # setterm --blank force as root, dpms stayed On), so the monitor is put
+  # to sleep by forcing the DRM connector off, which drops the HDMI link
+  # unconditionally. The force is sticky - wlroots cannot undo it - so
+  # cage-tty1 re-probes the connector in ExecStartPre before every cast.
+  # Manual recovery if the box is ever dark and unmanaged:
+  #   echo detect > /sys/class/drm/card1-HDMI-A-1/status
+  connector = "/sys/class/drm/card1-HDMI-A-1/status";
+  monitorOff = pkgs.writeShellApplication {
+    name = "monitor-off";
     text = ''
-      exec </dev/tty1 >/dev/tty1
-      setterm --term linux --blank force
+      echo off > ${connector}
+    '';
+  };
+  monitorOn = pkgs.writeShellApplication {
+    name = "monitor-on";
+    text = ''
+      echo detect > ${connector}
     '';
   };
 
@@ -76,21 +84,15 @@ in
 
   systemd.services."cage-tty1".serviceConfig = {
     KillSignal = "SIGKILL";
-    ExecStopPost = lib.getExe blank;
+    ExecStartPre = lib.getExe monitorOn;
+    ExecStopPost = lib.getExe monitorOff;
   };
 
-  # The monitor is dark whenever the kiosk is not running: blanked at boot
-  # (after getty settles, so its terminal reset cannot undo the blank) and
-  # re-blanked by ExecStopPost after every cast. consoleblank re-blanks
-  # after any stray unblank; a keyboard-less console has none in practice.
-  boot.kernelParams = [ "consoleblank=15" ];
-
-  systemd.services.monitor-blank = {
+  systemd.services.monitor-off = {
     wantedBy = [ "multi-user.target" ];
-    after = [ "getty.target" ];
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = lib.getExe blank;
+      ExecStart = lib.getExe monitorOff;
     };
   };
 

@@ -1,7 +1,14 @@
 # spark-display on|off|status: cast the mac onto spark's monitor.
 # `on` flips a state file; the org.nixos.spark-cast agent runs `supervise`,
-# a 5s convergence loop over DeskPad -> resolution -> sunshine display id ->
-# published LAN IP -> spark kiosk. See AGENTS.md "Casting".
+# a convergence loop over DeskPad -> resolution -> published LAN IP ->
+# spark kiosk -> sunshine display id. Each fix waits (bounded) for its own
+# postcondition and the loop re-runs almost immediately after acting, so a
+# cold start walks the whole ladder in a few seconds; the 5s tick only
+# maintains steady state. The kiosk starts before sunshine on purpose:
+# the panel's HDMI wake and moonlight's retry loop overlap sunshine
+# bring-up (safe: the gate keeps sunshine down until its conf holds the
+# fresh display id, so an early kiosk sees connection-refused, never a
+# wrong display). See AGENTS.md "Casting".
 
 DP=/opt/homebrew/bin/displayplacer
 STATE_DIR="$HOME/.local/state/spark-cast"
@@ -28,6 +35,31 @@ spark_ctl() {
 
 note() {
   printf '%s\n' "$1" >"$STATUS_FILE"
+}
+
+# await <seconds> <cmd...>: poll until cmd succeeds or the deadline passes.
+# Fix branches use this to wait for their own postcondition, which is what
+# makes fast re-runs safe: without it, a quick next pass would see e.g.
+# sunshine's port not yet bound and kickstart -k it mid-start, forever.
+await() {
+  local deadline=$((SECONDS + $1))
+  shift
+  until "$@" >/dev/null 2>&1; do
+    [ "$SECONDS" -lt "$deadline" ] || return 1
+    sleep 0.3
+  done
+}
+
+deskpad_present() {
+  [ -n "$(deskpad_display)" ]
+}
+
+deskpad_at_res() {
+  [ "$(deskpad_display | awk '{ print $3 }')" = "$RES" ]
+}
+
+sunshine_listening() {
+  /usr/bin/nc -z 127.0.0.1 47989
 }
 
 # Sunshine on a stale/invalid output_name silently falls back to capturing
@@ -75,21 +107,29 @@ deskpad_display() {
   fi
 }
 
+# One fix per pass, ACTED=1 when something was done; supervise re-runs
+# almost immediately after an action and sleeps 5s only when steady.
 converge() {
+  ACTED=0
+
   if ! /usr/bin/pgrep -xq DeskPad; then
+    ACTED=1
     sunshine_down
     # -gj: launch hidden and in the background; the virtual display does
     # not need a visible window, and the preview is patched out anyway.
     /usr/bin/open -gj "$APP" 2>/dev/null || true
     note "launching deskpad"
+    await 12 deskpad_present || true
     return 0
   fi
 
   local line pid ctx res
   line=$(deskpad_display)
   if [ -z "$line" ]; then
+    ACTED=1
     sunshine_down
     note "waiting for virtual display"
+    await 8 deskpad_present || true
     return 0
   fi
   read -r pid ctx res _ <<<"$line"
@@ -97,9 +137,36 @@ converge() {
   # Setting the resolution re-rolls the display id, so only when wrong,
   # and never with sunshine still serving the id about to die.
   if [ "$res" != "$RES" ]; then
+    ACTED=1
     sunshine_down
     "$DP" "id:$pid res:$RES hz:$HZ enabled:true scaling:off origin:$ORIGIN degree:0" >/dev/null 2>&1 || true
     note "setting resolution to $RES"
+    await 6 deskpad_at_res || true
+    return 0
+  fi
+
+  # The two spark-side steps run before sunshine: the kiosk tolerates a
+  # down sunshine (connection refused, fast retry), so the panel wake and
+  # moonlight's connect loop overlap sunshine bring-up instead of
+  # serializing after it.
+  local lan cur
+  lan=$(/usr/sbin/ipconfig getifaddr en0 2>/dev/null || true)
+  if [ -n "$lan" ]; then
+    cur=$(spark_ctl cat /var/lib/spark-cast/host 2>/dev/null || true)
+    if [ "$cur" != "$lan" ]; then
+      ACTED=1
+      printf '%s' "$lan" | spark_ctl "cat > /var/lib/spark-cast/host" 2>/dev/null || true
+      note "publishing lan ip $lan"
+      return 0
+    fi
+  fi
+
+  local kiosk
+  kiosk=$(spark_ctl systemctl is-active cage-tty1.service 2>/dev/null || true)
+  if [ "$kiosk" != "active" ]; then
+    ACTED=1
+    spark_ctl systemctl start cage-tty1.service 2>/dev/null || true
+    note "starting kiosk on spark"
     return 0
   fi
 
@@ -113,34 +180,19 @@ converge() {
   local want
   want=$(printf 'min_log_level = info\nkeyboard = disabled\nmouse = disabled\ncontroller = disabled\noutput_name = %s\nlan_encryption_mode = 2\norigin_web_ui_allowed = pc' "$ctx")
   if [ "$(cat "$SUNSHINE_CONF" 2>/dev/null)" != "$want" ]; then
+    ACTED=1
     printf '%s\n' "$want" >"$SUNSHINE_CONF"
     sunshine_up
     note "pointing sunshine at display $ctx"
+    await 8 sunshine_listening || true
     return 0
   fi
 
-  if ! /usr/bin/nc -z 127.0.0.1 47989 >/dev/null 2>&1; then
+  if ! sunshine_listening >/dev/null 2>&1; then
+    ACTED=1
     sunshine_up
     note "restarting sunshine"
-    return 0
-  fi
-
-  local lan cur
-  lan=$(/usr/sbin/ipconfig getifaddr en0 2>/dev/null || true)
-  if [ -n "$lan" ]; then
-    cur=$(spark_ctl cat /var/lib/spark-cast/host 2>/dev/null || true)
-    if [ "$cur" != "$lan" ]; then
-      printf '%s' "$lan" | spark_ctl "cat > /var/lib/spark-cast/host" 2>/dev/null || true
-      note "publishing lan ip $lan"
-      return 0
-    fi
-  fi
-
-  local kiosk
-  kiosk=$(spark_ctl systemctl is-active cage-tty1.service 2>/dev/null || true)
-  if [ "$kiosk" != "active" ]; then
-    spark_ctl systemctl start cage-tty1.service 2>/dev/null || true
-    note "starting kiosk on spark"
+    await 8 sunshine_listening || true
     return 0
   fi
 
@@ -183,7 +235,7 @@ supervise)
   mkdir -p "$STATE_DIR"
   while [ -f "$ON_FILE" ]; do
     converge
-    sleep 5
+    if [ "$ACTED" = 1 ]; then sleep 0.3; else sleep 5; fi
   done
   teardown
   ;;

@@ -159,6 +159,17 @@ Accent constraint for agent-facing TUI roles (omp markdown headings/inline code/
 
 `claude-purple/` follows the same entry + lazy `core/` split. Tool-call headings use the separate `toolTitle` token (claude-purple); `accent` stays coral for header descriptions, paths, and grep's per-file result headers. The extension patches the Theme prototype (and `DEFAULT_SHIMMER_PALETTE`) so the tool dots, the search dots, and the loader spinner/shimmer crest also render claude-purple, read live from `getColorHex("statusLinePath")` (the prompting-bar path shares that lane in `lib/theme.nix`).
 
+## Casting (spark-display)
+
+Spark's HDMI monitor doubles as the mac's extended display. `spark-display on|off|status` on the mac is the whole interface; everything else is machinery:
+
+- mac: DeskPad (built from pinned source, `hosts/macbook/deskpad.nix` - the released binary lacks 3440x1440) creates the virtual display; Sunshine (brew formula, launchd agent in `hosts/macbook/services.nix`) captures it and encodes VideoToolbox HEVC. Never run `sunshine` manually and never `brew services start sunshine`: a second instance steals the ports and the agent instance goes deaf.
+- spark: `hosts/spark/services/moonlight.nix` - moonlight-qt fullscreen in a cage kiosk on tty1 (`cage-tty1.service`, on-demand, boot stays multi-user). Decode is NVDEC via NVIDIA's VAAPI driver on wayland. A polkit rule scopes start/stop of that one unit to the primary user over ssh.
+- The `org.nixos.spark-cast` agent supervises: `on` touches `~/.local/state/spark-cast/on`, and a 5s convergence loop keeps DeskPad running, the virtual display at native res, `sunshine.conf`'s `output_name` synced to the display's CGDirectDisplayID (it re-rolls on every DeskPad relaunch and resolution change; displayplacer's contextual id equals the id Sunshine logs), and the kiosk up. Kill any piece and it self-heals within a tick. `off` removes the state file; the loop tears down.
+- `~/.config/sunshine/sunshine.conf` is owned by the convergence loop, not nix.
+
+One-time per machine, not declarable: Sunshine's Screen Recording grant (TCC), Sunshine web-UI creds (`sunshine --creds`), moonlight pairing (`sudo -u moonlight env QT_QPA_PLATFORM=offscreen moonlight pair <mac> --pin NNNN`, approve via `POST /api/pin` on the web UI), and DeskPad's own Screen Recording grant (only its preview window; the stream works without it). DeskPad is signed with a stable machine-local identity so that grant survives rebuilds.
+
 ## Remote sessions
 
 Terminal sessions, panes, and persistence are the job of Mux.app and muxd (`~/Documents/Git/mux`); spark runs the daemon via `hosts/spark/services/muxd.nix`. Nothing in this repo multiplexes terminals.

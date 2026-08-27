@@ -52,6 +52,14 @@
       flake = false;
     };
 
+    # DeskPad virtual display, built from source on macbook: the released
+    # binary (and its cask) lacks the ultrawide modes; 3440x1440@60 exists
+    # only on main. Pinned source, not a flake. See hosts/macbook/deskpad.nix.
+    deskpad-src = {
+      url = "github:Stengo/DeskPad";
+      flake = false;
+    };
+
     # Matt Pocock's agent skills (engineering + productivity buckets). Linked
     # into ~/.agents/skills by the user activation script; bump with
     # `nix flake update mattpocock-skills`.

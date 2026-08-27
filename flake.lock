@@ -32,6 +32,22 @@
         "type": "github"
       }
     },
+    "deskpad-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1772284464,
+        "narHash": "sha256-2T/Ylz/Y4StPwBqcvnvxS1Ntm+b4EdKTgfRw6Qe53VY=",
+        "owner": "Stengo",
+        "repo": "DeskPad",
+        "rev": "c3349f0e237e000cb4826fb3ea1cdd1c44949461",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Stengo",
+        "repo": "DeskPad",
+        "type": "github"
+      }
+    },
     "determinate": {
       "inputs": {
         "determinate-nixd-aarch64-darwin": "determinate-nixd-aarch64-darwin",
@@ -1073,6 +1089,7 @@
     },
     "root": {
       "inputs": {
+        "deskpad-src": "deskpad-src",
         "determinate": "determinate",
         "dgx-spark": "dgx-spark",
         "disko": "disko_2",

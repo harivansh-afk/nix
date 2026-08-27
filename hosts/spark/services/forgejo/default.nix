@@ -867,6 +867,13 @@ in
         ENABLED = true;
         DEFAULT_ACTIONS_URL = "https://github.com";
       };
+      "cron.cleanup_offline_runners" = {
+        ENABLED = true;
+        RUN_AT_START = true;
+        SCHEDULE = "@midnight";
+        GLOBAL_SCOPE_ONLY = false;
+        OLDER_THAN = "24h";
+      };
       "git.config" = {
         "credential.helper" = "store --file ${gitCredentialFile}";
       };
@@ -958,7 +965,7 @@ in
     };
   };
 
-  systemd.services.gitea-runner-netty = {
+  systemd.services.gitea-runner-spark = {
     restartIfChanged = false;
     serviceConfig = {
       DynamicUser = lib.mkForce false;
@@ -1049,9 +1056,9 @@ in
   services.gitea-actions-runner = {
     package = pkgs.forgejo-runner;
 
-    instances.netty = {
+    instances.spark = {
       enable = true;
-      name = "netty";
+      name = "spark";
       url = "https://${forgejoDomain}";
       tokenFile = runnerTokenFile;
 

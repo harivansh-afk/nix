@@ -1078,6 +1078,7 @@ in
         gnumake
         gnused
         gnutar
+        gzip
         gawk
         jq
         nix

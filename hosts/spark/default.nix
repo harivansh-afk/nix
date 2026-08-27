@@ -27,7 +27,6 @@
     ./services/moonlight.nix
     ./services/mosh.nix
     ./services/muxd.nix
-    ./services/rakazo.nix
     ./services/whisper.nix
     ./services/vaultwarden.nix
     ./services/website-counter.nix

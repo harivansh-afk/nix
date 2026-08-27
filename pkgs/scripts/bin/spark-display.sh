@@ -8,6 +8,7 @@ STATE_DIR="$HOME/.local/state/spark-cast"
 ON_FILE="$STATE_DIR/on"
 STATUS_FILE="$STATE_DIR/status"
 UUID_FILE="$STATE_DIR/display-uuid"
+SUNSHINE_GATE="$STATE_DIR/sunshine-on"
 SUNSHINE_CONF="$HOME/.config/sunshine/sunshine.conf"
 APP="/Applications/DeskPad.app"
 CAST_LABEL="org.nixos.spark-cast"
@@ -27,6 +28,20 @@ spark_ctl() {
 
 note() {
   printf '%s\n' "$1" >"$STATUS_FILE"
+}
+
+# Sunshine on a stale/invalid output_name silently falls back to capturing
+# the real desktop (CGMainDisplayID), so it only runs while the display id
+# in its conf is trustworthy. The gate file backs the launchd KeepAlive
+# PathState: down = kill and stay dead, up = start and restart on crash.
+sunshine_down() {
+  rm -f "$SUNSHINE_GATE"
+  /bin/launchctl kill SIGTERM "gui/$(id -u)/$SUNSHINE_LABEL" 2>/dev/null || true
+}
+
+sunshine_up() {
+  touch "$SUNSHINE_GATE"
+  /bin/launchctl kickstart -k "gui/$(id -u)/$SUNSHINE_LABEL" 2>/dev/null || true
 }
 
 # One line per non-builtin display: "<persistent-uuid> <contextual-id> <res> <serial>"
@@ -62,6 +77,7 @@ deskpad_display() {
 
 converge() {
   if ! /usr/bin/pgrep -xq DeskPad; then
+    sunshine_down
     /usr/bin/open "$APP" 2>/dev/null || true
     note "launching deskpad"
     return 0
@@ -70,13 +86,16 @@ converge() {
   local line pid ctx res
   line=$(deskpad_display)
   if [ -z "$line" ]; then
+    sunshine_down
     note "waiting for virtual display"
     return 0
   fi
   read -r pid ctx res _ <<<"$line"
 
-  # Setting the resolution re-rolls the display id, so only when wrong.
+  # Setting the resolution re-rolls the display id, so only when wrong,
+  # and never with sunshine still serving the id about to die.
   if [ "$res" != "$RES" ]; then
+    sunshine_down
     "$DP" "id:$pid res:$RES hz:$HZ enabled:true scaling:off origin:$ORIGIN degree:0" >/dev/null 2>&1 || true
     note "setting resolution to $RES"
     return 0
@@ -88,13 +107,13 @@ converge() {
   want=$(printf 'min_log_level = info\nkeyboard = disabled\nmouse = disabled\ncontroller = disabled\noutput_name = %s' "$ctx")
   if [ "$(cat "$SUNSHINE_CONF" 2>/dev/null)" != "$want" ]; then
     printf '%s\n' "$want" >"$SUNSHINE_CONF"
-    /bin/launchctl kickstart -k "gui/$(id -u)/$SUNSHINE_LABEL" 2>/dev/null || true
+    sunshine_up
     note "pointing sunshine at display $ctx"
     return 0
   fi
 
   if ! /usr/bin/nc -z 127.0.0.1 47989 >/dev/null 2>&1; then
-    /bin/launchctl kickstart -k "gui/$(id -u)/$SUNSHINE_LABEL" 2>/dev/null || true
+    sunshine_up
     note "restarting sunshine"
     return 0
   fi
@@ -123,6 +142,7 @@ converge() {
 
 teardown() {
   spark_ctl systemctl stop cage-tty1.service 2>/dev/null || true
+  sunshine_down
   /usr/bin/osascript -e 'quit app "DeskPad"' >/dev/null 2>&1 || true
   note "off"
 }

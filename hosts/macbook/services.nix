@@ -104,14 +104,21 @@ in
 
     # spark-display cast host (see AGENTS.md "Casting"). Never run sunshine
     # any other way: a second instance steals the ports and this one goes deaf.
+    # Gated on the supervisor's sunshine-on file: sunshine serves (and its
+    # ports listen) only while the cast is up and the display id in its conf
+    # is current; on a stale id upstream silently falls back to capturing the
+    # real desktop (CGMainDisplayID), which is what this gate fails closed
+    # against. Crashes still restart while the gate is present.
     sunshine.serviceConfig = {
       ProgramArguments = [
         "/bin/sh"
         "-c"
         "/bin/wait4path ${sunshineBin} && exec ${sunshineBin} ${home}/.config/sunshine/sunshine.conf"
       ];
-      RunAtLoad = true;
-      KeepAlive = true;
+      RunAtLoad = false;
+      KeepAlive = {
+        PathState."${home}/.local/state/spark-cast/sunshine-on" = true;
+      };
       StandardOutPath = "${home}/Library/Logs/sunshine.log";
       StandardErrorPath = "${home}/Library/Logs/sunshine.log";
     };

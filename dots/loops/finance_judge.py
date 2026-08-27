@@ -25,7 +25,7 @@ marked unjudged - the loop never goes quiet because the model was down.
 Env:
   FINANCE_SCAN_CMD  scanner executable (default finance-anomaly-scan on PATH)
   BRAIN_URL         chat completions endpoint (default http://127.0.0.1:18080/v1/chat/completions)
-  BRAIN_MODEL       served model alias (default qwen3.6-35b-a3b)
+  BRAIN_MODEL       served model alias (default qwen3.8-27b)
   VERDICT_DIR       where verdict notes land (default /var/lib/kb/staging/loops/finance-anomaly-watch)
 """
 
@@ -44,7 +44,7 @@ SCAN_CMD = os.environ.get("FINANCE_SCAN_CMD", "finance-anomaly-scan")
 BRAIN_URL = os.environ.get(
     "BRAIN_URL", "http://127.0.0.1:18080/v1/chat/completions"
 )
-BRAIN_MODEL = os.environ.get("BRAIN_MODEL", "qwen3.6-35b-a3b")
+BRAIN_MODEL = os.environ.get("BRAIN_MODEL", "qwen3.8-27b")
 VERDICT_DIR = Path(
     os.environ.get("VERDICT_DIR", "/var/lib/kb/staging/loops/finance-anomaly-watch")
 )

@@ -88,7 +88,7 @@ let
 
     export BROWSER_USE_CHROMIUM=${chromiumBin}
     export BROWSER_USE_BRAIN_URL=http://127.0.0.1:18080/v1
-    export BROWSER_USE_BRAIN_MODEL=qwen3.8-27b-nvfp4
+    export BROWSER_USE_BRAIN_MODEL=qwen3.8-27b
     # Use a persistent profile when present so logged-in sessions (X) are reused.
     if [ -d ${profileDir} ]; then
       export BROWSER_USE_PROFILE_DIR=${profileDir}

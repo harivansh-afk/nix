@@ -1087,38 +1087,6 @@
         "type": "github"
       }
     },
-    "prisma-nixpkgs": {
-      "locked": {
-        "lastModified": 1787444820,
-        "narHash": "sha256-IQ6htLffb1N2s5TbdYSnaq3q76q07vxtCGeR4J+2TsA=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "52d58e7fb50e92b1ee2355f4e33a3ad8b04eb70f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "52d58e7fb50e92b1ee2355f4e33a3ad8b04eb70f",
-        "type": "github"
-      }
-    },
-    "rakazo-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1787853598,
-        "narHash": "sha256-YU7HTW/qFhVaTQQTBckho+SDOmiDanx+Y7mRZb0Fn2k=",
-        "owner": "elie222",
-        "repo": "rakazo",
-        "rev": "3b510e0184c9515407c5e49c0862d55484f9f0d7",
-        "type": "github"
-      },
-      "original": {
-        "owner": "elie222",
-        "repo": "rakazo",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
         "deskpad-src": "deskpad-src",
@@ -1139,8 +1107,6 @@
         "nixpkgs-nushell": "nixpkgs-nushell",
         "openspec": "openspec",
         "pierrejo": "pierrejo",
-        "prisma-nixpkgs": "prisma-nixpkgs",
-        "rakazo-src": "rakazo-src",
         "rust-overlay": "rust-overlay_2",
         "sops-nix": "sops-nix",
         "terranix": "terranix",

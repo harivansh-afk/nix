@@ -33,6 +33,26 @@ let
       ${huggingfaceCli}/bin/hf download ${unchainedRepo} --include "${unchainedFile}" --local-dir "${unchainedDir}"
     fi
   '';
+
+  qwenMarker = "/var/lib/vllm/huggingface/.${qwenAlias}-complete";
+  downloadQwen = pkgs.writeShellScript "download-vllm-model" ''
+    set -euo pipefail
+    if [ ! -e "${qwenMarker}" ]; then
+      ${huggingfaceCli}/bin/hf download ${qwenModel}
+      touch "${qwenMarker}"
+    fi
+  '';
+
+  waitForQwen = pkgs.writeShellScript "wait-for-vllm" ''
+    for _ in $(seq 570); do
+      if ${pkgs.curl}/bin/curl -fsS -m 2 http://127.0.0.1:18080/v1/models >/dev/null 2>&1; then
+        exit 0
+      fi
+      sleep 1
+    done
+    echo "qwen API never became ready; failing the unit instead of lying" >&2
+    exit 1
+  '';
 in
 {
   services.ollama.enable = lib.mkForce false;
@@ -45,6 +65,7 @@ in
       image = vllmImage;
       ports = [ "127.0.0.1:18080:8000" ];
       volumes = [ "/var/lib/vllm/huggingface:/root/.cache/huggingface" ];
+      environment.HF_HUB_OFFLINE = "1";
       extraOptions = [
         "--device=nvidia.com/gpu=all"
         "--ipc=host"
@@ -108,6 +129,26 @@ in
     "R /var/lib/llama-cpp/models/qwen3.6-35b-a3b - - - -"
     "w /sys/block/nvme0n1/queue/read_ahead_kb - - - - 8192"
   ];
+
+  systemd.services.vllm-model-download = {
+    before = [ "podman-qwen3-8-nvfp4.service" ];
+    wants = [ "network-online.target" ];
+    after = [ "network-online.target" ];
+    environment = {
+      HF_HOME = "/var/lib/vllm/huggingface";
+      HF_HUB_ENABLE_HF_TRANSFER = "1";
+    };
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = downloadQwen;
+    };
+  };
+
+  systemd.services."podman-qwen3-8-nvfp4" = {
+    after = [ "vllm-model-download.service" ];
+    requires = [ "vllm-model-download.service" ];
+    serviceConfig.ExecStartPost = waitForQwen;
+  };
 
   systemd.services.llama-cpp-model-download = {
     before = [ "llama-cpp.service" ];

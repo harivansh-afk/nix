@@ -16,8 +16,8 @@ let
   appRoot = "${app}/lib/rakazo";
   node = "${pkgs.nodejs_24}/bin/node";
   tsx = "${appRoot}/node_modules/tsx/dist/cli.mjs";
-  vite = "${appRoot}/node_modules/vite/bin/vite.js";
-  prisma = "${appRoot}/node_modules/prisma/build/index.js";
+  vite = "${appRoot}/apps/web/node_modules/vite/bin/vite.js";
+  prisma = "${appRoot}/packages/db/node_modules/prisma/build/index.js";
   computerImage = "rakazo/computer:${inputs.rakazo-src.shortRev or "dirty"}";
 
   commonEnvironment = {
@@ -233,6 +233,7 @@ in
         TMPDIR = "${stateDir}/tmp";
       };
       serviceConfig = serviceConfig // {
+        WorkingDirectory = "${appRoot}/apps/web";
         ExecStart = "${node} ${vite} preview --configLoader runner --host 127.0.0.1 --port ${toString webPort}";
       };
     };

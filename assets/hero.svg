@@ -102,15 +102,15 @@
 <text x="366" y="546.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">browser-use</text>
 <rect x="640" y="418" width="280" height="178" rx="8" fill="#161616" stroke="#3c3836" stroke-width="1"/>
 <text x="654" y="440" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#d97757" font-weight="bold" text-anchor="start" letter-spacing="1.5">KNOWLEDGE</text>
-<text x="906" y="440" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="end">postgres · kuzu</text>
+<text x="906" y="440" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="end">postgres · pgvector</text>
 <rect x="654" y="448" width="175.704" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
-<text x="666" y="462.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">cognee kb · graph search</text>
+<text x="666" y="462.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">kb-search · hybrid retrieval</text>
 <rect x="654" y="476" width="182.025" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
 <text x="666" y="490.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">kb-ingest · hourly embeds</text>
 <rect x="654" y="504" width="200.988" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
 <text x="666" y="518.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">mini-loops · scheduled scans</text>
 <rect x="654" y="532" width="137.778" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
-<text x="666" y="546.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">daily graph render</text>
+<text x="666" y="546.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">local embeddings</text>
 <line x1="180" y1="596" x2="180" y2="616" stroke="#504945" stroke-width="1.2"/>
 <path d="M 176.5 615 L 183.5 615 L 180 621 Z" fill="#504945"/>
 <text x="190" y="612" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="start">push-mirrors</text>

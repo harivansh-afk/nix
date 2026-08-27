@@ -6,7 +6,7 @@
 # browser-use.nix - native, fully-local web automation.
 #
 # A `browse "<task>"` CLI that drives a real headless Chromium with browser-use,
-# reasoning over the page with the LOCAL brain (inference.nix, qwen3.6-35b-a3b at
+# reasoning over the page with the LOCAL brain (inference.nix, Qwen3.8 NVFP4 at
 # 127.0.0.1:18080). No cloud API, no network exposure, no ports.
 #
 # Two NixOS-specific constraints shape this module:
@@ -88,7 +88,7 @@ let
 
     export BROWSER_USE_CHROMIUM=${chromiumBin}
     export BROWSER_USE_BRAIN_URL=http://127.0.0.1:18080/v1
-    export BROWSER_USE_BRAIN_MODEL=qwen3.6-35b-a3b
+    export BROWSER_USE_BRAIN_MODEL=qwen3.8-27b-nvfp4
     # Use a persistent profile when present so logged-in sessions (X) are reused.
     if [ -d ${profileDir} ]; then
       export BROWSER_USE_PROFILE_DIR=${profileDir}

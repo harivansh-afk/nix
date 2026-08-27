@@ -68,7 +68,7 @@ let
             --audio-on-host \
             --quit-after || true
         fi
-        sleep 3
+        sleep 1
       done
     '';
   };

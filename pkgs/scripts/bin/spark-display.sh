@@ -78,7 +78,9 @@ deskpad_display() {
 converge() {
   if ! /usr/bin/pgrep -xq DeskPad; then
     sunshine_down
-    /usr/bin/open "$APP" 2>/dev/null || true
+    # -gj: launch hidden and in the background; the virtual display does
+    # not need a visible window, and the preview is patched out anyway.
+    /usr/bin/open -gj "$APP" 2>/dev/null || true
     note "launching deskpad"
     return 0
   fi

@@ -1,7 +1,14 @@
 # DeskPad (the spark-display virtual screen) from pinned source: only main
 # has the 3440x1440@60 mode. Voiceink-pattern activation build (system
-# Xcode, skip without it) with the same stable-signing scheme so the
-# Screen Recording grant for its preview survives rebuilds.
+# Xcode, skip without it), keyed on the src rev plus the patch.
+#
+# deskpad-no-preview.patch strips the preview window's CGDisplayStream,
+# DeskPad's only capture call: no Screen Recording grant needed, and
+# macOS 26's recurring legacy-capture nag (it re-fires on every relaunch,
+# and the supervisor relaunches DeskPad per cast) never appears. Sunshine
+# holds its own grant and does the real capture. The stable-signing scheme
+# stays: it keeps LaunchServices and any future TCC grant pinned across
+# rebuilds.
 {
   lib,
   pkgs,
@@ -11,7 +18,11 @@
 }:
 let
   src = inputs.deskpad-src;
-  rev = src.rev or src.narHash or "unknown";
+  patch = ./deskpad-no-preview.patch;
+  rev =
+    (src.rev or src.narHash or "unknown")
+    + "-"
+    + builtins.substring 0 12 (builtins.hashFile "sha256" patch);
   home = "/Users/${username}";
   build = "${home}/Library/Caches/deskpad-build";
   app = "/Applications/DeskPad.app";
@@ -95,6 +106,7 @@ let
     echo "DeskPad: building ${rev} from source..."
     rm -rf "${build}/src" && mkdir -p "${build}/src"
     cp -R "${src}/." "${build}/src/" && chmod -R u+w "${build}/src"
+    patch -d "${build}/src" -p1 <"${patch}"
     xcodebuild -project "${build}/src/DeskPad.xcodeproj" -scheme DeskPad \
       -configuration Release -derivedDataPath "${build}/dd" \
       CODE_SIGN_IDENTITY=- build >/dev/null

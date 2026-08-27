@@ -103,8 +103,13 @@ converge() {
 
   # Input stays on the mac: disabling all client input keeps sunshine's
   # virtual HID machinery out of the event path (HID stalls froze the mac).
+  # lan_encryption_mode 2: video RTP is cleartext by default (sunshine's
+  # lan default never even advertises video encryption support); mandatory
+  # is safe because the only client is our kiosk, which always opts in to
+  # ENCFLG_ALL on AES-capable hardware. origin_web_ui_allowed pc: the web
+  # UI answers localhost only (pairing approval runs on the mac anyway).
   local want
-  want=$(printf 'min_log_level = info\nkeyboard = disabled\nmouse = disabled\ncontroller = disabled\noutput_name = %s' "$ctx")
+  want=$(printf 'min_log_level = info\nkeyboard = disabled\nmouse = disabled\ncontroller = disabled\noutput_name = %s\nlan_encryption_mode = 2\norigin_web_ui_allowed = pc' "$ctx")
   if [ "$(cat "$SUNSHINE_CONF" 2>/dev/null)" != "$want" ]; then
     printf '%s\n' "$want" >"$SUNSHINE_CONF"
     sunshine_up

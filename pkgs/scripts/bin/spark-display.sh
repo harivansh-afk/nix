@@ -82,8 +82,10 @@ converge() {
     return 0
   fi
 
+  # Input stays on the mac: disabling all client input keeps sunshine's
+  # virtual HID machinery out of the event path (HID stalls froze the mac).
   local want
-  want=$(printf 'min_log_level = info\noutput_name = %s' "$ctx")
+  want=$(printf 'min_log_level = info\nkeyboard = disabled\nmouse = disabled\ncontroller = disabled\noutput_name = %s' "$ctx")
   if [ "$(cat "$SUNSHINE_CONF" 2>/dev/null)" != "$want" ]; then
     printf '%s\n' "$want" >"$SUNSHINE_CONF"
     /bin/launchctl kickstart -k "gui/$(id -u)/$SUNSHINE_LABEL" 2>/dev/null || true

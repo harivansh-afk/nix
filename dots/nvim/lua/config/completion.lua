@@ -2,18 +2,13 @@ local M = {}
 
 local function context(base)
   local cursor = vim.api.nvim_win_get_cursor(0)
-  local row = cursor[1]
   local col = cursor[2]
   local line = vim.api.nvim_get_current_line()
 
   return {
     base = base,
     before = line:sub(1, col),
-    bufnr = vim.api.nvim_get_current_buf(),
     col = col,
-    filetype = vim.bo.filetype,
-    line = line,
-    row = row,
   }
 end
 

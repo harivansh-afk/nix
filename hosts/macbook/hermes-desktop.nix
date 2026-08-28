@@ -1,65 +1,42 @@
-{
-  config,
-  inputs,
-  lib,
-  pkgs,
-  ...
-}:
+{ config, lib, ... }:
 let
   backendUrl = "http://spark-ix.tail368802.ts.net:9119";
   tokenPath = config.sops.secrets."hermes-backend-token".path;
-
-  desktop = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.desktop.override {
-    extraEnv.HERMES_DESKTOP_REMOTE_URL = backendUrl;
-    extraRun = [
+  dmgUrl = "https://hermes-assets.nousresearch.com/Hermes-Setup.dmg";
+in
+{
+  launchd.user.agents.hermes-desktop-env.serviceConfig = {
+    ProgramArguments = [
+      "/bin/sh"
+      "-c"
       ''
-        if [ -r ${lib.escapeShellArg tokenPath} ]; then
-          HERMES_DESKTOP_REMOTE_TOKEN="$(tr -d '\r\n' < ${lib.escapeShellArg tokenPath})"
-          export HERMES_DESKTOP_REMOTE_TOKEN
-        else
-          echo "hermes-desktop: cannot read the session token at ${tokenPath}" >&2
+        /bin/launchctl setenv HERMES_DESKTOP_REMOTE_URL ${backendUrl}
+        if [ -r ${tokenPath} ]; then
+          /bin/launchctl setenv HERMES_DESKTOP_REMOTE_TOKEN "$(/usr/bin/tr -d '\r\n' < ${tokenPath})"
         fi
       ''
     ];
+    RunAtLoad = true;
+    KeepAlive = false;
   };
 
-  plist = pkgs.writeText "hermes-desktop-Info.plist" ''
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-    <dict>
-      <key>CFBundleExecutable</key>
-      <string>hermes-desktop</string>
-      <key>CFBundleIdentifier</key>
-      <string>sh.harivan.hermes-desktop</string>
-      <key>CFBundleName</key>
-      <string>Hermes</string>
-      <key>CFBundlePackageType</key>
-      <string>APPL</string>
-      <key>CFBundleVersion</key>
-      <string>${desktop.version or "0"}</string>
-      <key>LSMinimumSystemVersion</key>
-      <string>12.0</string>
-    </dict>
-    </plist>
-  '';
-
-  shim = pkgs.writeShellScript "hermes-desktop-shim" ''
-    exec ${desktop}/bin/hermes-desktop "$@"
-  '';
-
-  bundle = pkgs.runCommand "hermes-desktop-bundle" { } ''
-    contents="$out/Hermes.app/Contents"
-    mkdir -p "$contents/MacOS" "$contents/Resources"
-    cp ${plist} "$contents/Info.plist"
-    cp ${shim} "$contents/MacOS/hermes-desktop"
-    chmod 0755 "$contents/MacOS/hermes-desktop"
-  '';
-in
-{
   system.activationScripts.postActivation.text = lib.mkAfter ''
-    rm -rf /Applications/Hermes.app
-    /usr/bin/ditto ${bundle}/Hermes.app /Applications/Hermes.app
-    /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f /Applications/Hermes.app >/dev/null 2>&1 || true
+    if [ ! -d /Applications/Hermes.app ]; then
+      echo "Hermes: installing desktop app from ${dmgUrl}"
+      hermes_tmp=$(mktemp -d)
+      if /usr/bin/curl -fsSL ${dmgUrl} -o "$hermes_tmp/Hermes.dmg" \
+        && /usr/bin/hdiutil attach "$hermes_tmp/Hermes.dmg" -nobrowse -quiet -mountpoint "$hermes_tmp/mnt"; then
+        app_src=$(/bin/ls -d "$hermes_tmp/mnt/"*.app 2>/dev/null | head -1)
+        if [ -n "$app_src" ]; then
+          /usr/bin/ditto "$app_src" /Applications/Hermes.app
+        else
+          echo "warning: Hermes dmg contained no .app" >&2
+        fi
+        /usr/bin/hdiutil detach "$hermes_tmp/mnt" -quiet || true
+      else
+        echo "warning: Hermes desktop download failed; retry with the next switch" >&2
+      fi
+      rm -rf "$hermes_tmp"
+    fi
   '';
 }

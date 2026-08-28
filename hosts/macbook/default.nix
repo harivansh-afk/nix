@@ -15,7 +15,6 @@
     ../../modules/security/sops.nix
     ../../modules/users/darwin.nix
     ./nap.nix
-    ./hermes-desktop.nix
     ./voiceink.nix
     ./voiceink-cloud-model.nix
     ./voiceink-dictionary.nix

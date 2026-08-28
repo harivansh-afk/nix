@@ -418,7 +418,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     # themes/current follows the active theme mode (see also theme.sh)
     mkdir -p "${theme.paths.sketchybarDir}"
     mkSymlink "${dotsRoot}/sketchybar/sketchybarrc" "${configHome}/sketchybar/sketchybarrc"
-    mkSymlink "${dotsRoot}/sketchybar/plugins" "${configHome}/sketchybar/plugins"
+    rm -f "${configHome}/sketchybar/plugins" # pre-2026-08-28 shell plugins, now sketchybar-feed
     mkSymlink "${sketchybarThemes.dark}" "${theme.paths.sketchybarDir}/cozybox-dark.sh"
     mkSymlink "${sketchybarThemes.light}" "${theme.paths.sketchybarDir}/cozybox-light.sh"
     ln -sfn "$THEME_SKETCHYBAR_TARGET" "${theme.paths.sketchybarCurrentFile}"

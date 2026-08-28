@@ -31,6 +31,22 @@ let
     $CC -fobjc-arc -framework AppKit -o $out/bin/notch-inset ${./notch-inset/notch-inset.m}
   '';
 
+  # Every dynamic value in the bar, pushed over sketchybar's mach port from one
+  # long-lived process (see hosts/macbook/sketchybar-feed/feed.m). Replaced the
+  # per-item shell plugins 2026-08-28: those forked a process per tick and the
+  # volume one ran `osascript` (a TCC round-trip) on every event. The app-glyph
+  # table is generated from sketchybar-app-font's icon_map.sh at build time.
+  sketchybarFeed = pkgs.runCommandCC "sketchybar-feed" { } ''
+    mkdir -p $out/bin build
+    awk -f ${./sketchybar-feed/gen-icon-map.awk} \
+      ${pkgs.sketchybar-app-font}/bin/icon_map.sh > build/icon_map.h
+    cp ${./sketchybar-feed/feed.m} build/feed.m
+    $CC -fobjc-arc -O2 -Wall -Wno-unused-parameter \
+      -framework Foundation -framework AppKit -framework CoreAudio \
+      -framework AudioToolbox -framework IOKit -framework CoreGraphics \
+      -o $out/bin/sketchybar-feed build/feed.m
+  '';
+
 in
 {
   launchd.daemons."limit.maxfiles" = {
@@ -57,8 +73,8 @@ in
     enable = true;
     extraPackages = [
       pkgs.aerospace
-      pkgs.sketchybar-app-font # icon_map.sh for the workspace tab app icons
       notchInset # bar height measurement, see the rc
+      sketchybarFeed # `sketchybar-feed volume-event`, the volume item's mouse script
     ];
   };
 
@@ -94,6 +110,23 @@ in
     sketchybar.serviceConfig = {
       StandardOutPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar.log";
       StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar.log";
+    };
+
+    # Sibling of the sketchybar agent: waits for its mach port, then pushes
+    # every item value. The rc signals it (SIGUSR1) at the end of each load,
+    # aerospace's exec-on-workspace-change signals it (SIGUSR2). aerospace on
+    # PATH for the workspace tabs.
+    sketchybar-feed.serviceConfig = {
+      ProgramArguments = [
+        "/bin/sh"
+        "-c"
+        "/bin/wait4path /nix/store && exec ${sketchybarFeed}/bin/sketchybar-feed"
+      ];
+      EnvironmentVariables.PATH = "${pkgs.aerospace}/bin:/usr/bin:/bin";
+      RunAtLoad = true;
+      KeepAlive = true;
+      StandardOutPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar-feed.log";
+      StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar-feed.log";
     };
 
   };

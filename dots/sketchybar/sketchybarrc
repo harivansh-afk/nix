@@ -7,10 +7,15 @@
 # The notch keeps the two sections apart; nothing is placed in the middle.
 # Colors come from themes/current, a symlink managed by the `theme` script
 # (rendered per-mode from lib/theme.nix).
+#
+# This file is layout only. Every value that changes at runtime (workspace
+# tabs, cpu/mem, volume, battery, clock) is pushed by `sketchybar-feed`, a
+# launchd sibling (hosts/macbook/sketchybar-feed/feed.m) that listens to the
+# system APIs directly and writes over sketchybar's mach port: no item here
+# has a script= or update_freq=. The rc signals it at the end so it re-reads
+# the theme and pushes everything after each (re)load.
 
 source "$CONFIG_DIR/themes/current"
-
-PLUGIN_DIR="$CONFIG_DIR/plugins"
 FONT="Berkeley Mono"
 APP_FONT="sketchybar-app-font"
 
@@ -53,7 +58,7 @@ CORNER_RADIUS=$(scale 13)
 
 # --- spacing scale (pt): every gap in the bar derives from these ---
 # PAD_EDGE   inside a block at its outer edges (also glyphless-tab padding,
-#            mirrored in plugins/spaces.sh - keep them in sync)
+#            mirrored in sketchybar-feed's spaces_push - keep them in sync)
 # PAD_ITEM   each side of a component boundary in the right block (gap = 2x)
 # PAD_TIGHT  between a muted prefix (vol/bat) and its value (gap = 2x)
 # TAB_GAP    between workspace tabs
@@ -99,8 +104,8 @@ sketchybar --default \
 # different height. One display-associated spacer on each edge lets every bar
 # use its own vertical margin as its horizontal margin too:
 #   edge = (actual display bar height - item height) / 2
-# The display watchdog reloads this rc after monitor or resolution changes, so
-# the spacers are rebuilt from the new bounding rectangles.
+# sketchybar-feed reloads this rc after monitor or resolution changes, so the
+# spacers are rebuilt from the new bounding rectangles.
 display_ids="$(
   sketchybar --query displays |
     sed -n 's/.*"arrangement-id":\([0-9][0-9]*\).*/\1/p'
@@ -138,9 +143,8 @@ for did in $display_ids; do
 done
 
 # --- left section: floating workspace tabs ---
-# Static shells only; plugins/spaces.sh renders all of them in one batch per
-# event (one process per event instead of one per workspace - keeps it fast).
-sketchybar --add event aerospace_workspace_change
+# Static shells only; sketchybar-feed renders all of them in one batch per
+# workspace or app event.
 
 # aerospace and sketchybar are sibling launchd agents started together at
 # login; without a server `list-workspaces` prints nothing and the loop would
@@ -155,7 +159,7 @@ for sid in $(aerospace list-workspaces --all); do
   # tab internals are visually compensated for font side bearings (digits
   # render ~2pt inside their advance, the app glyphs ~1pt): 10/11/10 makes
   # all three gaps measure ~12pt on screen (verified by pixel measurement);
-  # plugins/spaces.sh mirrors these numbers - keep them in sync
+  # sketchybar-feed's spaces_push mirrors these numbers - keep them in sync
   sketchybar --add item "space.$sid" left \
     --set "space.$sid" \
     drawing=off \
@@ -173,12 +177,6 @@ for sid in $(aerospace list-workspaces --all); do
     click_script="aerospace workspace $sid"
 done
 
-sketchybar --add item spaces_monitor left \
-  --subscribe spaces_monitor aerospace_workspace_change front_app_switched system_woke \
-  --set spaces_monitor \
-  drawing=off \
-  script="$PLUGIN_DIR/spaces.sh"
-
 # --- right section: one floating block, spacing instead of separators:
 # volume | battery | clock ---
 # (items added rightmost-first, grouped by a bracket that paints the
@@ -188,10 +186,8 @@ sketchybar --add item spaces_monitor left \
 # persist in the daemon across --reload, so relying on the default would
 # leave a stale painted block behind after a config change.
 sketchybar --add item clock right \
-  --subscribe clock system_woke \
   --set clock \
   background.drawing=off \
-  update_freq=10 \
   icon.drawing=on \
   icon.font="$FONT:Regular:$FONT_SIZE" \
   icon.color="$TEXT_COLOR" \
@@ -201,14 +197,11 @@ sketchybar --add item clock right \
   label.color="$PINK_COLOR" \
   label.padding_left=$PAD_TIGHT \
   label.padding_right=$PAD_EDGE \
-  click_script="open -a Calendar" \
-  script="$PLUGIN_DIR/clock.sh"
+  click_script="open -a Calendar"
 
 sketchybar --add item battery right \
-  --subscribe battery power_source_change system_woke \
   --set battery \
   background.drawing=off \
-  update_freq=60 \
   icon.drawing=on \
   icon=bat \
   icon.font="$FONT:Regular:$FONT_SIZE" \
@@ -217,11 +210,12 @@ sketchybar --add item battery right \
   label.font="$FONT:Bold:$FONT_SIZE" \
   label.padding_left=$PAD_TIGHT \
   label.padding_right=$PAD_ITEM \
-  click_script='open "x-apple.systempreferences:com.apple.Battery-Settings.extension"' \
-  script="$PLUGIN_DIR/battery.sh"
+  click_script='open "x-apple.systempreferences:com.apple.Battery-Settings.extension"'
 
+# click toggles mute, scroll adjusts: sketchybar-feed's CLI mode sets the
+# device through CoreAudio and its listener renders the new value
 sketchybar --add item volume right \
-  --subscribe volume volume_change mouse.clicked mouse.scrolled \
+  --subscribe volume mouse.clicked mouse.scrolled \
   --set volume \
   background.drawing=off \
   icon.drawing=on \
@@ -232,7 +226,7 @@ sketchybar --add item volume right \
   label.font="$FONT:Regular:$FONT_SIZE" \
   label.padding_left=$PAD_TIGHT \
   label.padding_right=$PAD_ITEM \
-  script="$PLUGIN_DIR/volume.sh"
+  script="sketchybar-feed volume-event"
 
 # No bracket/background on the right section: the items sit directly on the
 # wallpaper - user preference.
@@ -241,7 +235,6 @@ sketchybar --add item volume right \
 sketchybar --add item resources right \
   --set resources \
   background.drawing=off \
-  update_freq=5 \
   padding_right=$TAB_GAP \
   icon.drawing=on \
   icon.font="$FONT:Regular:$FONT_SIZE" \
@@ -249,22 +242,9 @@ sketchybar --add item resources right \
   icon.padding_right=$PAD_ITEM \
   label.font="$FONT:Regular:$FONT_SIZE" \
   label.padding_left=$PAD_ITEM \
-  label.padding_right=$PAD_EDGE \
-  script="$PLUGIN_DIR/stats.sh"
-
-# --- resolution watchdog ---
-# A resolution change moves safeAreaInsets.top but sketchybar fires no event
-# for it: this hidden item polls the daemon's own display frames (one ~ms
-# socket query per tick, no swift) and reloads the config - which re-measures
-# BAR_HEIGHT - when they drift from the stamp of the last load.
-sketchybar --add item display_monitor left \
-  --subscribe display_monitor display_change system_woke \
-  --set display_monitor \
-  drawing=off \
-  update_freq=10 \
-  script="$PLUGIN_DIR/display.sh"
+  label.padding_right=$PAD_EDGE
 
 # --- init ---
+# Items exist now: have sketchybar-feed re-read the theme and push every value.
 sketchybar --update
-sketchybar --trigger aerospace_workspace_change \
-  FOCUSED_WORKSPACE="$(aerospace list-workspaces --focused)"
+pkill -USR1 -x sketchybar-feed || true

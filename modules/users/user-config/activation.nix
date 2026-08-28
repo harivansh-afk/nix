@@ -117,8 +117,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${dotsRoot}/ssh/config" "${homeDirectory}/.ssh/config"
 
   # --- bin: standalone helper scripts ---
-  # pasteimg was folded into the wl-paste shim; clear the stale link.
-  rm -f "${homeDirectory}/.local/bin/pasteimg"
   ${lib.optionalString (!isDarwin) ''
     mkdir -p "${homeDirectory}/.local/share/applications"
     mkSymlink "${dotsRoot}/bin/open" "${homeDirectory}/.local/bin/open"
@@ -250,7 +248,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${dotsRoot}/omp/extensions/modes.ts" "${homeDirectory}/.omp/agent/extensions/modes.ts"
   mkSymlink "${dotsRoot}/omp/extensions/claude-hooks.ts" "${homeDirectory}/.omp/agent/extensions/claude-hooks.ts"
   mkSymlink "${dotsRoot}/omp/extensions/claude-agents.ts" "${homeDirectory}/.omp/agent/extensions/claude-agents.ts"
-  rm -f "${homeDirectory}/.omp/agent/extensions/rich-diff.ts"
   mkSymlink "${dotsRoot}/omp/extensions/diffs/diffs.ts" "${homeDirectory}/.omp/agent/extensions/diffs.ts"
   mkSymlink "${dotsRoot}/omp/extensions/claude-purple/claude-purple.ts" "${homeDirectory}/.omp/agent/extensions/claude-purple.ts"
 
@@ -418,7 +415,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     # themes/current follows the active theme mode (see also theme.sh)
     mkdir -p "${theme.paths.sketchybarDir}"
     mkSymlink "${dotsRoot}/sketchybar/sketchybarrc" "${configHome}/sketchybar/sketchybarrc"
-    rm -f "${configHome}/sketchybar/plugins" # pre-2026-08-28 shell plugins, now sketchybar-feed
     mkSymlink "${sketchybarThemes.dark}" "${theme.paths.sketchybarDir}/cozybox-dark.sh"
     mkSymlink "${sketchybarThemes.light}" "${theme.paths.sketchybarDir}/cozybox-light.sh"
     ln -sfn "$THEME_SKETCHYBAR_TARGET" "${theme.paths.sketchybarCurrentFile}"

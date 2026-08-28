@@ -66,8 +66,5 @@ in
     rm -rf /Applications/Hermes.app
     /usr/bin/ditto ${bundle}/Hermes.app /Applications/Hermes.app
     /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f /Applications/Hermes.app >/dev/null 2>&1 || true
-    # The earlier launchd agent leaked these into the GUI session.
-    /bin/launchctl asuser "$(id -u rathi)" /bin/launchctl unsetenv HERMES_DESKTOP_REMOTE_URL 2>/dev/null || true
-    /bin/launchctl asuser "$(id -u rathi)" /bin/launchctl unsetenv HERMES_DESKTOP_REMOTE_TOKEN 2>/dev/null || true
   '';
 }

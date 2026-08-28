@@ -21,7 +21,7 @@
   ...
 }:
 let
-  mux = inputs.mux;
+  inherit (inputs) mux;
   ghostty = mux.inputs.ghostty;
   muxPkg = mux.packages.${pkgs.stdenv.hostPlatform.system}.muxd;
   rev = "${mux.rev}-${ghostty.rev}";

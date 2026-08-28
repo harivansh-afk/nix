@@ -7,7 +7,7 @@
 # never touched: Raycast Beta (no cask exists; self-updates) and Docker.app
 # (adoption fails on macOS app-protection while it runs, and a forced
 # reinstall re-does the privileged helper; it self-updates). VoiceInk and
-# Mux.app are built from source (hosts/macbook/voiceink.nix, ~/Documents/Git/mux).
+# Mux.app are built from source (hosts/macbook/voiceink.nix, hosts/macbook/mux.nix).
 { lib, username, ... }:
 let
   # Brewfile `trusted:` does not write brew's persistent trust store, and

@@ -98,7 +98,7 @@ function M.render(keep)
   -- externally moved origin/<base> invalidates them without any bookkeeping.
   local base_sha = s.mode == "cumulative" and data.resolve(s.root, s.base) or nil
   local files = data.files(s.root, s.base, c.sha, s.mode, base_sha)
-  local has_diffs = (pcall(require, "diffs"))
+  local diffs_ok, diffs = pcall(require, "diffs")
 
   -- Fugitive-style eagerness: its status render starts the section diffs it
   -- will need for inline expansion BEFORE anyone asks. Same here - this
@@ -196,7 +196,7 @@ function M.render(keep)
         line_map[#lines] = f.path
         if at then
           hl[#hl + 1] = { #lines - 1, "diffLine", 0, #at }
-        elseif not has_diffs then
+        elseif not diffs_ok then
           -- Flat fallback ONLY without diffs.nvim - never fight its treesitter.
           local ch = l:sub(1, 1)
           local g = ch == "+" and "GitStatAdd" or ch == "-" and "GitStatDel" or nil
@@ -221,7 +221,6 @@ function M.render(keep)
     vim.api.nvim_buf_set_extmark(buf, ns, v[1], 0, { virt_text = v[2], virt_text_pos = "right_align" })
   end
 
-  local diffs_ok, diffs = pcall(require, "diffs")
   if diffs_ok then
     -- diffs.nvim's parser reads b:diffs_repo_root to resolve filetypes (open
     -- buffers, then filename, then file CONTENT under the root) - without it

@@ -20,13 +20,19 @@ in
     inherit stateDir;
     addToSystemPackages = true;
 
-    environmentFiles = [ config.sops.secrets."anthropic.env".path ];
+    # anthropic.env: ANTHROPIC_API_KEY for the anthropic lane.
+    # hermes-dashboard.env: the basic-auth provider. A non-loopback bind
+    # refuses to start without an auth provider, and the desktop signs in
+    # against it once (the session survives restarts via the signing secret).
+    environmentFiles = [
+      config.sops.secrets."anthropic.env".path
+      config.sops.secrets."hermes-dashboard.env".path
+    ];
 
     backend = {
       mode = "serve";
       host = "spark-ix.tail368802.ts.net";
       waitFor = "hostname";
-      sessionTokenFile = config.sops.secrets."hermes-backend-token".path;
     };
 
     settings = {

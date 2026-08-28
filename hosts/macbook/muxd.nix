@@ -22,7 +22,7 @@
 }:
 let
   home = "/Users/${username}";
-  uid = "$(id -u ${username})";
+  uid = "\"$(id -u ${username})\"";
   label = "org.nixos.muxd";
 in
 {

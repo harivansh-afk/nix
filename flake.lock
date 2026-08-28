@@ -657,11 +657,11 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1787930974,
-        "narHash": "sha256-n85IFNwHJ4/eLZAEtC7QkKXql8+2qe5QJvx21+Q00qM=",
-        "ref": "darwin-launchd",
-        "rev": "e39b54a7e21ed4b5869b07871d9c2cb011b0eabf",
-        "revCount": 341,
+        "lastModified": 1787931340,
+        "narHash": "sha256-WVTHtKM6nCn7gMCtnQPSXOPs/9juduCE5uAGBzhwhr8=",
+        "ref": "main",
+        "rev": "8a3222629c0b46c2b531b9e76d19cf775f251b88",
+        "revCount": 344,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/mux.git"
       },

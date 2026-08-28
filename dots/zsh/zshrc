@@ -210,3 +210,29 @@ _codex_apply_bat_theme
 
 bindkey '^k' forward-char
 bindkey '^j' backward-char
+
+# ctrl+n at an empty prompt opens nvim in the cwd (runs the `nv` alias)
+_open_nvim() {
+  if [[ -n "$BUFFER" ]]; then
+    zle down-line-or-history
+    return
+  fi
+  BUFFER="nv"
+  zle accept-line
+}
+zle -N _open_nvim
+bindkey -M viins '^N' _open_nvim
+bindkey -M vicmd '^N' _open_nvim
+
+# ctrl+g at an empty prompt opens nvim straight into fugitive (same as <C-g> inside nvim)
+_open_fugitive() {
+  if [[ -n "$BUFFER" ]]; then
+    zle list-expand
+    return
+  fi
+  BUFFER="nvim +Git +only"
+  zle accept-line
+}
+zle -N _open_fugitive
+bindkey -M viins '^G' _open_fugitive
+bindkey -M vicmd '^G' _open_fugitive

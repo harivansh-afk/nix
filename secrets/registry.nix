@@ -29,7 +29,6 @@
 {
   user = {
     "anthropic.env" = { };
-    "hermes-backend-token" = { };
     "antithesis.env" = { };
     "linear.env" = { };
     "graphite.env" = { };
@@ -64,6 +63,18 @@
 
     "user-password-hash" = {
       neededForUsers = true;
+    };
+
+    # Basic-auth credentials for the hermes backend (username, password,
+    # signing secret). EnvironmentFile of hermes-backend.service only; the
+    # bind to the tailnet name engages upstream's auth gate, and on 0.20.x the
+    # session-token path is loopback-only, so this is the one way a remote
+    # Hermes Desktop signs in.
+    "hermes-dashboard.env" = {
+      owner = username;
+      group = "users";
+      mode = "0400";
+      restartUnits = [ "hermes-backend.service" ];
     };
 
     # gws OAuth token (authorized_user creds incl. refresh token). Read by the

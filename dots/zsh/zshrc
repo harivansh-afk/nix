@@ -224,6 +224,15 @@ zle -N _open_nvim
 bindkey -M viins '^N' _open_nvim
 bindkey -M vicmd '^N' _open_nvim
 
+# ctrl+p opens nvim straight into the PR list
+_open_pr() {
+  BUFFER="nvim +PR"
+  zle accept-line
+}
+zle -N _open_pr
+bindkey -M viins '^P' _open_pr
+bindkey -M vicmd '^P' _open_pr
+
 # ctrl+g at an empty prompt opens nvim straight into fugitive (same as <C-g> inside nvim)
 _open_fugitive() {
   if [[ -n "$BUFFER" ]]; then

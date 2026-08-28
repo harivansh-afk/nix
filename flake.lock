@@ -442,17 +442,17 @@
     "ghostty": {
       "flake": false,
       "locked": {
-        "lastModified": 1786310595,
-        "narHash": "sha256-BpJm5mbSm+fEoKCbga3S4z3uy6Qo23NUYtuIim3pI7k=",
+        "lastModified": 1787769335,
+        "narHash": "sha256-Z3yiTv8VJxdAhMfb4ErCQ8GwtOXgg67MOvQp5R68jZY=",
         "owner": "ghostty-org",
         "repo": "ghostty",
-        "rev": "fea378e565c8ddb7f49808c4f2e36a4a932e35ff",
+        "rev": "d9840f3c8fc230c7768ae760c412974e9fc923bb",
         "type": "github"
       },
       "original": {
         "owner": "ghostty-org",
         "repo": "ghostty",
-        "rev": "fea378e565c8ddb7f49808c4f2e36a4a932e35ff",
+        "rev": "d9840f3c8fc230c7768ae760c412974e9fc923bb",
         "type": "github"
       }
     },
@@ -657,11 +657,11 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1787436321,
-        "narHash": "sha256-4WH4xImzDZs1DJFt40txYqGMaxIRYKZDSj8SowVaqdk=",
+        "lastModified": 1787779356,
+        "narHash": "sha256-U3Tkenvms/1dhyTGYFnVYcXit8TNp+C+k5fEXZVO8xk=",
         "ref": "main",
-        "rev": "bfc5a328f139716264126342112cd4e013cbf327",
-        "revCount": 331,
+        "rev": "65e6fd28f3aededdee69dda561e9978b3eaaf08f",
+        "revCount": 340,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/mux.git"
       },

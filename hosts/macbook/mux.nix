@@ -1,37 +1,18 @@
-# Mux.app, built from source into /Applications on the macbook.
+# Mux.app, built from the flake's pinned mux rev into /Applications.
 #
-# Until 2026-08-28 /Applications/Mux.app was a symlink into the checkout's
-# app/.build, so the installed app was whatever `scripts/make-app.sh` last
-# left there, at whatever rev the working tree happened to be on. This
-# module builds it from the flake's pinned mux rev (the same one the
-# org.nixos.muxd launchd agent runs, hosts/macbook/muxd.nix), so the app,
-# its bundled muxd, and the daemon are provably one build.
+# The app and the org.nixos.muxd agent (./muxd.nix) share one rev: the
+# bundled muxd and mux-attach are the mux flake's nix package.
 #
 # Not a pure derivation: the app needs full Xcode (swift build against
 # AppKit/Metal, and ghostty's xcframework build compiles Metal shaders
-# through xcrun), which nixpkgs cannot provide. As with voiceink.nix, an
-# as-user activation step shells out to the system Xcode, keyed on the mux
-# rev + ghostty rev so it only rebuilds when a pin moves, and skips
-# (non-fatally) if Xcode is absent.
+# through xcrun). Like voiceink.nix, an as-user activation step builds with
+# the system Xcode, keyed on mux rev + ghostty rev, and skips without Xcode.
 #
-# Pieces, in build order:
-# - GhosttyKit.xcframework + ghostty's share/ (terminfo, shell
-#   integration): `zig build -Demit-xcframework` in ghostty at the rev mux
-#   pins, with nixpkgs' zig 0.16. Cached per ghostty rev; this is the slow
-#   step and a rare one. ReleaseFast is not optional (a Debug libghostty
-#   os_logs every IO message and freezes under nvim scroll, per mux's
-#   scripts/fetch-ghosttykit.sh).
-# - Mux binary: `swift build -c release` on a writable copy of mux/app.
-# - muxd + mux-attach: from the mux flake's nix package, not cargo. Same
-#   store path the launchd agent runs.
-# - Bundle assembly and Info.plist mirror scripts/make-app.sh.
-# - Signing: the "mux-dev" identity in mux-dev.keychain-db, the keychain
-#   scripts/make-app.sh already uses (known password by design). Made
-#   idempotently here rather than via mux's dev-sign-setup.sh, whose
-#   presence check uses `find-identity -v`, which hides untrusted
-#   self-signed certs and so recreates the identity on every run. A stable
-#   identity is what keeps TCC grants across rebuilds; this also trusts it
-#   for codeSign so `-v` sees it.
+# Signing uses the "mux-dev" identity in mux-dev.keychain-db, the keychain
+# mux's scripts/make-app.sh uses, so TCC grants survive rebuilds. It is
+# created here rather than by mux's dev-sign-setup.sh, whose presence check
+# (`find-identity -v`) hides untrusted self-signed certs and would recreate
+# the identity on every run.
 {
   lib,
   pkgs,
@@ -55,22 +36,18 @@ let
   script = pkgs.writeShellScript "mux-app-build" ''
         set -euo pipefail
         export HOME="${home}"
-        # System Xcode (/usr/bin) wins for swift, codesign, xcrun; nix supplies
-        # zig 0.16 for ghostty and openssl for the identity.
         export PATH="/usr/bin:/bin:/usr/sbin:/sbin:${
           lib.makeBinPath [
             pkgs.zig_0_16
             pkgs.openssl
-            pkgs.git
           ]
         }"
         mkdir -p "${build}"
 
-        # --- stable signing identity ------------------------------------------
         ensure_identity() {
           if [ ! -f "${keychain}" ]; then
             security create-keychain -p "${keychainPass}" "${keychain}"
-            security set-keychain-settings "${keychain}" # no auto-lock
+            security set-keychain-settings "${keychain}"
           fi
           security unlock-keychain -p "${keychainPass}" "${keychain}"
 
@@ -91,8 +68,6 @@ let
           fi
 
           # codesign only finds identities in keychains on the search list.
-          # No `cmd | grep -q` under pipefail (grep exits on first match, the
-          # writer dies of SIGPIPE): capture, then pattern-match.
           if [[ "$(security list-keychains -d user)" != *"mux-dev.keychain-db"* ]]; then
             local kcs=()
             while IFS= read -r line; do
@@ -102,7 +77,6 @@ let
             security list-keychains -d user -s "''${kcs[@]}" "${keychain}"
           fi
 
-          # find-identity -v = exists AND trusted; re-add trust if it was lost.
           if [[ "$(security find-identity -v -p codesigning "${keychain}")" != *"${identity}"* ]]; then
             tmp="$(mktemp -d)"
             security find-certificate -c "${identity}" -p "${keychain}" >"$tmp/cert.pem"
@@ -118,7 +92,6 @@ let
         }
 
         built_ok() {
-          # A real bundle, not the old symlink into the checkout.
           [ -d "${app}" ] && [ ! -L "${app}" ] || return 1
           [ "$(cat "${build}/.rev" 2>/dev/null)" = "${rev}" ] || return 1
         }
@@ -130,39 +103,40 @@ let
         ensure_identity
         if built_ok; then
           sign_app
-          echo "Mux: re-signed with stable identity"
+          echo "Mux: re-signed"
           exit 0
         fi
         command -v xcodebuild >/dev/null || { echo "Mux: Xcode missing, skipping" >&2; exit 0; }
 
-        # --- GhosttyKit + ghostty resources, cached per ghostty rev -----------
+        # GhosttyKit.xcframework + ghostty's share/ (terminfo, shell integration),
+        # cached per ghostty rev. ReleaseFast: a Debug libghostty os_logs every IO
+        # message and freezes under load (mux's scripts/fetch-ghosttykit.sh).
         gk="${build}/ghostty-${ghostty.rev}"
         if [ ! -d "$gk/macos/GhosttyKit.xcframework" ] || [ ! -d "$gk/zig-out/share/ghostty" ]; then
-          echo "Mux: building GhosttyKit at ghostty ${ghostty.rev} (zig, minutes)..."
-          rm -rf "$gk" && mkdir -p "$gk"
-          cp -R "${ghostty}/." "$gk/" && chmod -R u+w "$gk"
-          # zig's package cache: real cache, keyed by content, survives revs.
+          echo "Mux: building GhosttyKit at ghostty ${ghostty.rev}..."
+          if [ ! -d "$gk" ]; then
+            mkdir -p "$gk"
+            cp -R "${ghostty}/." "$gk/" && chmod -R u+w "$gk"
+          fi
           export ZIG_GLOBAL_CACHE_DIR="${build}/zig-cache"
           (cd "$gk" && zig build -Demit-xcframework -Dxcframework-target=native -Doptimize=ReleaseFast)
           [ -d "$gk/zig-out/share/ghostty" ] || (cd "$gk" && zig build -Doptimize=ReleaseFast)
-          # Older ghostty revs' trees are dead weight once the pin moves.
           for old in "${build}"/ghostty-*; do
             [ "$old" = "$gk" ] || rm -rf "$old"
           done
         fi
 
-        # --- Mux binary ---------------------------------------------------------
-        echo "Mux: building ${mux.rev} from source..."
+        echo "Mux: building ${mux.rev}..."
         appsrc="${build}/app"
         rm -rf "$appsrc" && mkdir -p "$appsrc"
         cp -R "${mux}/app/." "$appsrc/" && chmod -R u+w "$appsrc"
         mkdir -p "$appsrc/GhosttyKit"
         cp -R "$gk/macos/GhosttyKit.xcframework" "$appsrc/GhosttyKit/"
-        # .build is SwiftPM's incremental cache; keep it across rebuilds.
         swift build -c release --package-path "$appsrc" --scratch-path "${build}/swift-build"
         bin="$(swift build -c release --package-path "$appsrc" --scratch-path "${build}/swift-build" --show-bin-path)/Mux"
 
-        # --- bundle -------------------------------------------------------------
+        # Layout and Info.plist as in mux's scripts/make-app.sh. Ghostty resolves
+        # terminfo as the sibling of GHOSTTY_RESOURCES_DIR (Resources/ghostty).
         bundle="${build}/Mux.app"
         rm -rf "$bundle"
         mkdir -p "$bundle/Contents/MacOS" "$bundle/Contents/Resources"
@@ -170,8 +144,6 @@ let
         cp "${muxPkg}/bin/muxd" "${muxPkg}/bin/mux-attach" "$bundle/Contents/MacOS/"
         chmod u+w "$bundle/Contents/MacOS/"*
         cp "${mux}/app/Assets/Mux.icns" "$bundle/Contents/Resources/Mux.icns"
-        # GHOSTTY_RESOURCES_DIR points at Resources/ghostty; ghostty derives the
-        # terminfo db as its SIBLING Resources/terminfo. Both, or TERM breaks.
         cp -R "$gk/zig-out/share/ghostty" "$bundle/Contents/Resources/ghostty"
         cp -R "$gk/zig-out/share/terminfo" "$bundle/Contents/Resources/terminfo"
         cat >"$bundle/Contents/Info.plist" <<'PLIST'
@@ -192,16 +164,11 @@ let
     </plist>
     PLIST
 
-        # --- install ------------------------------------------------------------
-        # The old install was a symlink into ~/Documents/Git/mux/app/.build;
-        # rm -rf on a symlink removes the link, not the checkout's bundle.
         rm -rf "${app}"
         ditto "$bundle" "${app}"
         sign_app
 
-        # One registered bundle. The intermediate is wiped and rebuilt every
-        # time, so it is not a cache; left on disk it is a second Mux.app
-        # LaunchServices can pick by name over /Applications.
+        # One registered Mux bundle: unregister and drop the intermediate.
         ${lsregister} -u "$bundle" >/dev/null 2>&1 || true
         rm -rf "$bundle" "$appsrc"
         ${lsregister} -f "${app}" >/dev/null 2>&1 || true

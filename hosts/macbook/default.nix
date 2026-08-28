@@ -21,6 +21,7 @@
     ./apps.nix
     ./defaults.nix
     ./homebrew.nix
+    ./hermes-desktop.nix
     ./services.nix
     ./startup-guard.nix
   ];

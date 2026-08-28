@@ -5,6 +5,8 @@ in
 {
   imports = [ inputs.hermes-agent.nixosModules.default ];
 
+  networking.hosts."100.114.116.11" = [ "spark-ix.tail368802.ts.net" ];
+
   systemd.tmpfiles.rules = [
     "L+ ${stateDir}/.hermes/plugins/knowledge-base - - - - /home/rathi/Documents/Git/nix/dots/hermes/plugins/knowledge-base"
     "L+ ${stateDir}/workspace/kb-staging - - - - /var/lib/kb/staging"

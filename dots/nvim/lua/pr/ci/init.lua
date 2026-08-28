@@ -317,9 +317,6 @@ function M.watch(root, sha, cb)
   end
 end
 
----@return pr.ci.Entry?
-function M.get(sha) return entries[sha] end
-
 --- Force a re-fetch now, whatever the poller was planning. This is what R
 --- and `:e` mean on the pane.
 function M.refresh(root, sha) return fetch(root, sha) end

@@ -22,6 +22,7 @@
     ./defaults.nix
     ./homebrew.nix
     ./hermes-desktop.nix
+    ./muxd.nix
     ./services.nix
     ./startup-guard.nix
   ];

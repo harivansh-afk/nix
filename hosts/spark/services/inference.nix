@@ -23,9 +23,12 @@ let
   unchainedFile = "Huihui-Qwen3.8-27B-abliterated-Q4_K.gguf";
   unchainedPath = "${unchainedDir}/${unchainedFile}";
 
+  # No top-level `version = 1` line: llama.cpp's ini parser starts in an
+  # implicit section named "default", so any key before the first header
+  # creates a [default] preset with no model. The router then advertises
+  # "default" as a model and spawns a llama-server without --model when a
+  # client probes it. The version key itself is skipped by the parser.
   modelPresets = pkgs.writeText "llama-cpp-models.ini" ''
-    version = 1
-
     [qwen3.8-27b]
     model = ${qwenPath}
 

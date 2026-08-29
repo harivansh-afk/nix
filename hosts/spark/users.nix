@@ -39,7 +39,6 @@ in
         shell = shellPackages.${user.shell};
         inherit (user) extraGroups;
         openssh.authorizedKeys.keys = user.sshKeys;
-        homeMode = "0700";
       }
       // lib.optionalAttrs (user ? linger) {
         inherit (user) linger;
@@ -58,16 +57,12 @@ in
     openFirewall = false;
     settings = {
       AllowAgentForwarding = false;
-      AllowTcpForwarding = true;
       AllowUsers = enabledUsers ++ lib.optionals config.services.forgejo.enable gitSshOrigins;
       AuthenticationMethods = "publickey";
-      GatewayPorts = "no";
       KbdInteractiveAuthentication = false;
       MaxAuthTries = 3;
       PasswordAuthentication = false;
       PermitRootLogin = "no";
-      PermitTunnel = false;
-      X11Forwarding = false;
     };
 
     # Forgejo's forced `forgejo serv` command already limits the git user;
@@ -82,6 +77,4 @@ in
         X11Forwarding no
     '';
   };
-
-  security.sudo.wheelNeedsPassword = true;
 }

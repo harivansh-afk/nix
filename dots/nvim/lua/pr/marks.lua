@@ -291,17 +291,4 @@ function M.attach(buf)
   end
 end
 
---- The mark rows for a g? help float. <leader>1-9 is global rather than a
---- buffer key, so it is named here rather than in M.KEYS.
----@return {[1]:string,[2]:string}[]
-function M.help_entries()
-  local out = {}
-  for _, k in ipairs(M.KEYS) do
-    out[#out + 1] = { k[1], k[3] }
-  end
-  out[#out + 1] = { "<leader>1-9", "jump to a marked slot" }
-  out[#out + 1] = { "<c-e>", "the whole fast list, in a float" }
-  return out
-end
-
 return M

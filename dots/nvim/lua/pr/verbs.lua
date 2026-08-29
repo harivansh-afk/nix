@@ -201,14 +201,4 @@ function M.attach(buf)
   end
 end
 
---- The verb rows for a g? help float.
----@return {[1]:string,[2]:string}[]
-function M.help_entries()
-  local out = {}
-  for _, k in ipairs(M.KEYS) do
-    out[#out + 1] = { k[1], k[3] }
-  end
-  return out
-end
-
 return M

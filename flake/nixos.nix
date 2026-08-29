@@ -3,6 +3,7 @@
   inputs,
   lib,
   mkSpecialArgs,
+  self,
   ...
 }:
 let
@@ -17,7 +18,18 @@ let
         ../hosts/${host.name}
       ];
     };
+
+  # Root-only container image, not a host in lib/hosts.nix.
+  ix = inputs.nixpkgs.lib.nixosSystem {
+    specialArgs = { inherit inputs self; };
+    modules = [
+      { nixpkgs.hostPlatform = "x86_64-linux"; }
+      ../hosts/ix
+    ];
+  };
 in
 {
-  flake.nixosConfigurations = lib.mapAttrs (_: mkNixos) nixosHosts;
+  flake.nixosConfigurations = lib.mapAttrs (_: mkNixos) nixosHosts // {
+    inherit ix;
+  };
 }

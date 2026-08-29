@@ -44,7 +44,6 @@ sops-nix with age encryption derived from each host's ed25519 SSH key. Secret fi
 - Prefer common package definitions across macbook and spark; keep only truly macOS-specific Homebrew and GUI integrations Darwin-only.
 - Cursor CLI and `cursor-agent` come from the official installer: `curl https://cursor.com/install -fsS | bash`.
 - Bugfix PRs keep the diff minimal and exclude unrelated changes.
-- The `tmp/` directory is gitignored local scratch space. Nothing there is tracked or load-bearing.
 - Berkeley Mono is installed out-of-band. The flake only provides nerd-fonts symbol glyphs.
 - There is no home-manager. Per-user config is `modules/users/user-config.nix`: plain dotfiles in `dots/` symlinked into the home directory by an activation script that runs as the user. The repo owner's links point at the live checkout (`~/Documents/Git/nix/dots`), so dotfile edits apply without a rebuild; other users get the nix-store copy. Configs that need store paths (zsh plugins, git credential helpers, theme renders) are store-generated shims that defer to the live dots file.
 - Ghostty is installed via Homebrew cask, not nixpkgs. The flake owns its config files and its terminfo: `xterm-ghostty` is declarative in `modules/common.nix` (`pkgs.ghostty-bin.terminfo` on darwin, `pkgs.ghostty.terminfo` on linux) so env-scrubbed shells resolve it without `TERMINFO`. Never fix terminfo imperatively via `tic` into `~/.terminfo`.
@@ -83,8 +82,7 @@ flake/
   args.nix             Host records (the two machines) + shared builders (mkPkgs, mkSpecialArgs)
   devshell.nix         Dev tools + formatter
   hosts.nix            macbook darwin configuration
-  nixos.nix            spark NixOS configuration
-  ix.nix               nixosConfigurations.ix: the ix dev VM template
+  nixos.nix            spark NixOS configuration + nixosConfigurations.ix (the dev VM template)
   packages.nix         packages.<system> output: portable scripts (ga, ghpr, connectors) + tool wrappers
 lib/
   remotes.nix          Remote server registry: hosts for the per-remote connector commands
@@ -94,7 +92,8 @@ modules/
   nix-settings.nix     nix.conf settings both hosts share (nix.settings on spark, determinateNix.customSettings on darwin)
   users/
     user-config.nix    Shared per-user dotfile/symlink/package builder (no home-manager)
-    nixos.nix          NixOS adapter: every user in users/, owner gets live dots
+    accounts/          User registry (rathi.nix: SSH keys + groups)
+    nixos.nix          NixOS adapter: every user in accounts/, owner gets live dots
     darwin.nix         nix-darwin adapter: primary user, live dots
   security/
     sops.nix           sops-nix setup, age key from SSH host key
@@ -114,16 +113,19 @@ hosts/
     hardware.nix       DGX Spark module + disko disk layout
     kernel-hardening.nix  Running-kernel boundary: module lock, sysctls, LSM order
     networking.nix     Wi-Fi (NetworkManager), Tailscale, firewall, zram
-    users.nix          User accounts from users/ directory, SSH, sudo
+    users.nix          User accounts from modules/users/accounts, SSH, sudo
+    docs/              Notes on the verified-boot, module-lock and strict-DMA setup
     services/          Every spark service; single-host, so they live with the host
       caddy.nix        Reverse proxy on loopback, loopbackVhost helper
       cloudflared.nix  Cloudflare tunnel to Caddy
+      hermes.nix       Hermes agent gateway + dashboard
       inference.nix    Local llama.cpp inference server (GPU)
       mosh.nix         Mosh UDP server config
-      whisper.nix      GPU speech-to-text server
       vaultwarden.nix  Vaultwarden password manager
-      website.nix      Static site for harivan.sh served via Caddy
-      forgejo/         Forgejo server, cozybox themes, mirror manifest, Actions runner
+      website.nix      harivan.sh static site + page counter (counter code lives in the website repo, counter/counter.py)
+      kb/              Knowledge base: postgres + pgvector, embedding server, connectors/*.sh, kb_vec.py indexer, kb-search
+      whisper/         GPU speech-to-text server (default.nix + setup.sh + server.py)
+      forgejo/         Forgejo server, cozybox css in assets/, mirror manifest, Actions runner, run-by-hand scripts/
   ix/
     default.nix        The entire ix dev VM: root dotfiles, agents, nothing else
 pkgs/
@@ -137,11 +139,7 @@ pkgs/
     lib/               Helpers (wallpaper-gen.py)
 terraform/
   cloudflare/          Declarative Cloudflare DNS for harivan.sh via terranix
-scripts/
-  forgejo-mirror/      Mirror reconciliation against /etc/forgejo-mirror/manifest.json (run on demand)
-users/
-  default.nix          User registry
-  rathi.nix            SSH keys + groups for rathi
+scripts/               Repo tooling: pr-smoke.sh, nvim-pack-sources.sh, omp/claude-hooks-smoke.sh
 assets/                Readme artwork + the static wallpapers
 dots/                  Dotfile sources (nvim, karabiner, lazygit, agents/ instructions + skills, etc.)
 ```
@@ -244,8 +242,8 @@ The VM has no secrets. sops-nix on spark derives its age key from the host ed255
 The legacy gitea-mirror Bun service has been removed. Forgejo's native mirror tables (`mirror` for inbound pulls, `push_mirror` for outbound pushes) are the source of truth. Two files drive the system:
 
 - `hosts/spark/services/forgejo/mirror-manifest.nix`: policy-only config (intervals, `owned_owner`, the small `no_mirror` set, the `actions_enabled_repos` allowlist). No repo inventory is checked into nix; the actual list of repos to mirror is discovered at runtime by querying forgejo's own database. Rendered to `/etc/forgejo-mirror/manifest.json` at activation.
-- `scripts/forgejo-mirror/reconcile.sh`: idempotent script that reads the manifest, deletes pull-mirror rows on push-mirror targets, creates missing push-mirrors with `use_ssh=true sync_on_commit=true interval=15m`, registers the forgejo-generated public key as a github deploy key, and flips `has_actions` per the allowlist. Run as root: `sudo FORGEJO_MIRROR_MANIFEST=/etc/forgejo-mirror/manifest.json bash scripts/forgejo-mirror/reconcile.sh [--dry-run]`.
-- `scripts/forgejo-mirror/github-ux.sh`: optional, applies the barrettruth full treatment (github description/homepage/has_* metadata, `.github/README.md` banner, redirect-pr workflow) to every push-mirror. Run on demand: `bash scripts/forgejo-mirror/github-ux.sh [--dry-run] [--only owner/name]`.
+- `hosts/spark/services/forgejo/scripts/reconcile.sh`: idempotent script that reads the manifest, deletes pull-mirror rows on push-mirror targets, creates missing push-mirrors with `use_ssh=true sync_on_commit=true interval=15m`, registers the forgejo-generated public key as a github deploy key, and flips `has_actions` per the allowlist. Run as root: `sudo FORGEJO_MIRROR_MANIFEST=/etc/forgejo-mirror/manifest.json bash hosts/spark/services/forgejo/scripts/reconcile.sh [--dry-run]`.
+- `hosts/spark/services/forgejo/scripts/github-ux.sh`: optional, applies the barrettruth full treatment (github description/homepage/has_* metadata, `.github/README.md` banner, redirect-pr workflow) to every push-mirror. Run on demand: `bash hosts/spark/services/forgejo/scripts/github-ux.sh [--dry-run] [--only owner/name]`.
 
 ### Pull-mirror credentials
 

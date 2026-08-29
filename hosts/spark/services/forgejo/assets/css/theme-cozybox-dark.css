@@ -1,0 +1,189 @@
+@import url("/assets/css/theme-forgejo-dark.css");
+
+:root {
+  --is-dark-theme: true;
+  color-scheme: dark;
+
+  /* steel ladder remapped to cozybox dark bg->fg shades */
+  --steel-900: #1d2021;
+  --steel-850: #232425;
+  --steel-800: #282828;
+  --steel-750: #2c2a28;
+  --steel-700: #32302f;
+  --steel-650: #3c3836;
+  --steel-600: #45403c;
+  --steel-550: #504945;
+  --steel-500: #5a544f;
+  --steel-450: #665c54;
+  --steel-400: #7c6f64;
+  --steel-350: #928374;
+  --steel-300: #a89984;
+  --steel-250: #bdae93;
+  --steel-200: #d5c4a1;
+  --steel-150: #e1d5a8;
+  --steel-100: #ebdbb2;
+
+  /* surface / structure (cozybox.nvim Normal #101010, CursorLine #161616) */
+  --color-body:               #101010;
+  --color-box-body:           #101010;
+  --color-box-body-highlight: #161616;
+  --color-box-header:         #0c0c0c;
+  --color-header-wrapper:     #0c0c0c;
+  --color-footer:             #0c0c0c;
+  --color-nav-bg:             #0c0c0c;
+  --color-nav-hover-bg:       #2a2a2a;
+  --color-secondary-nav-bg:   #0c0c0c;
+  --color-card:               #161616;
+  --color-menu:               #0c0c0c;
+  --color-button:             #0c0c0c;
+  --color-hover:              #161616;
+  --color-active:             #2a2a2a;
+  --color-timeline:           #504945;
+
+  /* text */
+  --color-text:             #ebdbb2;
+  --color-text-dark:        #ffffff;
+  --color-text-light:       #d5c4a1;
+  --color-text-light-1:     #bdae93;
+  --color-text-light-2:     #a89984;
+  --color-text-light-3:     #928374;
+  --color-placeholder-text: #928374;
+
+  /* secondary */
+  --color-secondary:           #504945;
+  --color-secondary-bg:        #161616;
+  --color-secondary-dark-1:    #504945;
+  --color-secondary-dark-2:    #665c54;
+  --color-secondary-light-1:   #2a2a2a;
+  --color-secondary-light-2:   #232425;
+  --color-secondary-light-3:   #32302f;
+  --color-secondary-light-4:   #282828;
+  --color-secondary-alpha-10:  #5049451a;
+  --color-secondary-alpha-20:  #50494533;
+  --color-secondary-alpha-30:  #5049454d;
+  --color-secondary-alpha-40:  #50494566;
+  --color-secondary-alpha-50:  #50494580;
+  --color-secondary-alpha-60:  #50494599;
+  --color-secondary-alpha-70:  #504945b3;
+  --color-secondary-alpha-80:  #504945cc;
+  --color-secondary-alpha-90:  #504945e6;
+
+  /* inputs */
+  --color-input-background:   #0c0c0c;
+  --color-input-text:         #ebdbb2;
+  --color-input-border:       #504945;
+  --color-input-border-hover: #665c54;
+  --color-input-toggle-background: #32302f;
+
+  /* links */
+  --color-link:       #5b84de;
+  --color-link-hover: #7596e8;
+
+  /* primary -> cozybox blue (#5b84de) */
+  --color-primary:          #5b84de;
+  --color-primary-contrast: #ffffff;
+  --color-primary-dark-1:   #6c91e3;
+  --color-primary-dark-2:   #7e9de8;
+  --color-primary-dark-3:   #91aaec;
+  --color-primary-dark-4:   #a4b7f0;
+  --color-primary-dark-5:   #b6c4f4;
+  --color-primary-dark-6:   #c9d1f7;
+  --color-primary-dark-7:   #dcdef9;
+  --color-primary-light-1:  #4a73c8;
+  --color-primary-light-2:  #3a62b3;
+  --color-primary-light-3:  #2c519d;
+  --color-primary-light-4:  #1f4287;
+  --color-primary-light-5:  #143371;
+  --color-primary-light-6:  #0a255c;
+  --color-primary-light-7:  #021847;
+  --color-primary-alpha-10: #5b84de1a;
+  --color-primary-alpha-20: #5b84de33;
+  --color-primary-alpha-30: #5b84de4d;
+  --color-primary-alpha-40: #5b84de66;
+  --color-primary-alpha-50: #5b84de80;
+  --color-primary-alpha-60: #5b84de99;
+  --color-primary-alpha-70: #5b84deb3;
+  --color-primary-alpha-80: #5b84decc;
+  --color-primary-alpha-90: #5b84dee6;
+  --color-primary-hover:    var(--color-primary-light-1);
+  --color-primary-active:   var(--color-primary-light-2);
+  --color-accent:           #5b84de;
+
+  /* cozybox dark accents (aligned to terminal palette in lib/theme.nix) */
+  --color-red:    #ea6962;
+  --color-orange: #fe8019;
+  --color-yellow: #d79921;
+  --color-olive:  #b8bb26;
+  --color-green:  #8ec97c;
+  --color-teal:   #8ec07c;
+  --color-blue:   #5b84de;
+  --color-violet: #d3869b;
+  --color-purple: #d3869b;
+  --color-pink:   #ea6962;
+
+  --color-red-light:    #f08680;
+  --color-orange-light: #fe9540;
+  --color-yellow-light: #fabd2f;
+  --color-green-light:  #a8da9c;
+  --color-blue-light:   #7596e8;
+  --color-violet-light: #dba0b0;
+
+  --color-red-dark-1:    #c75d57;
+  --color-orange-dark-1: #d96b15;
+  --color-yellow-dark-1: #b08015;
+  --color-green-dark-1:  #6fa363;
+  --color-blue-dark-1:   #4d70bb;
+  --color-violet-dark-1: #dba0b0;
+
+  --color-success: #8ec97c;
+  --color-info:    #5b84de;
+  --color-warning: #d79921;
+  --color-error:   #ea6962;
+  --color-danger:  #ea6962;
+
+  /* console palette (actions runner / job log box) - neutral, no blue */
+  --color-console-fg:          #ebdbb2;
+  --color-console-fg-subtle:   #928374;
+  --color-console-bg:          #0c0c0c;
+  --color-console-border:      #3c3836;
+  --color-console-hover-bg:    #ffffff0d;
+  --color-console-active-bg:   #504945;
+  --color-console-menu-bg:     #161616;
+  --color-console-menu-border: #504945;
+
+  /* info banner backdrop - neutralize the upstream blue */
+  --color-info-border: #504945;
+  --color-info-bg:     #232425;
+  --color-info-text:   #ebdbb2;
+
+  --color-code-bg:                 #0c0c0c;
+  --color-markup-code-block:       #0c0c0c;
+  --color-markup-code-inline:      #232425;
+  --color-markup-table-row:        #ffffff06;
+  /* diff bgs from cozybox.nvim DiffAdd/Change/Delete */
+  --color-diff-removed-row-bg:     #2a1818;
+  --color-diff-removed-word-bg:    #3d2222;
+  --color-diff-added-row-bg:       #1e2718;
+  --color-diff-added-word-bg:      #2d3d22;
+  --color-diff-moved-row-bg:       #1e1e18;
+  --color-diff-added-row-border:   #8ec97c;
+  --color-diff-removed-row-border: #ea6962;
+  --color-diff-moved-row-border:   #d79921;
+  --color-expand-button:           var(--color-body);
+}
+.code-diff tr.tag-code,
+.code-diff tr.tag-code td,
+.code-diff tr.tag-code .blob-excerpt { background-color: var(--color-body); }
+.page-footer { display: none !important; }
+#navbar-logo img { display: none !important; }
+#navbar-logo::before {
+  content: "Home" !important;
+  display: inline-block !important;
+  position: static !important;
+  background: none !important;
+  width: auto !important;
+  height: auto !important;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-text);
+}

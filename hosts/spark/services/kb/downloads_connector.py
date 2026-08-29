@@ -5,7 +5,7 @@ Walks the user's Downloads tree, extracts text from supported document types
 (pdf, docx, xlsx, txt) and writes one normalized markdown note per source file
 into /var/lib/kb/staging/downloads/, with frontmatter (source path, file type,
 ingested timestamp, content hash). The hourly kb-ingest service then embeds the
-staging area into pgvector (see hosts/spark/services/kb-ingest.nix). This script
+staging area into pgvector (see default.nix). This script
 only touches staging; it never modifies the kb-ingest hot path.
 
 Media (mp4, mov, png, jpg, jpeg, heic, psd, otf) is skipped.

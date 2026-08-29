@@ -12,9 +12,9 @@
 }:
 let
   forgejoCredentialHelper = pkgs.writeShellScript "git-credential-forgejo" ''
-    if [ "$1" = "get" ] && [ -r /run/secrets/forgejo-token.env ]; then
+    if [ "$1" = "get" ] && [ -r /run/secrets/forgejo-token ]; then
       echo "username=${forgeLogins.harivan}"
-      echo "password=$(cat /run/secrets/forgejo-token.env)"
+      echo "password=$(cat /run/secrets/forgejo-token)"
     fi
   '';
 

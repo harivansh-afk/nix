@@ -118,13 +118,9 @@ pkgs.writeShellScript "user-config-${name}" ''
 
   # --- bin: standalone helper scripts ---
   ${lib.optionalString (!isDarwin) ''
-    mkdir -p "${homeDirectory}/.local/share/applications"
     mkSymlink "${dotsRoot}/bin/open" "${homeDirectory}/.local/bin/open"
-    mkSymlink "${dotsRoot}/bin/macbook-open" "${homeDirectory}/.local/bin/macbook-open"
     mkSymlink "${dotsRoot}/bin/wl-paste" "${homeDirectory}/.local/bin/wl-paste"
     mkSymlink "${dotsRoot}/bin/xclip" "${homeDirectory}/.local/bin/xclip"
-    mkSymlink "${dotsRoot}/xdg/macbook-open.desktop" "${homeDirectory}/.local/share/applications/macbook-open.desktop"
-    mkSymlink "${dotsRoot}/xdg/mimeapps.list" "${configHome}/mimeapps.list"
   ''}
 
   # --- nvim: keep the config directory writable for vim.pack's lockfile,
@@ -184,11 +180,8 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${ghosttyThemes.dark}" "${configHome}/ghostty/themes/cozybox-dark"
   mkSymlink "${ghosttyThemes.light}" "${configHome}/ghostty/themes/cozybox-light"
 
-  # ~/.terminfo is in ncurses' DEFAULT search path, so xterm-ghostty resolves
-  # at zsh startup even in env-scrubbed spawns (login/muxd panes) where
-  # TERMINFO/TERMINFO_DIRS are absent: Apple's ncurses caches its search path
-  # on first lookup, so the TERMINFO_DIRS exported later by set-environment
-  # cannot rescue a shell that started without a resolvable entry.
+  # ~/.terminfo is on ncurses' default search path, so xterm-ghostty resolves
+  # in env-scrubbed spawns (login, muxd panes) that never see TERMINFO_DIRS.
   mkSymlink "${ghosttyTerminfo}/share/terminfo" "${homeDirectory}/.terminfo"
   mkSymlink "${fzfThemes.dark}" "${configHome}/fzf/themes/cozybox-dark"
   mkSymlink "${fzfThemes.light}" "${configHome}/fzf/themes/cozybox-light"
@@ -214,11 +207,8 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${dotsRoot}/claude/hooks/session-start.sh" "${homeDirectory}/.claude/hooks/session-start.sh"
   mkSymlink "${dotsRoot}/claude/hooks/session-id.sh" "${homeDirectory}/.claude/hooks/session-id.sh"
 
-  # --- codex: AGENTS.md rendered, config.toml seeded as a writable copy.
-  # Codex rewrites ~/.codex/config.toml at runtime (hook trust, per-project
-  # trust_level, model NUX counters), so it cannot be a read-only nix-store
-  # symlink. Only reseed when the managed source changes (tracked via an
-  # extended attribute) so runtime mutations survive every switch. ---
+  # --- codex: config.toml is a writable copy (codex rewrites it at runtime),
+  # reseeded only when the managed source changes (tracked in an xattr) ---
   mkSymlink "${codexAgentsMd}" "${homeDirectory}/.codex/AGENTS.md"
 
   target="${homeDirectory}/.codex/config.toml"
@@ -306,7 +296,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   fi
 
   # --- tea logins from sops secrets (skipped when unreadable) ---
-  harivanTokenFile=/run/secrets/forgejo-token.env
+  harivanTokenFile=/run/secrets/forgejo-token
   ixTokenEnvFile=/run/secrets/forgejo-ix.env
 
   harivanToken=
@@ -353,7 +343,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     umask 022
   fi
 
-  # --- theme state init (the old home/scripts.nix activation) ---
+  # --- theme state init ---
   ${customScripts.themeAssetsText}
 
   mkdir -p "${theme.paths.stateDir}" \
@@ -464,16 +454,8 @@ pkgs.writeShellScript "user-config-${name}" ''
     fi
   ''}
 
-  # --- rust-analyzer's sysroot source ---
-  # rust-analyzer resolves std by READING its source, not by loading rlibs, so
-  # with no rust-src component every std type is simply unknown: no hover, no
-  # completion, no goto-definition into the standard library. `cargo build`
-  # keeps working the whole time, so it reads as "the LSP is broken" rather
-  # than "a component is missing". pkgs/sets.nix installs rust-analyzer and
-  # rustup but a toolchain COMPONENT is not something nix declares, so this is
-  # the step that keeps the pair usable.
-  #
-  # Guarded on the directory: a switch costs one stat, never a network call.
+  # --- rust-src for rust-analyzer (it reads std's source; rustup components
+  # are not nix-declarable). Guarded on the directory, so a switch is one stat.
   rustup_bin="/run/current-system/sw/bin/rustup"
   rustc_bin="/run/current-system/sw/bin/rustc"
   if [ -x "$rustup_bin" ] && [ -x "$rustc_bin" ]; then

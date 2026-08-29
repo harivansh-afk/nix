@@ -80,10 +80,6 @@ in
     "d ${qwenDir} 0755 root root -"
     "d ${unchainedDir} 0755 root root -"
     "d /var/lib/llama-cpp/huggingface 0755 root root -"
-    # Old main models are no longer managed or served; /var/lib/vllm held the
-    # NVFP4 weights for the removed vLLM container.
-    "R /var/lib/llama-cpp/models/qwen3.6-35b-a3b - - - -"
-    "R /var/lib/vllm - - - -"
     "w /sys/block/nvme0n1/queue/read_ahead_kb - - - - 8192"
   ];
 

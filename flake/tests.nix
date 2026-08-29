@@ -83,10 +83,8 @@
         (lib.assertMsg (
           spark.virtualisation.oci-containers.containers == { }
         ) "spark: no always-on inference containers; local models go behind the llama.cpp router")
-        # Forgejo's git user is the one non-human account sshd admits, and the
-        # two ways that can go wrong are opposite: drop it and every ssh push
-        # breaks (silently, until someone tries), or add it bare and a service
-        # account becomes reachable from anywhere sshd is. Both fail here.
+        # The git user must be in AllowUsers (ssh pushes) and must be
+        # source-qualified (never reachable from the open internet).
         (
           let
             allow = spark.services.openssh.settings.AllowUsers;
@@ -148,14 +146,9 @@
     {
       checks = {
         spark-invariants = pkgs.writeText "spark-invariants" (builtins.toJSON (lib.all lib.id invariants));
-        # Full eval of the darwin system closure. `nix flake check` does not
-        # know the darwinConfigurations output schema and skips it entirely,
-        # so without this a darwin-only module error merges green and only
-        # surfaces on the next darwin-rebuild ("chore: fix darwin" commits).
-        # Forcing the toplevel drvPath is the eval; the string context is
-        # discarded on purpose so the darwin closure does not become a build
-        # input of this check (it cannot build on the linux runner, and does
-        # not need to: a failed eval already fails the check).
+        # `nix flake check` skips darwinConfigurations, so force the darwin
+        # toplevel eval here. The string context is dropped on purpose: the
+        # closure must not become a build input on the linux runner.
         eval-macbook = pkgs.writeText "eval-macbook" (
           builtins.unsafeDiscardStringContext self.darwinConfigurations.macbook.system.drvPath
         );

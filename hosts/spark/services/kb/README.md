@@ -8,8 +8,8 @@ Local ingestion and hybrid retrieval for the personal knowledge base.
 |------|---------|
 | `kb_vec.py` | Hourly chunking, embedding, and hybrid vector/full-text retrieval |
 | `downloads_connector.py` | Local document extraction into the staging directory |
-| `denylist.txt` | Denied path segments for local document ingestion |
-| `hosts/spark/services/kb-ingest.nix` | NixOS module providing `kb-search` and the vector indexer |
+| `default.nix` | Postgres, embeddings server, connectors, indexer, `kb-search` |
+| `connectors/` | gmail, calendar and forgejo connector scripts |
 
 ## Architecture
 
@@ -24,9 +24,9 @@ default. Separate local-only workflows handle finance data.
 
 ## Denylist
 
-The downloads connector rejects files when any absolute path component matches
-`denylist.txt`. It also rejects hidden files and directories. Hard-coded
-fallbacks exclude `.git` and `node_modules` if the denylist cannot be read.
+The downloads connector never reads the directories listed in `DENYLIST` in
+`downloads_connector.py` (security, finance-tax, travel-identity,
+legal-business), and skips hidden files and directories.
 
 ## Ingestion
 

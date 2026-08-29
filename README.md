@@ -51,16 +51,15 @@ hosts/               per-host config; everything single-host lives here
   macbook/           darwin defaults, homebrew, launchd services, voiceink
   spark/             NixOS base + services/ (forgejo, inference, whisper, caddy, ...)
   ix/                the throwaway dev VM template
-users/               multi-user definitions for spark
 dots/                app configs symlinked into XDG paths (live-editable)
   nvim/              the Neovim setup: pr, statusline
   ...                one directory per tool
 modules/             genuinely shared modules
   common.nix         nix settings, overlays, the shared package set
   security/          sops
-  users/             shared dotfile and user setup
+  users/             shared dotfile and user setup, accounts/ user registry
 pkgs/                derivations: package sets, leaf, jj-ix, packaged scripts
-scripts/             run-by-hand ops scripts (forgejo-mirror, CI smoke tests)
+scripts/             repo tooling (CI smoke tests, lock regeneration)
 secrets/             sops-encrypted secrets per host
 terraform/           declarative Cloudflare DNS via terranix
 assets/              readme artwork, wallpapers

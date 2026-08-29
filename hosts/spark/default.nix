@@ -21,15 +21,12 @@
     ./services/forgejo
     ./services/hermes.nix
     ./services/inference.nix
-    ./services/knowledge-base.nix
-    ./services/kb-ingest.nix
-    ./services/kb-ingestion.nix
+    ./services/kb
     ./services/nap.nix
     ./services/mosh.nix
     ./services/muxd.nix
-    ./services/whisper.nix
+    ./services/whisper
     ./services/vaultwarden.nix
-    ./services/website-counter.nix
     ./services/website.nix
     ./hardware.nix
     ./networking.nix

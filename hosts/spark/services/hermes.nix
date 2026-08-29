@@ -20,20 +20,14 @@ in
     inherit stateDir;
     addToSystemPackages = true;
 
-    # anthropic.env: ANTHROPIC_API_KEY for the anthropic lane.
-    # hermes-dashboard.env: the basic-auth provider. A non-loopback bind
-    # refuses to start without an auth provider; the browser signs in against
-    # it once (the session survives restarts via the signing secret).
+    # A non-loopback bind requires an auth provider: hermes-dashboard.env.
     environmentFiles = [
       config.sops.secrets."anthropic.env".path
       config.sops.secrets."hermes-dashboard.env".path
     ];
 
-    # "dashboard" serves the browser UI on the same port as the desktop
-    # sockets. Its Chat tab runs the full TUI over a PTY, so the mac needs no
-    # client at all: Nous ships no prebuilt desktop app (the dmg is an
-    # install.sh stub), and building the Electron app from source on the mac
-    # is a long build for nothing the browser does not already give.
+    # The dashboard's Chat tab runs the full TUI over a PTY, so the mac needs
+    # no desktop client.
     backend = {
       mode = "dashboard";
       host = "spark-ix.tail368802.ts.net";

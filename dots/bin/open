@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
-# open - macOS-style `open <file|url>` for Linux hosts. Thin shim: the real
-# routing lives in the xdg mime database (dots/xdg/mimeapps.list ->
-# macbook-open.desktop), so anything that calls xdg-open gets the same
-# behavior. Headless xdg-open skips the mime lookup (it is gated on $DISPLAY)
-# and honors $BROWSER instead, so default it to macbook-open; hosts without
-# xdg-utils at all fall back to macbook-open directly.
-# Linked at ~/.local/bin/open on Linux only; macOS keeps /usr/bin/open.
+# macOS-style `open` for Linux hosts; linked at ~/.local/bin/open on Linux only.
 set -euo pipefail
 
 if [ "$(uname -s)" = "Darwin" ]; then
@@ -17,10 +11,6 @@ if [ "$#" -eq 0 ]; then
   exit 1
 fi
 
-if ! command -v xdg-open >/dev/null 2>&1; then
-  exec macbook-open "$@"
-fi
-
 for arg in "$@"; do
-  BROWSER="${BROWSER:-macbook-open}" xdg-open "$arg"
+  xdg-open "$arg"
 done

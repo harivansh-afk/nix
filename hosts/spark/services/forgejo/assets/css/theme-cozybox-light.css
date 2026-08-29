@@ -1,0 +1,219 @@
+@import url("/assets/css/theme-forgejo-light.css");
+
+:root {
+  --is-dark-theme: false;
+  color-scheme: light;
+
+  /* zinc ladder: cool grays from cozybox.nvim light (no gruvbox cream) */
+  --zinc-50:  #f3f3f3;
+  --zinc-100: #ececec;
+  --zinc-150: #e7e7e7;
+  --zinc-200: #e1e1e1;
+  --zinc-250: #d8d8d8;
+  --zinc-300: #d0d0d0;
+  --zinc-350: #c8c8c8;
+  --zinc-400: #c3c7c9;
+  --zinc-450: #b8bcbe;
+  --zinc-500: #a8acae;
+  --zinc-550: #9a9da0;
+  --zinc-600: #7c7f82;
+  --zinc-650: #62656a;
+  --zinc-700: #504945;
+  --zinc-750: #3c3836;
+  --zinc-800: #2e2c2a;
+  --zinc-850: #232120;
+  --zinc-900: #181818;
+
+  /* surface / structure (Normal #e7e7e7, surface #e1e1e1, selection #c3c7c9) */
+  --color-body:               #e7e7e7;
+  --color-box-body:           #e7e7e7;
+  --color-box-body-highlight: #e1e1e1;
+  --color-box-header:         #dcdcdc;
+  --color-header-wrapper:     #dcdcdc;
+  --color-footer:             #dcdcdc;
+  --color-nav-bg:             #dcdcdc;
+  --color-nav-hover-bg:       #c3c7c9;
+  --color-secondary-nav-bg:   #e1e1e1;
+  --color-card:               #e1e1e1;
+  --color-menu:               #e1e1e1;
+  --color-button:             #d3d3d3;
+  --color-hover:              #d3d3d3;
+  --color-active:             #c3c7c9;
+  --color-timeline:           #b8bcbe;
+
+  /* text (dark grays on light) */
+  --color-text:             #282828;
+  --color-text-dark:        #181818;
+  --color-text-light:       #3c3836;
+  --color-text-light-1:     #504945;
+  --color-text-light-2:     #62656a;
+  --color-text-light-3:     #7c7f82;
+  --color-placeholder-text: #9a9da0;
+
+  /* secondary */
+  --color-secondary:           #c3c7c9;
+  --color-secondary-bg:        #d3d3d3;
+  --color-secondary-dark-1:    #b8bcbe;
+  --color-secondary-dark-2:    #a8acae;
+  --color-secondary-light-1:   #d8d8d8;
+  --color-secondary-light-2:   #e1e1e1;
+  --color-secondary-light-3:   #e7e7e7;
+  --color-secondary-light-4:   #ececec;
+  --color-secondary-alpha-10:  #c3c7c91a;
+  --color-secondary-alpha-20:  #c3c7c933;
+  --color-secondary-alpha-30:  #c3c7c94d;
+  --color-secondary-alpha-40:  #c3c7c966;
+  --color-secondary-alpha-50:  #c3c7c980;
+  --color-secondary-alpha-60:  #c3c7c999;
+  --color-secondary-alpha-70:  #c3c7c9b3;
+  --color-secondary-alpha-80:  #c3c7c9cc;
+  --color-secondary-alpha-90:  #c3c7c9e6;
+
+  /* inputs */
+  --color-input-background:   #e1e1e1;
+  --color-input-text:         #282828;
+  --color-input-border:       #b8bcbe;
+  --color-input-border-hover: #9a9da0;
+  --color-input-toggle-background: #d8d8d8;
+
+  /* links -> cozybox-light faded_blue */
+  --color-link:       #4261a5;
+  --color-link-hover: #324f8d;
+
+  /* primary -> cozybox-light faded_blue (#4261a5) */
+  --color-primary:          #4261a5;
+  --color-primary-contrast: #ffffff;
+  --color-primary-dark-1:   #5675b3;
+  --color-primary-dark-2:   #6889c0;
+  --color-primary-dark-3:   #7b9dcd;
+  --color-primary-dark-4:   #8eb0d9;
+  --color-primary-dark-5:   #a1c4e6;
+  --color-primary-dark-6:   #b5d8f3;
+  --color-primary-dark-7:   #c8ecff;
+  --color-primary-light-1:  #385693;
+  --color-primary-light-2:  #2f4b80;
+  --color-primary-light-3:  #26406d;
+  --color-primary-light-4:  #1d345b;
+  --color-primary-light-5:  #142948;
+  /* light-6 is the -webkit-autofill fill, painted under text coloured with
+     --color-text. This ramp runs dark (upstream's light ramp runs pale), so
+     a shade here like its neighbours gave dark-on-dark at 1.15:1 in
+     autofilled login inputs. Pale tint of the primary instead; light-4/5
+     stay dark because they back white --color-primary-contrast text. */
+  --color-primary-light-6:  #dfe6f4;
+  --color-primary-light-7:  #031223;
+  --color-primary-alpha-10: #4261a51a;
+  --color-primary-alpha-20: #4261a533;
+  --color-primary-alpha-30: #4261a54d;
+  --color-primary-alpha-40: #4261a566;
+  --color-primary-alpha-50: #4261a580;
+  --color-primary-alpha-60: #4261a599;
+  --color-primary-alpha-70: #4261a5b3;
+  --color-primary-alpha-80: #4261a5cc;
+  --color-primary-alpha-90: #4261a5e6;
+  --color-primary-hover:    var(--color-primary-light-1);
+  --color-primary-active:   var(--color-primary-light-2);
+  --color-accent:           #4261a5;
+
+  /* cozybox-light accents (faded variants from cozybox.nvim) */
+  --color-red:    #c5524a;
+  --color-orange: #af3a03;
+  --color-yellow: #b57614;
+  --color-olive:  #427b58;
+  --color-green:  #427b58;
+  --color-teal:   #3c7678;
+  --color-blue:   #4261a5;
+  --color-violet: #8f3f71;
+  --color-purple: #8f3f71;
+  --color-pink:   #c5524a;
+
+  --color-red-light:    #d57972;
+  --color-orange-light: #c95a2a;
+  --color-yellow-light: #c98e36;
+  --color-green-light:  #5a957a;
+  --color-blue-light:   #6b85c0;
+  --color-violet-light: #a85d8b;
+
+  --color-red-dark-1:    #a8453e;
+  --color-orange-dark-1: #8e2f02;
+  --color-yellow-dark-1: #946011;
+  --color-green-dark-1:  #356348;
+  --color-blue-dark-1:   #355088;
+  --color-violet-dark-1: #7a3560;
+
+  --color-success: #427b58;
+  --color-info:    #4261a5;
+  --color-warning: #b57614;
+  --color-error:   #c5524a;
+  --color-danger:  #c5524a;
+
+  /* console palette (actions run view, .console blocks, runner registration
+     box). Upstream ships a dark console in its light theme too, which leaves
+     the whole action-view-right pane - step list, job header and log body -
+     dark on an otherwise light page. Keep it on the light surface ladder. */
+  --color-console-fg:          #282828;
+  --color-console-fg-subtle:   #62656a;
+  --color-console-bg:          #f3f3f3;
+  --color-console-border:      #b8bcbe;
+  --color-console-hover-bg:    #0000000d;
+  --color-console-active-bg:   #d0d0d0;
+  --color-console-menu-bg:     #e7e7e7;
+  --color-console-menu-border: #b8bcbe;
+
+  /* ANSI log colours. Upstream tunes these for a dark console, so on the
+     light console above 12 of 14 fall below WCAG AA (bright yellow #eaaf03
+     lands at 1.78:1). Re-cut from the accents above, darkened until every
+     entry clears 4.5:1 on --color-console-bg; "bright" reads as more
+     saturated rather than lighter, as light terminal themes do.
+     --color-ansi-white and --color-ansi-bright-white are left to upstream:
+     they resolve to the console fg vars and follow this palette already. */
+  --color-ansi-black:          #282828;
+  --color-ansi-bright-black:   #62656a;
+  --color-ansi-red:            #b0453e;
+  --color-ansi-bright-red:     #8a352f;
+  --color-ansi-green:          #3b6f4f;
+  --color-ansi-bright-green:   #2c5741;
+  --color-ansi-yellow:         #8a5a0f;
+  --color-ansi-bright-yellow:  #6d470b;
+  --color-ansi-blue:           #4261a5;
+  --color-ansi-bright-blue:    #355088;
+  --color-ansi-magenta:        #8f3f71;
+  --color-ansi-bright-magenta: #7a3560;
+  --color-ansi-cyan:           #3c7678;
+  --color-ansi-bright-cyan:    #2f5c5e;
+
+  /* info banner backdrop - neutralize the upstream blue */
+  --color-info-border: #b8bcbe;
+  --color-info-bg:     #d8d8d8;
+  --color-info-text:   #282828;
+
+  --color-code-bg:                 #dcdcdc;
+  --color-markup-code-block:       #dcdcdc;
+  --color-markup-code-inline:      #d3d3d3;
+  --color-markup-table-row:        #00000006;
+  /* diff bgs from cozybox.nvim light DiffAdd/Change/Delete */
+  --color-diff-removed-row-bg:     #ffc7c7;
+  --color-diff-removed-word-bg:    #f5a5a5;
+  --color-diff-added-row-bg:       #d9e8d2;
+  --color-diff-added-word-bg:      #b8d4ad;
+  --color-diff-moved-row-bg:       #eee4c7;
+  --color-diff-added-row-border:   #427b58;
+  --color-diff-removed-row-border: #c5524a;
+  --color-diff-moved-row-border:   #b57614;
+}
+.code-diff tr.tag-code,
+.code-diff tr.tag-code td,
+.code-diff tr.tag-code .blob-excerpt { background-color: var(--color-body); }
+.page-footer { display: none !important; }
+#navbar-logo img { display: none !important; }
+#navbar-logo::before {
+  content: "Home" !important;
+  display: inline-block !important;
+  position: static !important;
+  background: none !important;
+  width: auto !important;
+  height: auto !important;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-text);
+}

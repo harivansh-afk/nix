@@ -1,25 +1,6 @@
-# jj-ix: the patched jj binary carrying the ix store backend and the
-# `jj ix ...` command group (clone/submit/forge/view/mount) - the client for
-# the jj-native forge at https://forge.ix.dev:8447/rpc (ix ADR 0001/0002).
-#
-# This is a FULL jj (all stock commands are present), but forge-backed
-# workspaces can only be opened by this binary: the ix store backend does not
-# exist in stock `jujutsu`. Installed as `jj-ix` so the stock `jj` stays the
-# default for ordinary git-backed repos.
-#
-# Source and toolchain both come from the ix repo's own pins:
-#   - src = the archived GitHub mirror at its final commit (see the ix-src
-#     flake input; the forge is not nix-fetchable today).
-#   - rustc/cargo = nightly-2026-05-27 (rust-toolchain.toml at the ix repo
-#     root; the satellite workspace needs nightly cargo for its
-#     `cargo-features = ["profile-rustflags", "trim-paths"]`).
-#
-# The crate lives in a standalone cargo workspace at crates/jj/client (its
-# path-deps reach the vendored jj fork at index/views/jj and a few ix root
-# crates, which is why src must be the whole ix tree). Tests are skipped:
-# the cli's dev-dependencies path-dep jj-server from the ix ROOT workspace,
-# and building that drags in a far larger dependency closure than the
-# binary needs.
+# jj-ix: jj with the ix store backend and `jj ix` commands, the client for
+# the forge at forge.ix.dev. Installed beside stock `jj`. Built from the
+# ix-src input with the nightly its rust-toolchain.toml names.
 {
   lib,
   makeRustPlatform,
@@ -51,11 +32,8 @@ rustPlatform.buildRustPackage {
     };
   };
 
-  # The repo's .cargo/config.toml routes every rustc call through
-  # .cargo/rustc-wrapper, a dev-shell guard script. Two problems in nix
-  # sandboxes: its `#!/usr/bin/env bash` shebang has no /usr/bin/env on
-  # Linux (exec fails with ENOENT), and on Darwin the guard aborts unless
-  # IX_CARGO_ENVIRONMENT=nix is set.
+  # The repo's rustc-wrapper guard script needs /usr/bin/env and
+  # IX_CARGO_ENVIRONMENT=nix, neither of which the sandbox has by default.
   postPatch = ''
     patchShebangs .cargo/rustc-wrapper
   '';
@@ -63,9 +41,7 @@ rustPlatform.buildRustPackage {
 
   nativeBuildInputs = [ pkg-config ];
 
-  # Dev-deps pull jj-server from the ix root workspace; the binary is what
-  # we ship. Correctness of the client is exercised upstream in the forge's
-  # own CI gate.
+  # Dev-deps pull in jj-server from the root workspace; upstream CI tests the client.
   doCheck = false;
 
   meta = {

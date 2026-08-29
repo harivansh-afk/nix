@@ -10,7 +10,7 @@
 }:
 let
   src = inputs.voiceink-src;
-  patch = ../../../dots/voiceink/streaming-provider.patch;
+  patch = ./streaming-provider.patch;
   rev = "${src.rev or src.narHash or "unknown"}-${
     builtins.substring 0 12 (builtins.hashFile "sha256" patch)
   }";

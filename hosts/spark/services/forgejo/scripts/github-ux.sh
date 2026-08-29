@@ -1,3 +1,4 @@
+#!/bin/bash
 set -euo pipefail
 
 MANIFEST="${FORGEJO_MIRROR_MANIFEST:-/etc/forgejo-mirror/manifest.json}"

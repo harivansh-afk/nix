@@ -13,7 +13,6 @@ username: {
   ];
   use-xdg-base-directories = true;
   max-jobs = "auto";
-  cores = 0;
 
   # nix-community cache: neovim-nightly and the Rust vendored deps whose
   # crates.io fetch otherwise 403s.

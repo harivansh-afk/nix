@@ -27,7 +27,7 @@ in
     ];
 
   programs.zsh.enable = true;
-  environment.shells = [ pkgs.zsh ];
+  environment.shells = lib.optionals hostConfig.isDarwin [ pkgs.zsh ];
 
   # nh (Nix Helper): friendlier rebuild wrapper that uses nix-output-monitor
   # internally and shows an nvd package diff on every switch. The programs.nh

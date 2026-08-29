@@ -19,7 +19,6 @@
 -- a review comment becomes the code it is about in one keystroke. On
 -- anything without a file anchor, <CR> opens the forge's page for it.
 
-local data = require "pr.data"
 local fmt = require "pr.fmt"
 local threads = require "pr.threads"
 

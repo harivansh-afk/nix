@@ -1,17 +1,6 @@
-# omp (oh-my-pi) coding agent, packaged from the upstream GitHub release
-# binaries. Upstream ships self-contained `bun build --compile` executables and
-# CI-verifies exactly these artifacts; a from-source build under nix needs
-# network inside the sandbox at three stages (bun dependency install, the
-# cross-target bun runtime download, the napi addon pipeline), so the release
-# asset is the packaging boundary. Bumping: update `version`, refresh each
-# hash from the per-asset sha256 digests on the release page
-# (`gh release view v<version> --repo can1357/oh-my-pi --json assets`), then
-# run scripts/omp/claude-hooks-smoke.sh to catch extension-API drift in the
-# Claude bridges (dots/omp/extensions/claude-hooks.ts, claude-agents.ts).
-#
-# Runtime notes: the binary extracts its native addon to ~/.omp/natives/<v>/ on
-# first run and self-update (`omp update`) fails harmlessly against the
-# read-only store — update by bumping this file instead.
+# omp (oh-my-pi) from the upstream release binaries; a source build needs
+# network in the sandbox. Bump: `version` + the per-asset hashes
+# (`gh release view v<version> --repo can1357/oh-my-pi --json assets`).
 _: {
   perSystem =
     {

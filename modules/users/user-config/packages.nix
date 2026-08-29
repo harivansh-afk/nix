@@ -13,7 +13,6 @@
 }:
 let
   nvimPackages = import ../../../lib/nvim-packages.nix { inherit lib pkgs; };
-  leaf = pkgs.callPackage ../../../pkgs/leaf { };
 in
 (with pkgs; [
   bat
@@ -29,7 +28,6 @@ in
   nvimAliases
   tea
 ])
-++ [ leaf ]
 ++ nvimPackages
 ++ extraPackages
 ++ builtins.attrValues customScripts.commonPackages

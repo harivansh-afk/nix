@@ -2,67 +2,47 @@
   description = "Hari's nix config";
 
   inputs = {
-    # Primary package set for both hosts (macbook follows unstable too, so the
-    # two machines share one package universe; see CLAUDE.md project prefs).
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    # Separate nixpkgs pin used only for nushell on darwin: the nushell test
-    # suite hits EPERM failures in the darwin sandbox on newer revs, and a
-    # dedicated pin avoids that without invalidating the spark NVIDIA kernel
-    # hash. Drop the pin (modules/common.nix overlay goes with it) once
-    # nushell builds clean from the main nixpkgs on darwin.
+    # nushell's tests fail in the darwin sandbox on newer nixpkgs; pinned separately so the spark kernel hash stays put.
     nixpkgs-nushell.url = "github:NixOS/nixpkgs/01fbdeef22b76df85ea168fbfe1bfd9e63681b30";
 
-    # Module system for the flake's own outputs (everything under flake/).
     flake-parts.url = "github:hercules-ci/flake-parts";
 
-    # Manages the Nix installation, daemon, and /etc/nix/nix.conf. On darwin,
-    # nix settings go through determinateNix.customSettings, not nix.settings.
-    # No nixpkgs follows: it ships its own pinned determinate-nixd.
+    # Owns the nix install and nix.conf; darwin settings go through determinateNix.customSettings.
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
 
-    # macbook system layer.
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # `gws` CLI, consumed in pkgs/sets.nix extras.
     googleworkspace-cli = {
       url = "github:googleworkspace/cli";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # OpenSpec CLI, consumed in pkgs/sets.nix extras.
     openspec = {
       url = "github:Fission-AI/OpenSpec";
     };
 
-    # Declarative Homebrew (taps, casks) on macbook only.
     nix-homebrew = {
       url = "github:zhaofengli-wip/nix-homebrew";
     };
 
-    # VoiceInk dictation app, built from source on macbook (GPLv3). The
-    # prebuilt cask is the paid path; building from source with `make local`
-    # (ad-hoc signing, no Apple Developer account) is the free path. Pinned
-    # source only: it is an Xcode app, not a flake. See hosts/macbook/voiceink.nix.
+    # Xcode app, built from source in hosts/macbook/voiceink.
     voiceink-src = {
       url = "github:Beingpax/VoiceInk";
       flake = false;
     };
 
-    # Not AirPlay(tm): the mac-to-spark cast appliance (sender supervisor,
-    # receiver daemon, DeskPad build). See hosts/macbook/nap.nix and
-    # hosts/spark/services/nap.nix.
+    # mac-to-spark cast appliance: hosts/macbook/nap.nix and hosts/spark/services/nap.nix.
     nap = {
       url = "git+https://git.harivan.sh/harivansh-afk/nap";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Matt Pocock's agent skills (engineering + productivity buckets). Linked
-    # into ~/.agents/skills by the user activation script; bump with
-    # `nix flake update mattpocock-skills`.
+    # Agent skills, linked into ~/.agents/skills by the user activation.
     mattpocock-skills = {
       url = "github:mattpocock/skills";
       flake = false;
@@ -70,58 +50,40 @@
 
     hermes-agent.url = "github:NousResearch/hermes-agent";
 
-    # Neovim nightly overlay, applied on darwin only: there is no binary
-    # cache for aarch64-linux, so spark stays on the nixpkgs neovim.
+    # Darwin only: no aarch64-linux cache, spark keeps nixpkgs neovim.
     neovim-nightly = {
       url = "github:nix-community/neovim-nightly-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # mux: native terminal multiplexer. This flake provides the muxd session
-    # daemon package + a NixOS module; spark runs muxd so panes on the Mac app
-    # can live here over QUIC. No nixpkgs follows: the flake pins a nixpkgs
-    # carrying zig 0.16, which ghostty-vt's build needs, and overriding it can
-    # break that build (same reasoning as dgx-spark).
+    # No nixpkgs follows: mux pins the zig 0.16 nixpkgs ghostty-vt needs.
     mux = {
       url = "git+https://git.harivan.sh/harivansh-afk/mux.git?ref=main";
     };
 
-    # Upstream NixOS module for the DGX Spark hardware. Deliberately no
-    # nixpkgs follows: upstream pins a known-good revision for the NVIDIA
-    # kernel build, and overriding it invalidates that hash.
+    # No nixpkgs follows: upstream pins the revision its NVIDIA kernel build was tested on.
     dgx-spark = {
       url = "github:graham33/nixos-dgx-spark";
     };
 
-    # Pierre-themed Forgejo frontend (hosts/spark/services/forgejo). Hosted on
-    # this same Forgejo instance, so flake updates need read access to it.
+    # Forgejo frontend theme, hosted on that same Forgejo (flake updates need read access).
     pierrejo = {
       url = "git+https://git.harivan.sh/harivansh-afk/pierrejo.git?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Rust toolchains by date, for packages needing the ix repo's pinned
-    # nightly (pkgs/jj-ix). Consumed via lib.mkRustBin, not as an overlay,
-    # so the main package set stays untouched.
+    # Dated rust toolchains for pkgs/jj-ix, consumed via lib.mkRustBin, not as an overlay.
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # ix monorepo source for pkgs/jj-ix (the patched jj with the ix store
-    # backend - the client for the jj-native forge at forge.ix.dev). Pinned
-    # to the archived GitHub mirror's FINAL commit (2026-08-12): the forge
-    # itself is not nix-fetchable, so bumping past this pin needs a tree
-    # exported from the forge (or a fetchable public mirror, ix ADR 0006).
-    # Fetching needs `access-tokens = github.com=...` in nix.conf on the
-    # building machine (the repo is org-internal).
+    # ix monorepo for pkgs/jj-ix, pinned to the archived mirror's final commit; fetching needs a github access-token in nix.conf.
     ix-src = {
       url = "github:indexable-inc/ix/f72060016d74211e72793f295d3b8697d1994a3d";
       flake = false;
     };
 
-    # Declarative partitioning for spark; paired with nixos-anywhere for
-    # from-scratch provisioning.
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -132,21 +94,17 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Remote installer used to (re)provision spark over SSH.
     nixos-anywhere = {
       url = "github:nix-community/nixos-anywhere";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Secrets: every secret lives encrypted in secrets/ and is declared in
-    # secrets/registry.nix; modules/security/sops.nix does the wiring.
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Cloudflare DNS as nix (terraform/cloudflare, flake/cloudflare.nix),
-    # driven by `just dns-plan` / `just dns-apply`.
+    # Cloudflare DNS as nix (terraform/cloudflare, flake/cloudflare.nix); just dns-plan / dns-apply.
     terranix = {
       url = "github:terranix/terranix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -162,7 +120,6 @@
         ./flake/cloudflare.nix
         ./flake/devshell.nix
         ./flake/hosts.nix
-        ./flake/ix.nix
         ./flake/nixos.nix
         ./flake/omp.nix
         ./flake/packages.nix

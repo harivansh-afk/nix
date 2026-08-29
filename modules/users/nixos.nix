@@ -7,7 +7,7 @@
   ...
 }:
 let
-  allUsers = import ../../users;
+  allUsers = import ./accounts;
   enabledUsers = builtins.attrNames allUsers;
   storeDots = "${../../dots}";
 

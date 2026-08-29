@@ -1,41 +1,23 @@
-# Every launchd unit the macbook runs, in one place. Model (2026-08-21
-# startup audit): nix-darwin launchd is the ONLY service manager this config
-# uses - the systemd of this host. Daemons and agents declared here render
-# to org.nixos.* plists; nix-darwin unloads and deletes stale ones on
-# switch, so removing an entry here is a complete removal.
-#
-# NOT here on purpose:
-# - tailscale: the GUI app's network extension is the node. nix-darwin's
-#   services.tailscale ran a second, never-logged-in tailscaled for months
-#   (verified 2026-08-21: BackendState NeedsLogin on its own socket while
-#   the extension held the tailnet). The signed app also gets sleep/wake +
-#   DNS-restore callbacks the nix-store daemon cannot (NetworkExtension
-#   entitlement is signed-bundle-only). Cask in ./homebrew.nix.
-# - karabiner: its services are SMAppService registrations owned by the app
-#   bundle, versioned with the app. Nix launching the settings window at
-#   login (the old open-karabiner-elements agent) did nothing for remapping.
-# - nap-cast + sunshine: declared by the nap flake's sender module,
-#   imported in ./nap.nix. Still nix-darwin launchd agents (org.nixos.*),
-#   just not spelled out in this file.
+# Every launchd unit on the macbook; nix-darwin launchd is the only service
+# manager. Not here on purpose: tailscale (the GUI app is the node, a nix
+# tailscaled ran logged-out beside it for months), karabiner (SMAppService,
+# owned by the app), nap-cast + sunshine (declared by the nap sender module).
 {
   config,
   pkgs,
   ...
 }:
 let
-  # Notch strip height (NSScreen.safeAreaInsets.top) for the sketchybar rc.
-  # A compiled AppKit binary because `swift -e` JIT-compiles via xcodebuild and
-  # blocked the rc for minutes at a cold login (see dots/sketchybar/sketchybarrc).
+  # Notch strip height for the sketchybar rc. Compiled, because `swift -e`
+  # JIT-compiles through xcodebuild and blocked the rc for minutes at login.
   notchInset = pkgs.runCommandCC "notch-inset" { } ''
     mkdir -p $out/bin
     $CC -fobjc-arc -framework AppKit -o $out/bin/notch-inset ${./notch-inset/notch-inset.m}
   '';
 
   # Every dynamic value in the bar, pushed over sketchybar's mach port from one
-  # long-lived process (see hosts/macbook/sketchybar-feed/feed.m). Replaced the
-  # per-item shell plugins 2026-08-28: those forked a process per tick and the
-  # volume one ran `osascript` (a TCC round-trip) on every event. The app-glyph
-  # table is generated from sketchybar-app-font's icon_map.sh at build time.
+  # daemon (no per-item shell plugins). The app-glyph table is generated from
+  # sketchybar-app-font's icon_map.sh at build time.
   sketchybarFeed = pkgs.runCommandCC "sketchybar-feed" { } ''
     mkdir -p $out/bin build
     awk -f ${./sketchybar-feed/gen-icon-map.awk} \
@@ -46,7 +28,6 @@ let
       -framework AudioToolbox -framework IOKit -framework CoreGraphics \
       -o $out/bin/sketchybar-feed build/feed.m
   '';
-
 in
 {
   launchd.daemons."limit.maxfiles" = {
@@ -64,33 +45,22 @@ in
     };
   };
 
-  # sketchybar replaces the native menu bar (auto-hidden via _HIHideMenuBar);
-  # the rc lives in dots/sketchybar and is symlinked to ~/.config/sketchybar
-  # by the user activation, so config here stays "" (sketchybar's default
-  # lookup path). aerospace is needed on the agent's PATH for the workspace
-  # items.
+  # The rc is the live-edited dots/sketchybar symlink, so no config here.
   services.sketchybar = {
     enable = true;
     extraPackages = [
       pkgs.aerospace
-      notchInset # bar height measurement, see the rc
-      sketchybarFeed # `sketchybar-feed volume-event`, the volume item's mouse script
+      notchInset
+      sketchybarFeed # the volume item's mouse script
     ];
   };
 
-  # app icon glyphs for the sketchybar workspace tabs
   fonts.packages = [ pkgs.sketchybar-app-font ];
 
   launchd.user.agents = {
-    # AeroSpace as a hand-declared launchd agent, NOT nix-darwin's
-    # services.aerospace: that module always renders its own `settings` to a
-    # store toml and passes `--config-path`, which overrides the ~/.config
-    # lookup. Verified 2026-08-21: the running instance had loaded a 16-line
-    # default config with ZERO keybindings while the 174-line dots toml sat
-    # unread. This agent passes no --config-path so AeroSpace reads
-    # ~/.config/aerospace/aerospace.toml (symlinked to dots, live-edited,
-    # reloaded in-app via service mode). The toml sets start-at-login = false
-    # so AeroSpace's own SMAppService login item never races this agent.
+    # Hand-declared, not services.aerospace: that module passes its own
+    # --config-path and silently overrides the dots toml. No config flag
+    # here, so AeroSpace reads the live ~/.config/aerospace/aerospace.toml.
     aerospace.serviceConfig = {
       ProgramArguments = [
         "/bin/sh"
@@ -103,19 +73,15 @@ in
       StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/aerospace.log";
     };
 
-    # Log the sketchybar daemon's stdout/stderr (rc failures, plugin errors):
-    # nix-darwin's services.sketchybar sets no log path, so the 2026-08-18
-    # empty-bar login left nothing to read. Merged with the module's own
-    # serviceConfig.
+    # services.sketchybar sets no log path.
     sketchybar.serviceConfig = {
       StandardOutPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar.log";
       StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar.log";
     };
 
-    # Sibling of the sketchybar agent: waits for its mach port, then pushes
-    # every item value. The rc signals it (SIGUSR1) at the end of each load,
-    # aerospace's exec-on-workspace-change signals it (SIGUSR2). aerospace on
-    # PATH for the workspace tabs.
+    # Waits for sketchybar's mach port, then pushes every item value. The rc
+    # signals it with SIGUSR1 after each load, aerospace with SIGUSR2 on
+    # workspace change.
     sketchybar-feed.serviceConfig = {
       ProgramArguments = [
         "/bin/sh"
@@ -128,6 +94,5 @@ in
       StandardOutPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar-feed.log";
       StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar-feed.log";
     };
-
   };
 }

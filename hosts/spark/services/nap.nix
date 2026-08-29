@@ -1,7 +1,5 @@
-# The nap cast receiver (see AGENTS.md "Casting"): napd session control
-# plus the moonlight kiosk on tty1. Bound to the tailnet address; tailnet
-# traffic bypasses the NixOS firewall via tailscaled's own netfilter
-# rules, the same trust boundary mosh relies on.
+# nap cast receiver (AGENTS.md "Casting"): napd plus the moonlight kiosk on
+# tty1, bound to the tailnet address.
 { inputs, ... }:
 {
   imports = [ inputs.nap.nixosModules.receiver ];

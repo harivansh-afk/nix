@@ -107,7 +107,6 @@ let
         ghosttyTerminfo
         ghosttyThemes
         lazygitConfigs
-        leafThemes
         sketchybarThemes
         heliumExtJson
         heliumExtensions

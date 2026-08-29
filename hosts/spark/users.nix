@@ -6,7 +6,7 @@
   ...
 }:
 let
-  allUsers = import ../../users;
+  allUsers = import ../../modules/users/accounts;
   enabledUsers = builtins.attrNames allUsers;
   passwordHashFile = config.sops.secrets."user-password-hash".path;
 
@@ -15,18 +15,9 @@ let
     inherit (pkgs) bash;
   };
 
-  # Forgejo serves git over SSH as the `git` service user, through this sshd
-  # (it runs no SSH server of its own). `git` is not in users/, so it is not
-  # in enabledUsers, and AllowUsers refuses it before a key is ever read:
-  # "User git from ::1 not allowed because not listed in AllowUsers". That is
-  # what broke every ssh push to git.harivan.sh from spark itself.
-  #
-  # Source-qualified rather than added flat. AllowUsers takes user@host
-  # patterns with CIDR masks, so the git user may authenticate ONLY from
-  # loopback or the tailnet - the same boundary the closed firewall draws for
-  # humans, asserted a second time in sshd instead of trusted to the firewall
-  # alone. A git.harivan.sh that ever stopped being Cloudflare-fronted still
-  # could not turn into an ssh entry point.
+  # Forgejo serves git over this sshd as the `git` user, which is not an
+  # account here, so AllowUsers must admit it explicitly; source-qualified so
+  # it can only authenticate from loopback or the tailnet.
   gitSshOrigins = [
     "git@127.0.0.1"
     "git@::1"
@@ -79,15 +70,9 @@ in
       X11Forwarding = false;
     };
 
-    # Behind Forgejo's own defence: it writes authorized_keys entries with a
-    # forced `forgejo serv` command, so the git user cannot ask for anything
-    # else. This is the layer under that - even if the forced command were
-    # bypassed, the account gets no tty and no forwarding of any kind.
-    #
-    # extraConfig is concatenated onto the END of sshd_config (see the
-    # `sshconf` derivation in nixos/modules/services/networking/ssh/sshd.nix),
-    # which is the only place a Match block may go: everything after one
-    # belongs to it.
+    # Forgejo's forced `forgejo serv` command already limits the git user;
+    # this removes tty and forwarding underneath it. extraConfig lands at the
+    # end of sshd_config, the only place a Match block may go.
     extraConfig = lib.optionalString config.services.forgejo.enable ''
       Match User git
         PermitTTY no

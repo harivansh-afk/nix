@@ -44,156 +44,34 @@ let
     }) forgejoOauthSourceList
   );
 
-  forgejoOauthSyncCases = lib.concatMapStringsSep "\n" (source: ''
-    sync_oauth_source \
-      ${lib.escapeShellArg source.name} \
-      ${lib.escapeShellArg source.provider} \
-      ${lib.escapeShellArg "oauth-${source.name}"} \
-      ${lib.escapeShellArg source.clientIdVariable} \
-      ${lib.escapeShellArg source.clientSecretVariable}
-  '') forgejoOauthSourceList;
+  oauthSources = lib.concatMapStringsSep "\n" (
+    source:
+    lib.concatStringsSep ":" [
+      source.name
+      source.provider
+      "oauth-${source.name}"
+      source.clientIdVariable
+      source.clientSecretVariable
+    ]
+  ) forgejoOauthSourceList;
 
-  # Reads /etc/forgejo-mirror/manifest.json, scans the forgejo SQLite db for
-  # repos with the Actions unit enabled (repo_unit.type=10), and disables it
-  # via the API on anything not in actions_enabled_repos. This is the policy
-  # backstop: even if a mirror is created with actions on (e.g. via the UI),
-  # the next tick of this service will turn it back off.
-  # Instead of bare bash, use a Python3 script for enforceForgejoActionsAllowlist.
-  enforceForgejoActionsAllowlist = pkgs.writeTextFile {
-    name = "forgejo-actions-enforce.py";
-    text = ''
-      #!/usr/bin/env ${pkgs.python3}/bin/python3
-      import os
-      import json
-      import sqlite3
-      import subprocess
-      import sys
+  forgejoDb = "/var/lib/forgejo/data/forgejo.db";
+  mirrorIntervalSeconds = 15 * 60;
 
-      MANIFEST = "/etc/forgejo-mirror/manifest.json"
-      DB = "/var/lib/forgejo/data/forgejo.db"
-      API = f"https://${forgejoDomain}/api/v1"
-      MIRROR_ENV_PATH = "${mirrorEnvFile}"
+  actionsEnforce = pkgs.writeShellScript "forgejo-actions-enforce" ''
+    export PATH=${lib.makeBinPath [ pkgs.curl ]}
+    export FORGEJO_API="https://${forgejoDomain}/api/v1"
+    export FORGEJO_MIRROR_MANIFEST=/etc/forgejo-mirror/manifest.json
+    export FORGEJO_DB=${forgejoDb}
+    exec ${pkgs.python3}/bin/python3 ${./actions-enforce.py}
+  '';
 
-      # Source env file (bash style, only supports key=value, no quotes)
-      def source_env(env_path):
-          env = {}
-          with open(env_path) as f:
-              for line in f:
-                  line = line.strip()
-                  if not line or line.startswith('#'):
-                      continue
-                  if '=' in line:
-                      k, v = line.split('=', 1)
-                      env[k.strip()] = v.strip()
-          return env
+  normalizeMirrorSchedule = pkgs.writeShellScript "forgejo-normalize-mirror-schedule" ''
+    export FORGEJO_DB=${forgejoDb}
+    export MIRROR_INTERVAL_SECONDS=${toString mirrorIntervalSeconds}
+    exec ${pkgs.python3}/bin/python3 ${./normalize-mirror-schedule.py}
+  '';
 
-      def exit_with_notice(msg):
-          print(msg)
-          sys.exit(0)
-
-      if not os.path.isfile(MANIFEST):
-          exit_with_notice("manifest not readable")
-      if not os.path.isfile(DB):
-          exit_with_notice("forgejo db not readable")
-      if not os.path.isfile(MIRROR_ENV_PATH):
-          exit_with_notice(f"missing mirror env: {MIRROR_ENV_PATH}")
-
-      # Load env vars, especially FORGEJO_TOKEN
-      env = os.environ.copy()
-      env.update(source_env(MIRROR_ENV_PATH))
-      token = env.get("FORGEJO_TOKEN")
-      if not token:
-          print("missing FORGEJO_TOKEN in EnvironmentFile")
-          sys.exit(1)
-
-      # Parse allowlist from manifest
-      with open(MANIFEST) as f:
-          manifest = json.load(f)
-      allowlist = sorted(set(manifest.get("actions_enabled_repos", [])))
-
-      # Query repo list with actions enabled (repo_unit.type == 10)
-      conn = sqlite3.connect(DB)
-      c = conn.cursor()
-      c.execute("""
-          SELECT u.lower_name||'/'||r.lower_name
-          FROM repo_unit ru
-          JOIN repository r ON r.id=ru.repo_id
-          JOIN user u ON u.id=r.owner_id
-          WHERE ru.type=10
-      """)
-      rows = c.fetchall()
-      actions_on = sorted(set(str(row[0]) for row in rows))
-      conn.close()
-
-      def api_patch_repo(repo, enable):
-          url = f"{API}/repos/{repo}"
-          data = {"has_actions": bool(enable)}
-          try:
-              result = subprocess.run([
-                  "${pkgs.curl}/bin/curl", "-fsS", "-X", "PATCH",
-                  "-H", f"Authorization: token {token}",
-                  "-H", "Content-Type: application/json",
-                  "-d", json.dumps(data),
-                  url
-              ], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-              if result.returncode != 0:
-                  print(f"    PATCH failed for {repo}: {result.stderr.decode().strip()}")
-          except Exception as e:
-              print(f"    PATCH exception for {repo}: {e}")
-
-      # Disable actions for repos that have it on but shouldn't
-      disabled = sorted(set(actions_on) - set(allowlist))
-      for repo in disabled:
-          if repo:
-              print(f"  disabling actions: {repo}")
-              api_patch_repo(repo, False)
-
-      # Enable actions for repos that should have it but don't
-      enabled = sorted(set(allowlist) - set(actions_on))
-      for repo in enabled:
-          if repo:
-              print(f"  enabling actions: {repo}")
-              api_patch_repo(repo, True)
-    '';
-    executable = true;
-  };
-
-  normalizeForgejoMirrorSchedule = pkgs.writeTextFile {
-    name = "forgejo-normalize-mirror-schedule.py";
-    text = ''
-      #!/usr/bin/env ${pkgs.python3}/bin/python3
-      import os
-      import sqlite3
-      import sys
-
-      DB = "/var/lib/forgejo/data/forgejo.db"
-
-      if not os.path.isfile(DB):
-          sys.exit(0)
-
-      conn = sqlite3.connect(DB)
-      c = conn.cursor()
-      try:
-          c.execute("PRAGMA journal_mode=WAL;")
-          c.execute("PRAGMA busy_timeout=10000;")
-          c.execute(f"""
-            UPDATE mirror
-            SET interval = ${toString (15 * 60 * 1000000000)},
-                next_update_unix = CAST(strftime('%s','now') AS INTEGER)
-                                   + (repo_id % ${toString (15 * 60)});
-          """)
-          c.execute("""
-            DELETE FROM action_task
-            WHERE status IN (6)
-              AND updated < CAST(strftime('%s','now','-1 day') AS INTEGER);
-          """)
-          c.execute("PRAGMA optimize;")
-          conn.commit()
-      finally:
-          conn.close()
-    '';
-    executable = true;
-  };
   forgejoIconSvg = ./icon.svg;
   forgejoBrandingAssets =
     pkgs.runCommand "forgejo-branding-assets"
@@ -208,425 +86,6 @@ let
         rsvg-convert -w 180 -h 180 ${forgejoIconSvg} > $out/apple-touch-icon.png
         rsvg-convert -w 512 -h 512 ${forgejoIconSvg} > $out/logo.png
       '';
-
-  forgejoCozyboxDarkCss = pkgs.writeText "theme-cozybox-dark.css" ''
-    @import url("/assets/css/theme-forgejo-dark.css");
-
-    :root {
-      --is-dark-theme: true;
-      color-scheme: dark;
-
-      /* steel ladder remapped to cozybox dark bg->fg shades */
-      --steel-900: #1d2021;
-      --steel-850: #232425;
-      --steel-800: #282828;
-      --steel-750: #2c2a28;
-      --steel-700: #32302f;
-      --steel-650: #3c3836;
-      --steel-600: #45403c;
-      --steel-550: #504945;
-      --steel-500: #5a544f;
-      --steel-450: #665c54;
-      --steel-400: #7c6f64;
-      --steel-350: #928374;
-      --steel-300: #a89984;
-      --steel-250: #bdae93;
-      --steel-200: #d5c4a1;
-      --steel-150: #e1d5a8;
-      --steel-100: #ebdbb2;
-
-      /* surface / structure (cozybox.nvim Normal #101010, CursorLine #161616) */
-      --color-body:               #101010;
-      --color-box-body:           #101010;
-      --color-box-body-highlight: #161616;
-      --color-box-header:         #0c0c0c;
-      --color-header-wrapper:     #0c0c0c;
-      --color-footer:             #0c0c0c;
-      --color-nav-bg:             #0c0c0c;
-      --color-nav-hover-bg:       #2a2a2a;
-      --color-secondary-nav-bg:   #0c0c0c;
-      --color-card:               #161616;
-      --color-menu:               #0c0c0c;
-      --color-button:             #0c0c0c;
-      --color-hover:              #161616;
-      --color-active:             #2a2a2a;
-      --color-timeline:           #504945;
-
-      /* text */
-      --color-text:             #ebdbb2;
-      --color-text-dark:        #ffffff;
-      --color-text-light:       #d5c4a1;
-      --color-text-light-1:     #bdae93;
-      --color-text-light-2:     #a89984;
-      --color-text-light-3:     #928374;
-      --color-placeholder-text: #928374;
-
-      /* secondary */
-      --color-secondary:           #504945;
-      --color-secondary-bg:        #161616;
-      --color-secondary-dark-1:    #504945;
-      --color-secondary-dark-2:    #665c54;
-      --color-secondary-light-1:   #2a2a2a;
-      --color-secondary-light-2:   #232425;
-      --color-secondary-light-3:   #32302f;
-      --color-secondary-light-4:   #282828;
-      --color-secondary-alpha-10:  #5049451a;
-      --color-secondary-alpha-20:  #50494533;
-      --color-secondary-alpha-30:  #5049454d;
-      --color-secondary-alpha-40:  #50494566;
-      --color-secondary-alpha-50:  #50494580;
-      --color-secondary-alpha-60:  #50494599;
-      --color-secondary-alpha-70:  #504945b3;
-      --color-secondary-alpha-80:  #504945cc;
-      --color-secondary-alpha-90:  #504945e6;
-
-      /* inputs */
-      --color-input-background:   #0c0c0c;
-      --color-input-text:         #ebdbb2;
-      --color-input-border:       #504945;
-      --color-input-border-hover: #665c54;
-      --color-input-toggle-background: #32302f;
-
-      /* links */
-      --color-link:       #5b84de;
-      --color-link-hover: #7596e8;
-
-      /* primary -> cozybox blue (#5b84de) */
-      --color-primary:          #5b84de;
-      --color-primary-contrast: #ffffff;
-      --color-primary-dark-1:   #6c91e3;
-      --color-primary-dark-2:   #7e9de8;
-      --color-primary-dark-3:   #91aaec;
-      --color-primary-dark-4:   #a4b7f0;
-      --color-primary-dark-5:   #b6c4f4;
-      --color-primary-dark-6:   #c9d1f7;
-      --color-primary-dark-7:   #dcdef9;
-      --color-primary-light-1:  #4a73c8;
-      --color-primary-light-2:  #3a62b3;
-      --color-primary-light-3:  #2c519d;
-      --color-primary-light-4:  #1f4287;
-      --color-primary-light-5:  #143371;
-      --color-primary-light-6:  #0a255c;
-      --color-primary-light-7:  #021847;
-      --color-primary-alpha-10: #5b84de1a;
-      --color-primary-alpha-20: #5b84de33;
-      --color-primary-alpha-30: #5b84de4d;
-      --color-primary-alpha-40: #5b84de66;
-      --color-primary-alpha-50: #5b84de80;
-      --color-primary-alpha-60: #5b84de99;
-      --color-primary-alpha-70: #5b84deb3;
-      --color-primary-alpha-80: #5b84decc;
-      --color-primary-alpha-90: #5b84dee6;
-      --color-primary-hover:    var(--color-primary-light-1);
-      --color-primary-active:   var(--color-primary-light-2);
-      --color-accent:           #5b84de;
-
-      /* cozybox dark accents (aligned to terminal palette in lib/theme.nix) */
-      --color-red:    #ea6962;
-      --color-orange: #fe8019;
-      --color-yellow: #d79921;
-      --color-olive:  #b8bb26;
-      --color-green:  #8ec97c;
-      --color-teal:   #8ec07c;
-      --color-blue:   #5b84de;
-      --color-violet: #d3869b;
-      --color-purple: #d3869b;
-      --color-pink:   #ea6962;
-
-      --color-red-light:    #f08680;
-      --color-orange-light: #fe9540;
-      --color-yellow-light: #fabd2f;
-      --color-green-light:  #a8da9c;
-      --color-blue-light:   #7596e8;
-      --color-violet-light: #dba0b0;
-
-      --color-red-dark-1:    #c75d57;
-      --color-orange-dark-1: #d96b15;
-      --color-yellow-dark-1: #b08015;
-      --color-green-dark-1:  #6fa363;
-      --color-blue-dark-1:   #4d70bb;
-      --color-violet-dark-1: #dba0b0;
-
-      --color-success: #8ec97c;
-      --color-info:    #5b84de;
-      --color-warning: #d79921;
-      --color-error:   #ea6962;
-      --color-danger:  #ea6962;
-
-      /* console palette (actions runner / job log box) - neutral, no blue */
-      --color-console-fg:          #ebdbb2;
-      --color-console-fg-subtle:   #928374;
-      --color-console-bg:          #0c0c0c;
-      --color-console-border:      #3c3836;
-      --color-console-hover-bg:    #ffffff0d;
-      --color-console-active-bg:   #504945;
-      --color-console-menu-bg:     #161616;
-      --color-console-menu-border: #504945;
-
-      /* info banner backdrop - neutralize the upstream blue */
-      --color-info-border: #504945;
-      --color-info-bg:     #232425;
-      --color-info-text:   #ebdbb2;
-
-      --color-code-bg:                 #0c0c0c;
-      --color-markup-code-block:       #0c0c0c;
-      --color-markup-code-inline:      #232425;
-      --color-markup-table-row:        #ffffff06;
-      /* diff bgs from cozybox.nvim DiffAdd/Change/Delete */
-      --color-diff-removed-row-bg:     #2a1818;
-      --color-diff-removed-word-bg:    #3d2222;
-      --color-diff-added-row-bg:       #1e2718;
-      --color-diff-added-word-bg:      #2d3d22;
-      --color-diff-moved-row-bg:       #1e1e18;
-      --color-diff-added-row-border:   #8ec97c;
-      --color-diff-removed-row-border: #ea6962;
-      --color-diff-moved-row-border:   #d79921;
-      --color-expand-button:           var(--color-body);
-    }
-    .code-diff tr.tag-code,
-    .code-diff tr.tag-code td,
-    .code-diff tr.tag-code .blob-excerpt { background-color: var(--color-body); }
-    .page-footer { display: none !important; }
-    #navbar-logo img { display: none !important; }
-    #navbar-logo::before {
-      content: "Home" !important;
-      display: inline-block !important;
-      position: static !important;
-      background: none !important;
-      width: auto !important;
-      height: auto !important;
-      font-weight: 600;
-      font-size: 1rem;
-      color: var(--color-text);
-    }
-  '';
-
-  forgejoCozyboxLightCss = pkgs.writeText "theme-cozybox-light.css" ''
-    @import url("/assets/css/theme-forgejo-light.css");
-
-    :root {
-      --is-dark-theme: false;
-      color-scheme: light;
-
-      /* zinc ladder: cool grays from cozybox.nvim light (no gruvbox cream) */
-      --zinc-50:  #f3f3f3;
-      --zinc-100: #ececec;
-      --zinc-150: #e7e7e7;
-      --zinc-200: #e1e1e1;
-      --zinc-250: #d8d8d8;
-      --zinc-300: #d0d0d0;
-      --zinc-350: #c8c8c8;
-      --zinc-400: #c3c7c9;
-      --zinc-450: #b8bcbe;
-      --zinc-500: #a8acae;
-      --zinc-550: #9a9da0;
-      --zinc-600: #7c7f82;
-      --zinc-650: #62656a;
-      --zinc-700: #504945;
-      --zinc-750: #3c3836;
-      --zinc-800: #2e2c2a;
-      --zinc-850: #232120;
-      --zinc-900: #181818;
-
-      /* surface / structure (Normal #e7e7e7, surface #e1e1e1, selection #c3c7c9) */
-      --color-body:               #e7e7e7;
-      --color-box-body:           #e7e7e7;
-      --color-box-body-highlight: #e1e1e1;
-      --color-box-header:         #dcdcdc;
-      --color-header-wrapper:     #dcdcdc;
-      --color-footer:             #dcdcdc;
-      --color-nav-bg:             #dcdcdc;
-      --color-nav-hover-bg:       #c3c7c9;
-      --color-secondary-nav-bg:   #e1e1e1;
-      --color-card:               #e1e1e1;
-      --color-menu:               #e1e1e1;
-      --color-button:             #d3d3d3;
-      --color-hover:              #d3d3d3;
-      --color-active:             #c3c7c9;
-      --color-timeline:           #b8bcbe;
-
-      /* text (dark grays on light) */
-      --color-text:             #282828;
-      --color-text-dark:        #181818;
-      --color-text-light:       #3c3836;
-      --color-text-light-1:     #504945;
-      --color-text-light-2:     #62656a;
-      --color-text-light-3:     #7c7f82;
-      --color-placeholder-text: #9a9da0;
-
-      /* secondary */
-      --color-secondary:           #c3c7c9;
-      --color-secondary-bg:        #d3d3d3;
-      --color-secondary-dark-1:    #b8bcbe;
-      --color-secondary-dark-2:    #a8acae;
-      --color-secondary-light-1:   #d8d8d8;
-      --color-secondary-light-2:   #e1e1e1;
-      --color-secondary-light-3:   #e7e7e7;
-      --color-secondary-light-4:   #ececec;
-      --color-secondary-alpha-10:  #c3c7c91a;
-      --color-secondary-alpha-20:  #c3c7c933;
-      --color-secondary-alpha-30:  #c3c7c94d;
-      --color-secondary-alpha-40:  #c3c7c966;
-      --color-secondary-alpha-50:  #c3c7c980;
-      --color-secondary-alpha-60:  #c3c7c999;
-      --color-secondary-alpha-70:  #c3c7c9b3;
-      --color-secondary-alpha-80:  #c3c7c9cc;
-      --color-secondary-alpha-90:  #c3c7c9e6;
-
-      /* inputs */
-      --color-input-background:   #e1e1e1;
-      --color-input-text:         #282828;
-      --color-input-border:       #b8bcbe;
-      --color-input-border-hover: #9a9da0;
-      --color-input-toggle-background: #d8d8d8;
-
-      /* links -> cozybox-light faded_blue */
-      --color-link:       #4261a5;
-      --color-link-hover: #324f8d;
-
-      /* primary -> cozybox-light faded_blue (#4261a5) */
-      --color-primary:          #4261a5;
-      --color-primary-contrast: #ffffff;
-      --color-primary-dark-1:   #5675b3;
-      --color-primary-dark-2:   #6889c0;
-      --color-primary-dark-3:   #7b9dcd;
-      --color-primary-dark-4:   #8eb0d9;
-      --color-primary-dark-5:   #a1c4e6;
-      --color-primary-dark-6:   #b5d8f3;
-      --color-primary-dark-7:   #c8ecff;
-      --color-primary-light-1:  #385693;
-      --color-primary-light-2:  #2f4b80;
-      --color-primary-light-3:  #26406d;
-      --color-primary-light-4:  #1d345b;
-      --color-primary-light-5:  #142948;
-      /* light-6 is the -webkit-autofill fill, painted under text coloured with
-         --color-text. This ramp runs dark (upstream's light ramp runs pale), so
-         a shade here like its neighbours gave dark-on-dark at 1.15:1 in
-         autofilled login inputs. Pale tint of the primary instead; light-4/5
-         stay dark because they back white --color-primary-contrast text. */
-      --color-primary-light-6:  #dfe6f4;
-      --color-primary-light-7:  #031223;
-      --color-primary-alpha-10: #4261a51a;
-      --color-primary-alpha-20: #4261a533;
-      --color-primary-alpha-30: #4261a54d;
-      --color-primary-alpha-40: #4261a566;
-      --color-primary-alpha-50: #4261a580;
-      --color-primary-alpha-60: #4261a599;
-      --color-primary-alpha-70: #4261a5b3;
-      --color-primary-alpha-80: #4261a5cc;
-      --color-primary-alpha-90: #4261a5e6;
-      --color-primary-hover:    var(--color-primary-light-1);
-      --color-primary-active:   var(--color-primary-light-2);
-      --color-accent:           #4261a5;
-
-      /* cozybox-light accents (faded variants from cozybox.nvim) */
-      --color-red:    #c5524a;
-      --color-orange: #af3a03;
-      --color-yellow: #b57614;
-      --color-olive:  #427b58;
-      --color-green:  #427b58;
-      --color-teal:   #3c7678;
-      --color-blue:   #4261a5;
-      --color-violet: #8f3f71;
-      --color-purple: #8f3f71;
-      --color-pink:   #c5524a;
-
-      --color-red-light:    #d57972;
-      --color-orange-light: #c95a2a;
-      --color-yellow-light: #c98e36;
-      --color-green-light:  #5a957a;
-      --color-blue-light:   #6b85c0;
-      --color-violet-light: #a85d8b;
-
-      --color-red-dark-1:    #a8453e;
-      --color-orange-dark-1: #8e2f02;
-      --color-yellow-dark-1: #946011;
-      --color-green-dark-1:  #356348;
-      --color-blue-dark-1:   #355088;
-      --color-violet-dark-1: #7a3560;
-
-      --color-success: #427b58;
-      --color-info:    #4261a5;
-      --color-warning: #b57614;
-      --color-error:   #c5524a;
-      --color-danger:  #c5524a;
-
-      /* console palette (actions run view, .console blocks, runner registration
-         box). Upstream ships a dark console in its light theme too, which leaves
-         the whole action-view-right pane - step list, job header and log body -
-         dark on an otherwise light page. Keep it on the light surface ladder. */
-      --color-console-fg:          #282828;
-      --color-console-fg-subtle:   #62656a;
-      --color-console-bg:          #f3f3f3;
-      --color-console-border:      #b8bcbe;
-      --color-console-hover-bg:    #0000000d;
-      --color-console-active-bg:   #d0d0d0;
-      --color-console-menu-bg:     #e7e7e7;
-      --color-console-menu-border: #b8bcbe;
-
-      /* ANSI log colours. Upstream tunes these for a dark console, so on the
-         light console above 12 of 14 fall below WCAG AA (bright yellow #eaaf03
-         lands at 1.78:1). Re-cut from the accents above, darkened until every
-         entry clears 4.5:1 on --color-console-bg; "bright" reads as more
-         saturated rather than lighter, as light terminal themes do.
-         --color-ansi-white and --color-ansi-bright-white are left to upstream:
-         they resolve to the console fg vars and follow this palette already. */
-      --color-ansi-black:          #282828;
-      --color-ansi-bright-black:   #62656a;
-      --color-ansi-red:            #b0453e;
-      --color-ansi-bright-red:     #8a352f;
-      --color-ansi-green:          #3b6f4f;
-      --color-ansi-bright-green:   #2c5741;
-      --color-ansi-yellow:         #8a5a0f;
-      --color-ansi-bright-yellow:  #6d470b;
-      --color-ansi-blue:           #4261a5;
-      --color-ansi-bright-blue:    #355088;
-      --color-ansi-magenta:        #8f3f71;
-      --color-ansi-bright-magenta: #7a3560;
-      --color-ansi-cyan:           #3c7678;
-      --color-ansi-bright-cyan:    #2f5c5e;
-
-      /* info banner backdrop - neutralize the upstream blue */
-      --color-info-border: #b8bcbe;
-      --color-info-bg:     #d8d8d8;
-      --color-info-text:   #282828;
-
-      --color-code-bg:                 #dcdcdc;
-      --color-markup-code-block:       #dcdcdc;
-      --color-markup-code-inline:      #d3d3d3;
-      --color-markup-table-row:        #00000006;
-      /* diff bgs from cozybox.nvim light DiffAdd/Change/Delete */
-      --color-diff-removed-row-bg:     #ffc7c7;
-      --color-diff-removed-word-bg:    #f5a5a5;
-      --color-diff-added-row-bg:       #d9e8d2;
-      --color-diff-added-word-bg:      #b8d4ad;
-      --color-diff-moved-row-bg:       #eee4c7;
-      --color-diff-added-row-border:   #427b58;
-      --color-diff-removed-row-border: #c5524a;
-      --color-diff-moved-row-border:   #b57614;
-    }
-    .code-diff tr.tag-code,
-    .code-diff tr.tag-code td,
-    .code-diff tr.tag-code .blob-excerpt { background-color: var(--color-body); }
-    .page-footer { display: none !important; }
-    #navbar-logo img { display: none !important; }
-    #navbar-logo::before {
-      content: "Home" !important;
-      display: inline-block !important;
-      position: static !important;
-      background: none !important;
-      width: auto !important;
-      height: auto !important;
-      font-weight: 600;
-      font-size: 1rem;
-      color: var(--color-text);
-    }
-  '';
-
-  forgejoCozyboxAutoCss = pkgs.writeText "theme-cozybox-auto.css" ''
-    @import url("/assets/css/theme-cozybox-light.css");
-    @import url("/assets/css/theme-cozybox-dark.css") (prefers-color-scheme: dark);
-  '';
 
   mkForgejoAuthMail =
     args: pkgs.replaceVars ./mail-auth.tmpl.in ({ domain = forgejoDomain; } // args);
@@ -675,12 +134,8 @@ let
       patches = [
         "${pkgs.path}/pkgs/by-name/fo/forgejo/static-root-path.patch"
       ];
-      # Forgejo 16 centralizes git hooks under APP_DATA/home/hooks with
-      # "#!/usr/bin/env <shell>" shebangs, which cannot exec inside the build
-      # sandbox (no /usr/bin/env), so the wiki-write tests 500 on pre-receive.
-      # Mirror nixpkgs master's generic.nix fixes for forgejo >= 16 until the
-      # nixpkgs pin catches up: rewrite the shebang for the test run only and
-      # skip TestMigrateRepository alongside the pin's existing skip list.
+      # Forgejo 16 git hooks use "#!/usr/bin/env" shebangs, absent in the
+      # sandbox; nixpkgs master's generic.nix fixes, until the pin catches up.
       preCheck = (old.preCheck or "") + ''
         substituteInPlace modules/git/hook_generate.go \
           --replace-fail "#!/usr/bin/env" "#!${pkgs.lib.getExe' pkgs.coreutils "env"}"
@@ -722,9 +177,7 @@ in
   };
   users.groups.git = { };
 
-  # Restart Forgejo whenever the rendered templates or the JS bundle change.
-  # Forgejo parses templates once at startup, so without this `just switch`
-  # would update the symlinks but leave the in-memory templates stale.
+  # Forgejo parses templates once at startup.
   systemd.services.forgejo.restartTriggers = [
     forgejoWeb.frontend
     forgejoWeb.js
@@ -736,78 +189,17 @@ in
   ];
 
   systemd.services.forgejo.preStart = lib.mkAfter ''
-    . ${mirrorGithubTokenFile}
-    printf 'https://oauth2:%s@github.com\n' "$GITHUB_TOKEN" > ${gitCredentialFile}
-    chmod 600 ${gitCredentialFile}
-
-    # The credential file above is NOT enough for pull mirrors: Forgejo 16
-    # runs mirror fetches without consulting [git.config] credential.helper
-    # (observed 2026-08-21: every github mirror 401ed "could not read
-    # Username" while a freshly migrated repo with auth_token embedded in
-    # remote.origin.url synced fine). Embed the current token into every
-    # github.com mirror remote here instead - re-applied on each start, so
-    # rotating the sops secret propagates on the next restart.
-    for repo in /var/lib/forgejo/repositories/*/*.git; do
-      [ -d "$repo" ] || continue
-      url=$(${pkgs.git}/bin/git -C "$repo" config remote.origin.url 2>/dev/null) || continue
-      case "$url" in
-        https://github.com/*) path="''${url#https://github.com/}" ;;
-        https://*@github.com/*) path="''${url#https://*@github.com/}" ;;
-        *) continue ;;
-      esac
-      ${pkgs.git}/bin/git -C "$repo" config remote.origin.url \
-        "https://oauth2:$GITHUB_TOKEN@github.com/$path"
-    done
-
-    export FORGEJO_WORK_DIR=/var/lib/forgejo
-    export FORGEJO_CUSTOM=/var/lib/forgejo/custom
-    CONFIG=/var/lib/forgejo/custom/conf/app.ini
-
-    credential_value() {
-      credential_name="$1"
-      variable_name="$2"
-      set -a
-      . "$CREDENTIALS_DIRECTORY/$credential_name"
-      set +a
-      printenv "$variable_name"
-    }
-
-    sync_oauth_source() {
-      name="$1"
-      provider="$2"
-      credential_name="$3"
-      client_id_variable="$4"
-      client_secret_variable="$5"
-      client_id="$(credential_value "$credential_name" "$client_id_variable")"
-      client_secret="$(credential_value "$credential_name" "$client_secret_variable")"
-
-      if [ -z "$client_id" ] || [ -z "$client_secret" ]; then
-        echo "Missing OAuth credentials for $name" >&2
-        return 1
-      fi
-
-      existing_id="$(${config.services.forgejo.package}/bin/forgejo -c "$CONFIG" admin auth list \
-        | ${pkgs.gawk}/bin/awk -F '\t' -v name="$name" 'NR>1 && $2==name {print $1; exit}')"
-
-      if [ -z "$existing_id" ]; then
-        ${config.services.forgejo.package}/bin/forgejo -c "$CONFIG" admin auth add-oauth \
-          --provider "$provider" \
-          --name "$name" \
-          --key "$client_id" \
-          --secret "$client_secret"
-        echo "Added OAuth source $name"
-      else
-        ${config.services.forgejo.package}/bin/forgejo -c "$CONFIG" admin auth update-oauth \
-          --provider "$provider" \
-          --id "$existing_id" \
-          --name "$name" \
-          --key "$client_id" \
-          --secret "$client_secret"
-        echo "Updated OAuth source $name (id=$existing_id)"
-      fi
-    }
-
-    ${forgejoOauthSyncCases}
+    export PATH=${
+      lib.makeBinPath [
+        pkgs.git
+        pkgs.gawk
+      ]
+    }:$PATH
+    export GITHUB_TOKEN_FILE=${mirrorGithubTokenFile}
+    export GIT_CREDENTIAL_FILE=${gitCredentialFile}
+    export FORGEJO=${config.services.forgejo.package}/bin/forgejo
+    export OAUTH_SOURCES=${lib.escapeShellArg oauthSources}
+    ${./pre-start.sh}
   '';
 
   services.forgejo = {
@@ -834,10 +226,8 @@ in
       repository = {
         DEFAULT_PRIVATE = "private";
         DEFAULT_PUSH_CREATE_PRIVATE = true;
-        # Actions are off by default for every repo (owned, fork, mirror,
-        # template). Only the four repos in mirror-manifest.actions_enabled_repos
-        # opt back in via the actions-allowlist enforcement service below.
-        # This prevents org mirrors from running GitHub Actions on this host.
+        # Only mirror-manifest.actions_enabled_repos opt back in (see
+        # forgejo-actions-enforce below).
         DEFAULT_REPO_UNITS = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
         DEFAULT_FORK_REPO_UNITS = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
         DEFAULT_MIRROR_REPO_UNITS = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
@@ -933,17 +323,14 @@ in
           -C "forgejo@${rootDomain}" -f /var/lib/forgejo/signing/id_ed25519
       fi
     '')
-    normalizeForgejoMirrorSchedule.outPath
+    normalizeMirrorSchedule
   ];
   systemd.services.forgejo.serviceConfig.LoadCredential = lib.mkAfter (
     lib.mapAttrsToList (name: path: "${name}:${path}") forgejoOauthCredentials
   );
 
-  # Enforce the Actions allowlist (mirror-manifest.actions_enabled_repos):
-  # any repo with the Actions unit on that is not in the allowlist gets it
-  # turned off; any allowlisted repo missing the unit gets it turned on.
-  # Runs at boot (after forgejo) and every 30 minutes so newly migrated
-  # mirrors get clamped before they can run anything.
+  # Actions are off for every repo except mirror-manifest.actions_enabled_repos;
+  # this re-clamps newly migrated mirrors before they can run anything.
   systemd.services.forgejo-actions-enforce = {
     description = "Force Actions on/off per mirror-manifest allowlist";
     after = [ "forgejo.service" ];
@@ -951,7 +338,7 @@ in
     serviceConfig = {
       Type = "oneshot";
       EnvironmentFile = [ mirrorEnvFile ];
-      ExecStart = enforceForgejoActionsAllowlist.outPath;
+      ExecStart = actionsEnforce;
     };
   };
   systemd.timers.forgejo-actions-enforce = {
@@ -1009,11 +396,8 @@ in
     "d ${runnerCacheRoot}/uv 0750 gitea-runner gitea-runner -"
     "d ${runnerCacheRoot}/actcache 0750 gitea-runner gitea-runner -"
 
-    # Forgejo runs git with HOME=/var/lib/forgejo, but writes its rendered
-    # gitconfig (with the credential.helper line pointing at .git-credentials)
-    # into /var/lib/forgejo/data/home/.gitconfig. Without this symlink the git
-    # subprocess never reads the credential helper, so mirror fetches against
-    # private GitHub repos fail with "could not read Username/Password".
+    # git runs with HOME=/var/lib/forgejo but the rendered gitconfig (with
+    # the credential helper) lands under data/home.
     "L+ /var/lib/forgejo/.gitconfig - - - - /var/lib/forgejo/data/home/.gitconfig"
 
     "d /var/lib/forgejo/custom 0750 git git -"
@@ -1024,9 +408,9 @@ in
     "d /var/lib/forgejo/custom/public/assets/img 0750 git git -"
     "L+ /var/lib/forgejo/custom/public/assets/css/harivan-forgejo.css - - - - ${forgejoWeb.assets}/css/harivan-forgejo.css"
     "L+ /var/lib/forgejo/custom/public/assets/css/pierre-forgejo.css - - - - ${pierreForgejo.assets}/css/pierre-forgejo.css"
-    "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-auto.css - - - - ${forgejoCozyboxAutoCss}"
-    "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-light.css - - - - ${forgejoCozyboxLightCss}"
-    "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-dark.css - - - - ${forgejoCozyboxDarkCss}"
+    "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-auto.css - - - - ${forgejoWeb.assets}/css/theme-cozybox-auto.css"
+    "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-light.css - - - - ${forgejoWeb.assets}/css/theme-cozybox-light.css"
+    "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-dark.css - - - - ${forgejoWeb.assets}/css/theme-cozybox-dark.css"
     "L+ /var/lib/forgejo/custom/public/assets/fonts/BerkeleyMono-Regular.otf - - - - /srv/harivan.sh/dist/fonts/BerkeleyMono-Regular.otf"
     "L+ /var/lib/forgejo/custom/public/assets/js - - - - ${forgejoWeb.js}/js"
     "L+ /var/lib/forgejo/custom/public/assets/img/favicon.svg - - - - ${forgejoBrandingAssets}/favicon.svg"
@@ -1120,5 +504,4 @@ in
       };
     };
   };
-
 }

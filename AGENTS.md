@@ -44,7 +44,6 @@ sops-nix with age encryption derived from each host's ed25519 SSH key. Secret fi
 - Prefer common package definitions across macbook and spark; keep only truly macOS-specific Homebrew and GUI integrations Darwin-only.
 - Cursor CLI and `cursor-agent` come from the official installer: `curl https://cursor.com/install -fsS | bash`.
 - Bugfix PRs keep the diff minimal and exclude unrelated changes.
-- The `tmp/` directory is gitignored local scratch space. Nothing there is tracked or load-bearing.
 - Berkeley Mono is installed out-of-band. The flake only provides nerd-fonts symbol glyphs.
 - There is no home-manager. Per-user config is `modules/users/user-config.nix`: plain dotfiles in `dots/` symlinked into the home directory by an activation script that runs as the user. The repo owner's links point at the live checkout (`~/Documents/Git/nix/dots`), so dotfile edits apply without a rebuild; other users get the nix-store copy. Configs that need store paths (zsh plugins, git credential helpers, theme renders) are store-generated shims that defer to the live dots file.
 - Ghostty is installed via Homebrew cask, not nixpkgs. The flake owns its config files and its terminfo: `xterm-ghostty` is declarative in `modules/common.nix` (`pkgs.ghostty-bin.terminfo` on darwin, `pkgs.ghostty.terminfo` on linux) so env-scrubbed shells resolve it without `TERMINFO`. Never fix terminfo imperatively via `tic` into `~/.terminfo`.
@@ -73,7 +72,7 @@ Rendered outputs: `~/.claude/CLAUDE.md` (core + coding + claude), `~/.codex/AGEN
 
 Skills: `dots/agents/skills/<name>/SKILL.md` are repo-owned (`unslop`); the `mattpocock-skills` flake input supplies the engineering and productivity buckets. `modules/users/user-config/agents.nix` builds one link farm from both and the activation script links it to `~/.agents/skills` (Codex, and anything agentskills.io-compatible) and `~/.claude/skills` (Claude Code). Add a skill by dropping a directory into `dots/agents/skills/`; upgrade upstream with `nix flake update mattpocock-skills`.
 
-Hooks live in `dots/claude/hooks/` and are registered in `agents.nix`; omp reuses them through `dots/omp/extensions/claude-hooks.ts`.
+Hooks live in `dots/claude/hooks/` and are registered in `agents.nix`. Claude agent definitions (`.claude/agents/*.md`) reach omp's task tool through `dots/omp/extensions/claude-agents.ts`.
 
 ## Module layout
 
@@ -83,8 +82,7 @@ flake/
   args.nix             Host records (the two machines) + shared builders (mkPkgs, mkSpecialArgs)
   devshell.nix         Dev tools + formatter
   hosts.nix            macbook darwin configuration
-  nixos.nix            spark NixOS configuration
-  ix.nix               nixosConfigurations.ix: the ix dev VM template
+  nixos.nix            spark NixOS configuration + nixosConfigurations.ix (the dev VM template)
   packages.nix         packages.<system> output: portable scripts (ga, ghpr, connectors) + tool wrappers
 lib/
   remotes.nix          Remote server registry: hosts for the per-remote connector commands
@@ -94,7 +92,8 @@ modules/
   nix-settings.nix     nix.conf settings both hosts share (nix.settings on spark, determinateNix.customSettings on darwin)
   users/
     user-config.nix    Shared per-user dotfile/symlink/package builder (no home-manager)
-    nixos.nix          NixOS adapter: every user in users/, owner gets live dots
+    accounts/          User registry (rathi.nix: SSH keys + groups)
+    nixos.nix          NixOS adapter: every user in accounts/, owner gets live dots
     darwin.nix         nix-darwin adapter: primary user, live dots
   security/
     sops.nix           sops-nix setup, age key from SSH host key
@@ -105,28 +104,32 @@ hosts/
     defaults.nix       System defaults (dock, finder, keyboard, screenshots, loginwindow)
     homebrew.nix       Taps, formulae, casks (every cask on the machine is declared)
     services.nix       Every launchd unit (aerospace, sketchybar, limit.maxfiles); the only service manager
-    startup-guard.nix  Enforces login-item allowlist, warns on undeclared launchd plists (daily + login + switch)
-    voiceink*.nix      VoiceInk built from source, cloud model, dictionary
+    mux/               Mux.app built from source at activation (default.nix + build.sh + Info.plist)
+    startup/           Login-item allowlist enforcement, undeclared launchd plist warnings (default.nix + guard.sh)
+    voiceink/          VoiceInk built from source at activation (default.nix + build.sh)
+    notch-inset/, sketchybar-feed/  ObjC sources compiled by services.nix
   spark/
     default.nix        Base NixOS config, nix-ld, verified boot
     hardware.nix       DGX Spark module + disko disk layout
     kernel-hardening.nix  Running-kernel boundary: module lock, sysctls, LSM order
     networking.nix     Wi-Fi (NetworkManager), Tailscale, firewall, zram
-    users.nix          User accounts from users/ directory, SSH, sudo
+    users.nix          User accounts from modules/users/accounts, SSH, sudo
+    docs/              Notes on the verified-boot, module-lock and strict-DMA setup
     services/          Every spark service; single-host, so they live with the host
       caddy.nix        Reverse proxy on loopback, loopbackVhost helper
       cloudflared.nix  Cloudflare tunnel to Caddy
+      hermes.nix       Hermes agent gateway + dashboard
       inference.nix    Local llama.cpp inference server (GPU)
       mosh.nix         Mosh UDP server config
-      whisper.nix      GPU speech-to-text server
       vaultwarden.nix  Vaultwarden password manager
-      website.nix      Static site for harivan.sh served via Caddy
-      forgejo/         Forgejo server, cozybox themes, mirror manifest, Actions runner
+      website.nix      harivan.sh static site + page counter (counter code lives in the website repo, counter/counter.py)
+      kb/              Knowledge base: postgres + pgvector, embedding server, connectors/*.sh, kb_vec.py indexer, kb-search
+      whisper/         GPU speech-to-text server (default.nix + setup.sh + server.py)
+      forgejo/         Forgejo server, cozybox css in assets/, mirror manifest, Actions runner, run-by-hand scripts/
   ix/
     default.nix        The entire ix dev VM: root dotfiles, agents, nothing else
 pkgs/
   sets.nix             Shared package sets (core, extras, darwinExtras, fonts) for modules/common.nix
-  leaf/                leaf (terminal markdown viewer) built from the pinned upstream tag
   jj-ix/               Patched jj with the ix store backend
   scripts/
     default.nix        Full script set for user profiles (portable + theme, wallpaper-gen)
@@ -135,22 +138,17 @@ pkgs/
     lib/               Helpers (wallpaper-gen.py)
 terraform/
   cloudflare/          Declarative Cloudflare DNS for harivan.sh via terranix
-scripts/
-  forgejo-mirror/      Mirror reconciliation against /etc/forgejo-mirror/manifest.json (run on demand)
-users/
-  default.nix          User registry
-  rathi.nix            SSH keys + groups for rathi
+scripts/               Repo tooling: pr-smoke.sh, nvim-pack-sources.sh
 assets/                Readme artwork + the static wallpapers
 dots/                  Dotfile sources (nvim, karabiner, lazygit, agents/ instructions + skills, etc.)
 ```
 
 ## Theme system
 
-The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `pkgs/scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, lazygit, leaf, and the wallpaper, then pokes live nvim servers. Shell hooks in `dots/zsh/zshrc` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
+The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `pkgs/scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, lazygit, and the wallpaper, then pokes live nvim servers. Shell hooks in `dots/zsh/zshrc` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
 
 Accent constraint for agent-facing TUI roles (omp markdown headings/inline code/links): no yellow, green, or pink hues. Stay in the neutral-bright / Claude-coral (`#d97757` dark, `#af3a03` light) / muted-blue (`#5b84de` dark, `#4261a5` light) lane. Status colors (success/error/warning, diffs) keep their conventional hues.
 
-`renderLeaf` writes leaf's custom-theme TOML (every `[ui]` + `[markdown]` key upstream defines, checked against `src/theme/serde.rs`; unknown keys are silently ignored by leaf, so the set must stay exhaustive). Surfaces are `"reset"` (ratatui `Color::Reset`, i.e. the terminal's own background) so leaf paints text only; the only painted regions are the TOC selection and the search highlights. leaf deliberately departs from the omp accent lane above: it is a document reader, not an agent surface, so hue carries the heading hierarchy. H1 is yellow (`#fabd2f` dark, `#b57614` light) as the single "top of document" accent, H2 is blue, H3/H4 fall back to the neutral ramp, and coral is reserved for inline code alone. That blue is gruvbox's desaturated `#83a598` (`#076678` light), never the saturated omp link blue `#5b84de`: cozybox is a warm palette and a pure cool blue sits near coral's complement, so the two vibrate wherever a heading meets inline code. Code-block tokens are the one thing the palette cannot drive: leaf takes a syntect theme *name* from its 7 bundled themes, so dark uses `base16-mocha.dark` (warmest match) and light uses `InspiredGitHub`.
 
 ## omp extensions
 
@@ -208,7 +206,7 @@ nix eval .#nixosConfigurations.ix.config.system.build.toplevel.drvPath
 nix build --dry-run <drv>^* --substituters https://cache.nixos.org
 ```
 
-What was deliberately left out, and why, so it does not get re-added by reflex: `leaf` (builds from source, so the VM fetches 1.6 GiB of rustc to compile one markdown viewer), `elixir_1_19` + `elixir-ls` (erlang twice, 248 MiB, and erlang's wx support drags in wxwidgets then webkitgtk), `clang` + `clang-tools` (1.4 GiB of clang and llvm libs), `pyright` + `python3` (389 MiB), `go_1_26` + `gopls` (248 MiB), `k9s` (168 MiB, no cluster to point it at), `tea` (its logins come from sops, which the VM has none of), and every `customScripts` entry (the remote connectors dial hosts a throwaway VM cannot reach, and `wallpaper-gen` pulls python + pillow for a machine with no display). `zoxide` is in the list because `dots/zsh/zshrc` runs `zoxide init zsh` unconditionally.
+What was deliberately left out, and why, so it does not get re-added by reflex: `elixir_1_19` + `elixir-ls` (erlang twice, 248 MiB, and erlang's wx support drags in wxwidgets then webkitgtk), `clang` + `clang-tools` (1.4 GiB of clang and llvm libs), `pyright` + `python3` (389 MiB), `go_1_26` + `gopls` (248 MiB), `k9s` (168 MiB, no cluster to point it at), `tea` (its logins come from sops, which the VM has none of), and every `customScripts` entry (the remote connectors dial hosts a throwaway VM cannot reach, and `wallpaper-gen` pulls python + pillow for a machine with no display). `zoxide` is in the list because `dots/zsh/zshrc` runs `zoxide init zsh` unconditionally.
 
 `environment.systemPackages` holds one entry, `pkgs.ghostty.terminfo`, and it has to be there rather than in the root package list: NixOS builds `TERMINFO_DIRS` from `environment.pathsToLink`, which only covers the system profile. Ghostty exports `TERM=xterm-ghostty`, `ix shell` carries that value into the guest, and a guest with no matching terminfo entry gives you `can't find terminal definition for xterm-ghostty`, a zsh line editor that cannot position the cursor (keystrokes echo doubled) and a `clear` that refuses to run. The cost is 2.2 KiB: `terminfo` is a separate output of the ghostty derivation and cache.nixos.org has it, so nothing builds ghostty itself. Any other terminal that sets an exotic `TERM` needs its own entry here, or `environment.enableAllTerminfo = true` if the list ever grows past a couple.
 
@@ -242,8 +240,8 @@ The VM has no secrets. sops-nix on spark derives its age key from the host ed255
 The legacy gitea-mirror Bun service has been removed. Forgejo's native mirror tables (`mirror` for inbound pulls, `push_mirror` for outbound pushes) are the source of truth. Two files drive the system:
 
 - `hosts/spark/services/forgejo/mirror-manifest.nix`: policy-only config (intervals, `owned_owner`, the small `no_mirror` set, the `actions_enabled_repos` allowlist). No repo inventory is checked into nix; the actual list of repos to mirror is discovered at runtime by querying forgejo's own database. Rendered to `/etc/forgejo-mirror/manifest.json` at activation.
-- `scripts/forgejo-mirror/reconcile.sh`: idempotent script that reads the manifest, deletes pull-mirror rows on push-mirror targets, creates missing push-mirrors with `use_ssh=true sync_on_commit=true interval=15m`, registers the forgejo-generated public key as a github deploy key, and flips `has_actions` per the allowlist. Run as root: `sudo FORGEJO_MIRROR_MANIFEST=/etc/forgejo-mirror/manifest.json bash scripts/forgejo-mirror/reconcile.sh [--dry-run]`.
-- `scripts/forgejo-mirror/github-ux.sh`: optional, applies the barrettruth full treatment (github description/homepage/has_* metadata, `.github/README.md` banner, redirect-pr workflow) to every push-mirror. Run on demand: `bash scripts/forgejo-mirror/github-ux.sh [--dry-run] [--only owner/name]`.
+- `hosts/spark/services/forgejo/scripts/reconcile.sh`: idempotent script that reads the manifest, deletes pull-mirror rows on push-mirror targets, creates missing push-mirrors with `use_ssh=true sync_on_commit=true interval=15m`, registers the forgejo-generated public key as a github deploy key, and flips `has_actions` per the allowlist. Run as root: `sudo FORGEJO_MIRROR_MANIFEST=/etc/forgejo-mirror/manifest.json bash hosts/spark/services/forgejo/scripts/reconcile.sh [--dry-run]`.
+- `hosts/spark/services/forgejo/scripts/github-ux.sh`: optional, applies the barrettruth full treatment (github description/homepage/has_* metadata, `.github/README.md` banner, redirect-pr workflow) to every push-mirror. Run on demand: `bash hosts/spark/services/forgejo/scripts/github-ux.sh [--dry-run] [--only owner/name]`.
 
 ### Pull-mirror credentials
 
@@ -278,6 +276,6 @@ Source of truth is the jj-native ix forge (RPC `https://forge.ix.dev:8447/rpc`, 
 
 ## Hermes
 
-Hermes runs on spark through upstream's NixOS module (`hosts/spark/services/hermes.nix`): the gateway and `hermes serve` as rathi, state in `~/.local/state/hermes/.hermes` (the pre-#442 `~/.hermes` moved there once; a symlink keeps the old path). The backend binds `spark-ix.tail368802.ts.net:9119` behind the session token in `secrets/user/hermes-backend-token`, and Hermes.app on the mac (`hosts/macbook/hermes-desktop.nix`) attaches to it with the same token — user-scoped secrets decrypt on both hosts, which is what makes the shared token work. Models: `gpt-5.6-sol` via the openai-codex OAuth in hermes state (default), Anthropic via `anthropic.env`, and the local `spark/qwen3.8-27b` provider against the llama.cpp router on 18080. The knowledge-base plugin (`dots/hermes/plugins/knowledge-base`, tmpfiles-linked into HERMES_HOME) provides read-only, finance-filtered `kb_search`; the graph tools stayed dead with the Cognee graph.
+Hermes runs on spark through upstream's NixOS module (`hosts/spark/services/hermes.nix`): the gateway and `hermes serve` as rathi, state in `~/.local/state/hermes/.hermes` (the pre-#442 `~/.hermes` moved there once; a symlink keeps the old path). The backend binds `spark-ix.tail368802.ts.net:9119` behind the session token in `secrets/user/hermes-backend-token`. Models: `gpt-5.6-sol` via the openai-codex OAuth in hermes state (default), Anthropic via `anthropic.env`, and the local `spark/qwen3.8-27b` provider against the llama.cpp router on 18080. The knowledge-base plugin (`dots/hermes/plugins/knowledge-base`, tmpfiles-linked into HERMES_HOME) provides read-only, finance-filtered `kb_search`; the graph tools stayed dead with the Cognee graph.
 
 The old cron loops, photon messenger, browser-use, and loop scanners stay removed. Do not re-add scheduled scanners or autonomous internet-to-agent paths by reflex, and do not document the KB's contents here; the KB modules under `hosts/spark/services/` are the source of truth for what runs.

@@ -1,9 +1,4 @@
-# Central sops-nix wiring.
-#
-# Reads secrets/registry.nix and declares every secret that applies to this
-# host. Imported by both nix-darwin and NixOS hosts. The platform-specific
-# sops-nix module (darwin vs nixos) is imported by each host config — this
-# file only needs to be platform-aware for the age key path.
+# sops-nix wiring for both platforms, driven by secrets/registry.nix.
 {
   hostConfig,
   hostname,
@@ -16,31 +11,23 @@ let
 
   userSecrets = lib.mapAttrs (
     name: cfg:
-    let
-      secretCfg = builtins.removeAttrs cfg [ "exposeToShell" ];
-    in
     {
       sopsFile = ../../secrets/user + "/${name}";
       format = "binary";
       owner = username;
       mode = "0400";
     }
-    // secretCfg
+    // builtins.removeAttrs cfg [ "exposeToShell" ]
   ) registry.user;
-
-  hostRegistry = registry.hosts.${hostname} or { };
 
   hostSecrets = lib.mapAttrs (
     name: cfg:
-    let
-      secretCfg = builtins.removeAttrs cfg [ "exposeToShell" ];
-    in
     {
       sopsFile = ../../secrets/hosts + "/${hostname}/${name}";
       format = "binary";
     }
-    // secretCfg
-  ) hostRegistry;
+    // cfg
+  ) (registry.hosts.${hostname} or { });
 in
 {
   sops = {
@@ -52,7 +39,6 @@ in
         else
           [ "/etc/ssh/ssh_host_ed25519_key" ];
     };
-
     secrets = userSecrets // hostSecrets;
   };
 }

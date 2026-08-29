@@ -1,30 +1,12 @@
-# secrets/registry.nix
+# Every sops secret in the flake. modules/security/sops.nix declares these;
+# the file for `user.<name>` is secrets/user/<name>, for `hosts.<host>.<name>`
+# it is secrets/hosts/<host>/<name>, and each lands at /run/secrets/<name>.
 #
-# Single source of truth for every sops-nix secret in this flake.
-# Consumed by modules/security/sops.nix and modules/users/user-config.nix.
-#
-# - `user.<name>`        : per-admin-user secrets. Decrypted on every host the
-#                          admin's SSH key is a sops recipient for (currently
-#                          both macbook and spark). Land at /run/secrets/<name>
-#                          and are auto-sourced into interactive zsh unless
-#                          `exposeToShell = false`.
-#                          Defaults: owner = ${username}, mode = "0400".
-#
-# - `hosts.<host>.<name>`: host-bound secrets. Decrypted only on the named
-#                          host. Land at /run/secrets/<name>. Each entry is
-#                          passed verbatim into sops.secrets, so it can carry
-#                          owner / group / mode / restartUnits / neededForUsers.
-#                          An entry can also override `sopsFile` to point at
-#                          a file outside this repo (e.g. a flake input) for
-#                          secrets that ship with their consuming service.
-#
-# Adding a new secret:
-#   1. Drop the plaintext or encrypted file into the matching directory:
-#        secrets/user/<name>            (user-shell)
-#        secrets/hosts/<host>/<name>    (host-bound)
-#      .sops.yaml will pick the right recipient set automatically.
-#   2. Add a one-line entry here.
-#   3. Consume via config.sops.secrets."<name>".path.
+# user secrets decrypt on every host the admin key reaches, default to
+# owner = username and mode 0400, and are sourced into interactive zsh unless
+# `exposeToShell = false` (raw tokens, anything that is not KEY=value).
+# host secrets decrypt on that host only; the entry is passed to sops.secrets
+# as is (owner, group, mode, restartUnits, neededForUsers).
 { username }:
 {
   user = {
@@ -35,41 +17,14 @@
     "mgrep.env" = { };
     "gws.env" = { };
     "mxbai.env" = { };
-    "forgejo-ix.env" = {
-      format = "dotenv";
-    };
-    # Raw token (not KEY=value). Consumed verbatim by home/tea.nix and
-    # home/git.nix, but must not be sourced by interactive shells.
-    "forgejo-token.env" = {
-      exposeToShell = false;
-      sopsFile = ./hosts/spark/forgejo-token.env;
-    };
-    # Raw Cloudflare API token. Consumed by the cloudflare-dns runner
-    # (flake/cloudflare.nix) from /run/secrets, never sourced into the shell.
-    "cloudflare-api-token" = {
-      exposeToShell = false;
-    };
+    "forgejo-ix.env".format = "dotenv";
+    "forgejo-token".exposeToShell = false;
+    "cloudflare-api-token".exposeToShell = false;
   };
 
   hosts.spark = {
-    # Raw token (not KEY=value). Consumed verbatim by home/tea.nix
-    # (tokenFile) and home/git.nix (cat in credential helper). Kept out
-    # of the `user` bucket so macOS does not try to `source` it.
-    "forgejo-token.env" = {
-      owner = username;
-      group = "users";
-      mode = "0400";
-    };
+    "user-password-hash".neededForUsers = true;
 
-    "user-password-hash" = {
-      neededForUsers = true;
-    };
-
-    # Basic-auth credentials for the hermes backend (username, password,
-    # signing secret). EnvironmentFile of hermes-backend.service only; the
-    # bind to the tailnet name engages upstream's auth gate, and on 0.20.x the
-    # session-token path is loopback-only, so this is how the browser
-    # dashboard signs in.
     "hermes-dashboard.env" = {
       format = "dotenv";
       owner = username;
@@ -78,19 +33,14 @@
       restartUnits = [ "hermes-backend.service" ];
     };
 
-    # gws OAuth token (authorized_user creds incl. refresh token). Read by the
-    # gmail/calendar KB connectors via GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE for
-    # deterministic, keyring-free auth. Owned by rathi (the connectors run as
-    # rathi). Not a KEY=value file, so keep it out of the shell-sourced bucket.
+    # gws OAuth token, read by the gmail and calendar KB connectors (run as the user).
     "gws-credentials.json" = {
       owner = username;
       group = "users";
       mode = "0400";
     };
 
-    "wifi.env" = {
-      restartUnits = [ "NetworkManager-ensure-profiles.service" ];
-    };
+    "wifi.env".restartUnits = [ "NetworkManager-ensure-profiles.service" ];
 
     "tailscale-ix-authkey" = {
       owner = "root";

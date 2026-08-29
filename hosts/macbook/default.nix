@@ -1,5 +1,4 @@
-# macbook: facts and file selection only. Behavior lives in the sibling
-# concern files (defaults / services / apps / homebrew) and shared modules.
+# macbook: facts and imports only.
 {
   inputs,
   pkgs,
@@ -14,18 +13,15 @@
     inputs.sops-nix.darwinModules.sops
     ../../modules/security/sops.nix
     ../../modules/users/darwin.nix
-    ./nap.nix
-    ./voiceink.nix
-    ./voiceink-cloud-model.nix
-    ./voiceink-dictionary.nix
     ./apps.nix
     ./defaults.nix
     ./homebrew.nix
-    ./hermes-desktop.nix
+    ./mux
     ./muxd.nix
-    ./mux.nix
+    ./nap.nix
     ./services.nix
-    ./startup-guard.nix
+    ./startup
+    ./voiceink
   ];
 
   networking.hostName = hostname;

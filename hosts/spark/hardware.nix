@@ -2,10 +2,8 @@
 {
   hardware.dgx-spark = {
     enable = true;
-    useNvidiaKernel = true;
   };
 
-  boot.loader.systemd-boot.enable = false;
   boot.loader.efi.canTouchEfiVariables = true;
 
   disko.devices = {

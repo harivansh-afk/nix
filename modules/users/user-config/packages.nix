@@ -15,14 +15,9 @@ let
   nvimPackages = import ../../../lib/nvim-packages.nix { inherit lib pkgs; };
 in
 (with pkgs; [
-  bat
   btop
   direnv
   eza
-  fzf
-  git
-  git-lfs
-  gh
   k9s
   neovim
   nvimAliases

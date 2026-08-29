@@ -217,15 +217,11 @@ in
         LANDING_PAGE = "/harivansh-afk";
       };
       service = {
-        DISABLE_REGISTRATION = false;
-        REQUIRE_SIGNIN_VIEW = false;
-        DEFAULT_USER_IS_RESTRICTED = false;
         REGISTER_EMAIL_CONFIRM = true;
         SEND_NOTIFICATION_EMAIL_ON_NEW_USER = true;
       };
       repository = {
         DEFAULT_PRIVATE = "private";
-        DEFAULT_PUSH_CREATE_PRIVATE = true;
         # Only mirror-manifest.actions_enabled_repos opt back in (see
         # forgejo-actions-enforce below).
         DEFAULT_REPO_UNITS = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
@@ -254,15 +250,12 @@ in
         MAX_WORKERS = 1;
       };
       actions = {
-        ENABLED = true;
         DEFAULT_ACTIONS_URL = "https://github.com";
       };
       "cron.cleanup_offline_runners" = {
         ENABLED = true;
         RUN_AT_START = true;
-        SCHEDULE = "@midnight";
         GLOBAL_SCOPE_ONLY = false;
-        OLDER_THAN = "24h";
       };
       "git.config" = {
         "credential.helper" = "store --file ${gitCredentialFile}";
@@ -279,9 +272,7 @@ in
         THEMES = "cozybox-auto,cozybox-light,cozybox-dark,forgejo-auto,forgejo-dark,forgejo-light";
       };
       picture = {
-        DISABLE_GRAVATAR = false;
         ENABLE_FEDERATED_AVATAR = true;
-        GRAVATAR_SOURCE = "gravatar";
       };
       oauth2_client = {
         UPDATE_AVATAR = true;
@@ -484,7 +475,6 @@ in
       ];
 
       settings = {
-        log.level = "info";
         runner = {
           capacity = 2;
           timeout = "3h";
@@ -498,7 +488,6 @@ in
           };
         };
         cache = {
-          enabled = true;
           dir = "${runnerCacheRoot}/actcache";
         };
       };

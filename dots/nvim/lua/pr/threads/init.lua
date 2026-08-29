@@ -201,9 +201,6 @@ function M.watch(root, number, cb)
   end
 end
 
----@return pr.threads.Entry?
-function M.get(root, number) return entries[key_of(root, number)] end
-
 --- Force a re-fetch now, whatever the poller was planning: R and `:e`.
 function M.refresh(root, number) return fetch(root, number) end
 

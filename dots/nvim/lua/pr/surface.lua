@@ -92,10 +92,18 @@ function M.common_keys(buf, refresh)
 end
 
 --- The help rows those shared keys are worth, appended to a surface's own.
+--- <leader>1-9 is global rather than a buffer key, so it is named here
+--- rather than in marks' M.KEYS.
 ---@return {[1]:string,[2]:string}[]
 function M.common_help()
-  local rows = require("pr.verbs").help_entries()
-  vim.list_extend(rows, require("pr.marks").help_entries())
+  local rows = {}
+  for _, mod in ipairs { require "pr.verbs", require "pr.marks" } do
+    for _, k in ipairs(mod.KEYS) do
+      rows[#rows + 1] = { k[1], k[3] }
+    end
+  end
+  rows[#rows + 1] = { "<leader>1-9", "jump to a marked slot" }
+  rows[#rows + 1] = { "<c-e>", "the whole fast list, in a float" }
   return rows
 end
 

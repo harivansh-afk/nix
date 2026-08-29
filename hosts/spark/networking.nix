@@ -26,17 +26,14 @@ in
           connection = {
             id = "spark-wifi";
             type = "wifi";
-            autoconnect = true;
             autoconnect-priority = 10;
           };
           wifi = {
             band = "a";
-            mode = "infrastructure";
             powersave = 2;
             ssid = "$WIFI_SSID";
           };
           wifi-security = {
-            auth-alg = "open";
             key-mgmt = "wpa-psk";
             psk = "$WIFI_PSK";
           };
@@ -50,16 +47,12 @@ in
           connection = {
             id = "spark-wifi-fallback";
             type = "wifi";
-            autoconnect = true;
-            autoconnect-priority = 0;
           };
           wifi = {
-            mode = "infrastructure";
             powersave = 2;
             ssid = "$WIFI_SSID";
           };
           wifi-security = {
-            auth-alg = "open";
             key-mgmt = "wpa-psk";
             psk = "$WIFI_PSK";
           };
@@ -100,8 +93,6 @@ in
       exec ${pkgs.tailscale}/bin/tailscale --socket=${personalSocket} "$@"
     '')
   ];
-
-  networking.firewall.enable = true;
 
   zramSwap.enable = true;
 }

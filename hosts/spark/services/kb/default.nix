@@ -164,7 +164,6 @@ in
       requires = [ "llama-cpp-embed-download.service" ];
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
-        Type = "simple";
         ExecStart = lib.concatStringsSep " " [
           "${llamaCpp}/bin/llama-server"
           "--host 127.0.0.1"

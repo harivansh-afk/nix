@@ -18,7 +18,6 @@ in
           "/Applications/${app}.app"
         ];
         RunAtLoad = true;
-        KeepAlive = false;
       };
     }) loginApps
   );

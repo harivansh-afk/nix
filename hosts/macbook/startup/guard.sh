@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Inputs from the nix wrapper: LOGIN_ITEMS and PLISTS, pipe-delimited
 # allowlists with a leading and trailing pipe.
 set -u

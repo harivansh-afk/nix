@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Runs after the NixOS module's own preStart, as the git user.
 #
 # Forgejo 16 does not consult credential.helper for pull-mirror fetches, so

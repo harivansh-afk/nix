@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Snapshot forge.ix.dev main into the forgejo indexable-inc/ix repo. The
 # forge speaks no git protocol, so a jj-ix workspace materializes main and a
 # plain git clone pushes "snapshot: forge main @ <rev>" commits over localhost.

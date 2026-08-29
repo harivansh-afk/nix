@@ -41,7 +41,7 @@ in
     serviceConfig = {
       Type = "simple";
       WorkingDirectory = stateDir;
-      ExecStartPre = ./setup.sh;
+      ExecStartPre = "${pkgs.bash}/bin/bash ${./setup.sh}";
       ExecStart = "${venv}/bin/python -u -m uvicorn server:app --host 127.0.0.1 --port ${toString port}";
       Restart = "on-failure";
       RestartSec = 5;

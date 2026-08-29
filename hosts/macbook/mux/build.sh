@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Build and sign Mux.app. Inputs from the nix wrapper: MUX_SRC, MUX_REV,
 # GHOSTTY_SRC, GHOSTTY_REV, MUXD (package with bin/muxd, bin/mux-attach),
 # INFO_PLIST.

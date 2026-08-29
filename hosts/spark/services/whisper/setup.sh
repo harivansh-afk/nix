@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Runtime uv venv: torch nightly cu130 for aarch64 is not in nixpkgs.
 # Inputs from the unit: STATE_DIR, VENV, PYTHON, SERVER_PY, REQ_VERSION.
 set -euo pipefail

@@ -73,9 +73,9 @@ let
     };
   };
   connectors = lib.zipAttrsWith (_: lib.mergeAttrsList) [
-    (connector "gmail" "hourly" ./connectors/gmail.sh)
-    (connector "calendar" "hourly" ./connectors/calendar.sh)
-    (connector "forgejo" "hourly" ./connectors/forgejo.sh)
+    (connector "gmail" "hourly" "${pkgs.bash}/bin/bash ${./connectors/gmail.sh}")
+    (connector "calendar" "hourly" "${pkgs.bash}/bin/bash ${./connectors/calendar.sh}")
+    (connector "forgejo" "hourly" "${pkgs.bash}/bin/bash ${./connectors/forgejo.sh}")
     (connector "downloads" "daily" "${downloadsPython}/bin/python ${./downloads_connector.py}")
   ];
 in

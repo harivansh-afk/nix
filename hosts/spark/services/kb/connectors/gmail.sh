@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Recent messages -> staging/gmail/<id>.md (headers + snippet). Exits clean
 # until gws is authenticated.
 set -uo pipefail

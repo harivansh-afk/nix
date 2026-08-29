@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Next 90 days of events -> staging/calendar/<id>.md.
 set -uo pipefail
 # shellcheck source=gws-env.sh

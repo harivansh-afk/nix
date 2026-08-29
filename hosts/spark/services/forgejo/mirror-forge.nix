@@ -23,7 +23,7 @@ let
     export STATE_DIR=${home}/.local/state/forge-snapshot
     export JJ=${home}/.local/bin/jj-ix
     export TOKEN_FILE=${config.sops.secrets."forgejo-token".path}
-    exec ${./forge-snapshot-mirror.sh}
+    exec ${pkgs.bash}/bin/bash ${./forge-snapshot-mirror.sh}
   '';
 in
 {

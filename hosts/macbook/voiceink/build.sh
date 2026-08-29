@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Build, neuter and sign VoiceInk. Inputs from the nix wrapper: SRC (source
 # tree), PATCH (streaming-provider patch), REV (rebuild key).
 #

@@ -199,7 +199,7 @@ in
     export GIT_CREDENTIAL_FILE=${gitCredentialFile}
     export FORGEJO=${config.services.forgejo.package}/bin/forgejo
     export OAUTH_SOURCES=${lib.escapeShellArg oauthSources}
-    ${./pre-start.sh}
+    ${pkgs.bash}/bin/bash ${./pre-start.sh}
   '';
 
   services.forgejo = {

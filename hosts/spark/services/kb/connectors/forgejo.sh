@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Own repos -> staging/forgejo/ (READMEs + open issues).
 set -uo pipefail
 out="$KB_STAGING_DIR/forgejo"

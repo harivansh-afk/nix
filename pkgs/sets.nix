@@ -21,7 +21,6 @@ in
     (with pkgs; [
       ast-grep
       bitwarden-cli
-      curl
       elixir
       fd
       gnupg
@@ -37,7 +36,6 @@ in
       python3
       ranger
       ripgrep
-      rsync
       rust-analyzer
       rustup
       tree
@@ -75,13 +73,11 @@ in
       llmfit
       minikube
       mgrep
-      mosh
       eternal-terminal
       ngrok
       phpPackages.composer
       postgresql_17
       redis
-      tailscale
       terraform
       texliveFull
       typst
@@ -95,7 +91,11 @@ in
 
   darwinExtras = with pkgs; [
     coreutils-prefixed
+    curl
+    mosh
     pandoc
+    rsync
+    tailscale
     yt-dlp
   ];
 

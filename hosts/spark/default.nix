@@ -38,9 +38,7 @@
   networking.hostName = hostname;
 
   boot = {
-    initrd.systemd.enable = true;
     lanzaboote = {
-      allowUnsigned = false;
       configurationLimit = 4;
       enable = true;
       pkiBundle = "/var/lib/sbctl";
@@ -55,10 +53,7 @@
   nix.settings = {
     accept-flake-config = true;
     experimental-features = [
-      "ca-derivations"
       "fetch-tree"
-      "flakes"
-      "nix-command"
     ];
   };
 

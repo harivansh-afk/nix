@@ -15,7 +15,6 @@ let
       sopsFile = ../../secrets/user + "/${name}";
       format = "binary";
       owner = username;
-      mode = "0400";
     }
     // builtins.removeAttrs cfg [ "exposeToShell" ]
   ) registry.user;
@@ -32,7 +31,6 @@ in
 {
   sops = {
     age = {
-      generateKey = false;
       sshKeyPaths =
         if hostConfig.isDarwin then
           [ "/Users/${username}/.ssh/id_ed25519" ]

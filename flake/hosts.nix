@@ -22,13 +22,11 @@ let
 
           nix-homebrew = {
             enable = true;
-            enableRosetta = false;
             user = host.username;
             autoMigrate = true;
           };
 
           determinateNix = {
-            enable = true;
             # Same attrset spark uses for nix.settings; Determinate owns
             # nix.conf on darwin, so it is fed in through customSettings.
             customSettings = import ../modules/nix-settings.nix host.username;

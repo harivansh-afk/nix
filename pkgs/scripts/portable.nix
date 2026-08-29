@@ -17,7 +17,7 @@ let
   remotes = import ../../lib/remotes.nix;
 
   remotePackages = lib.mapAttrs (
-    name: remote:
+    name: host:
     mkScript {
       inherit name;
       file = ./bin/remote.sh;
@@ -27,7 +27,7 @@ let
       ];
       replacements = {
         "@NAME@" = name;
-        "@HOST@" = remote.host;
+        "@HOST@" = host;
       };
     }
   ) remotes;

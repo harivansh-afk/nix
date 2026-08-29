@@ -58,7 +58,6 @@ in
       WEBSITE_COUNTER_SEED_CUTOFF = "2026-08-02T00:01:53Z";
     };
     serviceConfig = {
-      Type = "simple";
       DynamicUser = true;
       StateDirectory = "website-counter";
       WorkingDirectory = "/var/lib/website-counter";

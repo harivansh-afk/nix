@@ -39,7 +39,6 @@ in
       REQ_VERSION = reqVersion;
     };
     serviceConfig = {
-      Type = "simple";
       WorkingDirectory = stateDir;
       ExecStartPre = "${pkgs.bash}/bin/bash ${./setup.sh}";
       ExecStart = "${venv}/bin/python -u -m uvicorn server:app --host 127.0.0.1 --port ${toString port}";

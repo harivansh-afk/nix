@@ -40,7 +40,7 @@
         shfmt = lint "shfmt" [
           pkgs.shfmt
           pkgs.findutils
-        ] "shfmt -i 2 -d scripts pkgs $(find dots -mindepth 1 -maxdepth 1 ! -name zsh)";
+        ] "shfmt -i 2 -d scripts pkgs hosts $(find dots -mindepth 1 -maxdepth 1 ! -name zsh)";
         pr = lint "pr" [
           pkgs.bash
           pkgs.coreutils

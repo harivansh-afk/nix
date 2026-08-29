@@ -72,7 +72,7 @@ Rendered outputs: `~/.claude/CLAUDE.md` (core + coding + claude), `~/.codex/AGEN
 
 Skills: `dots/agents/skills/<name>/SKILL.md` are repo-owned (`unslop`); the `mattpocock-skills` flake input supplies the engineering and productivity buckets. `modules/users/user-config/agents.nix` builds one link farm from both and the activation script links it to `~/.agents/skills` (Codex, and anything agentskills.io-compatible) and `~/.claude/skills` (Claude Code). Add a skill by dropping a directory into `dots/agents/skills/`; upgrade upstream with `nix flake update mattpocock-skills`.
 
-Hooks live in `dots/claude/hooks/` and are registered in `agents.nix`; omp reuses them through `dots/omp/extensions/claude-hooks.ts`.
+Hooks live in `dots/claude/hooks/` and are registered in `agents.nix`. Claude agent definitions (`.claude/agents/*.md`) reach omp's task tool through `dots/omp/extensions/claude-agents.ts`.
 
 ## Module layout
 
@@ -130,7 +130,6 @@ hosts/
     default.nix        The entire ix dev VM: root dotfiles, agents, nothing else
 pkgs/
   sets.nix             Shared package sets (core, extras, darwinExtras, fonts) for modules/common.nix
-  leaf/                leaf (terminal markdown viewer) built from the pinned upstream tag
   jj-ix/               Patched jj with the ix store backend
   scripts/
     default.nix        Full script set for user profiles (portable + theme, wallpaper-gen)
@@ -139,18 +138,17 @@ pkgs/
     lib/               Helpers (wallpaper-gen.py)
 terraform/
   cloudflare/          Declarative Cloudflare DNS for harivan.sh via terranix
-scripts/               Repo tooling: pr-smoke.sh, nvim-pack-sources.sh, omp/claude-hooks-smoke.sh
+scripts/               Repo tooling: pr-smoke.sh, nvim-pack-sources.sh
 assets/                Readme artwork + the static wallpapers
 dots/                  Dotfile sources (nvim, karabiner, lazygit, agents/ instructions + skills, etc.)
 ```
 
 ## Theme system
 
-The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `pkgs/scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, lazygit, leaf, and the wallpaper, then pokes live nvim servers. Shell hooks in `dots/zsh/zshrc` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
+The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `pkgs/scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, lazygit, and the wallpaper, then pokes live nvim servers. Shell hooks in `dots/zsh/zshrc` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
 
 Accent constraint for agent-facing TUI roles (omp markdown headings/inline code/links): no yellow, green, or pink hues. Stay in the neutral-bright / Claude-coral (`#d97757` dark, `#af3a03` light) / muted-blue (`#5b84de` dark, `#4261a5` light) lane. Status colors (success/error/warning, diffs) keep their conventional hues.
 
-`renderLeaf` writes leaf's custom-theme TOML (every `[ui]` + `[markdown]` key upstream defines, checked against `src/theme/serde.rs`; unknown keys are silently ignored by leaf, so the set must stay exhaustive). Surfaces are `"reset"` (ratatui `Color::Reset`, i.e. the terminal's own background) so leaf paints text only; the only painted regions are the TOC selection and the search highlights. leaf deliberately departs from the omp accent lane above: it is a document reader, not an agent surface, so hue carries the heading hierarchy. H1 is yellow (`#fabd2f` dark, `#b57614` light) as the single "top of document" accent, H2 is blue, H3/H4 fall back to the neutral ramp, and coral is reserved for inline code alone. That blue is gruvbox's desaturated `#83a598` (`#076678` light), never the saturated omp link blue `#5b84de`: cozybox is a warm palette and a pure cool blue sits near coral's complement, so the two vibrate wherever a heading meets inline code. Code-block tokens are the one thing the palette cannot drive: leaf takes a syntect theme *name* from its 7 bundled themes, so dark uses `base16-mocha.dark` (warmest match) and light uses `InspiredGitHub`.
 
 ## omp extensions
 
@@ -208,7 +206,7 @@ nix eval .#nixosConfigurations.ix.config.system.build.toplevel.drvPath
 nix build --dry-run <drv>^* --substituters https://cache.nixos.org
 ```
 
-What was deliberately left out, and why, so it does not get re-added by reflex: `leaf` (builds from source, so the VM fetches 1.6 GiB of rustc to compile one markdown viewer), `elixir_1_19` + `elixir-ls` (erlang twice, 248 MiB, and erlang's wx support drags in wxwidgets then webkitgtk), `clang` + `clang-tools` (1.4 GiB of clang and llvm libs), `pyright` + `python3` (389 MiB), `go_1_26` + `gopls` (248 MiB), `k9s` (168 MiB, no cluster to point it at), `tea` (its logins come from sops, which the VM has none of), and every `customScripts` entry (the remote connectors dial hosts a throwaway VM cannot reach, and `wallpaper-gen` pulls python + pillow for a machine with no display). `zoxide` is in the list because `dots/zsh/zshrc` runs `zoxide init zsh` unconditionally.
+What was deliberately left out, and why, so it does not get re-added by reflex: `elixir_1_19` + `elixir-ls` (erlang twice, 248 MiB, and erlang's wx support drags in wxwidgets then webkitgtk), `clang` + `clang-tools` (1.4 GiB of clang and llvm libs), `pyright` + `python3` (389 MiB), `go_1_26` + `gopls` (248 MiB), `k9s` (168 MiB, no cluster to point it at), `tea` (its logins come from sops, which the VM has none of), and every `customScripts` entry (the remote connectors dial hosts a throwaway VM cannot reach, and `wallpaper-gen` pulls python + pillow for a machine with no display). `zoxide` is in the list because `dots/zsh/zshrc` runs `zoxide init zsh` unconditionally.
 
 `environment.systemPackages` holds one entry, `pkgs.ghostty.terminfo`, and it has to be there rather than in the root package list: NixOS builds `TERMINFO_DIRS` from `environment.pathsToLink`, which only covers the system profile. Ghostty exports `TERM=xterm-ghostty`, `ix shell` carries that value into the guest, and a guest with no matching terminfo entry gives you `can't find terminal definition for xterm-ghostty`, a zsh line editor that cannot position the cursor (keystrokes echo doubled) and a `clear` that refuses to run. The cost is 2.2 KiB: `terminfo` is a separate output of the ghostty derivation and cache.nixos.org has it, so nothing builds ghostty itself. Any other terminal that sets an exotic `TERM` needs its own entry here, or `environment.enableAllTerminfo = true` if the list ever grows past a couple.
 

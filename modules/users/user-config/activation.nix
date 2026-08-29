@@ -28,7 +28,6 @@
   ghosttyTerminfo,
   ghosttyThemes,
   lazygitConfigs,
-  leafThemes,
   claudeSettings,
   claudeMd,
   codexAgentsMd,
@@ -75,7 +74,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${configHome}/ghostty/shaders" \
     "${configHome}/ghostty/themes" \
     "${configHome}/lazygit" \
-    "${theme.paths.leafThemesDir}" \
     "${configHome}/direnv/lib" \
     "${configHome}/k9s" \
     "${configHome}/gh" \
@@ -187,9 +185,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${fzfThemes.light}" "${configHome}/fzf/themes/cozybox-light"
   mkSymlink "${lazygitConfigs.dark}" "${configHome}/lazygit/config-dark.yml"
   mkSymlink "${lazygitConfigs.light}" "${configHome}/lazygit/config-light.yml"
-  mkSymlink "${dotsRoot}/leaf/config.toml" "${configHome}/leaf/config.toml"
-  mkSymlink "${leafThemes.dark}" "${theme.paths.leafThemesDir}/cozybox-dark.toml"
-  mkSymlink "${leafThemes.light}" "${theme.paths.leafThemesDir}/cozybox-light.toml"
 
   # gh rewrites its config at runtime; keep a managed copy instead of a
   # read-only store symlink
@@ -236,7 +231,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${ompMcpSource}" "${homeDirectory}/.omp/agent/mcp.json"
   mkSymlink "${ompModelsSource}" "${homeDirectory}/.omp/agent/models.yml"
   mkSymlink "${dotsRoot}/omp/extensions/modes.ts" "${homeDirectory}/.omp/agent/extensions/modes.ts"
-  mkSymlink "${dotsRoot}/omp/extensions/claude-hooks.ts" "${homeDirectory}/.omp/agent/extensions/claude-hooks.ts"
   mkSymlink "${dotsRoot}/omp/extensions/claude-agents.ts" "${homeDirectory}/.omp/agent/extensions/claude-agents.ts"
   mkSymlink "${dotsRoot}/omp/extensions/diffs/diffs.ts" "${homeDirectory}/.omp/agent/extensions/diffs.ts"
   mkSymlink "${dotsRoot}/omp/extensions/claude-purple/claude-purple.ts" "${homeDirectory}/.omp/agent/extensions/claude-purple.ts"
@@ -350,7 +344,6 @@ pkgs.writeShellScript "user-config-${name}" ''
            "${theme.paths.fzfDir}" \
            "${theme.paths.ghosttyDir}" \
            "${theme.paths.lazygitDir}" \
-           "${theme.paths.leafThemesDir}" \
            "${theme.paths.btopThemesDir}" \
            "${theme.paths.gitDir}" \
            "${theme.wallpapers.dir}"
@@ -369,7 +362,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   ln -sfn "$THEME_GHOSTTY_TARGET" "${theme.paths.ghosttyCurrentFile}"
   ln -sfn "$THEME_LAZYGIT_TARGET" "${theme.paths.lazygitCurrentFile}"
   ln -sfn "$THEME_GIT_THEME_TARGET" "${theme.paths.gitThemeCurrentFile}"
-  ln -sfn "$THEME_LEAF_TARGET" "${theme.paths.leafCurrentFile}"
   ln -sfn "$THEME_BTOP_TARGET" "${theme.paths.btopCurrentFile}"
 
   if [ ! -f "${theme.wallpapers.dark}" ]; then

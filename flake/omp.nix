@@ -1,7 +1,6 @@
 # omp (oh-my-pi) from the upstream release binaries; a source build needs
 # network in the sandbox. Bump: `version` + the per-asset hashes
-# (`gh release view v<version> --repo can1357/oh-my-pi --json assets`), then
-# run scripts/omp/claude-hooks-smoke.sh.
+# (`gh release view v<version> --repo can1357/oh-my-pi --json assets`).
 _: {
   perSystem =
     {

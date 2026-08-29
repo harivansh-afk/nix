@@ -91,9 +91,6 @@ let
     gitThemeCurrentFile = "${configHome}/git/theme.inc";
     sketchybarDir = "${configHome}/sketchybar/themes";
     sketchybarCurrentFile = "${configHome}/sketchybar/themes/current";
-    leafDir = "${configHome}/leaf";
-    leafThemesDir = "${configHome}/leaf/themes";
-    leafCurrentFile = "${configHome}/leaf/themes/current.toml";
     btopThemesDir = "${configHome}/btop/themes";
     btopCurrentFile = "${configHome}/btop/themes/cozybox-current.theme";
   };
@@ -698,157 +695,6 @@ let
       };
     };
 
-  # Custom theme file for leaf (terminal markdown viewer). Every surface is
-  # "reset" - ratatui's Color::Reset, i.e. the terminal's own background - so
-  # leaf paints text only, never blocks; the sole painted regions are the
-  # selection/search highlights that have to show position. Markdown roles
-  # follow the omp lane (neutral-bright headings, coral inline code, blue
-  # links); alerts and task/status colors keep their conventional hues.
-  renderLeaf =
-    mode:
-    let
-      t = themes.${mode};
-      c =
-        if mode == "light" then
-          {
-            base = "arctic";
-            syntax = "InspiredGitHub";
-            bright = "#282828";
-            monoHigh = "#504945";
-            monoMid = "#665c54";
-            mono = "#7c6f64";
-            dim = "#a89984";
-            border = "#c3c7c9";
-            borderStrong = "#a89984";
-            highlightBg = "#d5d5d5";
-            matchBg = "#c3c7c9";
-            coral = "#af3a03";
-            linkBlue = "#076678";
-            linkHover = "#054a58";
-            headingAccent = "#b57614";
-            green = "#427b58";
-            red = "#c5524a";
-            yellow = "#b57614";
-            purple = "#8f3f71";
-          }
-        else
-          {
-            base = "ocean";
-            syntax = "base16-mocha.dark";
-            bright = "#ebdbb2";
-            monoHigh = "#bdae93";
-            monoMid = "#a89984";
-            mono = "#928374";
-            dim = "#7c6f64";
-            border = "#3c3836";
-            borderStrong = "#504945";
-            highlightBg = "#3c3836";
-            matchBg = "#665c54";
-            coral = "#d97757";
-            linkBlue = "#83a598";
-            linkHover = "#9fc0b5";
-            headingAccent = sharedPalette.yellowBright;
-            inherit (sharedPalette)
-              green
-              red
-              yellow
-              purple
-              ;
-          };
-      selectedBg = if mode == "light" then t.selectionBackground else t.border;
-    in
-    ''
-      base = "${c.base}"
-      syntax = "${c.syntax}"
-
-      [ui]
-      content_bg = "reset"
-      scrollbar_hover = "${t.text}"
-      status_bg = "reset"
-      status_separator = "${c.border}"
-      status_brand_fg = "${c.coral}"
-      status_brand_bg = "reset"
-      status_filename_fg = "${t.text}"
-      status_filename_bg = "reset"
-      status_watch_fg = "${c.green}"
-      status_watch_bg = "reset"
-      status_reloaded_fg = "${c.green}"
-      status_reloaded_bg = "reset"
-      status_search_fg = "${c.coral}"
-      status_search_bg = "reset"
-      status_success_fg = "${c.green}"
-      status_success_bg = "reset"
-      status_warning_fg = "${c.yellow}"
-      status_error_fg = "${c.red}"
-      status_error_bg = "reset"
-      status_shortcut_fg = "${c.dim}"
-      status_percent_fg = "${c.mono}"
-      toc_bg = "reset"
-      toc_border = "${c.border}"
-      toc_header_fg = "${c.dim}"
-      toc_hover_fg = "${c.bright}"
-      toc_accent = "${c.coral}"
-      toc_active_bg = "${selectedBg}"
-      toc_inactive_bg = "reset"
-      toc_index_inactive = "${c.dim}"
-      toc_primary_active = "${c.bright}"
-      toc_primary_inactive = "${t.text}"
-      toc_secondary_inactive = "${c.dim}"
-      toc_secondary_text_active = "${t.text}"
-      toc_secondary_text_inactive = "${c.mono}"
-
-      [markdown]
-      text = "${t.text}"
-      strong_text = "${c.bright}"
-      heading_1 = "${c.headingAccent}"
-      heading_2 = "${c.linkBlue}"
-      heading_3 = "${c.bright}"
-      heading_4 = "${c.monoHigh}"
-      heading_other = "${c.monoMid}"
-      heading_underline = "${c.border}"
-      rule = "${c.border}"
-      inline_code_fg = "${c.coral}"
-      inline_code_bg = "reset"
-      code_frame = "${c.border}"
-      code_label = "${c.dim}"
-      code_gutter = "${c.dim}"
-      link_icon = "${c.linkBlue}"
-      link_text = "${c.linkBlue}"
-      link_hover = "${c.linkHover}"
-      blockquote_marker = "${c.borderStrong}"
-      blockquote_text = "${c.monoMid}"
-      list_level_1 = "${c.linkBlue}"
-      list_level_2 = "${c.monoMid}"
-      list_level_3 = "${c.mono}"
-      ordered_list = "${c.linkBlue}"
-      table_border = "${c.border}"
-      table_separator = "${c.borderStrong}"
-      table_header = "${c.linkBlue}"
-      table_cell = "${t.text}"
-      search_highlight_bg = "${c.highlightBg}"
-      search_match_bg = "${c.matchBg}"
-      mark_fg = "${c.bright}"
-      mark_bg = "${selectedBg}"
-      latex_inline_fg = "${c.linkBlue}"
-      latex_inline_bg = "reset"
-      latex_block_fg = "${c.linkBlue}"
-      mermaid_keyword = "${c.coral}"
-      mermaid_arrow = "${c.mono}"
-      mermaid_label = "${t.text}"
-      mermaid_block_fg = "${c.monoMid}"
-      task_checked = "${c.green}"
-      task_unchecked = "${c.dim}"
-      alert_note = "${c.linkBlue}"
-      alert_tip = "${c.green}"
-      alert_important = "${c.purple}"
-      alert_warning = "${c.yellow}"
-      alert_caution = "${c.red}"
-    '';
-
-  # btop theme file. main_bg stays empty so btop paints on the terminal
-  # background (btop.conf has theme_background off). btop reads the theme
-  # once at startup and has no reload signal, so a mode toggle shows up in
-  # the next btop, not the running one.
   renderBtop =
     mode:
     let
@@ -1019,7 +865,6 @@ in
     renderGitThemeInclude
     renderGhostty
     renderLazygit
-    renderLeaf
     renderPurePrompt
     renderSketchybar
     renderZshHighlights

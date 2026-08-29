@@ -58,7 +58,7 @@ modules/             genuinely shared modules
   common.nix         nix settings, overlays, the shared package set
   security/          sops
   users/             shared dotfile and user setup, accounts/ user registry
-pkgs/                derivations: package sets, leaf, jj-ix, packaged scripts
+pkgs/                derivations: package sets, jj-ix, packaged scripts
 scripts/             repo tooling (CI smoke tests, lock regeneration)
 secrets/             sops-encrypted secrets per host
 terraform/           declarative Cloudflare DNS via terranix

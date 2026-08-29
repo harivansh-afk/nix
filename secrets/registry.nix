@@ -28,23 +28,18 @@
     "hermes-dashboard.env" = {
       format = "dotenv";
       owner = username;
-      group = "users";
-      mode = "0400";
       restartUnits = [ "hermes-backend.service" ];
     };
 
     # gws OAuth token, read by the gmail and calendar KB connectors (run as the user).
     "gws-credentials.json" = {
       owner = username;
-      group = "users";
-      mode = "0400";
     };
 
     "wifi.env".restartUnits = [ "NetworkManager-ensure-profiles.service" ];
 
     "tailscale-ix-authkey" = {
       owner = "root";
-      mode = "0400";
       restartUnits = [ "tailscaled-autoconnect.service" ];
     };
 
@@ -55,50 +50,36 @@
 
     "vaultwarden.env" = {
       owner = "vaultwarden";
-      group = "vaultwarden";
-      mode = "0400";
       restartUnits = [ "vaultwarden.service" ];
     };
 
     "forgejo-smtp-password" = {
       owner = "git";
-      group = "git";
-      mode = "0400";
       restartUnits = [ "forgejo.service" ];
     };
 
     "forgejo-mirror.env" = {
       owner = "git";
-      group = "git";
-      mode = "0400";
       restartUnits = [ "forgejo.service" ];
     };
 
     "forgejo-mirror-github-token.env" = {
       owner = "git";
-      group = "git";
-      mode = "0400";
       restartUnits = [ "forgejo.service" ];
     };
 
     "forgejo-google-oauth.env" = {
       owner = "git";
-      group = "git";
-      mode = "0400";
       restartUnits = [ "forgejo.service" ];
     };
 
     "forgejo-github-oauth.env" = {
       owner = "git";
-      group = "git";
-      mode = "0400";
       restartUnits = [ "forgejo.service" ];
     };
 
     "forgejo-runner-token" = {
       owner = "gitea-runner";
-      group = "gitea-runner";
-      mode = "0400";
       restartUnits = [ "gitea-runner-spark.service" ];
     };
   };

@@ -185,9 +185,12 @@ in
     };
     # The activation script reseeds config.yml whenever this generated file
     # changes; without a pinned setupVersion each reseed resets it to 0 and the
-    # onboarding wizard re-fires on next launch. Pin it and disable the wizard
-    # outright so omp updates (which bump CURRENT_SETUP_VERSION) stay quiet too.
-    setupVersion = 1;
+    # onboarding wizard re-fires on next launch. Pin it to upstream's
+    # CURRENT_SETUP_VERSION (src/modes/setup-version.ts): the cold-launch gate
+    # in main.ts eagerly imports the whole setup-wizard barrel whenever the
+    # stored version is lower, before startup.setupWizard is even consulted,
+    # so a stale pin taxes every launch just to decide to skip the wizard.
+    setupVersion = 2;
     startup = {
       quiet = true;
       setupWizard = false;

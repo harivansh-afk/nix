@@ -230,6 +230,12 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${ompModesSource}" "${homeDirectory}/.omp/agent/modes.json"
   mkSymlink "${ompMcpSource}" "${homeDirectory}/.omp/agent/mcp.json"
   mkSymlink "${ompModelsSource}" "${homeDirectory}/.omp/agent/models.yml"
+  for link in "${homeDirectory}/.omp/agent/extensions"/*; do
+    if [ -L "$link" ] && [ ! -e "$link" ]; then
+      rm -f "$link"
+    fi
+  done
+
   mkSymlink "${dotsRoot}/omp/extensions/modes.ts" "${homeDirectory}/.omp/agent/extensions/modes.ts"
   mkSymlink "${dotsRoot}/omp/extensions/claude-agents.ts" "${homeDirectory}/.omp/agent/extensions/claude-agents.ts"
   mkSymlink "${dotsRoot}/omp/extensions/diffs/diffs.ts" "${homeDirectory}/.omp/agent/extensions/diffs.ts"

@@ -9,8 +9,10 @@
  *
  * Strategy (cheapest faithful mapping, chosen after auditing real defs):
  *   - omp lowercases tool names at parse time, so `Read, Grep, Glob, Bash,
- *     Edit, Write, Task` already work. A definition whose frontmatter parses
- *     clean is exposed as a plain SYMLINK - no copy, no drift.
+ *     Edit, Write, Task` already work, and unmatched ids (mcp__*, unknown
+ *     names) are silently ignored on omp's side. A definition whose
+ *     frontmatter parses clean is exposed as a plain SYMLINK - no copy, no
+ *     drift.
  *   - A definition that needs help (multi-word Claude tools like WebSearch,
  *     Agent->task, model pins like `sonnet`/`inherit`) gets a generated COPY
  *     where only the `tools:`/`model:` frontmatter lines are spliced; the body
@@ -22,52 +24,16 @@
  * source disappears. Hand-written files in the target dirs are never touched.
  * A `.omp/.gitignore` is dropped only when this extension creates `.omp/`.
  *
- * Runs once per process from the main session (subagent extension re-binding
- * is detected via a globalThis slot - the loader cache-busts module instances,
- * so module state cannot be used). Kill switch: OMP_CLAUDE_AGENTS=0.
+ * Runs once per process from the main session. Subagent bindings re-run the
+ * extension factory, so the main session is remembered in a globalThis slot
+ * keyed by session id - globalThis survives whether the loader shares or
+ * cache-busts module instances across bindings. Kill switch:
+ * OMP_CLAUDE_AGENTS=0.
  */
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
-
-// ---------------------------------------------------------------------------
-// omp tool vocabulary (mirror of src/tools/builtin-names.ts, lowercase)
-// ---------------------------------------------------------------------------
-
-const OMP_TOOLS: Record<string, true> = {
-	read: true,
-	bash: true,
-	edit: true,
-	ast_grep: true,
-	ast_edit: true,
-	ask: true,
-	debug: true,
-	eval: true,
-	ssh: true,
-	github: true,
-	glob: true,
-	grep: true,
-	lsp: true,
-	inspect_image: true,
-	browser: true,
-	checkpoint: true,
-	rewind: true,
-	task: true,
-	job: true,
-	irc: true,
-	todo: true,
-	web_search: true,
-	search_tool_bm25: true,
-	write: true,
-	memory_edit: true,
-	retain: true,
-	recall: true,
-	reflect: true,
-	learn: true,
-	manage_skill: true,
-	yield: true,
-};
 
 /** Claude tool name (lowercased) -> omp tool name. */
 const CLAUDE_TOOL_ALIASES: Record<string, string> = {
@@ -143,20 +109,16 @@ function translate(content: string, sourcePath: string): TranslationResult | und
 			const { names, consumed } = collectTools(doc.fmLines, i);
 			const mapped: string[] = [];
 			for (const name of names) {
-				const lower = name.toLowerCase();
-				const alias = CLAUDE_TOOL_ALIASES[lower];
-				if (alias !== undefined) {
-					dirty = true;
-					if (!mapped.includes(alias)) mapped.push(alias);
-				} else {
-					// Known tools case-fold on omp's side; unknown names (e.g.
-					// mcp__*) pass through untouched - omp ignores unmatched ids.
-					if (!mapped.includes(name)) mapped.push(name);
-					if (OMP_TOOLS[lower] === undefined && !name.startsWith("mcp__")) dirty = true;
-				}
+				// Known tools case-fold on omp's side; names without an alias
+				// (e.g. mcp__*) pass through untouched - omp ignores unmatched ids.
+				const alias = CLAUDE_TOOL_ALIASES[name.toLowerCase()] ?? name;
+				if (!mapped.includes(alias)) mapped.push(alias);
 			}
-			if (consumed > 1) dirty = true; // normalize dash-lists to CSV
-			out.push(`tools: ${mapped.join(", ")}`);
+			const rewritten = `tools: ${mapped.join(", ")}`;
+			// Dirty when aliasing/dedup changed the list or a dash-list got
+			// normalized to CSV; a byte-identical rewrite keeps the symlink.
+			if (consumed > 1 || rewritten !== line) dirty = true;
+			out.push(rewritten);
 			i += consumed - 1;
 			continue;
 		}
@@ -311,8 +273,8 @@ interface MainSlot {
 const MAIN_SLOT_KEY = "__ompClaudeAgentsMainSession";
 
 function mainSlot(): MainSlot {
-	// Unchecked cast: globalThis is the only store surviving the loader's
-	// per-binding module cache-busting; the key is namespaced and owned here.
+	// Unchecked cast: globalThis is the one store that survives no matter how
+	// the loader treats module instances; the key is namespaced and owned here.
 	const g = globalThis as unknown as Record<string, MainSlot | undefined>;
 	let slot = g[MAIN_SLOT_KEY];
 	if (slot === undefined) {

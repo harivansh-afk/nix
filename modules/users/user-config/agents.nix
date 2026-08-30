@@ -54,28 +54,6 @@ let
   codexXattr = "user.hari.codex-seed-source";
   ompXattr = "user.hari.omp-seed-source";
 
-  # Named model-role bundles for the /mode command
-  # (dots/omp/extensions/modes.ts). Each bundle REPLACES modelRoles wholesale
-  # when applied. Role syntax: provider/model[:thinking][,fallback...].
-  # `default` drives the main session model; `task` is what subagents resolve
-  # at spawn time (the task agent resolves the `task` role).
-  ompModes = {
-    default = {
-      description = "fable-5 high main, gpt-5.6-sol low subagents";
-      roles = {
-        default = "anthropic/claude-fable-5:high";
-        task = "openai-codex/gpt-5.6-sol:low";
-      };
-    };
-    local = {
-      description = "Qwen 3.8 main, unchained Qwen 3.8 task agents";
-      roles = {
-        default = "spark-local/qwen3.8-27b:medium";
-        task = "spark-local/huihui-qwen3.8-27b-abliterated:medium";
-      };
-    };
-  };
-
   # MCP servers for omp (~/.omp/agent/mcp.json). `index` is ix-mcp, the
   # indexable Python-kernel MCP server; the `ix-mcp` on PATH is the spark-only
   # wrapper around the live checkout (hosts/spark/omp.nix), so the entry is
@@ -141,9 +119,17 @@ in
     light = jsonFormat.generate "omp-cozybox-light.json" (theme.ompTheme "light");
   };
 
-  ompModesSource = jsonFormat.generate "omp-modes.json" ompModes;
-
   ompMcpSource = jsonFormat.generate "omp-mcp.json" { mcpServers = ompMcpServers; };
+
+  # Session overlay for local inference: `omp --config ~/.omp/agent/local.yml`.
+  # Role syntax: provider/model[:thinking]; `default` drives the main session
+  # model, `task` is what subagents resolve at spawn time.
+  ompLocalSource = yamlFormat.generate "omp-local-mode.yml" {
+    modelRoles = {
+      default = "spark-local/qwen3.8-27b:medium";
+      task = "spark-local/huihui-qwen3.8-27b-abliterated:medium";
+    };
+  };
 
   ompModelsSource = yamlFormat.generate "omp-models.yml" {
     providers.spark-local = {
@@ -199,8 +185,10 @@ in
     display.shimmer = "disabled";
     disabledProviders = [ "llama.cpp" ];
     todo.enabled = false;
-    # Seed matches the `default` mode so a config reseed lands on it.
-    modelRoles = ompModes.default.roles;
+    modelRoles = {
+      default = "anthropic/claude-fable-5:high";
+      task = "openai-codex/gpt-5.6-sol:low";
+    };
     statusLine = {
       preset = "custom";
       sessionAccent = false;

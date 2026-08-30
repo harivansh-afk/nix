@@ -72,7 +72,7 @@ Rendered outputs: `~/.claude/CLAUDE.md` (core + coding + claude), `~/.codex/AGEN
 
 Skills: `dots/agents/skills/<name>/SKILL.md` are repo-owned (`unslop`); the `mattpocock-skills` flake input supplies the engineering and productivity buckets. `modules/users/user-config/agents.nix` builds one link farm from both and the activation script links it to `~/.agents/skills` (Codex, and anything agentskills.io-compatible) and `~/.claude/skills` (Claude Code). Add a skill by dropping a directory into `dots/agents/skills/`; upgrade upstream with `nix flake update mattpocock-skills`.
 
-Hooks live in `dots/claude/hooks/` and are registered in `agents.nix`. Claude agent definitions (`.claude/agents/*.md`) reach omp's task tool through `dots/omp/extensions/claude-agents.ts`.
+Hooks live in `dots/claude/hooks/` and are registered in `agents.nix`; they are Claude Code's only and do not reach omp (see the omp section).
 
 ## Module layout
 
@@ -150,13 +150,13 @@ The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A ru
 Accent constraint for agent-facing TUI roles (omp markdown headings/inline code/links): no yellow, green, or pink hues. Stay in the neutral-bright / Claude-coral (`#d97757` dark, `#af3a03` light) / muted-blue (`#5b84de` dark, `#4261a5` light) lane. Status colors (success/error/warning, diffs) keep their conventional hues.
 
 
-## omp extensions
+## omp
 
-`dots/omp/extensions/` holds omp extension entries; each entry file is symlinked individually into `~/.omp/agent/extensions/` by the activation script, which also prunes dangling symlinks there so removed extensions do not leave the loader tripping over dead links. The `diffs/` package (diffs.nvim-style edit diffs) splits into the discovered entry (`diffs/diffs.ts`) and lazy business logic (`diffs/core/`): value-importing `@oh-my-pi/pi-coding-agent` during omp's loadExtensions evaluates the package-root barrel (every export graph in the SDK), so the entry defers it to `session_start` via a relative dynamic import that omp's permanent extension-graph hook rewrites at import time. Never symlink `diffs/core/` files into `~/.omp/agent/extensions/` - discovery would load them eagerly and put the cost back on startup. Edits to `core/` files need an omp restart; the entry's `?mtime` cache-buster does not reach runtime imports.
+omp runs stock upstream: no extensions and no hooks, by policy. The extension monkey-patches (diffs.nvim-style edit rendering, purple tool dots, the /mode command, the Claude agent-def bridge) were removed in #535 after auditing 18.0.11 - do not re-add them by reflex; if upstream grows a native knob for one of these, use the knob. The activation script clears any symlink from `~/.omp/agent/extensions/` on every switch, so a stray extension link does not quietly resurrect the pattern. omp's native hooks load only from `hooks/pre/` and `hooks/post/` subdirs (in `.claude`, `.codex`, `~/.omp/agent`); none exist on either host and none should be created - the flat scripts in `~/.claude/hooks/` are Claude Code's and invisible to omp.
 
-`claude-purple/` follows the same entry + lazy `core/` split. Tool-call headings use the separate `toolTitle` token (claude-purple), and since omp 18.x the grep/glob search icons render via `toolTitle` natively; `accent` stays coral for header descriptions, paths, and UI chrome. The extension patches the Theme prototype (and `DEFAULT_SHIMMER_PALETTE`) so the tool dots and the loader spinner/shimmer crest also render claude-purple, read live from `getColorHex("statusLinePath")` (the prompting-bar path shares that lane in `lib/theme.nix`).
+Nix seeds omp from `modules/users/user-config/agents.nix`: the cozybox theme JSONs, `models.yml` (the spark-local llama.cpp provider), `mcp.json` (the index MCP server, spark only), `config.yml` (xattr-tracked reseed - omp rewrites it at runtime, so it is a writable copy, not a symlink), and `local.yml`, a session overlay that puts both model roles on local Qwen: `omp --config ~/.omp/agent/local.yml`.
 
-`config.yml`'s `setupVersion` in `modules/users/user-config/agents.nix` must track upstream's `CURRENT_SETUP_VERSION`: omp's cold-launch gate eagerly imports the whole setup-wizard barrel whenever the stored version is lower, before `startup.setupWizard` is consulted, so a stale pin taxes every launch. There is no config key for it beyond the pin; check the constant in `src/modes/setup-version.ts` when bumping omp majors.
+`config.yml`'s `setupVersion` must track upstream's `CURRENT_SETUP_VERSION`: omp's cold-launch gate eagerly imports the whole setup-wizard barrel whenever the stored version is lower, before `startup.setupWizard` is consulted, so a stale pin taxes every launch. Check the constant in `src/modes/setup-version.ts` when bumping omp majors.
 
 ## Casting (nap)
 

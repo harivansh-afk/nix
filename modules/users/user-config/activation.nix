@@ -37,7 +37,7 @@
   writeXattr,
   ompThemes,
   ompConfigSource,
-  ompModesSource,
+  ompLocalSource,
   ompMcpSource,
   ompModelsSource,
   ompReadXattr,
@@ -88,7 +88,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${homeDirectory}/.agents" \
     "${homeDirectory}/.codex" \
     "${homeDirectory}/.omp/agent/themes" \
-    "${homeDirectory}/.omp/agent/extensions" \
     "${homeDirectory}/.local/bin" \
     "${homeDirectory}/.ssh/sockets" \
     "${stateHome}" \
@@ -227,19 +226,15 @@ pkgs.writeShellScript "user-config-${name}" ''
 
   mkSymlink "${ompThemes.dark}" "${homeDirectory}/.omp/agent/themes/cozybox-dark.json"
   mkSymlink "${ompThemes.light}" "${homeDirectory}/.omp/agent/themes/cozybox-light.json"
-  mkSymlink "${ompModesSource}" "${homeDirectory}/.omp/agent/modes.json"
+  mkSymlink "${ompLocalSource}" "${homeDirectory}/.omp/agent/local.yml"
   mkSymlink "${ompMcpSource}" "${homeDirectory}/.omp/agent/mcp.json"
   mkSymlink "${ompModelsSource}" "${homeDirectory}/.omp/agent/models.yml"
+  rm -f "${homeDirectory}/.omp/agent/modes.json"
   for link in "${homeDirectory}/.omp/agent/extensions"/*; do
-    if [ -L "$link" ] && [ ! -e "$link" ]; then
+    if [ -L "$link" ]; then
       rm -f "$link"
     fi
   done
-
-  mkSymlink "${dotsRoot}/omp/extensions/modes.ts" "${homeDirectory}/.omp/agent/extensions/modes.ts"
-  mkSymlink "${dotsRoot}/omp/extensions/claude-agents.ts" "${homeDirectory}/.omp/agent/extensions/claude-agents.ts"
-  mkSymlink "${dotsRoot}/omp/extensions/diffs/diffs.ts" "${homeDirectory}/.omp/agent/extensions/diffs.ts"
-  mkSymlink "${dotsRoot}/omp/extensions/claude-purple/claude-purple.ts" "${homeDirectory}/.omp/agent/extensions/claude-purple.ts"
 
   target="${homeDirectory}/.omp/agent/config.yml"
   source="${ompConfigSource}"

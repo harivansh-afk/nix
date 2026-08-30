@@ -1,14 +1,4 @@
 {
-  "blink.cmp": {
-    "hash": "sha256-ddDHovz4qm54QdkcnMBusc28GFNo7BWqvRjMnVrGwFE=",
-    "rev": "1e4a8fb9708bbaa35addaa198638feed622d56ae",
-    "url": "https://github.com/saghen/blink.cmp"
-  },
-  "blink.lib": {
-    "hash": "sha256-FsDcgBiD3fl0EO1advAoQBbA2HY1p8Ja7lwhmpB++Zc=",
-    "rev": "5876dd95deeb70aadbe9f1c0b7117a135061cdac",
-    "url": "https://github.com/saghen/blink.lib"
-  },
   "canola-collection": {
     "hash": "sha256-iQh/QeKeELxNsWsWPO/GsNiYdXhZM7vv7Q0uQjO4sJE=",
     "rev": "8566c09080c3084db1ffba21dec53e2b4235daed",
@@ -54,15 +44,20 @@
     "rev": "232b3e981aee6f62405ac40342600ce4d1fe6a7f",
     "url": "https://github.com/lumen-oss/lz.n"
   },
+  "mini.completion": {
+    "hash": "sha256-V4fKHi4D32VQtXgYXOQhrEZHy2jqYP23RB6gpry1f40=",
+    "rev": "d2a2b2a2b5350b713ade3bb744df39eee7d4229b",
+    "url": "https://github.com/nvim-mini/mini.completion"
+  },
+  "mini.pairs": {
+    "hash": "sha256-PxtB01LKAZYED4Bb7zEgLy2+DDKZNOWQ5vE1a6Cqb2I=",
+    "rev": "b1c5a726921b7a8c9321e9a7a208aa0571de5810",
+    "url": "https://github.com/echasnovski/mini.pairs"
+  },
   "nonicons.nvim": {
     "hash": "sha256-5N8zqOmzEHS2Ui6RIoMzVUVIAopw1IZkqW0LeDxpOS0=",
     "rev": "cdb1e205661bb1f127c480d7a58efe09a2709d6a",
     "url": "https://github.com/barrettruth/nonicons.nvim"
-  },
-  "nvim-autopairs": {
-    "hash": "sha256-klOJgBPw8oGDnF9wKIpGDzuBY+tH1acRyvZSPR4wrjw=",
-    "rev": "7b9923abad60b903ece7c52940e1321d39eccc79",
-    "url": "https://github.com/windwp/nvim-autopairs"
   },
   "nvim-lspconfig": {
     "hash": "sha256-DP6osN9M8wTYqIAmTX6R+wzoSV3BhFonDjPZd3Kv0y4=",

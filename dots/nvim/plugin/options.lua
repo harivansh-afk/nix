@@ -40,6 +40,7 @@ o.foldenable = true
 o.updatetime = 250
 o.mouse = "a"
 o.clipboard = "unnamedplus"
+opt.completeopt = { "menuone", "noselect", "noinsert", "fuzzy", "popup" }
 
 -- Clipboard on hosts without a clipboard tool (nvim in a pane on spark):
 -- write the yank to the terminal's clipboard with OSC 52 through

@@ -1,6 +1,12 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = ","
 
+vim.filetype.add {
+  extension = {
+    h = "c",
+  },
+}
+
 vim.opt.background = "dark"
 do
   local orig_notify = vim.notify

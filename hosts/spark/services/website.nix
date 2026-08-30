@@ -35,6 +35,7 @@ in
         file_server
       }
       handle_errors {
+        header Cache-Control "no-cache"
         @notFound expression {err.status_code} == 404
         rewrite @notFound /404.html
         file_server

@@ -1,22 +1,34 @@
 local lsp = require "config.lsp"
 
-vim.lsp.config("*", {
-  on_attach = lsp.on_attach,
+vim.api.nvim_create_autocmd("LspAttach", {
+  group = vim.api.nvim_create_augroup("ALsp", { clear = true }),
+  callback = function(args)
+    local client = vim.lsp.get_client_by_id(args.data.client_id)
+    if client then lsp.on_attach(client, args.buf) end
+  end,
 })
 
-for _, server in ipairs {
+local servers = {
+  "bashls",
+  "clangd",
+  "cssls",
+  "elixirls",
+  "gopls",
+  "html",
+  "jsonls",
   "lua_ls",
   "pyright",
-  "ts_ls",
   "rust_analyzer",
-  "gopls",
-  "clangd",
-  "bashls",
-  "jsonls",
-  "html",
-  "cssls",
-} do
-  local ok, config = pcall(require, "lsp." .. server)
-  if ok and config then vim.lsp.config(server, config) end
-  vim.lsp.enable(server)
-end
+  "ts_ls",
+}
+
+local available_servers = vim
+  .iter(servers)
+  :filter(function(name)
+    local cmd = vim.lsp.config[name].cmd
+    if type(cmd) == "function" then return true end
+    return type(cmd) == "table" and type(cmd[1]) == "string" and vim.fn.executable(cmd[1]) == 1
+  end)
+  :totable()
+
+vim.lsp.enable(available_servers)

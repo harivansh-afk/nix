@@ -45,21 +45,16 @@ Options: >
       options.lua               Vim options
       keymaps.lua               Global keymaps
       autocmds.lua              Autocommands
-      completion.lua            Native automatic completion
+    lsp/
+      elixirls.lua              Custom server definition
     lua/
       config/
-        completion.lua          Native completefunc providers
         lsp.lua                 Shared on_attach
-      lsp/
-        lua_ls.lua              Per-server settings
-        pyright.lua
-        rust_analyzer.lua
-        ts_ls.lua
       plugins/
-        editor.lua              Autopairs, surround, ufo, preview
+        editor.lua              Completion, pairs, surround, ufo, preview
+        lsp.lua                 nvim-lspconfig
         fzf.lua                 Fzf-lua fuzzy finder
         git.lua                 Fugitive, gitsigns, diffs.nvim
-        lsp.lua                 nvim-lspconfig
         canola.lua              Canola file explorer
         treesitter.lua          Treesitter + textobjects
         ui.lua                  Cozybox, statusline, nonicons
@@ -71,8 +66,14 @@ Options: >
         tree.lua                PR worktrees, real files at a commit
       statusline.lua            Native statusline renderer
     after/
+      lsp/
+        lua_ls.lua              Per-server settings
+        pyright.lua
+        rust_analyzer.lua
+        ts_ls.lua
+        clangd.lua
       plugin/
-        lsp.lua                 LSP server enable loop
+        lsp.lua                 Available LSP server enablement
       ftplugin/
         fugitive.lua            Tab remapped to = in fugitive
         go.lua                  Hard tabs, tabstop 4
@@ -104,10 +105,10 @@ Plugins are declared with vim.pack and loaded through lz.n.
     lewis6991/gitsigns.nvim         Git gutter signs
     barrettruth/diffs.nvim          Diff highlighting
 
-    windwp/nvim-autopairs           Auto-close brackets
+    echasnovski/mini.pairs          Auto-close brackets
+    nvim-mini/mini.completion       Manual LSP completion and signatures
     kylechui/nvim-surround          Surround operations
     kevinhwang91/nvim-ufo           Code folding
-    Native Neovim completion        LSP, path, buffer, snippets, env vars
 
 ==============================================================================
 5. KEYMAPS                                                  *config-keymaps*
@@ -122,6 +123,15 @@ GENERAL ~
     J                   Join lines, keep cursor
     x  (visual)         Delete without yanking
     p  (visual)         Paste without yanking
+
+COMPLETION ~
+    <C-n>               Open completion or select next item
+    <C-p>               Select previous item
+    <C-y>               Accept selected item
+    <CR>                Newline without accepting completion
+    <C-t>               File completion
+    <C-;>               Vim command completion
+    <C-r>               Register completion
 
 BUFFERS ~
     <Tab>               Next buffer
@@ -208,12 +218,12 @@ TREESITTER TEXTOBJECTS ~
 ==============================================================================
 6. LSP                                                      *config-lsp*
 
-Servers are configured in `lua/lsp/` and enabled in `after/plugin/lsp.lua`.
-Adding a new server: create `lua/lsp/<name>.lua` returning a settings table,
-then add the name to the list in `after/plugin/lsp.lua`.
+Custom servers live in `lsp/`. Overrides for nvim-lspconfig servers live in
+`after/lsp/`. `after/plugin/lsp.lua` enables listed servers only when their
+executables are available on PATH.
 
-Enabled servers: lua_ls, pyright, ts_ls, rust_analyzer, gopls, clangd,
-bashls, jsonls, html, cssls.
+Configured servers: bashls, clangd, cssls, elixirls, gopls, html, jsonls,
+lua_ls, pyright, rust_analyzer, ts_ls.
 
 Buffer keymaps (set on LspAttach): >
     gd                  Go to definition

@@ -1,5 +1,5 @@
 return {
-  filetypes = { "c", "cpp", "objc", "objcpp", "cuda" },
+  filetypes = { "c", "objc" },
   cmd = {
     "clangd",
     "--clang-tidy",

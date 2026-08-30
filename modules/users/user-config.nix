@@ -94,7 +94,7 @@ let
         writeXattr
         ompThemes
         ompConfigSource
-        ompModesSource
+        ompLocalSource
         ompMcpSource
         ompModelsSource
         ompReadXattr

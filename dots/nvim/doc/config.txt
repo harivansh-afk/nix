@@ -41,6 +41,7 @@ Options: >
 
 >
     init.lua                    Leader, helpers, vim.pack/lz.n bootstrap
+    filetype.lua                Force .h headers to C
     plugin/
       options.lua               Vim options
       keymaps.lua               Global keymaps
@@ -224,6 +225,9 @@ executables are available on PATH.
 
 Configured servers: bashls, clangd, cssls, elixirls, gopls, html, jsonls,
 lua_ls, pyright, rust_analyzer, ts_ls.
+
+clangd is restricted to C and Objective-C. Completion is LSP-only and never
+falls back to words from other loaded buffers.
 
 Buffer keymaps (set on LspAttach): >
     gd                  Go to definition

@@ -20,6 +20,7 @@ return {
       local completion = require "mini.completion"
       completion.setup {
         delay = { completion = 10000000, info = 100, signature = 50 },
+        fallback_action = function() end,
         lsp_completion = {
           source_func = "omnifunc",
           auto_setup = false,

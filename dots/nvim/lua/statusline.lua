@@ -72,7 +72,7 @@ local function flags()
   local parts = {}
 
   if vim.bo.modified then table.insert(parts, "+") end
-  if vim.bo.readonly or not vim.bo.modifiable then table.insert(parts, "") end
+  if vim.bo.readonly or not vim.bo.modifiable then table.insert(parts, "ro") end
 
   return table.concat(parts, " ")
 end

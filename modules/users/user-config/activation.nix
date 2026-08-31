@@ -47,6 +47,7 @@
   heliumExtJson,
   heliumExtensions,
   installMutableTools,
+  nvimTreesitter,
   ...
 }:
 pkgs.writeShellScript "user-config-${name}" ''
@@ -157,6 +158,18 @@ pkgs.writeShellScript "user-config-${name}" ''
         ;;
     esac
   done
+
+  # --- nvim treesitter: the plugin, every parser, and its matched queries come
+  # from the nixpkgs pin, so nothing is compiled or downloaded at runtime.
+  # vim.pack must never manage nvim-treesitter again (the runtime installer is
+  # dead config with nix-delivered parsers), so a stale pack copy is cleared
+  # the same way omp extensions are.
+  mkdir -p "${dataHome}/nvim/site/pack/nix/start"
+  mkSymlink "${nvimTreesitter.plugin}" "${dataHome}/nvim/site/pack/nix/start/nvim-treesitter"
+  mkSymlink "${nvimTreesitter.env}/parser" "${dataHome}/nvim/site/parser"
+  mkSymlink "${nvimTreesitter.env}/queries" "${dataHome}/nvim/site/queries"
+  rm -rf "${dataHome}/nvim/site/parser-info" \
+         "${dataHome}/nvim/site/pack/core/opt/nvim-treesitter"
 
   # --- assorted app configs ---
   # btop: rendered (not symlinked) so custom_cpu_name shows the node's own

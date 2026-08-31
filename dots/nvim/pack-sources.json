@@ -9,11 +9,6 @@
     "rev": "d7c349fd0ffc3d6e8eceefdf66af66cb1ab42826",
     "url": "https://github.com/barrettruth/canola.nvim"
   },
-  "ci.nvim": {
-    "hash": "sha256-3I+wdryPEGU5JZQX3aoRydA8sF++7ud2BAYzCFSYqdY=",
-    "rev": "d88b2cdea5fcf50c6115b0b673c07f90e82fb115",
-    "url": "https://forge.barrettruth.com/barrettruth/ci.nvim"
-  },
   "cozybox.nvim": {
     "hash": "sha256-QulyQlUptCB/uwO3u4d2BY0jAT/9ijVqTpH0KP3of6E=",
     "rev": "67815e6b9230dd24d2b3090398de833125b6afa1",
@@ -68,11 +63,6 @@
     "hash": "sha256-1aMDbmzCvOP5da/IUq0+B8GqkwvaMqfXAp9Q+MyIUZ0=",
     "rev": "8b47db616ef658b8fc27e61db2896aa2f40134de",
     "url": "https://github.com/kylechui/nvim-surround"
-  },
-  "nvim-treesitter": {
-    "hash": "sha256-h0O7KX8rIAhOW5MxQPvw9MeTNsjBxP2JuS/9sgcfzrw=",
-    "rev": "61df84986b4b4ec469ee745a182e433d49f8c27e",
-    "url": "https://github.com/nvim-treesitter/nvim-treesitter"
   },
   "nvim-treesitter-textobjects": {
     "hash": "sha256-naZ+p5RrC+uUyFRaksmozDfNgJRifff+9TDWx79DCPk=",

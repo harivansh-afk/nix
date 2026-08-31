@@ -5,7 +5,7 @@ vim.pack.add({
 return {
   {
     "MeanderingProgrammer/render-markdown.nvim",
-    ft = { "markdown", "codecompanion" },
+    ft = "markdown",
     after = function()
       require("render-markdown").setup {
         completions = { lsp = { enabled = true } },

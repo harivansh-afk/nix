@@ -8,7 +8,6 @@ let
   inherit (pkgs.stdenv.hostPlatform) system;
   nvimPack = import ../../lib/nvim-pack.nix { inherit lib pkgs; };
   packDir = "/root/.local/share/nvim/site/pack/core/opt";
-  parserDir = "/root/.local/share/nvim/site/parser";
   userConfig = import ../../modules/users/user-config.nix {
     inherit lib pkgs;
     user = {
@@ -19,6 +18,7 @@ let
     hostname = "ix";
     isDarwin = false;
     installMutableTools = false;
+    nvimTreesitterEnv = nvimPack.treesitter.curated;
   };
 
   # Pin claude-code to the latest release: the nixpkgs pin lags behind.
@@ -87,7 +87,7 @@ in
   system.activationScripts.nvimPack = {
     deps = [ "userConfig-root" ];
     text = ''
-      mkdir -p "${packDir}" "${parserDir}" /root/.config/nvim
+      mkdir -p "${packDir}" /root/.config/nvim
 
       if [ ! -e /root/.config/nvim/nvim-pack-lock.json ]; then
         install -m 0644 ${nvimPack.lockFile} /root/.config/nvim/nvim-pack-lock.json
@@ -100,12 +100,6 @@ in
             chmod -R u+w "${packDir}/${name}"
           fi
         '') nvimPack.plugins
-      )}
-
-      ${lib.concatStringsSep "\n" (
-        lib.mapAttrsToList (
-          name: grammar: ''ln -sfn ${grammar}/parser "${parserDir}/${name}.so"''
-        ) nvimPack.parsers
       )}
     '';
   };

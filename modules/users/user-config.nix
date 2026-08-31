@@ -22,9 +22,15 @@
   forgeUsers ? { },
   installMutableTools ? true,
   skillSources ? { },
+  nvimTreesitterEnv ? null,
 }:
 let
   inherit (user) name homeDirectory;
+  nvimPack = import ../../lib/nvim-pack.nix { inherit lib pkgs; };
+  nvimTreesitter = {
+    plugin = nvimPack.treesitter.plugin;
+    env = if nvimTreesitterEnv != null then nvimTreesitterEnv else nvimPack.treesitter.full;
+  };
   forgeLogins = {
     harivan = "harivansh-afk";
     ix = "harivansh-afk";
@@ -60,6 +66,7 @@ let
       forgeLogins
       installMutableTools
       skillSources
+      nvimTreesitter
       ;
   };
 

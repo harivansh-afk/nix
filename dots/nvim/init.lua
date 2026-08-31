@@ -31,28 +31,13 @@ end
 function _G.bmap(mode, lhs, rhs, opts) _G.map(mode, lhs, rhs, vim.tbl_extend("force", opts or {}, { buffer = 0 })) end
 
 local disabled_plugins = {
-  "2html_plugin",
-  "bugreport",
-  "getscript",
-  "getscriptPlugin",
   "gzip",
-  "logipat",
   "matchit",
   "netrw",
-  "netrwFileHandlers",
   "netrwPlugin",
-  "netrwSettings",
-  "optwin",
-  "rplugin",
-  "rrhelper",
-  "synmenu",
-  "tar",
+  "remote_plugins",
   "tarPlugin",
-  "tohtml",
-  "tutor",
-  "vimball",
-  "vimballPlugin",
-  "zip",
+  "tutor_mode_plugin",
   "zipPlugin",
 }
 

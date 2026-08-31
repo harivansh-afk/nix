@@ -32,6 +32,13 @@
       proxied = true;
       comment = "spark cloudflared tunnel";
     };
+    mixbridge = {
+      name = "mixbridge.harivan.sh";
+      type = "CNAME";
+      content = "64bce32c-6613-459c-bb68-262d73e1b78f.cfargotunnel.com";
+      proxied = true;
+      comment = "spark cloudflared tunnel";
+    };
     status = {
       name = "status.harivan.sh";
       type = "CNAME";

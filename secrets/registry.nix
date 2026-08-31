@@ -53,6 +53,12 @@
       restartUnits = [ "vaultwarden.service" ];
     };
 
+    # Spotify client-credentials pair for the mixbridge yt-dlp API.
+    "mixbridge.env" = {
+      format = "dotenv";
+      restartUnits = [ "mixbridge-api.service" ];
+    };
+
     "forgejo-smtp-password" = {
       owner = "git";
       restartUnits = [ "forgejo.service" ];

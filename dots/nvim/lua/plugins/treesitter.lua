@@ -49,25 +49,29 @@ return {
       }
 
       for lhs, obj in pairs(select_maps) do
-        map({ "x", "o" }, lhs, function()
-          require("nvim-treesitter-textobjects.select").select_textobject(obj, "textobjects")
-        end)
+        map(
+          { "x", "o" },
+          lhs,
+          function() require("nvim-treesitter-textobjects.select").select_textobject(obj, "textobjects") end
+        )
       end
 
       for method, maps in pairs(move_maps) do
         for lhs, obj in pairs(maps) do
-          map({ "n", "x", "o" }, lhs, function()
-            require("nvim-treesitter-textobjects.move")[method](obj, "textobjects")
-          end)
+          map(
+            { "n", "x", "o" },
+            lhs,
+            function() require("nvim-treesitter-textobjects.move")[method](obj, "textobjects") end
+          )
         end
       end
 
-      map("n", "<leader>sn", function()
-        require("nvim-treesitter-textobjects.swap").swap_next("@parameter.inner")
-      end)
-      map("n", "<leader>sp", function()
-        require("nvim-treesitter-textobjects.swap").swap_previous("@parameter.inner")
-      end)
+      map("n", "<leader>sn", function() require("nvim-treesitter-textobjects.swap").swap_next "@parameter.inner" end)
+      map(
+        "n",
+        "<leader>sp",
+        function() require("nvim-treesitter-textobjects.swap").swap_previous "@parameter.inner" end
+      )
     end,
   },
 }

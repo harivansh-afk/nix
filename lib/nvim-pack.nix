@@ -29,17 +29,28 @@ let
     "yaml"
   ];
 
-  fetchParser =
-    name:
-    let
-      attr = "tree-sitter-" + lib.replaceStrings [ "_" ] [ "-" ] name;
-    in
-    pkgs.tree-sitter-grammars.${attr}
-      or (throw "nixpkgs has no tree-sitter-grammars.${attr} for parser ${name}");
+  grammarSet = pkgs.vimPlugins.nvim-treesitter-parsers;
+
+  mkTreesitterEnv =
+    name: grammars:
+    pkgs.buildEnv {
+      inherit name;
+      paths = grammars ++ lib.filter (q: q != null) (map (g: g.associatedQuery or null) grammars);
+    };
 in
 {
   plugins = lib.mapAttrs fetchPlugin sources;
-  parsers = lib.genAttrs parserNames fetchParser;
+  treesitter = {
+    plugin = pkgs.vimPlugins.nvim-treesitter;
+    full = mkTreesitterEnv "nvim-treesitter-grammars-full" (
+      lib.filter lib.isDerivation (builtins.attrValues grammarSet)
+    );
+    curated = mkTreesitterEnv "nvim-treesitter-grammars-curated" (
+      map (
+        name: grammarSet.${name} or (throw "nvim-treesitter-parsers has no grammar ${name}")
+      ) parserNames
+    );
+  };
   lockFile = pkgs.writeText "nvim-pack-lock.json" (
     builtins.toJSON {
       plugins = lib.mapAttrs (_: source: {

@@ -3,7 +3,7 @@ vim.pack.add({
   -- barrettruth deleted his forge.nvim; the public fork is the source now.
   -- Upstream gone means GitHub answers the anonymous clone with an auth
   -- prompt, which kills vim.pack on any box doing a fresh install.
-  "https://github.com/barrettruth/forge.nvim",
+  "https://github.com/harivansh-afk/forge.nvim",
   "https://github.com/barrettruth/diffs.nvim",
 }, { load = function() end })
 
@@ -31,8 +31,8 @@ return {
         signs_staged_enable = true,
       }
 
-      map("n", "]g", "<cmd>Gitsigns next_hunk<cr>")
-      map("n", "[g", "<cmd>Gitsigns prev_hunk<cr>")
+      map("n", "]g", "<cmd>Gitsigns nav_hunk next<cr>")
+      map("n", "[g", "<cmd>Gitsigns nav_hunk prev<cr>")
       map("n", "<leader>ghs", "<cmd>Gitsigns stage_hunk<cr>")
       map("n", "<leader>ghr", "<cmd>Gitsigns reset_hunk<cr>")
       map("n", "<leader>ghp", "<cmd>Gitsigns preview_hunk<cr>")

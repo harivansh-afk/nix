@@ -23,7 +23,7 @@ end
 
 api.nvim_create_autocmd("TextYankPost", {
   group = augroup,
-  callback = function() vim.highlight.on_yank { higroup = "Visual", timeout = 200 } end,
+  callback = function() vim.hl.on_yank { higroup = "Visual", timeout = 200 } end,
 })
 
 api.nvim_create_autocmd("BufReadPost", {

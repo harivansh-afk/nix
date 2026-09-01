@@ -105,6 +105,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   # --- git ---
   mkSymlink "${dotsRoot}/git/config" "${configHome}/git/config"
   mkSymlink "${dotsRoot}/git/ignore" "${configHome}/git/ignore"
+  mkSymlink "${dotsRoot}/git/allowed_signers" "${configHome}/git/allowed_signers"
   mkSymlink "${gitCredentialsInc}" "${configHome}/git/credentials.inc"
   mkSymlink "${gitDeltaThemesInc}" "${configHome}/git/delta-themes.inc"
 

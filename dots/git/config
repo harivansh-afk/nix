@@ -12,6 +12,9 @@
 [gpg]
 	format = ssh
 
+[gpg "ssh"]
+	allowedSignersFile = ~/.config/git/allowed_signers
+
 [commit]
 	gpgSign = true
 

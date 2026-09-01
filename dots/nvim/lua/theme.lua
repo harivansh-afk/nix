@@ -133,14 +133,20 @@ function M.apply(mode)
   -- re-applies its glyphs over the fresh tables.
   if package.loaded["nvim-web-devicons"] then pcall(require("nvim-web-devicons").refresh) end
 
-  if vim.g.cozybox_theme_mode ~= next_mode or vim.g.colors_name ~= next_scheme then vim.cmd.colorscheme(next_scheme) end
+  local mode_changed = vim.g.cozybox_theme_mode ~= next_mode
+  if mode_changed or vim.g.colors_name ~= next_scheme then vim.cmd.colorscheme(next_scheme) end
 
   -- fzf-lua caches its own icon table keyed only on background, so a
   -- refreshed devicons set is never re-read; drop the cache after nonicons'
-  -- scheduled re-override so the next picker rebuilds it.
-  vim.schedule(function()
-    if package.loaded["fzf-lua.devicons"] then pcall(require("fzf-lua.devicons").unload) end
-  end)
+  -- scheduled re-override so the next picker rebuilds it. Only on a real mode
+  -- change: apply() also runs on VimEnter and FocusGained, and a picker opened
+  -- from the command line (`nvim +'FzfLua files'`) is already running when
+  -- VimEnter fires. Its producer fetches the icon state over RPC, and a
+  -- scheduled unload (from the setup-time apply, or VimEnter) hands it nil,
+  -- so fzf lists zero files.
+  if mode_changed and package.loaded["fzf-lua.devicons"] then
+    vim.schedule(function() pcall(require("fzf-lua.devicons").unload) end)
+  end
 
   vim.g.cozybox_theme_mode = next_mode
   apply_terminal_palette(next_mode)

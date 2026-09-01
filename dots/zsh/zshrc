@@ -240,3 +240,16 @@ _open_fugitive() {
 zle -N _open_fugitive
 bindkey -M viins '^G' _open_fugitive
 bindkey -M vicmd '^G' _open_fugitive
+
+# ctrl+f at an empty prompt opens nvim straight into the file finder (same as <C-f> inside nvim)
+_open_files() {
+  if [[ -n "$BUFFER" ]]; then
+    zle self-insert
+    return
+  fi
+  BUFFER="nvim +'FzfLua files'"
+  zle accept-line
+}
+zle -N _open_files
+bindkey -M viins '^F' _open_files
+bindkey -M vicmd '^F' _open_files

@@ -73,7 +73,7 @@ in
   claudeSettings = jsonFormat.generate "claude-settings.json" {
     "$schema" = "https://json.schemastore.org/claude-code-settings.json";
     env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
-    model = "claude-fable-5";
+    model = "claude-fable-5-1";
     tui = "fullscreen";
     permissions.defaultMode = "bypassPermissions";
     includeCoAuthoredBy = false;
@@ -186,7 +186,7 @@ in
     disabledProviders = [ "llama.cpp" ];
     todo.enabled = false;
     modelRoles = {
-      default = "anthropic/claude-fable-5:high";
+      default = "anthropic/claude-fable-5-1:high";
       task = "openai-codex/gpt-5.6-sol:low";
     };
     statusLine = {

@@ -21,12 +21,7 @@ zmodload zsh/complist
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-za-z}'
 
 # --- aliases ---
-alias ca="cursor-agent"
-alias agent-claude="cursor-agent --model=claude-opus-4-8 --force"
-alias agent-codex="cursor-agent --model=gpt-5.4-xhigh-fast --force"
-alias cc="claude --model 'claude-fable-5' --system-prompt \"$CLAUDE_SYS_PROMPT\""
-alias ccf="claude --model 'claude-fable-5' --system-prompt \"$CLAUDE_SYS_PROMPT\" --settings '{\"fastMode\":true}'"
-alias ch="claude-handoff"
+alias cc="claude --model 'claude-fable-5-1'"
 alias cl="clear"
 alias gc="git commit"
 alias gd="git diff"

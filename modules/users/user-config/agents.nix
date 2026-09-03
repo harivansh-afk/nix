@@ -25,7 +25,6 @@ let
 
   jsonFormat = pkgs.formats.json { };
   yamlFormat = pkgs.formats.yaml { };
-  hookCommand = hook: "${homeDirectory}/.claude/hooks/${hook}";
 
   mkReadXattr =
     xattrName:
@@ -74,27 +73,6 @@ in
       command = "${homeDirectory}/.claude/statusline.sh";
     };
     voiceEnabled = true;
-    hooks = {
-      SessionStart = [
-        {
-          hooks = [
-            {
-              type = "command";
-              command = hookCommand "session-start.sh";
-            }
-          ];
-        }
-        {
-          hooks = [
-            {
-              type = "command";
-              command = hookCommand "session-id.sh";
-              timeout = 5;
-            }
-          ];
-        }
-      ];
-    };
   };
 
   codexConfigSource = pkgs.writeText "codex-config.toml" (

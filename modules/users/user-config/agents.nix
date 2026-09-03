@@ -68,6 +68,7 @@ in
     permissions.defaultMode = "bypassPermissions";
     includeCoAuthoredBy = false;
     autoCompactEnabled = true;
+    autoMemoryEnabled = false;
     showThinkingSummaries = true;
     statusLine = {
       type = "command";

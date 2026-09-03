@@ -8,7 +8,6 @@
 }:
 let
   packageSets = import ../pkgs/sets.nix { inherit inputs lib pkgs; };
-  homeDirectory = if hostConfig.isDarwin then "/Users/${username}" else "/home/${username}";
 in
 {
   # Shared with darwin's determinateNix.customSettings; see
@@ -53,26 +52,4 @@ in
     EDITOR = "nvim";
     VISUAL = "nvim";
   };
-
-  environment.etc."codex/requirements.toml".text = ''
-    [hooks]
-    managed_dir = "${homeDirectory}/.claude/hooks"
-
-    [[hooks.SessionStart]]
-    [[hooks.SessionStart.hooks]]
-    type = "command"
-    command = "$HOME/.claude/hooks/session-start.sh"
-
-    [[hooks.SessionStart]]
-    [[hooks.SessionStart.hooks]]
-    type = "command"
-    command = "$HOME/.claude/hooks/session-id.sh"
-    timeout = 5
-
-    [[hooks.PreToolUse]]
-    matcher = "^Bash$"
-    [[hooks.PreToolUse.hooks]]
-    type = "command"
-    command = "$HOME/.claude/hooks/enforce-modern-tools.sh"
-  '';
 }

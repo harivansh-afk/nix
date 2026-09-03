@@ -1,5 +1,5 @@
 # GUI apps nix launches at login. Apps with their own launch-at-login
-# (Raycast, PastePal, Tailscale) are not duplicated here; launch by absolute
+# (Raycast, Tailscale) are not duplicated here; launch by absolute
 # path so LaunchServices cannot resolve a stray bundle of the same name.
 { lib, ... }:
 let
@@ -8,17 +8,26 @@ let
   ];
 in
 {
-  launchd.user.agents = builtins.listToAttrs (
-    map (app: {
-      name = "open-${lib.strings.toLower (builtins.replaceStrings [ " " ] [ "-" ] app)}";
-      value.serviceConfig = {
-        ProgramArguments = [
-          "/usr/bin/open"
-          "-a"
-          "/Applications/${app}.app"
-        ];
+  launchd.user.agents =
+    builtins.listToAttrs (
+      map (app: {
+        name = "open-${lib.strings.toLower (builtins.replaceStrings [ " " ] [ "-" ] app)}";
+        value.serviceConfig = {
+          ProgramArguments = [
+            "/usr/bin/open"
+            "-a"
+            "/Applications/${app}.app"
+          ];
+          RunAtLoad = true;
+        };
+      }) loginApps
+    )
+    // {
+      open-pastepal.serviceConfig = {
+        ProgramArguments = [ "/Applications/PastePal.app/Contents/MacOS/PastePal" ];
         RunAtLoad = true;
+        KeepAlive = true;
+        ProcessType = "Interactive";
       };
-    }) loginApps
-  );
+    };
 }

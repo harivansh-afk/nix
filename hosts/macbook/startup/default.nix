@@ -6,7 +6,6 @@
 let
   loginItems = [
     "Raycast Beta"
-    "PastePal"
   ];
   plists = [
     "limit.maxfiles.plist"

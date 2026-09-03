@@ -73,8 +73,6 @@ Rendered outputs: `~/.claude/CLAUDE.md` (core + coding + claude), `~/.codex/AGEN
 
 Skills come from the `mattpocock-skills` flake input. `modules/users/user-config/agents.nix` builds the selected skills into one link farm and the activation script links it to `~/.agents/skills` (Codex, and anything agentskills.io-compatible) and `~/.claude/skills` (Claude Code). Upgrade them with `nix flake update mattpocock-skills`.
 
-Hooks live in `dots/claude/hooks/` and are registered in `agents.nix`; they are Claude Code's only and do not reach omp (see the omp section).
-
 ## Module layout
 
 ```
@@ -153,7 +151,7 @@ Accent constraint for agent-facing TUI roles (omp markdown headings/inline code/
 
 ## omp
 
-omp runs stock upstream: no extensions and no hooks, by policy. The extension monkey-patches (diffs.nvim-style edit rendering, purple tool dots, the /mode command, the Claude agent-def bridge) were removed in #535 after auditing 18.0.11 - do not re-add them by reflex; if upstream grows a native knob for one of these, use the knob. The activation script clears any symlink from `~/.omp/agent/extensions/` on every switch, so a stray extension link does not quietly resurrect the pattern. omp's native hooks load only from `hooks/pre/` and `hooks/post/` subdirs (in `.claude`, `.codex`, `~/.omp/agent`); none exist on either host and none should be created - the flat scripts in `~/.claude/hooks/` are Claude Code's and invisible to omp.
+omp runs stock upstream: no extensions and no hooks, by policy. The extension monkey-patches (diffs.nvim-style edit rendering, purple tool dots, the /mode command, the Claude agent-def bridge) were removed in #535 after auditing 18.0.11 - do not re-add them by reflex; if upstream grows a native knob for one of these, use the knob. The activation script clears any symlink from `~/.omp/agent/extensions/` on every switch, so a stray extension link does not quietly resurrect the pattern. No agent harness has hooks configured, and none should be created.
 
 Nix seeds omp from `modules/users/user-config/agents.nix`: the cozybox theme JSONs, `models.yml` (the spark-local llama.cpp provider), `mcp.json` (the index MCP server, spark only), `config.yml` (xattr-tracked reseed - omp rewrites it at runtime, so it is a writable copy, not a symlink), and `local.yml`, a session overlay that puts both model roles on local Qwen: `omp --config ~/.omp/agent/local.yml`.
 

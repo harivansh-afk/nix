@@ -85,7 +85,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${configHome}/devin" \
     "${configHome}/gcloud/configurations" \
     "${configHome}/tea" \
-    "${homeDirectory}/.claude/hooks" \
     "${homeDirectory}/.agents" \
     "${homeDirectory}/.codex" \
     "${homeDirectory}/.omp/agent/themes" \
@@ -207,13 +206,12 @@ pkgs.writeShellScript "user-config-${name}" ''
 
   # --- agents: instructions rendered from dots/agents/ (lib/agent-instructions.nix),
   # skills from one link farm shared by every harness ---
+  rm -rf "${homeDirectory}/.claude/hooks"
   mkSymlink "${claudeMd}" "${homeDirectory}/.claude/CLAUDE.md"
   mkSymlink "${agentSkills}" "${homeDirectory}/.agents/skills"
   mkSymlink "${agentSkills}" "${homeDirectory}/.claude/skills"
   mkSymlink "${claudeSettings}" "${homeDirectory}/.claude/settings.json"
   mkSymlink "${dotsRoot}/claude/statusline.sh" "${homeDirectory}/.claude/statusline.sh"
-  mkSymlink "${dotsRoot}/claude/hooks/session-start.sh" "${homeDirectory}/.claude/hooks/session-start.sh"
-  mkSymlink "${dotsRoot}/claude/hooks/session-id.sh" "${homeDirectory}/.claude/hooks/session-id.sh"
 
   # --- codex: config.toml is a writable copy (codex rewrites it at runtime),
   # reseeded only when the managed source changes (tracked in an xattr) ---

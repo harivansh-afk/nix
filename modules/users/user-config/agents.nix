@@ -2,7 +2,6 @@
   lib,
   pkgs,
   homeDirectory,
-  dotsRoot,
   isDarwin,
   theme,
   skillSources,
@@ -11,15 +10,6 @@
 let
   agentInstructions = import ../../../lib/agent-instructions.nix { inherit pkgs; };
 
-  # ~/.agents/skills is a store directory of symlinks: repo-local skills point
-  # at the live dots checkout (editable without a rebuild), upstream skills at
-  # their pinned flake input. Claude Code only scans ~/.claude/skills, Codex
-  # scans ~/.agents/skills; both are linked to this one farm.
-  skillDirs = dir: builtins.filter (n: n != "README.md") (builtins.attrNames (builtins.readDir dir));
-  localSkills = map (name: {
-    inherit name;
-    path = "${dotsRoot}/agents/skills/${name}";
-  }) (skillDirs ../../../dots/agents/skills);
   # Opt-in allowlist: each upstream skill costs context on every turn (its
   # description is always loaded), so add one here only after reading it.
   pocockPick = [
@@ -68,7 +58,7 @@ in
 {
   claudeMd = agentInstructions.claude;
   codexAgentsMd = agentInstructions.codex;
-  agentSkills = pkgs.linkFarm "agent-skills" (localSkills ++ pocockSkills);
+  agentSkills = pkgs.linkFarm "agent-skills" pocockSkills;
 
   claudeSettings = jsonFormat.generate "claude-settings.json" {
     "$schema" = "https://json.schemastore.org/claude-code-settings.json";

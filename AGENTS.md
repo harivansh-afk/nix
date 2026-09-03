@@ -71,7 +71,7 @@ Instructions for every agent harness are layered in `dots/agents/` and rendered 
 
 Rendered outputs: `~/.claude/CLAUDE.md` (core + coding + claude), `~/.codex/AGENTS.md` (core + coding). A fact that is true for two parts moves up to `core.md`; a repo-specific fact belongs in that repo's `AGENTS.md` (this file), which `CLAUDE.md` imports with `@AGENTS.md`.
 
-Skills: `dots/agents/skills/<name>/SKILL.md` are repo-owned (`unslop`); the `mattpocock-skills` flake input supplies the engineering and productivity buckets. `modules/users/user-config/agents.nix` builds one link farm from both and the activation script links it to `~/.agents/skills` (Codex, and anything agentskills.io-compatible) and `~/.claude/skills` (Claude Code). Add a skill by dropping a directory into `dots/agents/skills/`; upgrade upstream with `nix flake update mattpocock-skills`.
+Skills come from the `mattpocock-skills` flake input. `modules/users/user-config/agents.nix` builds the selected skills into one link farm and the activation script links it to `~/.agents/skills` (Codex, and anything agentskills.io-compatible) and `~/.claude/skills` (Claude Code). Upgrade them with `nix flake update mattpocock-skills`.
 
 Hooks live in `dots/claude/hooks/` and are registered in `agents.nix`; they are Claude Code's only and do not reach omp (see the omp section).
 

@@ -109,19 +109,39 @@ main() {
   sync_on_commit=$(jq -r '.push_mirror_sync_on_commit' "$MANIFEST")
   interval=$(jq -r '.push_mirror_interval' "$MANIFEST")
 
-  local actions_enabled retired_owners
+  local actions_enabled retired_owners github_canonical
   actions_enabled=$(jq -r '.actions_enabled_repos[]' "$MANIFEST")
   retired_owners=$(jq -r '.retired_mirror_owners[]?' "$MANIFEST")
+  github_canonical=$(jq -r '.github_canonical_repos[]?' "$MANIFEST")
 
   # ------------------------------------------------------------------------
   # 1. Owned repos: convert pull -> push, ensure push-mirror exists
   # ------------------------------------------------------------------------
   log "phase 1: ensuring push-mirrors for $owned_owner/*"
+  # Keyed by lower case: the loop below reads lower_name from the DB.
+  declare -A gh_canonical
+  while IFS= read -r p; do [ -n "$p" ] && gh_canonical["${p,,}"]=1; done <<<"$github_canonical"
 
   while IFS=$'\t' read -r rid name original_url; do
     [ -z "$rid" ] && continue
     local path="$owned_owner/$name"
     local dir="/var/lib/forgejo/repositories/$owned_owner/$name.git"
+
+    # GitHub-canonical repos are inbound pull mirrors. A push-mirror on one
+    # would force-push the forge over GitHub, so drop any stray one and skip.
+    if [ -n "${gh_canonical[$path]+x}" ]; then
+      if [ -z "$(sq "SELECT 1 FROM mirror WHERE repo_id=$rid LIMIT 1;" || true)" ]; then
+        warn "  $path: github-canonical but not a pull mirror; re-migrate it as one"
+      fi
+      local stray
+      for stray in $(tea_api "/repos/$owned_owner/$name/push_mirrors" 2>/dev/null | jq -r '.[].remote_name' || true); do
+        log "  $path: github-canonical; deleting push-mirror $stray"
+        [ "$DRY" = "1" ] && continue
+        tea_api -X DELETE "/repos/$owned_owner/$name/push_mirrors/$stray" >/dev/null ||
+          warn "  $path: could not delete push-mirror $stray"
+      done
+      continue
+    fi
 
     # The pull-mirror fetch URL lives in the bare repo's git config (the DB
     # only holds an encrypted copy for the UI). No mutation yet: converting

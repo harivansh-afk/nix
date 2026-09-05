@@ -19,6 +19,7 @@ stdenv.mkDerivation {
       --replace-fail "-march=native" "" \
       --replace-fail 'codesign --entitlements' '/usr/bin/codesign --entitlements'
     substituteInPlace src/main.m \
+      --replace-fail 'signal(SIGCHLD, SIG_IGN);' 'signal(SIGCHLD, SIG_DFL);' \
       --replace-fail '[[NSWorkspace sharedWorkspace] openApplicationAtURL:[NSURL fileURLWithPath:bundlePath] configuration:[NSWorkspaceOpenConfiguration configuration] completionHandler:nil];' '(void)bundlePath;'
   '';
 

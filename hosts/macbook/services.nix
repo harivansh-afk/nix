@@ -32,6 +32,18 @@ let
   '';
 in
 {
+  nixpkgs.overlays = [
+    (_final: prev: {
+      aerospace = prev.aerospace.overrideAttrs {
+        version = "0.21.3-Beta";
+        src = prev.fetchzip {
+          url = "https://github.com/nikitabobko/AeroSpace/releases/download/v0.21.3-Beta/AeroSpace-v0.21.3-Beta.zip";
+          hash = "sha256-JHXtF3IKUbge7z2cMBi4L9IruiByNPCIKugLe4ymvys=";
+        };
+      };
+    })
+  ];
+
   launchd.daemons."limit.maxfiles" = {
     serviceConfig = {
       Label = "limit.maxfiles";

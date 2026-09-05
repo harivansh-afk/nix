@@ -26,6 +26,7 @@
   };
 
   system.defaults.NSGlobalDomain = {
+    AppleEnableSwipeNavigateWithScrolls = true;
     _HIHideMenuBar = true;
     ApplePressAndHoldEnabled = false;
     InitialKeyRepeat = 15;

@@ -10,9 +10,9 @@ After merging, run `just switch`, then grant AerospaceSwipe Accessibility
 access in System Settings > Privacy & Security > Accessibility. The app is
 included in the system applications. If the changed trackpad preferences do
 not take effect immediately, log out and back in. Native three-finger horizontal
-Spaces gestures are disabled for both built-in and Bluetooth trackpads so a
-swipe does not switch both systems. Mission Control and vertical gestures are
-unchanged.
+navigation is disabled for both built-in and Bluetooth trackpads, and page
+navigation uses two fingers. Native desktop switching can remain on four
+fingers. Mission Control and vertical gestures are unchanged.
 
 The package removes upstream's `-march=native` and signs the bundle after Nix
 fixups. It also suppresses upstream's independent app launch after Accessibility

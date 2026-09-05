@@ -36,12 +36,6 @@
       flake = false;
     };
 
-    # mac-to-spark cast appliance: hosts/macbook/nap.nix and hosts/spark/services/nap.nix.
-    nap = {
-      url = "git+https://git.harivan.sh/harivansh-afk/nap";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # Agent skills, linked into ~/.agents/skills by the user activation.
     mattpocock-skills = {
       url = "github:mattpocock/skills";

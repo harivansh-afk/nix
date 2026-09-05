@@ -24,7 +24,6 @@
     ./services/inference.nix
     ./services/kb
     ./services/mixbridge
-    ./services/nap.nix
     ./services/mosh.nix
     ./services/muxd.nix
     ./services/whisper

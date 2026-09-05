@@ -157,16 +157,6 @@ Nix seeds omp from `modules/users/user-config/agents.nix`: the cozybox theme JSO
 
 `config.yml`'s `setupVersion` must track upstream's `CURRENT_SETUP_VERSION`: omp's cold-launch gate eagerly imports the whole setup-wizard barrel whenever the stored version is lower, before `startup.setupWizard` is consulted, so a stale pin taxes every launch. Check the constant in `src/modes/setup-version.ts` when bumping omp majors.
 
-## Casting (nap)
-
-Spark's HDMI monitor doubles as the mac's extended display, driven by the nap flake (git.harivan.sh/harivansh-afk/nap, "Not AirPlay(tm)"): a Rust convergence supervisor on the mac, a `napd` receiver daemon on spark, and an HTTP control plane with session leases between them. `nap on|off|status` on the mac is the whole interface. The architecture, ladder semantics, sunshine gating, DRM force handling, and one-time setup (TCC, sunshine creds, moonlight pairing) are documented in that repo's README; this repo only wires it up:
-
-- `hosts/macbook/nap.nix` imports the sender module (DeskPad build, sunshine + nap-cast launchd agents, `/etc/nap/config.toml`). Sunshine itself stays a brew formula. Never run `sunshine` manually and never `brew services start sunshine`: a second instance steals the ports and the agent instance goes deaf.
-- `hosts/spark/services/nap.nix` imports the receiver module (napd + moonlight kiosk on `cage-tty1.service`). napd binds spark's tailnet address on 46270; tailnet traffic bypasses the NixOS firewall via tailscaled's netfilter rules (the same trust boundary mosh uses), so no firewall ports open. Video stays on the LAN (the tailscale path costs ~30% CPU in wireguard-go on the mac and was rejected); the sender publishes its `en0` address via the control plane, and there is no fallback path by design.
-- Leases replace the old ssh control plane: the sender's steady 5s tick renews a 20s lease, so a sleeping or vanished mac tears the kiosk down and darkens the panel on its own, and a mid-cast LAN address change restarts the kiosk instead of leaving moonlight on a stale target.
-- Machine-local facts that survive any rewrite: the connector is `card1-HDMI-A-1`, manual recovery for a dark unmanaged panel is `echo on > /sys/class/drm/card1-HDMI-A-1/status`, kiosk logs are attributed to the user session (`journalctl _UID=$(id -u moonlight)`, not `-u cage-tty1`), and `~/.config/sunshine/sunshine.conf` on the mac is owned by the nap supervisor, not nix. Verify stream encryption with `rg "Video encryption enabled" ~/Library/Logs/sunshine.log`.
-- Pairing state lives in `/var/lib/moonlight`, so the moonlight user and home must not be renamed casually. Pair mid-cast (sunshine only serves while a cast is up).
-
 ## Remote sessions
 
 Terminal sessions, panes, and persistence are the job of Mux.app and muxd (`~/Documents/Git/mux`); spark runs the daemon via `hosts/spark/services/muxd.nix`. Nothing in this repo multiplexes terminals.

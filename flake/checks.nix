@@ -4,6 +4,7 @@
   perSystem =
     { pkgs, ... }:
     let
+      hermes = self.nixosConfigurations.spark.config.services.hermes-agent;
       lint =
         name: tools: script:
         pkgs.runCommand "lint-${name}" { nativeBuildInputs = tools; } ''
@@ -34,6 +35,35 @@
         ] "bash scripts/pr-smoke.sh";
 
         stylua = lint "stylua" [ pkgs.stylua ] "stylua --check dots/nvim";
+      }
+      // pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "aarch64-linux") {
+        hermes-runtime =
+          pkgs.runCommand "hermes-runtime"
+            {
+              nativeBuildInputs = [
+                hermes.package
+                pkgs.nodejs
+              ]
+              ++ hermes.extraPackages;
+              inherit (hermes.environment) HERMES_CUA_DRIVER_CMD PHOTON_SIDECAR_DIR;
+            }
+            ''
+              export HOME=$TMPDIR/home HERMES_HOME=$TMPDIR/home/.hermes
+              export CUA_DRIVER_RS_TELEMETRY_ENABLED=0
+              export ANONYMIZED_TELEMETRY=false
+              mkdir -p "$HERMES_HOME"
+              hermes --version
+              hermes computer-use status
+              browser-use --version
+              agent-browser --version
+              cd "$PHOTON_SIDECAR_DIR"
+              node --input-type=module -e '
+                await import("spectrum-ts");
+                await import("./send-format.mjs");
+                await import("./stream-staleness.mjs");
+              '
+              touch $out
+            '';
       };
     };
 }

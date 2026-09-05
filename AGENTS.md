@@ -271,6 +271,17 @@ Source of truth is the jj-native ix forge (RPC `https://forge.ix.dev:8447/rpc`, 
 
 ## Hermes
 
-Hermes runs on spark through upstream's NixOS module (`hosts/spark/services/hermes.nix`): the gateway and `hermes serve` as rathi, state in `~/.local/state/hermes/.hermes` (the pre-#442 `~/.hermes` moved there once; a symlink keeps the old path). The backend binds `spark-ix.tail368802.ts.net:9119` behind the session token in `secrets/user/hermes-backend-token`. Models: `gpt-5.6-sol` via the openai-codex OAuth in hermes state (default), Anthropic via `anthropic.env`, and the local `spark/qwen3.8-27b` provider against the llama.cpp router on 18080. The knowledge-base plugin (`dots/hermes/plugins/knowledge-base`, tmpfiles-linked into HERMES_HOME) provides read-only, finance-filtered `kb_search`; the graph tools stayed dead with the Cognee graph.
+Hermes runs through upstream's NixOS module in `hosts/spark/services/hermes.nix`.
+The gateway and dashboard share `~/.local/state/hermes/.hermes`; the `~/.hermes`
+symlink keeps existing CLI state reachable. Astra uses Codex OAuth at medium
+reasoning. Native browser, CUA, delegation, memory and skills are enabled for CLI
+and Photon iMessage. The knowledge-base plugin remains read-only.
 
-The old cron loops, photon messenger, browser-use, and loop scanners stay removed. Do not re-add scheduled scanners or autonomous internet-to-agent paths by reflex, and do not document the KB's contents here; the KB modules under `hosts/spark/services/` are the source of truth for what runs.
+Chromium's existing Default profile is private mutable state; Hermes uses its
+native snapshot feature. Never commit browser profiles or put their credentials
+in the store. For browser identity, Sway/CUA diagnostics, Photon recovery or
+post-deployment acceptance, read `hosts/spark/docs/hermes.md`.
+
+Nix owns runtimes, settings and the assistant guidance in `dots/hermes/`. Memory,
+learned skills and conversation state persist across rebuilds. Scheduled work is
+created only on request; the old scanners, graph and automatic loops remain absent.

@@ -6,7 +6,7 @@
 }:
 let
   chromium = pkgs.chromium.override {
-    commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret";
+    commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret --force-renderer-accessibility";
   };
   swayConfig = pkgs.writeText "sway.conf" ''
     xwayland disable
@@ -35,8 +35,23 @@ in
     pkgs.wtype
   ];
   fonts.packages = [ pkgs.dejavu_fonts ];
+  services.dbus.packages = [ pkgs.at-spi2-core ];
+  systemd.packages = [ pkgs.at-spi2-core ];
+  systemd.user.tmpfiles.users.${username}.rules = [
+    "L+ %h/.config/sway-mimeapps.list - - - - ${pkgs.writeText "sway-mimeapps.list" ''
+      [Default Applications]
+      text/html=chromium-browser.desktop
+      x-scheme-handler/http=chromium-browser.desktop
+      x-scheme-handler/https=chromium-browser.desktop
+    ''}"
+  ];
   services.gnome.gnome-keyring.enable = true;
   programs.dconf.enable = true;
+  programs.dconf.profiles.user.databases = [
+    {
+      settings."org/gnome/desktop/interface".toolkit-accessibility = true;
+    }
+  ];
   xdg.portal = {
     enable = true;
     extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
@@ -69,6 +84,7 @@ in
       WLR_RENDERER = "pixman";
       XDG_CURRENT_DESKTOP = "sway";
       XDG_SESSION_TYPE = "wayland";
+      GTK_A11Y = "always";
     };
     serviceConfig = {
       ExecStart = "${pkgs.sway}/bin/sway --unsupported-gpu --config ${swayConfig}";

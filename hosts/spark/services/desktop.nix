@@ -8,17 +8,31 @@ let
   chromium = pkgs.chromium.override {
     commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret";
   };
+  vncKeymap = pkgs.writeText "vnc-keymap.xkb" ''
+    xkb_keymap {
+      xkb_keycodes { include "evdev+aliases(qwerty)" };
+      xkb_types { include "complete" };
+      xkb_compatibility { include "complete" };
+      xkb_symbols {
+        include "pc+us+inet(evdev)"
+        replace key <META> { [ Super_L ] };
+        modifier_map None { <META> };
+        modifier_map Mod4 { <META> };
+      };
+    };
+  '';
   swayConfig = pkgs.writeText "sway.conf" ''
     xwayland disable
     output HEADLESS-1 mode 1600x1000
     output HEADLESS-1 bg #202020 solid_color
     seat seat0 fallback true
-    bindsym Ctrl+Mod1+Return exec ${pkgs.ghostty}/bin/ghostty
-    bindsym Ctrl+Mod1+b exec ${chromium}/bin/chromium
-    bindsym Ctrl+Mod1+Shift+q kill
-    bindsym Ctrl+Mod1+f fullscreen toggle
-    bindsym Ctrl+Mod1+Left focus left
-    bindsym Ctrl+Mod1+Right focus right
+    input "0:0:wlr_virtual_keyboard_v1" xkb_file ${vncKeymap}
+    bindsym Mod4+Return exec ${pkgs.ghostty}/bin/ghostty
+    bindsym Mod4+b exec ${chromium}/bin/chromium
+    bindsym Mod4+Shift+q kill
+    bindsym Mod4+f fullscreen toggle
+    bindsym Mod4+Left focus left
+    bindsym Mod4+Right focus right
     exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP && ${pkgs.systemd}/bin/systemctl --user start wayvnc
     exec ${pkgs.ghostty}/bin/ghostty
     exec ${chromium}/bin/chromium

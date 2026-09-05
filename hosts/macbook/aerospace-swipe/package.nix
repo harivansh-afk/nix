@@ -10,8 +10,8 @@ stdenv.mkDerivation {
   src = fetchFromGitHub {
     owner = "acsandmann";
     repo = "aerospace-swipe";
-    rev = "16aad5a5ad678335a7593a2afaa473816c278c5f";
-    hash = "sha256-VsqhN5hUZk3ehVwShvL+4WClvLU+CJGGAnHyJKAwteo=";
+    rev = "fecab07757d2e50345afeb361d16107444711a40";
+    hash = "sha256-tLWN5NpbPgEviqXi3+1o1jmyWFFEfWITLvuHvV2l3XY=";
   };
 
   postPatch = ''

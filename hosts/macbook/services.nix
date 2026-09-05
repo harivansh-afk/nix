@@ -8,8 +8,6 @@
   ...
 }:
 let
-  aerospaceSwipe = pkgs.callPackage ./aerospace-swipe/package.nix { };
-
   # Notch strip height for the sketchybar rc. Compiled, because `swift -e`
   # JIT-compiles through xcodebuild and blocked the rc for minutes at login.
   notchInset = pkgs.runCommandCC "notch-inset" { } ''
@@ -32,18 +30,6 @@ let
   '';
 in
 {
-  nixpkgs.overlays = [
-    (_final: prev: {
-      aerospace = prev.aerospace.overrideAttrs {
-        version = "0.21.3-Beta";
-        src = prev.fetchzip {
-          url = "https://github.com/nikitabobko/AeroSpace/releases/download/v0.21.3-Beta/AeroSpace-v0.21.3-Beta.zip";
-          hash = "sha256-JHXtF3IKUbge7z2cMBi4L9IruiByNPCIKugLe4ymvys=";
-        };
-      };
-    })
-  ];
-
   launchd.daemons."limit.maxfiles" = {
     serviceConfig = {
       Label = "limit.maxfiles";
@@ -69,24 +55,8 @@ in
   };
 
   fonts.packages = [ pkgs.sketchybar-app-font ];
-  environment.systemPackages = [ aerospaceSwipe ];
 
   launchd.user.agents = {
-    aerospace-swipe.serviceConfig = {
-      ProgramArguments = [
-        "/bin/sh"
-        "-c"
-        "/bin/wait4path /nix/store && exec ${aerospaceSwipe}/Applications/AerospaceSwipe.app/Contents/MacOS/AerospaceSwipe"
-      ];
-      EnvironmentVariables.PATH = "${pkgs.aerospace}/bin:/usr/bin:/bin";
-      RunAtLoad = true;
-      KeepAlive = true;
-      LimitLoadToSessionType = "Aqua";
-      ProcessType = "Interactive";
-      StandardOutPath = "/Users/${config.system.primaryUser}/Library/Logs/aerospace-swipe.log";
-      StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/aerospace-swipe.log";
-    };
-
     # Hand-declared, not services.aerospace: that module passes its own
     # --config-path and silently overrides the dots toml. No config flag
     # here, so AeroSpace reads the live ~/.config/aerospace/aerospace.toml.

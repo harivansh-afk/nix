@@ -1,7 +1,12 @@
 # macOS system defaults for the macbook: dock, finder, global keyboard/text
 # behavior, screenshots, smb identity. Behavior-free facts only - launchd
 # services live in ./services.nix, login apps in ./apps.nix.
-{ config, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   system.defaults.smb.NetBIOSName = builtins.substring 0 15 config.networking.hostName;
   system.defaults.smb.ServerDescription = config.networking.hostName;
@@ -58,5 +63,11 @@
 
   system.activationScripts.screenshotsDir.text = ''
     sudo -u ${config.system.primaryUser} /bin/mkdir -p /Users/${config.system.primaryUser}/Desktop/screenshots
+  '';
+
+  system.activationScripts.postActivation.text = lib.mkAfter ''
+    for type in net.daringfireball.markdown public.markdown net.ia.markdown com.unknown.md; do
+      sudo -u ${config.system.primaryUser} ${pkgs.duti}/bin/duti -s doc.md-preview "$type" all
+    done
   '';
 }

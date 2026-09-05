@@ -1,156 +1,37 @@
 #!/usr/bin/env bash
-# macbook-open - stream a file (or hand a URL) to the Mac and open it there.
-# The xdg handler side of the house: macbook-open.desktop declares this as the
-# handler command and ~/.config/mimeapps.list (dots/xdg/mimeapps.list) routes
-# browserable mimetypes to it, so xdg-open - and everything that shells out to
-# it - lands on the Mac. Mirror of the clipboard shims: one SSH call over Tailscale, no
-# daemon, dials out itself so it works from mosh sessions too. Linked at
-# ~/.local/bin/macbook-open on Linux hosts.
-#
-# Usage:
-#   macbook-open <file|url> [...]
-#
-# Env:
-#   OPEN_HOST     ssh host/alias of the Mac (default: macbook)
-#   OPEN_MD_APP   macOS app to hand markdown files to (e.g. "Marked 2",
-#                 Typora). Unset: render to HTML on the Mac with pandoc and
-#                 open in the default browser, so .md never falls through to
-#                 whatever editor last claimed the extension in LaunchServices.
-#
-# Exit codes: 0 ok, 2 cannot reach Mac, 1 bad usage / missing file.
 set -euo pipefail
 
-if [ "$(uname -s)" = "Darwin" ]; then
-  exec /usr/bin/open "$@"
-fi
-
-mac="${OPEN_HOST:-macbook}"
-
-# nix-darwin systemPackages path (packages.nix darwinExtras); absolute because
-# the non-interactive remote shell has no profile PATH.
-pandoc=/run/current-system/sw/bin/pandoc
-
-script_path="${BASH_SOURCE[0]}"
-while [ -L "$script_path" ]; do
-  script_dir="$(cd -P "$(dirname "$script_path")" && pwd)"
-  link="$(readlink "$script_path")"
-  case "$link" in
-  /*) script_path="$link" ;;
-  *) script_path="$script_dir/$link" ;;
-  esac
-done
-script_dir="$(cd -P "$(dirname "$script_path")" && pwd)"
-markdown_viewer_dir="$(cd "$script_dir/../markdown-viewer" && pwd)"
-markdown_css_file="$markdown_viewer_dir/markdown-viewer.css"
-markdown_after_body_file="$markdown_viewer_dir/mermaid.html"
-markdown_theme_file="$markdown_viewer_dir/highlight.theme"
-
-if [ "$#" -eq 0 ]; then
-  echo "usage: macbook-open <file|url> [...]" >&2
+if (($# == 0)); then
+  echo 'usage: macbook-open <file|url> [...]' >&2
   exit 1
 fi
 
-# ssh exits 255 on transport failure; anything else is the remote command's
-# own status (e.g. macOS open finding no app for the file).
-fail() {
-  if [ "$1" -eq 255 ]; then
-    echo "macbook-open: could not reach $mac (is it awake / on Tailscale?)" >&2
-    exit 2
-  fi
-  echo "macbook-open: the Mac failed to open it (ssh said above)" >&2
-  exit "$1"
-}
+ssh=(ssh -o BatchMode=yes -o ConnectTimeout=8 "${OPEN_HOST:-macbook}")
 
-# Open a URL in the Mac's default browser. printf %q keeps query strings and
-# ampersands intact through the remote shell.
-send_url() {
-  ssh -n -o BatchMode=yes -o ConnectTimeout=8 "$mac" \
-    "/usr/bin/open $(printf '%q' "$1")" || fail $?
-}
-
-# Stream a file to a fresh temp dir on the Mac and open it. The basename is
-# kept (sanitized; command substitution strips the newline before tr sees it)
-# so macOS associates the right app by extension. Markdown is special-cased:
-# macOS ships no renderer, so LaunchServices resolves .md to whatever editor
-# registered it last (Windsurf, Xcode, ...), which is never what a remote
-# `open README.md` wants.
-send_file() {
-  local file="$1" safe
-  safe="$(basename -- "$file")"
-  safe="$(printf '%s' "$safe" | tr -c 'A-Za-z0-9._-' '_')"
-  [ -n "$safe" ] || safe="file"
-  case "$safe" in
-  *.md | *.markdown | *.mdown | *.mkdn)
-    send_markdown "$file" "$safe"
-    ;;
-  *)
-    ssh -o BatchMode=yes -o ConnectTimeout=8 "$mac" \
-      "d=\$(mktemp -d -t remote-open) && cat > \"\$d/$safe\" && /usr/bin/open \"\$d/$safe\"" \
-      <"$file" || fail $?
-    ;;
-  esac
-}
-
-# Markdown viewer routing. OPEN_MD_APP set: hand the raw file to that app via
-# `open -a`. Unset: pandoc (gfm) renders a standalone HTML next to the streamed
-# file and the default browser opens it; a missing pandoc is a hard error
-# naming the fix, not a silent fall-through to the LaunchServices default.
-send_markdown() {
-  local file="$1" safe="$2" markdown_css markdown_after_body markdown_theme
-  if [ -n "${OPEN_MD_APP:-}" ]; then
-    ssh -o BatchMode=yes -o ConnectTimeout=8 "$mac" \
-      "d=\$(mktemp -d -t remote-open) && cat > \"\$d/$safe\" && /usr/bin/open -a $(printf '%q' "$OPEN_MD_APP") \"\$d/$safe\"" \
-      <"$file" || fail $?
-    return
-  fi
-  markdown_css="$(cat "$markdown_css_file")"
-  markdown_after_body="$(cat "$markdown_after_body_file")"
-  markdown_theme="$(cat "$markdown_theme_file")"
-  ssh -o BatchMode=yes -o ConnectTimeout=8 "$mac" \
-    "d=\$(mktemp -d -t remote-open) && cat > \"\$d/$safe\" && cat > \"\$d/markdown-viewer.css\" <<'EOF_CSS'
-$markdown_css
-EOF_CSS
-cat > \"\$d/markdown-mermaid.html\" <<'EOF_JS'
-$markdown_after_body
-EOF_JS
-cat > \"\$d/markdown-highlight.theme\" <<'EOF_THEME'
-$markdown_theme
-EOF_THEME
-if [ -x $pandoc ]; then $pandoc --standalone --from gfm --metadata pagetitle=\"$safe\" --css \"\$d/markdown-viewer.css\" --include-after-body \"\$d/markdown-mermaid.html\" --highlight-style \"\$d/markdown-highlight.theme\" --output \"\$d/$safe.html\" \"\$d/$safe\" && /usr/bin/open \"\$d/$safe.html\"; else echo 'macbook-open: pandoc missing on the Mac; darwin-rebuild switch installs it (packages.nix darwinExtras)' >&2; exit 3; fi" \
-    <"$file" || fail $?
-}
-
-send_path() {
-  local file="$1"
-  if [ -d "$file" ]; then
-    echo "macbook-open: $file is a directory (only files and URLs)" >&2
-    exit 1
-  fi
-  if [ ! -f "$file" ]; then
-    echo "macbook-open: $file: no such file" >&2
-    exit 1
-  fi
-  send_file "$file"
-}
-
-# Percent-decode a file:// URI into a plain path; desktop Exec fields get %u,
-# so callers may hand over URIs rather than paths.
-decode() {
-  local s="${1#file://localhost}"
-  s="${s#file://}"
-  printf '%b' "${s//%/\\x}"
-}
-
-for arg in "$@"; do
-  case "$arg" in
+for target in "$@"; do
+  case "$target" in
   http://* | https://*)
-    send_url "$arg"
+    "${ssh[@]}" -n "/usr/bin/open $(printf '%q' "$target")"
+    continue
     ;;
   file://*)
-    send_path "$(decode "$arg")"
-    ;;
-  *)
-    send_path "$arg"
+    target="${target#file://}"
+    target="${target#localhost}"
+    decoded=
+    while [[ "$target" =~ ^([^%]*)%([[:xdigit:]]{2})(.*)$ ]]; do
+      printf -v byte '%b' "\\x${BASH_REMATCH[2]}"
+      decoded+="${BASH_REMATCH[1]}$byte"
+      target="${BASH_REMATCH[3]}"
+    done
+    target="$decoded$target"
     ;;
   esac
+
+  if [[ ! -f "$target" ]]; then
+    printf 'macbook-open: not a regular file: %s\n' "$target" >&2
+    exit 1
+  fi
+
+  printf -v name '%q' "${target##*/}"
+  "${ssh[@]}" "d=\$(mktemp -d -t remote-open) && cat > \"\$d\"/$name && /usr/bin/open \"\$d\"/$name" <"$target"
 done

@@ -13,21 +13,21 @@ let
     output HEADLESS-1 mode 1600x1000
     output HEADLESS-1 bg #202020 solid_color
     seat seat0 fallback true
-    bindsym Mod4+Return exec ${pkgs.foot}/bin/foot
+    bindsym Mod4+Return exec ${pkgs.ghostty}/bin/ghostty
     bindsym Mod4+b exec ${chromium}/bin/chromium
     bindsym Mod4+Shift+q kill
     bindsym Mod4+f fullscreen toggle
     bindsym Mod4+Left focus left
     bindsym Mod4+Right focus right
     exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP && ${pkgs.systemd}/bin/systemctl --user start wayvnc
-    exec ${pkgs.foot}/bin/foot
+    exec ${pkgs.ghostty}/bin/ghostty
     exec ${chromium}/bin/chromium
   '';
 in
 {
   environment.systemPackages = [
     chromium
-    pkgs.foot
+    pkgs.ghostty
     pkgs.sway
     pkgs.grim
     pkgs.wtype

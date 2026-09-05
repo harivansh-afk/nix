@@ -74,6 +74,10 @@ tell application "System Events"
   end tell
 end tell
 EOF
+  elif [[ "$(uname -s)" == "Linux" ]]; then
+    GSETTINGS_SCHEMA_DIR="@GSETTINGS_SCHEMA_DIR@" \
+      GIO_EXTRA_MODULES="@GIO_EXTRA_MODULES@" \
+      gsettings set org.gnome.desktop.interface color-scheme "prefer-$mode"
   fi
 
   while IFS= read -r socket; do
@@ -82,7 +86,7 @@ EOF
   done < <(
     {
       find /tmp -maxdepth 1 -type s -name 'nvim-*.sock' 2>/dev/null
-      find "${TMPDIR:-/tmp}" -type s -path "*/nvim.${USER}/*/nvim.*" 2>/dev/null
+      find "${TMPDIR:-/tmp}/nvim.${USER}" -maxdepth 2 -type s -name 'nvim.*' 2>/dev/null
     } | sort -u
   )
 }

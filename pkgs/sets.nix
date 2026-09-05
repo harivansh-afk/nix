@@ -100,6 +100,7 @@ in
   ];
 
   fonts = with pkgs; [
+    (callPackage ./nonicons.nix { })
     nerd-fonts.symbols-only
   ];
 }

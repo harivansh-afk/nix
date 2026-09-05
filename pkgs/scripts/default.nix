@@ -103,12 +103,17 @@ let
     theme = mkScript {
       name = "theme";
       file = ./bin/theme.sh;
-      runtimeInputs = with pkgs; [
-        coreutils
-        findutils
-        neovim
-      ];
+      runtimeInputs =
+        (with pkgs; [
+          coreutils
+          findutils
+          neovim
+        ])
+        ++ lib.optionals pkgs.stdenv.isLinux [ pkgs.glib ];
       replacements = {
+        "@GSETTINGS_SCHEMA_DIR@" =
+          lib.optionalString pkgs.stdenv.isLinux "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}/glib-2.0/schemas";
+        "@GIO_EXTRA_MODULES@" = lib.optionalString pkgs.stdenv.isLinux "${pkgs.dconf.lib}/lib/gio/modules";
         "@DEFAULT_MODE@" = theme.defaultMode;
         "@STATE_DIR@" = theme.paths.stateDir;
         "@STATE_FILE@" = theme.paths.stateFile;

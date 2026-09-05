@@ -15,6 +15,8 @@ let
     seat seat0 fallback true
     bindsym Mod4+Return exec ${pkgs.ghostty}/bin/ghostty
     bindsym Mod4+b exec ${chromium}/bin/chromium
+    bindsym Mod1+Return exec ${pkgs.ghostty}/bin/ghostty
+    bindsym Mod1+b exec ${chromium}/bin/chromium
     bindsym Mod4+Shift+q kill
     bindsym Mod4+f fullscreen toggle
     bindsym Mod4+Left focus left

@@ -34,6 +34,7 @@ in
   systemd.user.services.sway = {
     description = "Sway desktop";
     wantedBy = [ "default.target" ];
+    path = [ pkgs.bash ];
     unitConfig.ConditionUser = username;
     environment = {
       WLR_BACKENDS = "headless";

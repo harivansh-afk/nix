@@ -23,8 +23,8 @@ let
       case "''${1:-status}" in
         status) systemctl --user status agent-desktop ;;
         screenshot) grim -o HEADLESS-1 "''${2:-/tmp/agent-desktop.png}" ;;
-        type) shift; wtype -- "$@" ;;
-        key) shift; wtype "$@" ;;
+        type) shift; wtype -s 100 -- "$@" ;;
+        key) shift; wtype -s 100 "$@" -s 100 ;;
         move) swaymsg seat seat0 cursor set "$2" "$3" ;;
         click)
           swaymsg seat seat0 cursor press "''${2:-button1}"

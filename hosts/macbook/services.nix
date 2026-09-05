@@ -1,7 +1,3 @@
-# Every launchd unit on the macbook; nix-darwin launchd is the only service
-# manager. Not here on purpose: tailscale (the GUI app is the node, a nix
-# tailscaled ran logged-out beside it for months), karabiner (SMAppService,
-# owned by the app), nap-cast + sunshine (declared by the nap sender module).
 {
   config,
   pkgs,

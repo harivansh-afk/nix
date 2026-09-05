@@ -18,7 +18,6 @@
     ./homebrew.nix
     ./mux
     ./muxd.nix
-    ./nap.nix
     ./services.nix
     ./startup
     ./voiceink

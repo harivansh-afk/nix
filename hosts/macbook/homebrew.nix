@@ -7,7 +7,6 @@ let
   # not persist, so preActivation writes the trust store too.
   trustedTaps = [
     "humanlayer/humanlayer"
-    "lizardbyte/homebrew" # sunshine
     "peripheryapp/periphery"
   ];
 in
@@ -35,11 +34,7 @@ in
       trusted = true;
     }) trustedTaps;
 
-    # CLI tools live in nix; these two are the exceptions. Never omp (it is
-    # installer-managed in ~/.local/bin). sunshine is binary only, its agent
-    # comes from the nap sender module.
     brews = [
-      "lizardbyte/homebrew/sunshine"
       "pngpaste"
     ];
 

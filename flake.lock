@@ -3,16 +3,16 @@
     "brew-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1781226006,
-        "narHash": "sha256-w4ZTuOnhYiDxjaynrMTASzp802QblBWmo3wpB8wVN4Y=",
+        "lastModified": 1787796349,
+        "narHash": "sha256-5s+MJAFyemD6lvrtL2c0jQ7P/XChdx1MPXzoCaQY+ic=",
         "owner": "Homebrew",
         "repo": "brew",
-        "rev": "109191be4988470b51a60a5ef1998520aa24c01b",
+        "rev": "3e3da86e4eaccd23f4ce43df9b0a31b16c707347",
         "type": "github"
       },
       "original": {
         "owner": "Homebrew",
-        "ref": "6.0.1",
+        "ref": "6.0.20",
         "repo": "brew",
         "type": "github"
       }
@@ -29,22 +29,6 @@
       "original": {
         "owner": "ipetkov",
         "repo": "crane",
-        "type": "github"
-      }
-    },
-    "deskpad-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1772284464,
-        "narHash": "sha256-2T/Ylz/Y4StPwBqcvnvxS1Ntm+b4EdKTgfRw6Qe53VY=",
-        "owner": "Stengo",
-        "repo": "DeskPad",
-        "rev": "c3349f0e237e000cb4826fb3ea1cdd1c44949461",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Stengo",
-        "repo": "DeskPad",
         "type": "github"
       }
     },
@@ -671,27 +655,6 @@
         "url": "https://git.harivan.sh/harivansh-afk/mux.git"
       }
     },
-    "nap": {
-      "inputs": {
-        "deskpad-src": "deskpad-src",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1787866697,
-        "narHash": "sha256-RcxuyV6VxJg9Zbgk+9O+jTw7cPiAS4oI/RBEnl2EgsU=",
-        "ref": "refs/heads/main",
-        "rev": "93da87401c5ede7311d1e112c8ab1e8fb264596b",
-        "revCount": 2,
-        "type": "git",
-        "url": "https://git.harivan.sh/harivansh-afk/nap"
-      },
-      "original": {
-        "type": "git",
-        "url": "https://git.harivan.sh/harivansh-afk/nap"
-      }
-    },
     "neovim-nightly": {
       "inputs": {
         "flake-parts": "flake-parts_7",
@@ -798,11 +761,11 @@
         "brew-src": "brew-src"
       },
       "locked": {
-        "lastModified": 1781389246,
-        "narHash": "sha256-ORqLAo/hoJdsZC7UPAuEHev6S0+XIqKEC7vjo5prz1k=",
+        "lastModified": 1788444135,
+        "narHash": "sha256-ChwTDZPvTmEgZdS30dUfgdXlzAPtZAUWwEH/PfDXZmg=",
         "owner": "zhaofengli-wip",
         "repo": "nix-homebrew",
-        "rev": "de7953a08ed4bb9245be043e468561c17b89130d",
+        "rev": "ec8417a617de4d3c739aed40837e308ebd667165",
         "type": "github"
       },
       "original": {
@@ -1273,7 +1236,6 @@
         "lanzaboote": "lanzaboote",
         "mattpocock-skills": "mattpocock-skills",
         "mux": "mux",
-        "nap": "nap",
         "neovim-nightly": "neovim-nightly",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",

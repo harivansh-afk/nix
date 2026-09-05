@@ -23,6 +23,7 @@
   };
 
   hosts.spark = {
+    "wayvnc.conf".owner = username;
     "user-password-hash".neededForUsers = true;
 
     "hermes-dashboard.env" = {

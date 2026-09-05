@@ -405,6 +405,8 @@ pkgs.writeShellScript "user-config-${name}" ''
     # aerospace reads ~/.config/aerospace/aerospace.toml
     mkdir -p "${configHome}/aerospace"
     mkSymlink "${dotsRoot}/aerospace/aerospace.toml" "${configHome}/aerospace/aerospace.toml"
+    mkdir -p "${configHome}/aerospace-swipe"
+    mkSymlink "${dotsRoot}/aerospace-swipe/config.json" "${configHome}/aerospace-swipe/config.json"
 
     # sketchybar: rc + plugins from dots, palette fragments from the store,
     # themes/current follows the active theme mode (see also theme.sh)

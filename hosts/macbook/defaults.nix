@@ -26,6 +26,7 @@
   };
 
   system.defaults.NSGlobalDomain = {
+    AppleEnableSwipeNavigateWithScrolls = true;
     _HIHideMenuBar = true;
     ApplePressAndHoldEnabled = false;
     InitialKeyRepeat = 15;
@@ -49,6 +50,10 @@
   # startup has exactly one owner per app (see ./apps.nix). Was previously
   # set imperatively; declared here so a fresh machine gets it.
   system.defaults.CustomUserPreferences."com.apple.loginwindow".TALLogoutSavesState = false;
+  system.defaults.CustomUserPreferences."com.apple.AppleMultitouchTrackpad".TrackpadThreeFingerHorizSwipeGesture =
+    0;
+  system.defaults.CustomUserPreferences."com.apple.driver.AppleBluetoothMultitouch.trackpad".TrackpadThreeFingerHorizSwipeGesture =
+    0;
 
   system.defaults.screencapture = {
     location = "~/Desktop/screenshots";

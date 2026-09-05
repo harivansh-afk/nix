@@ -1,4 +1,9 @@
-{ pkgs, username, ... }:
+{
+  config,
+  pkgs,
+  username,
+  ...
+}:
 let
   chromium = pkgs.chromium.override {
     commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret";
@@ -14,8 +19,7 @@ let
     bindsym Mod4+f fullscreen toggle
     bindsym Mod4+Left focus left
     bindsym Mod4+Right focus right
-    exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP
-    exec ${pkgs.wayvnc}/bin/wayvnc 127.0.0.1 45931
+    exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP && ${pkgs.systemd}/bin/systemctl --user start wayvnc
     exec ${pkgs.foot}/bin/foot
     exec ${chromium}/bin/chromium
   '';
@@ -30,6 +34,21 @@ in
   ];
   fonts.packages = [ pkgs.dejavu_fonts ];
   services.gnome.gnome-keyring.enable = true;
+
+  systemd.user.services.wayvnc = {
+    description = "WayVNC remote desktop";
+    partOf = [ "sway.service" ];
+    after = [ "sway.service" ];
+    unitConfig.ConditionUser = username;
+    serviceConfig = {
+      ExecStart = "${pkgs.wayvnc}/bin/wayvnc --config ${
+        config.sops.secrets."wayvnc.conf".path
+      } 100.114.116.11 45931";
+      Restart = "on-failure";
+      RestartSec = 5;
+      UMask = "0077";
+    };
+  };
 
   systemd.user.services.sway = {
     description = "Sway desktop";

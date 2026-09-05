@@ -20,14 +20,6 @@ on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 # for the focused workspace itself, so no variable passing and no shell).
 exec-on-workspace-change = ['/usr/bin/pkill', '-USR2', '-x', 'sketchybar-feed']
 
-# Force every detected window into the tiling layer, then fall through to the
-# app-specific workspace-routing rules below (check-further-callbacks = true).
-# Without this, some apps (e.g. Linear) open as floating and overlap tiled
-# windows instead of splitting space. Must stay above the routing rules.
-[[on-window-detected]]
-check-further-callbacks = true
-run = 'layout tiling'
-
 [[on-window-detected]]
 if.app-id = 'com.apple.finder'
 run = 'layout floating'

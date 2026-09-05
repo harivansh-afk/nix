@@ -44,6 +44,7 @@ alias lt="eza --tree"
 alias lla="eza -la"
 
 if [[ "$OSTYPE" == darwin* ]]; then
+  alias vnc-spark="/usr/bin/open vnc://100.114.116.11:45931"
   alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 fi
 

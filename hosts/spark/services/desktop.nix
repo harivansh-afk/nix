@@ -8,25 +8,11 @@ let
   chromium = pkgs.chromium.override {
     commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret";
   };
-  vncKeymap = pkgs.writeText "vnc-keymap.xkb" ''
-    xkb_keymap {
-      xkb_keycodes { include "evdev+aliases(qwerty)" };
-      xkb_types { include "complete" };
-      xkb_compatibility { include "complete" };
-      xkb_symbols {
-        include "pc+us+inet(evdev)"
-        replace key <META> { [ Super_L ] };
-        modifier_map None { <META> };
-        modifier_map Mod4 { <META> };
-      };
-    };
-  '';
   swayConfig = pkgs.writeText "sway.conf" ''
     xwayland disable
     output HEADLESS-1 mode 1600x1000
     output HEADLESS-1 bg #202020 solid_color
     seat seat0 fallback true
-    input "0:0:wlr_virtual_keyboard_v1" xkb_file ${vncKeymap}
     bindsym Mod4+Return exec ${pkgs.ghostty}/bin/ghostty
     bindsym Mod4+b exec ${chromium}/bin/chromium
     bindsym Mod4+Shift+q kill
@@ -57,6 +43,7 @@ in
 
   systemd.user.services.wayvnc = {
     description = "WayVNC remote desktop";
+    environment.XKB_DEFAULT_OPTIONS = "altwin:meta_win";
     partOf = [ "sway.service" ];
     after = [ "sway.service" ];
     unitConfig.ConditionUser = username;

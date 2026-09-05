@@ -12,5 +12,5 @@ if [ "$#" -eq 0 ]; then
 fi
 
 for arg in "$@"; do
-  xdg-open "$arg"
+  BROWSER="${BROWSER:-macbook-open}" xdg-open "$arg"
 done

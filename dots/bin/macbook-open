@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if (($# == 0)); then
+  echo 'usage: macbook-open <file|url> [...]' >&2
+  exit 1
+fi
+
+ssh=(ssh -o BatchMode=yes -o ConnectTimeout=8 "${OPEN_HOST:-macbook}")
+
+for target in "$@"; do
+  case "$target" in
+  http://* | https://*)
+    "${ssh[@]}" -n "/usr/bin/open $(printf '%q' "$target")"
+    continue
+    ;;
+  file://*)
+    target="${target#file://}"
+    target="${target#localhost}"
+    decoded=
+    while [[ "$target" =~ ^([^%]*)%([[:xdigit:]]{2})(.*)$ ]]; do
+      printf -v byte '%b' "\\x${BASH_REMATCH[2]}"
+      decoded+="${BASH_REMATCH[1]}$byte"
+      target="${BASH_REMATCH[3]}"
+    done
+    target="$decoded$target"
+    ;;
+  esac
+
+  if [[ ! -f "$target" ]]; then
+    printf 'macbook-open: not a regular file: %s\n' "$target" >&2
+    exit 1
+  fi
+
+  printf -v name '%q' "${target##*/}"
+  "${ssh[@]}" "d=\$(mktemp -d -t remote-open) && cat > \"\$d\"/$name && /usr/bin/open \"\$d\"/$name" <"$target"
+done

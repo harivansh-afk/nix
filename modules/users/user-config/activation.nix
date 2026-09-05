@@ -117,6 +117,10 @@ pkgs.writeShellScript "user-config-${name}" ''
   # --- bin: standalone helper scripts ---
   ${lib.optionalString (!isDarwin) ''
     mkSymlink "${dotsRoot}/bin/open" "${homeDirectory}/.local/bin/open"
+    mkdir -p "${homeDirectory}/.local/share/applications"
+    mkSymlink "${dotsRoot}/bin/macbook-open" "${homeDirectory}/.local/bin/macbook-open"
+    mkSymlink "${dotsRoot}/xdg/macbook-open.desktop" "${homeDirectory}/.local/share/applications/macbook-open.desktop"
+    mkSymlink "${dotsRoot}/xdg/mimeapps.list" "${configHome}/mimeapps.list"
     mkSymlink "${dotsRoot}/bin/wl-paste" "${homeDirectory}/.local/bin/wl-paste"
     mkSymlink "${dotsRoot}/bin/xclip" "${homeDirectory}/.local/bin/xclip"
   ''}

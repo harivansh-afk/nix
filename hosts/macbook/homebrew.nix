@@ -56,6 +56,7 @@ in
       "humanlayer"
       "karabiner-elements"
       "linear"
+      "markdown-preview"
       "riptide-beta"
       "signal"
       "slack"

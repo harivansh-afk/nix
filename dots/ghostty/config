@@ -1,6 +1,6 @@
 theme = light:cozybox-light,dark:cozybox-dark
 font-family = Berkeley Mono
-font-codepoint-map = U+f101-U+f25c=nonicons
+font-codepoint-map = U+f101-U+f2ba=nonicons
 background-opacity = 1
 font-size = 16
 window-padding-y = 0

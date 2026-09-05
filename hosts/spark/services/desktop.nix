@@ -34,6 +34,12 @@ in
   ];
   fonts.packages = [ pkgs.dejavu_fonts ];
   services.gnome.gnome-keyring.enable = true;
+  programs.dconf.enable = true;
+  xdg.portal = {
+    enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+    config.sway.default = [ "gtk" ];
+  };
 
   systemd.user.services.wayvnc = {
     description = "WayVNC remote desktop";

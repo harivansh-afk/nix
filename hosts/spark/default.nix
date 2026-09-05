@@ -17,7 +17,7 @@
     ../../modules/users/nixos.nix
     ./kernel-hardening.nix
     ./services/caddy.nix
-    ./services/agent-desktop.nix
+    ./services/desktop.nix
     ./services/cloudflared.nix
     ./services/forgejo
     ./services/hermes.nix

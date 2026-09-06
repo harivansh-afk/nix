@@ -36,8 +36,19 @@ The hourly timer runs the indexer automatically. Run it on demand with:
 systemctl start kb-ingest
 ```
 
-Each run performs a full reload of `kb_vec`, then recreates its HNSW and
-full-text indexes.
+Each run prepares embeddings in a connection-local temporary table while the
+previous index stays readable. Once every batch succeeds, one transaction
+replaces `kb_vec` and ensures its HNSW and full-text indexes exist. An embedding,
+insert, or index failure leaves the previous rows intact; closing the connection
+discards the temporary table. An empty staging directory intentionally replaces
+the index with an empty table. Readers can briefly wait during the final database
+replacement, but never wait on embedding requests holding the replacement lock.
+
+The `kb-ingest` flake check runs ingestion against a disposable Postgres/pgvector
+cluster using synthetic documents and embeddings. It checks successful replacement,
+reader access during embedding, incomplete responses, staging insert failure,
+rollback after the final truncate, and empty-input replacement. It never connects
+to the live KB or embedding server.
 
 ## Search
 

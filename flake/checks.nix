@@ -35,6 +35,10 @@
         ] "bash scripts/pr-smoke.sh";
 
         stylua = lint "stylua" [ pkgs.stylua ] "stylua --check dots/nvim";
+        kb-ingest = lint "kb-ingest" [
+          (pkgs.python3.withPackages (ps: [ ps.psycopg2 ]))
+          (pkgs.postgresql_17.withPackages (ps: [ ps.pgvector ]))
+        ] "python3 hosts/spark/services/kb/test_kb_vec.py";
         logitech = lint "logitech" [ pkgs.python3 ] "python3 hosts/macbook/logitech/test_apply.py";
       }
       // pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "aarch64-linux") {

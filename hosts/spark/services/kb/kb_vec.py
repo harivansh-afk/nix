@@ -2,7 +2,7 @@
 
 ingest: walk /var/lib/kb/staging/**/*.md, chunk on text boundaries with
         overlap, embed via the local llama.cpp server, full reload of the
-        kb_vec table (TRUNCATE + insert; idempotent, ~seconds on GPU).
+        kb_vec table atomically after preparing all embeddings.
 search: hybrid retrieval, two arms fused with reciprocal rank fusion:
         - semantic: pgvector cosine over an HNSW index. The query (and only
           the query) gets the Qwen3-Embedding instruction prefix; documents
@@ -17,6 +17,7 @@ HNSW at this scale is near-exact. Do not reintroduce ivfflat.
 """
 
 import argparse
+from contextlib import closing
 import glob
 import json
 import os
@@ -74,49 +75,64 @@ def chunks(t, target=CHUNK_TARGET, overlap=CHUNK_OVERLAP):
 
 
 def ingest():
-    con = psycopg2.connect(**PG)
-    cur = con.cursor()
-    cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
-    cur.execute(
-        "CREATE TABLE IF NOT EXISTS kb_vec(id bigserial primary key, source text,"
-        " path text, chunk int, txt text, emb vector(1024))"
-    )
-    cur.execute("DROP INDEX IF EXISTS kb_vec_idx")
-    cur.execute("TRUNCATE kb_vec")
-    con.commit()
-    files = glob.glob("/var/lib/kb/staging/**/*.md", recursive=True)
-    t0 = time.time()
-    n = 0
-    batch, meta = [], []
-
-    def flush():
-        nonlocal n
-        if not batch:
-            return
-        embs = embed(batch)
-        for (src, path, ci, txt), e in zip(meta, embs):
-            cur.execute(
-                "INSERT INTO kb_vec(source,path,chunk,txt,emb) VALUES(%s,%s,%s,%s,%s)",
-                (src, path, ci, txt, str(e)),
-            )
-            n += 1
+    with closing(psycopg2.connect(**PG)) as con, con.cursor() as cur:
+        cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
+        cur.execute(
+            "CREATE TABLE IF NOT EXISTS kb_vec(id bigserial primary key, source text,"
+            " path text, chunk int, txt text, emb vector(1024))"
+        )
+        cur.execute(
+            "CREATE TEMP TABLE kb_vec_ingest(source text, path text, chunk int,"
+            " txt text, emb vector(1024))"
+        )
         con.commit()
-        batch.clear()
-        meta.clear()
+        files = glob.glob("/var/lib/kb/staging/**/*.md", recursive=True)
+        t0 = time.time()
+        n = 0
+        batch, meta = [], []
 
-    for f in files:
-        src = f.split("/var/lib/kb/staging/")[-1].split("/")[0]
-        txt = open(f, errors="ignore").read()
-        for ci, c in enumerate(chunks(txt)):
-            batch.append(c)
-            meta.append((src, f, ci, c))
-            if len(batch) >= 32:
-                flush()
-    flush()
-    cur.execute("CREATE INDEX IF NOT EXISTS kb_vec_hnsw ON kb_vec USING hnsw (emb vector_cosine_ops)")
-    cur.execute("CREATE INDEX IF NOT EXISTS kb_vec_fts ON kb_vec USING gin (to_tsvector('english', txt))")
-    con.commit()
-    print(f"INDEXED {n} chunks from {len(files)} docs in {time.time() - t0:.1f}s")
+        def flush():
+            nonlocal n
+            if not batch:
+                return
+            embs = embed(batch)
+            if len(embs) != len(meta):
+                raise ValueError("Embedding response count does not match chunk count")
+            with con:
+                for (src, path, ci, txt), e in zip(meta, embs):
+                    cur.execute(
+                        "INSERT INTO kb_vec_ingest(source,path,chunk,txt,emb)"
+                        " VALUES(%s,%s,%s,%s,%s)",
+                        (src, path, ci, txt, str(e)),
+                    )
+                    n += 1
+            batch.clear()
+            meta.clear()
+
+        for f in files:
+            src = f.split("/var/lib/kb/staging/")[-1].split("/")[0]
+            with open(f, errors="ignore") as document:
+                txt = document.read()
+            for ci, c in enumerate(chunks(txt)):
+                batch.append(c)
+                meta.append((src, f, ci, c))
+                if len(batch) >= 32:
+                    flush()
+        flush()
+        with con:
+            cur.execute("DROP INDEX IF EXISTS kb_vec_idx")
+            cur.execute("TRUNCATE kb_vec")
+            cur.execute(
+                "INSERT INTO kb_vec(source,path,chunk,txt,emb)"
+                " SELECT source,path,chunk,txt,emb FROM kb_vec_ingest"
+            )
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS kb_vec_hnsw ON kb_vec USING hnsw (emb vector_cosine_ops)"
+            )
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS kb_vec_fts ON kb_vec USING gin (to_tsvector('english', txt))"
+            )
+        print(f"INDEXED {n} chunks from {len(files)} docs in {time.time() - t0:.1f}s")
 
 
 def search(

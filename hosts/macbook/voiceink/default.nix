@@ -10,9 +10,13 @@
 }:
 let
   src = inputs.voiceink-src;
-  patch = ./streaming-provider.patch;
+  patchText = lib.concatMapStringsSep "\n" builtins.readFile [
+    ./streaming-provider.patch
+    ./mini-recorder.patch
+  ];
+  patch = pkgs.writeText "voiceink.patch" patchText;
   rev = "${src.rev or src.narHash or "unknown"}-${
-    builtins.substring 0 12 (builtins.hashFile "sha256" patch)
+    builtins.substring 0 12 (builtins.hashString "sha256" patchText)
   }-${builtins.substring 0 12 (builtins.hashFile "sha256" ./build.sh)}";
   home = "/Users/${username}";
 
@@ -30,6 +34,8 @@ let
   '';
 in
 {
+  imports = [ ./settings.nix ];
+
   system.activationScripts.postActivation.text = lib.mkAfter ''
     sudo -u ${username} ${build} || {
       echo "VoiceInk build or installation failed; see the build output above" >&2

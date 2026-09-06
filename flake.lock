@@ -630,6 +630,27 @@
         "type": "github"
       }
     },
+    "mixbridge-web": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788720313,
+        "narHash": "sha256-yaaMZ57tH8+rLu1ih9JxshbGH0URKtHNnGG5AfeCqQM=",
+        "ref": "master",
+        "rev": "e9721cd2f00830dd4c87fde1e2ac891a5d40ecf3",
+        "revCount": 297,
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/mixbridge-web.git"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/mixbridge-web.git"
+      }
+    },
     "mux": {
       "inputs": {
         "flake-utils": "flake-utils_2",
@@ -1218,6 +1239,7 @@
         "ix-src": "ix-src",
         "lanzaboote": "lanzaboote",
         "mattpocock-skills": "mattpocock-skills",
+        "mixbridge-web": "mixbridge-web",
         "mux": "mux",
         "neovim-nightly": "neovim-nightly",
         "nix-darwin": "nix-darwin",

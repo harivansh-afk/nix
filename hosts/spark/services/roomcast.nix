@@ -101,6 +101,9 @@ in
     ];
     rokuAddress = "10.41.1.210";
     rokuSerial = "X04000ALK1SW";
+    playerAppId = "dev";
+    playerSupportsSeeking = true;
+    playerSupportsSubtitles = true;
   };
 
   users.users.${username}.extraGroups = [ "roomcast" ];

@@ -70,6 +70,7 @@ in
               "status"
               "control"
               "seek"
+              "subtitles"
               "sources"
               "browse"
             ];

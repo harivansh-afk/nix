@@ -30,6 +30,8 @@ let
   '';
 in
 {
+  imports = [ ./settings.nix ];
+
   system.activationScripts.postActivation.text = lib.mkAfter ''
     sudo -u ${username} ${build} || {
       echo "VoiceInk build or installation failed; see the build output above" >&2

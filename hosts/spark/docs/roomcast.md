@@ -4,6 +4,27 @@ The public Roomcast flake owns the application, package and NixOS module. This
 repo pins its revision and configures Spark's LAN interface, TV serial, address
 hint, discovery scope and Hermes integration. Hermes uses the module's package.
 
+## Roku player
+
+Spark selects the sideloaded Roomcast Player (`dev`) with timestamp seeking and
+subtitle control enabled. Install Roomcast Player 1.3.3 or newer before deploying
+these settings. The ZIP is built from the pinned Roomcast input with
+`nix build --inputs-from . roomcast#roku-player`; upload
+`result/roomcast-player.zip` through the TV's developer installer. Installer
+credentials stay outside Git and the Nix store.
+
+New movies and episodes request captions on, preferring English, using the
+Roomcast module defaults. Availability depends on the source. The `subtitles`
+tool reads tracks or changes on/off, language and track selection; its
+confirmation reports native player state. Verify visible captions and their
+dialogue timing on the TV. Seeking and a timestamp start also need playback
+acceptance after deployment; installing the ZIP alone does not enable them in
+the running service.
+
+A Roomcast service restart discards the active relay session. Record the title,
+episode and position before restarting, then issue a fresh play request with
+`start_seconds` to resume. A paused, healthy session uses `control` resume.
+
 ## Network
 
 Spark uses DHCP on `wlP9s9`; no router access or reservation is required. The TV's
@@ -47,9 +68,9 @@ second profile to lose its tools. HTTP sessions do not spawn MCP subprocesses.
 `hosts/spark/services/roommate-agent.nix` configures Hermes's native
 multiplexed profiles. Roomcast contains no messaging transport, identities or
 chat permissions. The existing Photon connection stays on the personal profile.
-Telegram routes to `roommates`, which exposes only seven Roomcast MCP tools:
-search, play, status, control, seek, sources and browse. The profile has its own
-working directory, instructions and shared group conversation state. Personal
+Telegram routes to `roommates`, which exposes only eight Roomcast MCP tools:
+search, play, status, control, seek, subtitles, sources and browse. The profile
+has its own working directory, instructions and shared group conversation state. Personal
 memory and plugins are disabled; Hermes supplies native shared Codex OAuth.
 Its Nix-selected skills are `hermes-agent` and `roomcast`, with bundled seeding,
 project discovery and skill-creation nudges disabled.

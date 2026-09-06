@@ -9,7 +9,12 @@
 
   services.roomcast = {
     enable = true;
-    lanAddress = "10.41.1.145";
+    lanInterface = "wlP9s9";
+    rokuMac = "ec:9b:75:c0:3f:40";
+    discoveryNetworks = [
+      "10.41.1.0/24"
+      "10.41.2.0/24"
+    ];
     rokuAddress = "10.41.1.210";
     rokuSerial = "X04000ALK1SW";
   };

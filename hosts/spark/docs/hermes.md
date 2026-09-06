@@ -73,7 +73,7 @@ modules omitted by upstream's writable-mirror fallback at the pinned revision.
 Photon binds its control endpoint to loopback port 18789.
 
 Group TV requests use the separate [roommate agent](roomcast.md#roommate-agent).
-Groups do not enter the personal gateway.
+Groups use the TV profile within the same gateway, with separate tools and state.
 
 The existing `PHOTON_ALLOWED_USERS` should identify Hari. Verify that allowlist and
 credentials after activation; unknown senders must not be able to start work.

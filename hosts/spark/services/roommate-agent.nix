@@ -61,7 +61,7 @@ in
           ];
         };
         mcp_servers.roommates_tv = {
-          command = "${config.services.roomcast.package}/bin/roomcast-mcp";
+          inherit (hermes.settings.mcp_servers.roomcast) url transport;
           lazy = false;
           tools = {
             include = [

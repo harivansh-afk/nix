@@ -91,7 +91,7 @@ in
       PHOTON_SIDECAR_DIR = "${photonSidecar}";
       PHOTON_NODE_BIN = "${pkgs.nodejs}/bin/node";
       PHOTON_SIDECAR_PORT = "18789";
-      HERMES_GATEWAY_BUSY_ACK_ENABLED = "false";
+      HERMES_GATEWAY_BUSY_ACK_ENABLED = "true";
     };
     hermesHomeFiles."SOUL.md" = ../../../dots/hermes/SOUL.md;
     hermesHomeFiles.".no-bundled-skills" =
@@ -153,6 +153,7 @@ in
         busy_input_mode = "steer";
         memory_notifications = "off";
         platforms.photon = {
+          busy_ack_detail = false;
           tool_progress = false;
           streaming = false;
         };

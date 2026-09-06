@@ -5,9 +5,18 @@ and pinned runtimes. The Hermes flake input tracks an exact upstream revision;
 Astra uses the existing Codex OAuth identity with medium reasoning. Activation
 clears the old main-model localhost URL while retaining the separate Spark model.
 
-The two processes serve different clients: `hermes gateway` handles Photon
-iMessage; `hermes serve` exposes the authenticated tailnet API used by the Mac
+The two processes serve different clients: `hermes gateway` handles Photon and Telegram;
+`hermes serve` exposes the authenticated tailnet API used by the Mac
 desktop app. They share Hermes state. The backend does not serve the web dashboard.
+
+Messaging busy acknowledgements are explicitly enabled, including when an old
+mutable `.env` retained the previous disabled value. Photon uses concise notices
+without iteration/tool details. The foreground handles quick requests; repo-owned
+agent guidance sends long investigations to background delegation and ends the
+foreground turn. This is an agent workflow, not a separate chat scheduler or a
+hard response-time guarantee. Profiles can run concurrently but share gateway
+restarts. Roomcast's shared HTTP MCP service is independent of those restarts;
+see [roomcast.md](roomcast.md).
 
 CLI and Photon sessions have terminal/files, delegation, skills, memory and
 conversation recall, plus the shared `computer` MCP server for browser and desktop

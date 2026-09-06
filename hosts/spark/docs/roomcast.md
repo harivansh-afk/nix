@@ -32,47 +32,40 @@ precise seeking; credentials stay in private Roomcast state.
 
 `hosts/spark/services/roommate-agent.nix` configures Hermes's native
 multiplexed profiles. Roomcast contains no messaging transport, identities or
-chat permissions. Photon uses the unmodified upstream sidecar.
-
-The existing owner's DM routes to the default personal profile. Every other
-Photon chat routes to `roommates`, which exposes only seven Roomcast MCP tools:
+chat permissions. The existing Photon connection stays on the personal profile.
+Telegram routes to `roommates`, which exposes only seven Roomcast MCP tools:
 search, play, status, control, seek, sources and browse. The profile has its own
-working directory, instructions and conversation state; personal memory and
-plugins are disabled. Hermes supplies its native shared Codex OAuth fallback.
-There is one Photon connection, and Hermes replies to the originating chat.
-Members of a group share its conversation session through Hermes's native setting.
-Its Nix-selected skills are only `hermes-agent` and `roomcast`; bundled seeding,
-project skill discovery and skill-creation nudges are disabled for this profile.
+working directory, instructions and shared group conversation state. Personal
+memory and plugins are disabled; Hermes supplies native shared Codex OAuth.
+Its Nix-selected skills are `hermes-agent` and `roomcast`, with bundled seeding,
+project discovery and skill-creation nudges disabled.
 
-Profiles share a gateway process and Unix user. They separate agent context and
-tool availability; they are not a filesystem or process sandbox. Guests have no
-terminal, personal browser, knowledge-base, delegation or outbound messaging tool.
-Roomcast's service separately runs as its own user with its own browser state.
+Profiles share a gateway process and Unix user. They separate context and tools,
+not filesystem or process access. Guests have no terminal, personal browser,
+knowledge-base, delegation or outbound messaging tool. Roomcast separately runs
+as its own service user with its own browser state.
 
 ### Enrollment
 
-After merging and deploying:
+The existing `@sparkotron_bot` is enrolled in Roommates TV (`-5343368090`). Nix
+owns this exact group allowlist; the recovered token and owner ID remain in
+`secrets/hosts/spark/hermes-telegram.env`. Roommates' Telegram DMs and other groups are
+rejected; the owner's Telegram DM reaches the TV profile. Photon remains configured independently for Hari.
 
-1. Create the iMessage group with the existing Spark agent and your roommates.
-2. Send `/whoami` yourself in that group and record its chat ID.
-3. Add `ROOMMATE_CHAT_IDS=<chat ID>` to the existing encrypted
-   `secrets/hosts/spark/hermes-photon.env`, then deploy that configuration change.
-   Multiple chat IDs are comma-separated. Never use `*`.
-4. Have a roommate ask for playback and confirm the reply arrives in that group.
+Telegram privacy mode is enabled. Use `/whoami@sparkotron_bot` for identity and
+reply directly to the bot for TV requests. Ordinary messages need privacy mode
+disabled before Telegram delivers them; `require_mention = true` still limits
+agent replies to explicit triggers. Do not grant group-admin powers just to
+receive ordinary messages.
 
-Every member of an allowed group, including members added later, can control the
-TV there. Their DMs and other groups remain unauthorized. Keep
-`PHOTON_ALLOWED_USERS` restricted to the owner; do not add roommates. Native slash
-permissions allow guests only `/help` and `/whoami`; the owner retains admin
-commands. Remove a chat ID and redeploy to revoke future requests. Revocation does
-not cancel a request already running or stop playback.
+Members of the enrolled group, including later additions, can control the TV.
+Guests can use `/help` and `/whoami`, but cannot change profiles or configuration.
+The owner retains native admin commands. Remove the group from both allowlists
+and redeploy to revoke requests; that does not stop existing playback.
 
-The owner DM route uses the existing `PHOTON_HOME_CHANNEL` phone number with
-Photon's `any;-;` chat-ID prefix, verified against this account's session metadata.
-If Photon changes that identifier, update the route; unmatched owner chats get
-the TV profile. The managed configuration expands identifiers from the service's
-private environment, so no phone numbers or group IDs enter the Nix store.
-An unset `ROOMMATE_CHAT_IDS` grants no guest access.
+Acceptance requires a group request, proof that the `roommates` profile handled
+it with only Roomcast tools, and a reply delivered to the same group. Check a
+real status request before asking for disruptive playback changes.
 
 ### Network policy
 

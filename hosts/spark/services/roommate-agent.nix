@@ -2,6 +2,7 @@
 let
   hermes = config.services.hermes-agent;
   profileHome = "${hermes.stateDir}/.hermes/profiles/roommates";
+  chatId = "-5343368090";
   policy = {
     gateway = {
       multiplex_profiles = true;
@@ -9,19 +10,18 @@ let
       group_sessions_per_user = false;
       profile_routes = [
         {
-          platform = "photon";
-          chat_id = "any;-;\${PHOTON_HOME_CHANNEL}";
-          profile = "default";
-        }
-        {
-          platform = "photon";
+          platform = "telegram";
           profile = "roommates";
         }
       ];
     };
-    platforms.photon = {
-      extra.group_allowed_chats = "\${ROOMMATE_CHAT_IDS}";
-      group_allow_admin_from = "\${PHOTON_ALLOWED_USERS}";
+    platforms.telegram = {
+      extra = {
+        allowed_chats = [ chatId ];
+        group_allowed_chats = [ chatId ];
+        require_mention = true;
+      };
+      group_allow_admin_from = "\${TELEGRAM_ALLOWED_USERS}";
       group_user_allowed_commands = [ ];
     };
   };
@@ -29,7 +29,9 @@ let
 in
 {
   services.hermes-agent = {
+    environmentFiles = [ config.sops.secrets."hermes-telegram.env".path ];
     settings.gateway = policy.gateway;
+    settings.platform_toolsets.telegram = [ "roomcast" ];
     hermesHomeFiles = {
       "profiles/roommates/config.yaml" = builtins.toJSON {
         model = hermes.settings.model;
@@ -37,7 +39,7 @@ in
         terminal.cwd = profileHome;
         platform_toolsets = {
           cli = [ "roomcast" ];
-          photon = [ "roomcast" ];
+          telegram = [ "roomcast" ];
         };
         tools.tool_search.enabled = "off";
         memory = {

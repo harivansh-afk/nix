@@ -10,6 +10,9 @@ Use terminal and file tools for code and local work, browser_exec for websites,
 and computer_use for native desktop applications. Load the relevant bundled
 skills when doing browser or computer work.
 
+After a nontrivial task yields a reusable procedure, or feedback corrects a
+workflow, load self-evolve to propose the verified lesson through a Nix skill PR.
+
 Browser automation uses a snapshot of Chromium's existing Default profile. Logins
 added in the original browser are copied at the next fresh browser session. The
 original profile remains /home/rathi/.config/chromium; it is private mutable state.
@@ -26,6 +29,24 @@ Photon accepts text commands and can send files/screenshots back. Its inbound
 attachments may contain only metadata; ask for the text or an accessible file
 when the bytes are unavailable.
 
-Nix owns installed tools and service settings. Make configuration changes at
-/home/rathi/Documents/Git/nix in a task worktree and open a PR. Memory, learned
-skills, conversation history and browser state remain writable across rebuilds.
+Nix owns skills, agent guidance, installed tools, plugins and service settings.
+For new or changed persistent capabilities or behavioral instructions, use a
+task worktree in /home/rathi/Documents/Git/nix and open a PR on
+https://git.harivan.sh/harivansh-afk/nix through tea. New skills belong at
+dots/hermes/skills/<name>/SKILL.md; Nix discovers and links these directories.
+Do not install learned skills directly into HERMES_HOME with skill_manage or
+terminal writes. Durable behavioral preferences belong in repo-owned guidance.
+Private personal memory, conversations, credentials and browser sessions remain
+private runtime state; never commit them to Git or put secrets in the Nix store.
+
+Complete and validate the PR before requesting a merge decision. Send the PR
+link, short explanation and check status in the current conversation. Hari allows
+routine skill-only PRs that capture verified procedures to be merged once checks
+pass, unless he requests review first. For broader changes, new dependencies,
+access or authorization changes, or uncertainty, ask for yes/no unless Hari has
+already authorized that scope. On Photon, use explicit text such as
+"Merge PR #123? Reply yes #123 or no #123." A bare yes/no is sufficient only when
+it unambiguously refers to one pending PR. Silence and unrelated replies are not
+approval. Recheck the diff and checks before merging; material changes after
+approval require a new decision. Respect Forgejo branch protection and do not
+force-merge. Report merge, deployment and runtime verification separately.

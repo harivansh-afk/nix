@@ -38,6 +38,10 @@ let
     "hermes-cli"
     "knowledge_base"
   ];
+  skillsDir = ../../../dots/hermes/skills;
+  skillNames = lib.filter (name: builtins.pathExists (skillsDir + "/${name}/SKILL.md")) (
+    lib.attrNames (lib.filterAttrs (_: type: type == "directory") (builtins.readDir skillsDir))
+  );
 in
 {
   imports = [ inputs.hermes-agent.nixosModules.default ];
@@ -48,7 +52,8 @@ in
     "L+ ${stateDir}/.hermes/plugins/knowledge-base - - - - /home/rathi/Documents/Git/nix/dots/hermes/plugins/knowledge-base"
     "L+ ${stateDir}/workspace/kb-staging - - - - /var/lib/kb/staging"
     "L+ ${stateDir}/.hermes/skills/cua-driver - - - - ${cuaDriver.skills}"
-  ];
+  ]
+  ++ map (name: "L+ ${stateDir}/.hermes/skills/${name} - - - - ${skillsDir + "/${name}"}") skillNames;
 
   services.hermes-agent = {
     enable = true;
@@ -116,6 +121,7 @@ in
       computer_use.native_wayland = true;
       approvals.mode = "smart";
       plugins.enabled = [ "knowledge-base" ];
+      skills.creation_nudge_interval = 0;
       platform_toolsets = {
         cli = toolsets;
         photon = toolsets;

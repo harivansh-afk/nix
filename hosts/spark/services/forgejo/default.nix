@@ -177,6 +177,18 @@ in
   };
   users.groups.git = { };
 
+  security.pam.services.sshd.rules.session.forgejo-systemd = {
+    order = config.security.pam.services.sshd.rules.session.systemd.order - 1;
+    control = "[success=1 default=ignore]";
+    modulePath = "${pkgs.pam}/lib/security/pam_succeed_if.so";
+    args = [
+      "quiet"
+      "user"
+      "="
+      "git"
+    ];
+  };
+
   # Forgejo parses templates once at startup.
   systemd.services.forgejo.restartTriggers = [
     forgejoWeb.frontend

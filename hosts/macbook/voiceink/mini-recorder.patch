@@ -6,15 +6,25 @@ diff --git a/VoiceInk/Views/Recorder/MiniRecorderView.swift b/VoiceInk/Views/Rec
 -    private let compactWidth: CGFloat = 184
 +    private let compactWidth: CGFloat = 150
      private let expandedWidth: CGFloat = 300
-@@ -56,14 +56,16 @@
+@@ -54,16 +54,16 @@
 
+-            Spacer(minLength: 0)
+-
 -            RecorderStatusDisplay(
 -                currentState: stateProvider.recordingState,
 -                audioMeterProvider: recorder.audioMeterSnapshot
 -            )
+-
+-            Spacer(minLength: 0)
+-
+-            RecorderModeButton(
+-                buttonSize: 22,
+-                padding: EdgeInsets()
+-            )
+-            .padding(.trailing, 12)
 +            Group {
 +                if stateProvider.recordingState == .transcribing {
-+                    ProgressAnimation(color: .white, dotCount: 3)
++                    ProgressAnimation(color: .white, dotCount: 12, fillsWidth: true)
 +                        .accessibilityLabel("Transcribing")
 +                } else {
 +                    RecorderStatusDisplay(
@@ -23,29 +33,37 @@ diff --git a/VoiceInk/Views/Recorder/MiniRecorderView.swift b/VoiceInk/Views/Rec
 +                    )
 +                }
 +            }
++            .frame(maxWidth: .infinity)
++            .padding(.horizontal, 12)
 +            .frame(height: controlBarHeight, alignment: .center)
-
-             Spacer(minLength: 0)
--
--            RecorderModeButton(
--                buttonSize: 22,
--                padding: EdgeInsets()
--            )
--            .padding(.trailing, 12)
          }
 diff --git a/VoiceInk/Views/Recorder/RecorderComponents.swift b/VoiceInk/Views/Recorder/RecorderComponents.swift
 --- a/VoiceInk/Views/Recorder/RecorderComponents.swift
 +++ b/VoiceInk/Views/Recorder/RecorderComponents.swift
-@@ -208,3 +208,3 @@
+@@ -208,3 +208,4 @@
 
 -    private let dotCount = 5
 +    private let dotCount: Int
++    private let fillsWidth: Bool
      private let dotSize: CGFloat = 3
-@@ -215,5 +215,6 @@
+@@ -215,9 +216,11 @@
 
 -    init(color: Color = .white, animationSpeed: Double = 0.3) {
-+    init(color: Color = .white, animationSpeed: Double = 0.3, dotCount: Int = 5) {
++    init(color: Color = .white, animationSpeed: Double = 0.3, dotCount: Int = 5, fillsWidth: Bool = false) {
          self.color = color
          self.animationSpeed = animationSpeed
+-    }
+-
+-    var body: some View {
+-        HStack(spacing: dotSpacing) {
 +        self.dotCount = dotCount
-     }
++        self.fillsWidth = fillsWidth
++    }
++
++    var body: some View {
++        HStack(spacing: fillsWidth ? 0 : dotSpacing) {
+             ForEach(0..<dotCount, id: \.self) { index in
+@@ -226,2 +229,3 @@
+                     .frame(width: dotSize, height: dotSize)
++                    .frame(maxWidth: fillsWidth ? .infinity : nil)
+             }

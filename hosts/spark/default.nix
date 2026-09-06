@@ -23,7 +23,6 @@
     ./services/hermes.nix
     ./services/roomcast.nix
     ./services/inference.nix
-    ./services/kb
     ./services/mixbridge.nix
     ./services/mosh.nix
     ./services/muxd.nix

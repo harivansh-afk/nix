@@ -83,6 +83,13 @@
         (lib.assertMsg (
           spark.virtualisation.oci-containers.containers == { }
         ) "spark: no always-on inference containers; local models go behind the llama.cpp router")
+        (lib.assertMsg (
+          lib.all (name: !(lib.hasPrefix "kb-" name) && !(lib.hasPrefix "llama-cpp-embed" name)) (
+            lib.attrNames spark.systemd.units
+          )
+          && lib.elem "knowledge-base" spark.services.hermes-agent.settings.plugins.disabled
+          && !(lib.elem "knowledge-base" spark.services.hermes-agent.settings.plugins.enabled)
+        ) "spark: personal KB services, timers and the Hermes KB plugin must stay disabled")
         # The git user must be in AllowUsers (ssh pushes) and must be
         # source-qualified (never reachable from the open internet).
         (

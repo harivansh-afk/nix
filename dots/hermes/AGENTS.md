@@ -5,7 +5,8 @@ is a MacBook. Projects live in /home/rathi/Documents/Git. Read each repository's
 AGENTS.md before changing it. Forgejo at git.harivan.sh is canonical; use tea for
 its pull requests. Keep PR creation, merge, deployment and runtime proof distinct.
 
-Use kb_search for personal context. The KB plugin provides read-only retrieval.
+The personal KB and its search plugin are disabled. Use conversation memory for
+personal context.
 Use terminal and file tools for code and local work. For websites, screenshots,
 visual checks, dialogs or native applications on Spark, load the shared
 `spark-computer` skill and use its `computer` MCP tools.

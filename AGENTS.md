@@ -122,7 +122,7 @@ hosts/
       mosh.nix         Mosh UDP server config
       vaultwarden.nix  Vaultwarden password manager
       website.nix      harivan.sh static site + page counter (counter code lives in the website repo, counter/counter.py)
-      kb/              Knowledge base: postgres + pgvector, embedding server, connectors/*.sh, kb_vec.py indexer, kb-search
+      kb/              Disabled personal KB source; see kb/README.md for retained data
       whisper/         GPU speech-to-text server (default.nix + setup.sh + server.py)
       forgejo/         Forgejo server, cozybox css in assets/, mirror manifest, Actions runner, run-by-hand scripts/
   ix/
@@ -276,8 +276,8 @@ The gateway and dashboard share `~/.local/state/hermes/.hermes`; the `~/.hermes`
 symlink keeps existing CLI state reachable. Astra uses Codex OAuth at medium
 reasoning. Browser and desktop actions use the shared `computer` MCP server
 through the `spark-computer` skill, also installed for coding agents. Delegation,
-memory and skills are enabled for CLI and Photon iMessage. The knowledge-base
-plugin remains read-only.
+memory and skills are enabled for CLI and Photon iMessage. The personal KB,
+its ingestion and embedding services, and its Hermes plugin are disabled.
 
 Chromium's existing Default profile is private mutable state; agents attach to
 the running browser and create task-owned tabs. Never commit profiles or put credentials

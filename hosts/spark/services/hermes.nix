@@ -27,7 +27,6 @@ let
   '';
   toolsets = [
     "hermes-cli"
-    "knowledge_base"
     "computer"
   ];
   skillsDir = ../../../dots/hermes/skills;
@@ -56,8 +55,8 @@ in
   networking.hosts."100.114.116.11" = [ "spark-ix.tail368802.ts.net" ];
 
   systemd.tmpfiles.rules = [
-    "L+ ${stateDir}/.hermes/plugins/knowledge-base - - - - /home/rathi/Documents/Git/nix/dots/hermes/plugins/knowledge-base"
-    "L+ ${stateDir}/workspace/kb-staging - - - - /var/lib/kb/staging"
+    "r ${stateDir}/.hermes/plugins/knowledge-base - - - -"
+    "r ${stateDir}/workspace/kb-staging - - - -"
   ];
 
   system.activationScripts.hermes-skills = lib.stringAfter [ "hermes-agent-setup" ] ''
@@ -135,7 +134,10 @@ in
       };
       approvals.mode = "off";
       security.protected_instruction_files = false;
-      plugins.enabled = [ "knowledge-base" ];
+      plugins = {
+        enabled = [ ];
+        disabled = [ "knowledge-base" ];
+      };
       skills = {
         creation_nudge_interval = 0;
         external_dirs = [ "${skills}" ];

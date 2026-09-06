@@ -6,6 +6,7 @@ let
     gateway = {
       multiplex_profiles = true;
       multiplex_profile_allowlist = [ "roommates" ];
+      group_sessions_per_user = false;
       profile_routes = [
         {
           platform = "photon";

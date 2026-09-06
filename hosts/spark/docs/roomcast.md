@@ -40,6 +40,7 @@ search, play, status, control, seek, sources and browse. The profile has its own
 working directory, instructions and conversation state; personal memory and
 plugins are disabled. Hermes supplies its native shared Codex OAuth fallback.
 There is one Photon connection, and Hermes replies to the originating chat.
+Members of a group share its conversation session through Hermes's native setting.
 
 Profiles share a gateway process and Unix user. They separate agent context and
 tool availability; they are not a filesystem or process sandbox. Guests have no

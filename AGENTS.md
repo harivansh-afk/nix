@@ -82,7 +82,7 @@ flake/
   devshell.nix         Dev tools + formatter
   hosts.nix            macbook darwin configuration
   nixos.nix            spark NixOS configuration + nixosConfigurations.ix (the dev VM template)
-  packages.nix         packages.<system> output: portable scripts (ga, ghpr, connectors) + tool wrappers
+  packages.nix         packages.<system> output: portable scripts (ga, connectors) + tool wrappers
 lib/
   remotes.nix          Remote server registry: hosts for the per-remote connector commands
   theme.nix            Cozybox theme: colors, renderers for ghostty/fzf/lazygit/pure-prompt/bat/zsh-highlights
@@ -132,7 +132,7 @@ pkgs/
   jj-ix/               Patched jj with the ix store backend
   scripts/
     default.nix        Full script set for user profiles (portable + theme, wallpaper-gen)
-    portable.nix       Home-independent scripts (ga, ghpr, iosrun, remote connectors)
+    portable.nix       Home-independent scripts (ga, iosrun, remote connectors)
     bin/               Script sources wired by default.nix
     lib/               Helpers (wallpaper-gen.py)
 terraform/
@@ -161,7 +161,7 @@ Nix seeds omp from `modules/users/user-config/agents.nix`: the cozybox theme JSO
 
 Terminal sessions, panes, and persistence are the job of Mux.app and muxd (`~/Documents/Git/mux`); spark runs the daemon via `hosts/spark/services/muxd.nix`. Nothing in this repo multiplexes terminals.
 
-The portable scripts (`ga`, `ghpr`, `iosrun`, the remote connectors) build without a home directory (`pkgs/scripts/portable.nix`) and are exposed as flake `packages`, so hosts not managed by this flake can install them with `nix profile add git+https://git.harivan.sh/harivansh-afk/nix#<name>`.
+The portable scripts (`ga`, `iosrun`, the remote connectors) build without a home directory (`pkgs/scripts/portable.nix`) and are exposed as flake `packages`, so hosts not managed by this flake can install them with `nix profile add git+https://git.harivan.sh/harivansh-afk/nix#<name>`.
 
 `lib/remotes.nix` maps a command name to the remote hostname. `pkgs/scripts/portable.nix` renders each entry into a connector command (via `pkgs/scripts/bin/remote.sh`) that lands in every user's profile: `spark`, `macbook`, or `dev6` opens a shell over `mosh <host>`; `--ssh` forces `ssh -t` for UDP-hostile networks. Transport config (hostnames, keys, ControlMaster) stays in the live-edited `dots/ssh/config`; ssh, scp, and git are never wrapped. To add a server: one entry in `lib/remotes.nix` plus its `Host` block in `dots/ssh/config`.
 

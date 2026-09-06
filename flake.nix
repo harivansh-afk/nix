@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs-macbook.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     # nushell's tests fail in the darwin sandbox on newer nixpkgs; pinned separately so the spark kernel hash stays put.
     nixpkgs-nushell.url = "github:NixOS/nixpkgs/01fbdeef22b76df85ea168fbfe1bfd9e63681b30";
@@ -14,7 +15,7 @@
 
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin/master";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-macbook";
     };
 
     googleworkspace-cli = {
@@ -32,7 +33,7 @@
 
     # Xcode app, built from source in hosts/macbook/voiceink.
     voiceink-src = {
-      url = "github:Beingpax/VoiceInk";
+      url = "github:Beingpax/VoiceInk/v2.13";
       flake = false;
     };
 

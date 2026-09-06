@@ -53,40 +53,15 @@ files stay on Spark; reasoning still uses the configured Astra Codex provider.
 
 ## Desktop and browser
 
-The services run as Hari with his home, user D-Bus and Sway display. Startup waits
-for the active Wayland socket and reads the user manager's display environment;
-no display number is hard-coded. If you restart Sway independently, restart both
-Hermes services afterwards so they reconnect to the new display. Cua uses the
-native Wayland backend; XWayland stays disabled. Desktop actions share the visible
-VNC session, so concurrent workers must coordinate native GUI actions.
+Hermes uses the shared `computer` MCP server, connecting to the existing browser
+and CUA daemon without waiting for a display at gateway startup. Load the
+[spark-computer skill](../../../dots/agents/skills/spark-computer/SKILL.md) for
+browser/native actions, named sessions and cleanup. Tool names are
+`mcp__computer__computer_exec` and `mcp__computer__computer_close`.
 
-Chromium's original profile stays at `~/.config/chromium/Default`, using GNOME
-Keyring. Cookies, passwords and profile files remain private mutable state.
-The shared `computer` MCP server attaches to its loopback CDP endpoint and uses
-the Nix-owned `cua-driver` user service for native desktop actions.
-
-For browser interaction, screenshots or native applications, load the shared
-[spark-computer skill](../../../dots/agents/skills/spark-computer/SKILL.md).
-Hermes exposes `mcp__computer__computer_exec` and
-`mcp__computer__computer_close`. Each task uses a unique session name with
-persistent Python variables and imports. The browser helper creates one owned
-tab in the existing profile; sessions share its logins and site storage. Native
-actions use `desktop: true`, which locks desktop input across participating
-agents for that execution. Finish with `computer_close(session=...)`; it closes
-the owned tab and connection while leaving Chromium and other tabs running.
-Close additional pages or contexts created by the task separately.
-
-`display(...)` returns browser images as MCP image blocks, and CUA screenshots
-are forwarded automatically. The declarative patch at
-`pkgs/spark-computer/hermes-mcp-images.patch` passes these images to Astra's native
-vision context while retaining Hermes's cached media output. Images emitted
-before a code error remain visible alongside the error. Text-only results and
-nonvision models retain the ordinary text response path. The patch applies to
-the pinned Hermes Python source during its package build.
-
-For CDP connectivity, display diagnostics and measured acceptance results, follow
-[Spark browser and desktop automation](browser.md). If the browser restarts or a
-task's owned tab closes, close the stale computer session and create a new one.
+The pinned package's MCP image patch makes screenshots visible to Astra.
+For service ownership, image-coordinate handling, diagnosis and repeatable tests,
+see [Spark browser and desktop](browser.md).
 
 ## iMessage
 
@@ -106,7 +81,7 @@ and screenshots are the supported baseline.
 
 Update `hermes-agent` with `nix flake update hermes-agent` and recheck the MCP
 image patch against that revision. The shared computer package takes Python,
-Playwright and Pillow from nixpkgs. Cua's binary and skill archive share a release
+and Playwright from nixpkgs. Cua's binary and skill archive share a release
 version and fixed hashes. Rebuild through the normal PR/deployment flow.
 
 `nix build .#checks.aarch64-linux.hermes-runtime` tests packaged startup and Photon

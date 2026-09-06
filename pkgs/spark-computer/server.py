@@ -162,8 +162,9 @@ class CuaClient:
 
     async def run(self):
         try:
+            runtime_dir = os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
             args = ["mcp", "--socket", os.environ.get("CUA_DRIVER_SOCKET",
-                    f"/run/user/{os.getuid()}/cua-driver.sock")]
+                    f"{runtime_dir}/cua-driver/control.sock")]
             params = StdioServerParameters(command=os.environ.get("CUA_DRIVER_COMMAND", "cua-driver"),
                                            args=args, env=dict(os.environ))
             async with stdio_client(params) as (read, write):

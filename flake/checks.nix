@@ -70,15 +70,12 @@
                 pkgs.nodejs
               ]
               ++ hermes.extraPackages;
-              inherit (hermes.environment) HERMES_CUA_DRIVER_CMD PHOTON_SIDECAR_DIR;
+              inherit (hermes.environment) PHOTON_SIDECAR_DIR;
             }
             ''
               export HOME=$TMPDIR/home HERMES_HOME=$TMPDIR/home/.hermes
-              export CUA_DRIVER_RS_TELEMETRY_ENABLED=0
-              export ANONYMIZED_TELEMETRY=false
               mkdir -p "$HERMES_HOME"
               hermes --version
-              hermes computer-use status
               cd "$PHOTON_SIDECAR_DIR"
               node --input-type=module -e '
                 await import("spectrum-ts");

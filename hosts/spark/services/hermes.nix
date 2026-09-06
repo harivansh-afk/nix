@@ -38,15 +38,6 @@ let
     cp ${photonSrc}/* $out/
     ln -s ${photonDeps}/node_modules $out/node_modules
   '';
-  desktopEnv = pkgs.writeShellApplication {
-    name = "hermes-desktop-env";
-    runtimeInputs = [
-      pkgs.systemd
-      pkgs.coreutils
-      pkgs.gnused
-    ];
-    text = builtins.readFile ./hermes-desktop-env.sh;
-  };
   toolsets = [
     "hermes-cli"
     "knowledge_base"
@@ -80,8 +71,6 @@ in
     workingDirectory = "${stateDir}/workspace";
     addToSystemPackages = true;
     extraPackages = [
-      cuaDriver
-      computer
       pkgs.uv
       pkgs.tea
       pkgs.jq
@@ -93,12 +82,9 @@ in
       config.sops.secrets."hermes-photon.env".path
     ];
     environment = {
-      HERMES_CUA_DRIVER_CMD = "${cuaDriver}/bin/cua-driver";
       PHOTON_SIDECAR_DIR = "${photonSidecar}";
       PHOTON_NODE_BIN = "${pkgs.nodejs}/bin/node";
       PHOTON_SIDECAR_PORT = "18789";
-      CUA_DRIVER_RS_TELEMETRY_ENABLED = "0";
-      ANONYMIZED_TELEMETRY = "false";
       HERMES_GATEWAY_BUSY_ACK_ENABLED = "false";
     };
     hermesHomeFiles."SOUL.md" = ../../../dots/hermes/SOUL.md;
@@ -180,17 +166,12 @@ in
       XDG_CONFIG_HOME = "${home}/.config";
       XDG_RUNTIME_DIR = runtimeDir;
       DBUS_SESSION_BUS_ADDRESS = "unix:path=${runtimeDir}/bus";
-      XDG_SESSION_TYPE = "wayland";
-      XDG_CURRENT_DESKTOP = "sway";
-      GTK_A11Y = "always";
     };
     path = [
       "/run/current-system/sw"
       "/etc/profiles/per-user/${username}"
     ];
     serviceConfig = {
-      ExecStartPre = "${desktopEnv}/bin/hermes-desktop-env";
-      EnvironmentFile = "-${stateDir}/.hermes/desktop.env";
       ReadWritePaths = [
         home
         runtimeDir

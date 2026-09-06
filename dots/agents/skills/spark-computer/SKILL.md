@@ -1,21 +1,17 @@
 ---
 name: spark-computer
-description: Operate Spark's existing browser or native desktop through persistent Python, Playwright and CUA. Use for browser interaction, authenticated websites, screenshots, visual checks, dialogs and native applications on Spark.
+description: Use Spark's browser or desktop for websites, screenshots, visual checks, native apps and dialogs.
 ---
 
 # Spark computer
 
 Use the `computer` MCP server's `computer_exec` and `computer_close` tools.
-Hermes names them `mcp__computer__computer_exec` and `mcp__computer__computer_close`.
-The tools run on Spark as Hari. Each task gets a unique session name; retain it
-through the task, then close it. Python variables and imports persist in that
-session. Different agents must choose different names.
+Hermes prefixes these with `mcp__computer__`. Give each task a unique `session`;
+Python variables, imports and page references persist across calls in that session.
 
-## Browser code
+## Browser
 
-Use Playwright's async API with top-level `await`. The browser helper creates
-one task-owned tab in Hari's existing Chromium profile. It shares logins while
-leaving existing tabs alone. Start with:
+Use async Playwright with top-level `await`:
 
 ```python
 page = await browser.page()
@@ -24,69 +20,50 @@ print(await page.title())
 display(await page.screenshot())
 ```
 
-Use roles, labels and observed DOM state for normal controls. Group known steps
-in one call and wait on specific conditions with Playwright's locators, events
-and assertions. Observe again when navigation or uncertainty changes the plan.
-Use `display(image_bytes_or_path)` for visual verification; it returns actual
-images to the model. Inspect screenshots for canvas, layout and pixel actions.
-Printing a file path alone does not display it.
+The helper creates one owned tab in Hari's existing Chromium profile. Use
+observed roles, labels and DOM state for controls; screenshots for canvas and
+visual checks. Group known steps and wait on specific locators/events rather
+than sleeping. `display(image_bytes_or_path)` returns an actual image to the
+model; printing a path does not.
 
-`await browser.tabs()` lists existing tab metadata. To operate an existing tab
-when that is explicitly the task, resolve the intended page from
-`page.context.pages` using the observed URL/title and retain that reference.
-Only close tabs created for this task. `computer_close` closes the helper's
-owned tab and leaves the browser and other tabs running.
+`await browser.tabs()` lists tab metadata. When explicitly asked to operate an
+existing tab, resolve its exact reference from `page.context.pages`. Preserve
+unrelated tabs. Sessions share cookies, storage and account state: coordinate
+conflicting work on the same site. Extra pages or isolated contexts are your
+responsibility to close; isolated contexts do not inherit the existing login.
 
-Session names isolate Python variables and owned tabs, not cookies or site
-storage. Coordinate operations on the same account/site. Use a separate browser
-context only when the task requires independent state and does not need Hari's
-existing login. Close any extra context or page you create.
+## Desktop
 
-## Native desktop code
-
-Set `desktop: true` on `computer_exec` when calling the desktop helper. It holds
-a host-wide lock for that execution so participating agents cannot interleave
-native input. Browser-only calls can run concurrently.
+Set `desktop: true` when using `desktop`. Each execution holds a shared lock
+across participating agents; browser-only calls can continue independently.
+Keep dependent observation/action/verification steps together under that lock.
+Human input and direct clients bypass it; yield when Hari takes over.
 
 ```python
 print(await desktop.list_windows())
 print(await desktop.describe("get_window_state"))
 ```
 
-Select the exact window from that result. Inspect the current tool schema with
-`await desktop.describe("tool_name")`, then call it as an async method:
+Select the exact window's observed `pid` and `window_id`, then call
+`await desktop.get_window_state(pid=PID, window_id=WINDOW_ID)`. CUA images are
+forwarded automatically. Discover unfamiliar action schemas with
+`await desktop.describe("tool_name")`, then call `await desktop.tool_name(...)`.
 
-```python
-state = await desktop.get_window_state(pid=PID, window_id=WINDOW_ID)
-print(state)
-```
+Prefer fresh accessibility `element_token` values (or matching snapshot/index).
+Use `delivery_mode="foreground"` for visible input when needed. Window actions
+use window-local screenshot coordinates; account for harness image resizing.
+Reobserve after actions and after reacquiring the lock. Verify application state;
+`effect: unverifiable` does not establish success. For refused native actions,
+read the adjacent `cua-driver/LINUX.md`. Sway cannot independently inject raw
+input into an occluded window.
 
-Screenshots from CUA are returned as images automatically. Use the fresh
-`element_token`, or the matching `snapshot_id` and `element_index`, for semantic
-actions. Re-snapshot after actions and verify the requested application state.
-Use window-local screenshot coordinates for window actions; desktop images use
-screen coordinates. Read the adjacent upstream `cua-driver` skill's `LINUX.md`
-when a native action is refused or a compositor capability is unclear.
+## Finish and recover
 
-Prefer accessibility actions. For a task requiring visible mouse/keyboard
-control, use `delivery_mode="foreground"` when needed; these actions share
-Hari's visible desktop. Yield when Hari takes over. Sway cannot inject arbitrary
-raw input into an obscured window independently of focus.
+Use async APIs and keep background tasks within the call. Timeouts are cooperative;
+blocking Python cannot be interrupted. Errors preserve variables but may follow
+partial actions: inspect before retrying. After tab loss or a browser/transport
+restart, close the stale session and start another.
 
-## Execution and recovery
-
-The namespace includes `browser`, `desktop`, `display`, `asyncio` and normal
-Python builtins. Use async APIs; timeouts are cooperative and cannot interrupt
-blocking Python. Keep background tasks within the current execution. A timeout
-or exception can follow a partially completed action: inspect state before
-retrying. Ordinary code errors preserve the session for correction.
-
-If the owned tab is closed or the browser restarts, close the stale session and
-start a new one. If desktop startup fails, check the Nix-owned `cua-driver` and
-`sway` user services. Browser connectivity is at `http://127.0.0.1:19222`.
-The desktop services and driver own the display setup; agents need no ad-hoc
-Wayland environment exports or profile copies.
-
-Finish with `computer_close(session=...)`. Verify the actual outcome before
-claiming success. Runtime details and measured acceptance results live in
-`~/Documents/Git/nix/hosts/spark/docs/browser.md`.
+Finish with `computer_close(session=...)`; it closes the owned tab and CUA
+connection, preserving Chromium and other tabs. For service failures and test
+commands, read `~/Documents/Git/nix/hosts/spark/docs/browser.md`.

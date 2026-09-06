@@ -41,6 +41,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    mixbridge-web = {
+      url = "git+https://git.harivan.sh/harivansh-afk/mixbridge-web.git?ref=master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     hermes-agent.url = "github:NousResearch/hermes-agent";
 
     # Darwin only: no aarch64-linux cache, spark keeps nixpkgs neovim.

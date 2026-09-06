@@ -43,7 +43,7 @@
     };
 
     roomcast = {
-      url = "git+https://git.harivan.sh/harivansh-afk/roomcast.git?ref=feat/playback";
+      url = "git+https://git.harivan.sh/harivansh-afk/roomcast.git?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

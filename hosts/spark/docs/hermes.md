@@ -13,15 +13,22 @@ CLI and Photon sessions have terminal/files, delegation, skills, memory and
 conversation recall, plus the shared `computer` MCP server for browser and desktop
 work. Hermes's native browser and computer-use toolsets are disabled. The local
 knowledge-base plugin adds read-only retrieval. The `spark-computer` skill and
-Cua's version-matched skill pack are linked into Hermes Home. There are no custom
+Cua's version-matched skill pack are supplied by Nix. There are no custom
 hooks or scheduled jobs.
+
+`skillSources` in `hermes.nix` selects the upstream skills and includes
+`dots/hermes/skills/`. Hermes reads the resulting store directory through
+`skills.external_dirs`; bundled seeding and project discovery are disabled.
+The first activation archives the old skill tree at
+`~/.local/state/hermes/skills-before-nix`. The store tree uses real directories
+because upstream's bundle-sync scanner does not follow directory symlinks.
 
 ## Learning from work
 
 The Nix-owned `self-evolve` skill routes verified lessons through PRs to
 https://git.harivan.sh/harivansh-afk/nix. Add or edit
-`dots/hermes/skills/<name>/SKILL.md`; Nix discovers these directories and links
-them into Hermes Home on deployment. No per-skill module edit is needed.
+`dots/hermes/skills/<name>/SKILL.md`; Nix includes these directories in the store
+skill tree on deployment. No per-skill module edit is needed.
 Supporting scripts and references live alongside SKILL.md. Agent guidance
 requires this path for skills, plugins, configuration and durable behavioral
 instructions. Private memory, conversations, credentials and browser state stay

@@ -16,7 +16,6 @@ land on `PATH` on every host. `portable.nix` is the home-independent subset
 |----------------|-----------------------|----------------------------------------------|
 | `theme`        | `bin/theme.sh`        | Switch cozybox dark/light, relink theme assets |
 | `ga`           | `bin/ga.sh`           | Git add helper                               |
-| `ghpr`         | `bin/ghpr.sh`         | Open/create GitHub PR                        |
 | `iosrun`       | `bin/iosrun.sh`       | iOS simulator run helper                     |
 | `wallpaper-gen`| `bin/wallpaper-gen.sh`| Generate themed wallpapers (uses `lib/wallpaper-gen.py`) |
 

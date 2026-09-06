@@ -34,6 +34,18 @@ let
   skillNames = lib.filter (name: builtins.pathExists (skillsDir + "/${name}/SKILL.md")) (
     lib.attrNames (lib.filterAttrs (_: type: type == "directory") (builtins.readDir skillsDir))
   );
+  skillSources = {
+    hermes-agent = inputs.hermes-agent + "/skills/autonomous-ai-agents/hermes-agent";
+    cua-driver = cuaDriver.skills;
+    spark-computer = ../../../dots/agents/skills/spark-computer;
+  }
+  // lib.genAttrs skillNames (name: skillsDir + "/${name}");
+  skills = pkgs.runCommand "hermes-skills" { } ''
+    mkdir -p $out
+    ${lib.concatStringsSep "\n" (
+      lib.mapAttrsToList (name: path: "cp -rL ${path} $out/${name}") skillSources
+    )}
+  '';
 in
 {
   imports = [
@@ -46,10 +58,15 @@ in
   systemd.tmpfiles.rules = [
     "L+ ${stateDir}/.hermes/plugins/knowledge-base - - - - /home/rathi/Documents/Git/nix/dots/hermes/plugins/knowledge-base"
     "L+ ${stateDir}/workspace/kb-staging - - - - /var/lib/kb/staging"
-    "L+ ${stateDir}/.hermes/skills/cua-driver - - - - ${cuaDriver.skills}"
-    "L+ ${stateDir}/.hermes/skills/spark-computer - - - - ${../../../dots/agents/skills/spark-computer}"
-  ]
-  ++ map (name: "L+ ${stateDir}/.hermes/skills/${name} - - - - ${skillsDir + "/${name}"}") skillNames;
+  ];
+
+  system.activationScripts.hermes-skills = lib.stringAfter [ "hermes-agent-setup" ] ''
+    if [ ! -e ${stateDir}/skills-before-nix ]; then
+      mv ${stateDir}/.hermes/skills ${stateDir}/skills-before-nix
+      chmod 0700 ${stateDir}/skills-before-nix
+      install -d -o ${username} -g users -m 0700 ${stateDir}/.hermes/skills
+    fi
+  '';
 
   services.hermes-agent = {
     enable = true;
@@ -77,6 +94,8 @@ in
       HERMES_GATEWAY_BUSY_ACK_ENABLED = "false";
     };
     hermesHomeFiles."SOUL.md" = ../../../dots/hermes/SOUL.md;
+    hermesHomeFiles.".no-bundled-skills" =
+      "Skills are selected by Nix in hosts/spark/services/hermes.nix.\n";
     documents."AGENTS.md" = ../../../dots/hermes/AGENTS.md;
 
     backend = {
@@ -117,7 +136,11 @@ in
       approvals.mode = "off";
       security.protected_instruction_files = false;
       plugins.enabled = [ "knowledge-base" ];
-      skills.creation_nudge_interval = 0;
+      skills = {
+        creation_nudge_interval = 0;
+        external_dirs = [ "${skills}" ];
+        project_discovery = false;
+      };
       platform_toolsets = {
         cli = toolsets;
         photon = toolsets;

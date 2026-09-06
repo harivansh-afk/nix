@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build and sign Mux.app. Inputs from the nix wrapper: MUX_SRC, MUX_REV,
 # GHOSTTY_SRC, GHOSTTY_REV, MUXD (package with bin/muxd, bin/mux-attach),
-# INFO_PLIST.
+# INFO_PLIST, MUX_BUILD_ID (the Nix wrapper store path).
 #
 # Signs with the "mux-dev" identity in mux-dev.keychain-db, the keychain
 # mux's own scripts/make-app.sh uses, so TCC grants survive rebuilds. Created
@@ -9,7 +9,7 @@
 # hides untrusted self-signed certs and would recreate the identity every run.
 set -euo pipefail
 
-rev="$MUX_REV-$GHOSTTY_REV"
+rev="$MUX_BUILD_ID"
 build="$HOME/Library/Caches/mux-build"
 app="/Applications/Mux.app"
 identity="mux-dev"
@@ -88,9 +88,9 @@ command -v xcodebuild >/dev/null || {
 }
 
 # GhosttyKit.xcframework + ghostty's share/ (terminfo, shell integration),
-# cached per ghostty rev. ReleaseFast: a Debug libghostty os_logs every IO
+# cached per build identity. ReleaseFast: a Debug libghostty os_logs every IO
 # message and freezes under load.
-gk="$build/ghostty-$GHOSTTY_REV"
+gk="$build/ghostty-${MUX_BUILD_ID##*/}"
 if [ ! -d "$gk/macos/GhosttyKit.xcframework" ] || [ ! -d "$gk/zig-out/share/ghostty" ]; then
   echo "Mux: building GhosttyKit at ghostty $GHOSTTY_REV..."
   if [ ! -d "$gk" ]; then

@@ -39,18 +39,6 @@ let
       runtimeInputs = with pkgs; [ git ];
     };
 
-    ghpr = mkScript {
-      name = "ghpr";
-      file = ./bin/ghpr.sh;
-      runtimeInputs = with pkgs; [
-        gh
-        git
-        gnugrep
-        gnused
-        coreutils
-      ];
-    };
-
     iosrun = mkScript {
       name = "iosrun";
       file = ./bin/iosrun.sh;

@@ -42,6 +42,11 @@
       flake = false;
     };
 
+    roomcast = {
+      url = "git+https://git.harivan.sh/harivansh-afk/roomcast.git?ref=feat/playback";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     hermes-agent.url = "github:NousResearch/hermes-agent";
 
     # Darwin only: no aarch64-linux cache, spark keeps nixpkgs neovim.

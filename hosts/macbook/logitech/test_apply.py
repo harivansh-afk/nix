@@ -1,47 +1,62 @@
 import copy
 import json
-from pathlib import Path
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing, nullcontext
+from pathlib import Path
+from unittest.mock import patch
 
-from apply import configure, read
-from seed import seed
-
+from apply import apply, configure, load_defaults, read, seed
 
 SOURCE = Path(__file__).parent
 
 
 class MouseMappingsTest(unittest.TestCase):
     def setUp(self):
-        self.defaults = json.loads((SOURCE / "settings.json").read_text())
+        self.defaults = load_defaults(SOURCE)
         self.policy = json.loads((SOURCE / "mappings.json").read_text())
-        self.key = self.defaults["profile_keys"][0]
+        self.key = self.defaults["settings"]["profile_keys"][0]
 
     def test_controls_and_browser_scope(self):
-        result = configure(self.defaults, self.defaults, self.policy)
+        result = configure(self.defaults["settings"], self.defaults, self.policy)
         self.assertEqual(len(result["profile_keys"]), 5)
         for key in result["profile_keys"]:
             assignments = {a["slotId"]: a["card"] for a in result[key]["assignments"]}
             for device in self.policy["devices"]:
-                self.assertEqual(assignments[device + "_c86"]["macro"]["actionName"], "⌘V")
-                gestures = assignments[device + "_c195"]["nestedCards"]["custom_gesture"]["nestedCards"]
+                self.assertEqual(
+                    assignments[device + "_c86"]["macro"]["actionName"], "⌘V"
+                )
+                gestures = assignments[device + "_c195"]["nestedCards"][
+                    "custom_gesture"
+                ]["nestedCards"]
                 self.assertEqual(gestures["click"]["macro"]["actionName"], "⌘C")
                 for direction in ("up", "down"):
-                    self.assertEqual(gestures[direction]["macro"]["media"]["usage"], "VOLUME_" + direction.upper())
+                    self.assertEqual(
+                        gestures[direction]["macro"]["media"]["usage"],
+                        "VOLUME_" + direction.upper(),
+                    )
                 for direction, action in (("left", "BACK"), ("right", "FORWARD")):
                     if key == self.key:
-                        self.assertEqual(gestures[direction]["macro"]["type"], "DO_NOTHING")
+                        self.assertEqual(
+                            gestures[direction]["macro"]["type"], "DO_NOTHING"
+                        )
                     else:
-                        self.assertEqual(gestures[direction]["macro"]["mouse"]["action"], "OSX_GESTURE_" + action)
+                        self.assertEqual(
+                            gestures[direction]["macro"]["mouse"]["action"],
+                            "OSX_GESTURE_" + action,
+                        )
 
     def test_preserves_unowned_state_and_reuses_browser_registration(self):
-        current = copy.deepcopy(self.defaults)
+        current = copy.deepcopy(self.defaults["settings"])
         current["account_sentinel"] = {"keep": True}
-        current["applications"]["applications"].append({
-            "bundleId": "net.imput.helium", "applicationId": "existing-helium",
-            "lastRunTime": "preserve-me",
-        })
+        current["applications"]["applications"].append(
+            {
+                "bundleId": "net.imput.helium",
+                "applicationId": "existing-helium",
+                "lastRunTime": "preserve-me",
+            }
+        )
         before = copy.deepcopy(current)
         result = configure(current, self.defaults, self.policy)
         self.assertEqual(current, before)
@@ -58,15 +73,37 @@ class MouseMappingsTest(unittest.TestCase):
     def test_seed_is_valid_and_does_not_replace_existing_databases(self):
         with tempfile.TemporaryDirectory() as directory:
             destination = Path(directory)
-            seed(SOURCE, destination)
+            seed(self.defaults, destination)
             for name in ("settings", "macros"):
-                with sqlite3.connect(destination / f"{name}.db") as db:
-                    self.assertEqual(db.execute("PRAGMA integrity_check").fetchone(), ("ok",))
-                    self.assertEqual(read(db)[1], json.loads((SOURCE / f"{name}.json").read_text()))
-                    db.execute("UPDATE data SET file=?", (b'{"preserve":"user edits"}',))
+                with closing(sqlite3.connect(destination / f"{name}.db")) as db, db:
+                    self.assertEqual(
+                        db.execute("PRAGMA integrity_check").fetchone(), ("ok",)
+                    )
+                    self.assertEqual(read(db)[1], self.defaults[name])
+                    db.execute(
+                        "UPDATE data SET file=?", (b'{"preserve":"user edits"}',)
+                    )
             before = {p.name: p.read_bytes() for p in destination.iterdir()}
-            seed(SOURCE, destination)
-            self.assertEqual(before, {p.name: p.read_bytes() for p in destination.iterdir()})
+            seed(self.defaults, destination)
+            self.assertEqual(
+                before, {p.name: p.read_bytes() for p in destination.iterdir()}
+            )
+
+    def test_update_backs_up_settings_and_leaves_macros_untouched(self):
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "Options"
+            destination.mkdir()
+            seed(self.defaults, destination)
+            macros = (destination / "macros.db").read_bytes()
+            with patch("apply.paused_agent", side_effect=nullcontext) as pause:
+                apply(SOURCE, destination)
+                apply(SOURCE, destination)
+                pause.assert_called_once()
+            backups = list((Path(directory) / "LogiOptionsPlus-backups").glob("*.db"))
+            self.assertEqual(len(backups), 1)
+            with closing(sqlite3.connect(backups[0])) as backup:
+                self.assertEqual(read(backup)[1], self.defaults["settings"])
+            self.assertEqual((destination / "macros.db").read_bytes(), macros)
 
 
 if __name__ == "__main__":

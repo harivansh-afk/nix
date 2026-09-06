@@ -3,169 +3,19 @@
     "mx-master-3-6b023",
     "mx-master-3s-2b034"
   ],
-  "cards": {
-    "copy": {
-      "id": "card_global_presets_osx_copy",
-      "name": "ASSIGNMENT_NAME_COPY",
-      "category": "ASSIGNMENT_CATEGORY_EDIT_FILES_FOLDERS",
-      "attribute": "MACRO_PLAYBACK",
-      "readOnly": true,
-      "continuous": false,
-      "macro": {
-        "type": "KEYSTROKE",
-        "keystroke": {
-          "code": 6,
-          "modifiers": [
-            227
-          ],
-          "displayCharacter": ""
-        },
-        "onboardable": false,
-        "actionName": "\u2318C",
-        "icon": ""
-      },
-      "nestedCards": {},
-      "tags": [
-        "PRESET_TAG_KEY_OR_BUTTON",
-        "PRESET_COMPUTER_FUNCTIONS"
-      ],
-      "icons": {
-        "uri": "pipeline://system_actions/",
-        "icons": [
-          "Copy.png",
-          "Copy.svg"
-        ]
-      },
-      "taskId": 801
-    },
-    "paste": {
-      "id": "card_global_presets_osx_paste",
-      "name": "ASSIGNMENT_NAME_PASTE",
-      "category": "ASSIGNMENT_CATEGORY_EDIT_FILES_FOLDERS",
-      "attribute": "MACRO_PLAYBACK",
-      "readOnly": true,
-      "continuous": false,
-      "macro": {
-        "type": "KEYSTROKE",
-        "keystroke": {
-          "code": 25,
-          "modifiers": [
-            227
-          ],
-          "displayCharacter": ""
-        },
-        "onboardable": false,
-        "actionName": "\u2318V",
-        "icon": ""
-      },
-      "nestedCards": {},
-      "tags": [
-        "PRESET_TAG_KEY_OR_BUTTON",
-        "PRESET_COMPUTER_FUNCTIONS"
-      ],
-      "taskId": 803,
-      "icons": {
-        "uri": "pipeline://system_actions/",
-        "icons": [
-          "Paste.png",
-          "Paste.svg"
-        ]
-      }
-    },
-    "back": {
-      "id": "card_global_presets_osx_back",
-      "taskId": 59,
-      "name": "ASSIGNMENT_NAME_BACK",
-      "category": "ASSIGNMENT_CATEGORY_NAVIGATE_COMPUTER",
-      "attribute": "MACRO_PLAYBACK",
-      "readOnly": true,
-      "continuous": false,
-      "macro": {
-        "type": "MOUSE",
-        "mouse": {
-          "action": "OSX_GESTURE_BACK",
-          "hidUsage": 0
-        },
-        "onboardable": false,
-        "actionName": "",
-        "icon": ""
-      },
-      "nestedCards": {},
-      "icons": {
-        "uri": "pipeline://system_actions/",
-        "icons": [
-          "Back.png",
-          "Back.svg"
-        ]
-      },
-      "tags": [
-        "PRESET_TAG_KEY_OR_BUTTON",
-        "PRESET_TAG_LPS_SUPPORTED",
-        "PRESET_COMPUTER_FUNCTIONS"
-      ]
-    },
-    "forward": {
-      "id": "card_global_presets_osx_forward",
-      "taskId": 61,
-      "name": "ASSIGNMENT_NAME_FORWARD",
-      "category": "ASSIGNMENT_CATEGORY_NAVIGATE_COMPUTER",
-      "attribute": "MACRO_PLAYBACK",
-      "readOnly": true,
-      "continuous": false,
-      "macro": {
-        "type": "MOUSE",
-        "mouse": {
-          "action": "OSX_GESTURE_FORWARD",
-          "hidUsage": 0
-        },
-        "onboardable": false,
-        "actionName": "",
-        "icon": ""
-      },
-      "nestedCards": {},
-      "icons": {
-        "uri": "pipeline://system_actions/",
-        "icons": [
-          "Forward.png",
-          "Forward.svg"
-        ]
-      },
-      "tags": [
-        "PRESET_TAG_KEY_OR_BUTTON",
-        "PRESET_TAG_LPS_SUPPORTED",
-        "PRESET_COMPUTER_FUNCTIONS"
-      ]
-    },
-    "nothing": {
-      "id": "card_global_presets_do_nothing",
-      "name": "ASSIGNMENT_NAME_DONOTHING",
-      "attribute": "MACRO_PLAYBACK",
-      "readOnly": true,
-      "continuous": false,
-      "macro": {
-        "type": "DO_NOTHING",
-        "onboardable": false,
-        "actionName": "",
-        "icon": "",
-        "doNothing": {
-          "action": "NONE"
-        }
-      },
-      "nestedCards": {},
-      "tags": [
-        "PRESET_TAG_MISC",
-        "PRESET_MOUSE_FUNCTIONS",
-        "PRESET_KEYBOARD_FUNCTIONS"
-      ],
-      "icons": {
-        "uri": "pipeline://system_actions/",
-        "icons": [
-          "DoNothing.png",
-          "DoNothing.svg"
-        ]
-      },
-      "taskId": 0
-    }
+  "buttons": {
+    "c86": "paste"
+  },
+  "gestures": {
+    "click": "copy",
+    "up": "volume_up",
+    "down": "volume_down",
+    "left": "nothing",
+    "right": "nothing"
+  },
+  "browserGestures": {
+    "left": "back",
+    "right": "forward"
   },
   "browsers": [
     {

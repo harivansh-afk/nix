@@ -8,10 +8,8 @@ let
     "Raycast Beta"
   ];
   plists = [
-    "com.logi.cp-dev-mgr.plist"
     "com.logi.optionsplus.plist"
     "com.logi.optionsplus.updater.plist"
-    "com.logitech.LogiRightSight.plist"
     "com.logitech.LogiRightSight.Agent.plist"
     "limit.maxfiles.plist"
     "systems.determinate.nix-daemon.plist"

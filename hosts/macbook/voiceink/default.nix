@@ -13,7 +13,7 @@ let
   patch = ./streaming-provider.patch;
   rev = "${src.rev or src.narHash or "unknown"}-${
     builtins.substring 0 12 (builtins.hashFile "sha256" patch)
-  }";
+  }-${builtins.substring 0 12 (builtins.hashFile "sha256" ./build.sh)}";
   home = "/Users/${username}";
 
   build = pkgs.writeShellScript "voiceink-build" ''
@@ -31,6 +31,9 @@ let
 in
 {
   system.activationScripts.postActivation.text = lib.mkAfter ''
-    sudo -u ${username} ${build} || echo "warning: VoiceInk build failed" >&2
+    sudo -u ${username} ${build} || {
+      echo "VoiceInk build or installation failed; see the build output above" >&2
+      exit 1
+    }
   '';
 }

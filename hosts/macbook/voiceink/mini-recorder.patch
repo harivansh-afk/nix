@@ -1,18 +1,12 @@
 diff --git a/VoiceInk/Views/Recorder/MiniRecorderView.swift b/VoiceInk/Views/Recorder/MiniRecorderView.swift
 --- a/VoiceInk/Views/Recorder/MiniRecorderView.swift
 +++ b/VoiceInk/Views/Recorder/MiniRecorderView.swift
-@@ -12,7 +12,7 @@
-     // MARK: - Layout Constants
- 
+@@ -14,3 +14,3 @@
      private let controlBarHeight: CGFloat = 40
 -    private let compactWidth: CGFloat = 184
 +    private let compactWidth: CGFloat = 150
      private let expandedWidth: CGFloat = 300
-     private let assistantWidth: CGFloat = 520
-     private let compactCornerRadius: CGFloat = 20
-@@ -60,12 +60,6 @@
-             )
- 
+@@ -62,8 +62,2 @@
              Spacer(minLength: 0)
 -
 -            RecorderModeButton(
@@ -21,5 +15,3 @@ diff --git a/VoiceInk/Views/Recorder/MiniRecorderView.swift b/VoiceInk/Views/Rec
 -            )
 -            .padding(.trailing, 12)
          }
-         .frame(height: controlBarHeight)
-     }

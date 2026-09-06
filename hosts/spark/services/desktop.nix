@@ -6,7 +6,7 @@
 }:
 let
   chromium = pkgs.chromium.override {
-    commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret --force-renderer-accessibility";
+    commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret --force-renderer-accessibility --remote-debugging-port=19222";
   };
   swayConfig = pkgs.writeText "sway.conf" ''
     xwayland disable

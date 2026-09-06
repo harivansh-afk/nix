@@ -63,6 +63,16 @@ Keyring. Nix declares Chromium, accessibility, the Sway-specific default-browser
 association and Hermes's profile selection. Cookies, passwords and profile files
 are private mutable state, never Nix store contents or Git assets.
 
+The desktop Chromium launcher always enables CDP at `http://127.0.0.1:19222`.
+Agents that need the original visible browser can attach with
+`agent-browser --cdp http://127.0.0.1:19222 snapshot` or Playwright's
+`connect_over_cdp("http://127.0.0.1:19222")`. Check `/json/version` on that endpoint
+before connecting. Chromium binds this endpoint to loopback; remote clients must
+use an SSH tunnel. Attached agents share the original tabs and logins, so coordinate
+their actions and disconnect without closing the browser. This is the unbranded
+Chromium build, which permits debugging its existing default profile. A launcher
+update requires restarting the existing browser process before flags take effect.
+
 Hermes snapshots that profile into its own private browser state at each fresh
 browser session and drives a visible window. Existing logins are copied, but
 extensions and some storage (including IndexedDB) are not. Log in through the

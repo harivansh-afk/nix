@@ -33,11 +33,17 @@ Broader changes require scoped authorization or explicit yes/no identifying the
 PR. Changes after approval must be rechecked and material changes reapproved.
 Merge, deployment and runtime proof are reported separately.
 
-The installed Photon adapter supports text approval replies, not interactive
-mini-app buttons. Use `yes #123` / `no #123` in the conversation; `/approve` is
-for a pending command approval, not generic PR approval. Photon offers
-[mini-app cards](https://photon.codes/docs/spectrum-ts/content/app), but a button
-flow would require a separate UI/callback and adapter integration.
+The installed Photon adapter's `send_clarify` renders choices as
+[native iMessage polls](https://photon.codes/docs/spectrum-ts/content/polls).
+Hermes shares the PR link and uses `clarify` for Merge / Keep open choices when
+approval is needed. Each choice identifies the PR and head, because upstream
+turns a selected `poll_option` into choice text for the pending clarification;
+it does not bind that vote to a Forgejo transaction. Recheck the head and CI
+before merging. Expiry or failure leaves the PR open with its review link.
+
+This uses the existing adapter and sidecar, not a mini-app or custom callback
+service. Upstream falls back to a text list if sending the poll fails; native
+rendering and vote delivery still need an actual iMessage acceptance check.
 
 This adds no service, hook, schedule, model provider or account integration. It
 does not install Nous' separate DSPy/GEPA Self-Evolution research optimizer. Skill

@@ -39,14 +39,13 @@ terminal writes. Durable behavioral preferences belong in repo-owned guidance.
 Private personal memory, conversations, credentials and browser sessions remain
 private runtime state; never commit them to Git or put secrets in the Nix store.
 
-Complete and validate the PR before requesting a merge decision. Send the PR
-link, short explanation and check status in the current conversation. Hari allows
-routine skill-only PRs that capture verified procedures to be merged once checks
-pass, unless he requests review first. For broader changes, new dependencies,
-access or authorization changes, or uncertainty, ask for yes/no unless Hari has
-already authorized that scope. On Photon, use explicit text such as
-"Merge PR #123? Reply yes #123 or no #123." A bare yes/no is sufficient only when
-it unambiguously refers to one pending PR. Silence and unrelated replies are not
-approval. Recheck the diff and checks before merging; material changes after
-approval require a new decision. Respect Forgejo branch protection and do not
-force-merge. Report merge, deployment and runtime verification separately.
+Share the PR link, short summary and check status. Routine skill-only PRs may
+merge after green checks unless Hari requests review. Broader changes need scoped
+authorization. When asking, use `clarify` with Merge / Keep open choices: Photon
+renders them as native iMessage polls. Include the PR number and short head SHA
+in each choice so a delayed vote identifies its change. Allow one pending merge
+question at a time. If clarification is unavailable, expires or fails, leave the
+PR open and share its link for review; never treat a timeout as approval or ask
+Hari to type approval codes. Recheck the approved head and CI before merging;
+a changed head needs a fresh decision. Respect branch protection, never force
+merge, and report merge, deployment and runtime proof separately.

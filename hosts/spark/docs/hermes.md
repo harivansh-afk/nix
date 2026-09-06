@@ -9,9 +9,8 @@ The two processes serve different clients: `hermes gateway` handles Photon and T
 `hermes serve` exposes the authenticated tailnet API used by the Mac
 desktop app. They share Hermes state. The backend does not serve the web dashboard.
 
-Messaging busy acknowledgements are explicitly enabled, including when an old
-mutable `.env` retained the previous disabled value. Photon uses concise notices
-without iteration/tool details. The foreground handles quick requests; repo-owned
+Automatic busy acknowledgements stay disabled; messaging updates should be
+agent-written responses. The foreground handles quick requests; repo-owned
 agent guidance sends long investigations to background delegation and ends the
 foreground turn. This is an agent workflow, not a separate chat scheduler or a
 hard response-time guarantee. Profiles can run concurrently but share gateway

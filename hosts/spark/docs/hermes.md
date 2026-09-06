@@ -19,8 +19,9 @@ see [roomcast.md](roomcast.md).
 
 CLI and Photon sessions have terminal/files, delegation, skills, memory and
 conversation recall, plus the shared `computer` MCP server for browser and desktop
-work. Hermes's native browser and computer-use toolsets are disabled. The local
-knowledge-base plugin adds read-only retrieval. The `spark-computer` skill and
+work. Hermes's native browser and computer-use toolsets are disabled. The personal
+KB and its search plugin are disabled; conversation memory remains enabled.
+The `spark-computer` skill and
 Cua's version-matched skill pack are supplied by Nix. There are no custom
 hooks or scheduled jobs.
 

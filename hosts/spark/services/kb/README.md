@@ -1,6 +1,16 @@
 # Personal knowledge base
 
-Local ingestion and hybrid retrieval for the personal knowledge base.
+Disabled on Spark. The host no longer imports this module, so the embedding
+server, model downloader, connector and ingestion services/timers, KB PostgreSQL
+service, and `kb-search` are absent from the system configuration. Hermes's KB
+plugin is disabled and its plugin/staging symlinks are removed on activation.
+
+Existing PostgreSQL data, `/var/lib/kb`, `/var/lib/llama-cpp-embed`, and legacy
+`/var/lib/cognee` data remain on disk. Disabling services does not delete them.
+Hermes conversation memory and skills remain enabled.
+
+The source below is retained for reference; re-enabling the KB requires an
+explicit request and a configuration change.
 
 ## Files
 
@@ -28,7 +38,7 @@ The downloads connector never reads the directories listed in `DENYLIST` in
 `downloads_connector.py` (security, finance-tax, travel-identity,
 legal-business), and skips hidden files and directories.
 
-## Ingestion
+## Ingestion when enabled
 
 The hourly timer runs the indexer automatically. Run it on demand with:
 
@@ -39,7 +49,7 @@ systemctl start kb-ingest
 Each run performs a full reload of `kb_vec`, then recreates its HNSW and
 full-text indexes.
 
-## Search
+## Search when enabled
 
 ```sh
 kb-search "what does the neovim wiki say about LSP configuration?"

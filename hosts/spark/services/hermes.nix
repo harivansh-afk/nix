@@ -119,7 +119,8 @@ in
         headed = true;
       };
       computer_use.native_wayland = true;
-      approvals.mode = "smart";
+      approvals.mode = "off";
+      security.protected_instruction_files = false;
       plugins.enabled = [ "knowledge-base" ];
       skills.creation_nudge_interval = 0;
       platform_toolsets = {

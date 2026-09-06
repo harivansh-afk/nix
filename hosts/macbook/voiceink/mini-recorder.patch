@@ -6,7 +6,25 @@ diff --git a/VoiceInk/Views/Recorder/MiniRecorderView.swift b/VoiceInk/Views/Rec
 -    private let compactWidth: CGFloat = 184
 +    private let compactWidth: CGFloat = 150
      private let expandedWidth: CGFloat = 300
-@@ -62,8 +62,2 @@
+@@ -56,14 +56,16 @@
+
+-            RecorderStatusDisplay(
+-                currentState: stateProvider.recordingState,
+-                audioMeterProvider: recorder.audioMeterSnapshot
+-            )
++            Group {
++                if stateProvider.recordingState == .transcribing {
++                    ProgressAnimation(color: .white, dotCount: 3)
++                        .accessibilityLabel("Transcribing")
++                } else {
++                    RecorderStatusDisplay(
++                        currentState: stateProvider.recordingState,
++                        audioMeterProvider: recorder.audioMeterSnapshot
++                    )
++                }
++            }
++            .frame(height: controlBarHeight, alignment: .center)
+
              Spacer(minLength: 0)
 -
 -            RecorderModeButton(
@@ -15,3 +33,19 @@ diff --git a/VoiceInk/Views/Recorder/MiniRecorderView.swift b/VoiceInk/Views/Rec
 -            )
 -            .padding(.trailing, 12)
          }
+diff --git a/VoiceInk/Views/Recorder/RecorderComponents.swift b/VoiceInk/Views/Recorder/RecorderComponents.swift
+--- a/VoiceInk/Views/Recorder/RecorderComponents.swift
++++ b/VoiceInk/Views/Recorder/RecorderComponents.swift
+@@ -208,3 +208,3 @@
+
+-    private let dotCount = 5
++    private let dotCount: Int
+     private let dotSize: CGFloat = 3
+@@ -215,5 +215,6 @@
+
+-    init(color: Color = .white, animationSpeed: Double = 0.3) {
++    init(color: Color = .white, animationSpeed: Double = 0.3, dotCount: Int = 5) {
+         self.color = color
+         self.animationSpeed = animationSpeed
++        self.dotCount = dotCount
+     }

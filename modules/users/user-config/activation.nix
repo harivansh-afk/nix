@@ -29,6 +29,7 @@
   ghosttyThemes,
   lazygitConfigs,
   claudeSettings,
+  claudeComputerSource,
   claudeMd,
   codexAgentsMd,
   agentSkills,
@@ -215,6 +216,17 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${agentSkills}" "${homeDirectory}/.agents/skills"
   mkSymlink "${agentSkills}" "${homeDirectory}/.claude/skills"
   mkSymlink "${claudeSettings}" "${homeDirectory}/.claude/settings.json"
+  ${lib.optionalString (claudeComputerSource != null) ''
+    target="${homeDirectory}/.claude.json"
+    tmp=$(mktemp "${homeDirectory}/.claude.json.XXXXXX")
+    if [ -e "$target" ]; then
+      ${pkgs.jq}/bin/jq --slurpfile computer ${claudeComputerSource} '.mcpServers.computer = $computer[0]' "$target" > "$tmp"
+    else
+      ${pkgs.jq}/bin/jq -n --slurpfile computer ${claudeComputerSource} '{mcpServers: {computer: $computer[0]}}' > "$tmp"
+    fi
+    chmod 600 "$tmp"
+    mv "$tmp" "$target"
+  ''}
   mkSymlink "${dotsRoot}/claude/statusline.sh" "${homeDirectory}/.claude/statusline.sh"
 
   # --- codex: config.toml is a writable copy (codex rewrites it at runtime),

@@ -1,0 +1,116 @@
+--- a/tools/mcp_tool_handlers.py
++++ b/tools/mcp_tool_handlers.py
+@@ -8,6 +8,7 @@
+ import json
+ import time
+ from contextlib import asynccontextmanager
++from pathlib import Path
+ from types import SimpleNamespace
+ from typing import Any, Callable, Dict, List, Optional, Tuple
+ from tools.registry import tool_error
+@@ -92,6 +93,8 @@
+
+ def _result_is_error(result) -> bool:
+     """True only for a JSON payload carrying an ``error`` key (non-JSON = success)."""
++    if isinstance(result, dict) and result.get("_multimodal") is True:
++        result = result.get("text_summary", "")
+     try:
+         return "error" in json.loads(result)
+     except (json.JSONDecodeError, TypeError):
+@@ -320,7 +323,7 @@
+     return "".join(str(t) for t in texts if t)
+
+
+-def _render_content_blocks(result, server_name: str) -> Tuple[str, int]:
++def _render_content_blocks(result, server_name: str, image_paths: Optional[List[str]] = None) -> Tuple[str, int]:
+     """Text passes through; image/audio blocks are cached (MEDIA: tags); resource blocks are
+     materialized rather than silently dropped; unsupported blocks become an inline drop notice
+     (kimi-code#3227). Returns ``(text, usable_parts)`` — the count of REAL rendered blocks
+@@ -339,7 +342,10 @@
+             if block.text.strip():
+                 usable_parts += 1
+             continue
+-        rendered = _cache_mcp_image_block(block) or _cache_mcp_audio_block(block) or _render_mcp_resource_block(block, server_name)
++        image = _cache_mcp_image_block(block)
++        if image_paths is not None and image.startswith("MEDIA:"):
++            image_paths.append(image[len("MEDIA:"):])
++        rendered = image or _cache_mcp_audio_block(block) or _render_mcp_resource_block(block, server_name)
+         if rendered:
+             parts.append(rendered)
+             usable_parts += 1
+@@ -384,22 +390,47 @@
+     return _truncate_mcp_text_result(as_json) if len(as_json) > _MCP_HARD_RESULT_CAP_CHARS else structured
+
+
+-def _render_call_tool_result(result, server_name: str) -> str:
+-    """Pure: ``CallToolResult`` -> handler JSON. ``content`` and ``structuredContent`` are
++def _native_mcp_image_result(text: str, image_paths: List[str]) -> Any:
++    """Keep adapter MEDIA tags while attaching cached images to vision-capable models."""
++    if not image_paths:
++        return text
++    try:
++        from tools.vision_tools import (
++            _EMBED_MAX_DIMENSION, _EMBED_TARGET_BYTES,
++            _resize_image_for_vision, _should_use_native_vision_fast_path)
++        if not _should_use_native_vision_fast_path():
++            return text
++        images = []
++        for path in image_paths:
++            data_url = _resize_image_for_vision(
++                Path(path), max_base64_bytes=_EMBED_TARGET_BYTES,
++                max_dimension=_EMBED_MAX_DIMENSION, force_jpeg=True)
++            images.append({"type": "image_url", "image_url": {"url": data_url}})
++        return {"_multimodal": True, "text_summary": text,
++                "content": [{"type": "text", "text": text}, *images]}
++    except Exception as exc:
++        logger.debug("Native MCP image attach failed (falling back to text): %s", exc)
++        return text
++
++
++def _render_call_tool_result(result, server_name: str) -> Any:
++    """``CallToolResult`` -> handler JSON or a native multimodal envelope. ``content`` and ``structuredContent`` are
+     ALTERNATIVES, never both forwarded (kimi-code#3234): spec-following servers already render
+     their data into content, so forwarding both sent it twice. content wins whenever it rendered
+     anything usable (no richness heuristic is attempted — none is reliable); structuredContent
+     fills in only when the blocks rendered effectively empty, keeping structuredContent-only
+     servers working. ``_meta`` minus reserved keys is always surfaced."""
+     if mcp_field(result, "is_error", "isError", False):
+-        return tool_error(_sanitize_error(_truncate_mcp_text_result(_error_result_text(result) or "MCP tool returned an error")))
+-    text_result, usable_parts = _render_content_blocks(result, server_name)
++        error = tool_error(_sanitize_error(_truncate_mcp_text_result(_error_result_text(result) or "MCP tool returned an error")))
++        images = [_cache_mcp_image_block(block) for block in (result.content or [])]
++        image_paths = [image[len("MEDIA:"):] for image in images if image.startswith("MEDIA:")]
++        return _native_mcp_image_result(error, image_paths)
++    image_paths: List[str] = []
++    text_result, usable_parts = _render_content_blocks(result, server_name, image_paths)
+     structured = _capped_structured_content(result)
+     meta = _strip_reserved_meta_keys(mcp_field(result, "meta", "meta"))
+     if structured is not None and usable_parts > 0:
+         structured = None  # drop notices do not count as usable content
+-    if structured is None and meta is None:
+-        return json.dumps({"result": text_result}, ensure_ascii=False)
+     # Key order is part of the output: "result" leads when there is text, otherwise "_meta" precedes it.
+     payload: Dict[str, Any] = {"result": text_result} if text_result else {}
+     # Cap structuredContent too — a malicious server could flood context via a multi-MB JSON payload
+@@ -411,16 +442,17 @@
+         payload["_meta"] = meta
+     payload.setdefault("result", text_result)
+     try:
+-        return json.dumps(payload, ensure_ascii=False)
++        text = json.dumps(payload, ensure_ascii=False)
+     except (TypeError, ValueError):  # Non-serializable metadata: drop the extras, keep the call.
+-        return json.dumps({"result": text_result}, ensure_ascii=False)
++        text = json.dumps({"result": text_result}, ensure_ascii=False)
++    return _native_mcp_image_result(text, image_paths)
+
+
+ def _make_tool_handler(server_name: str, tool_name: str, tool_timeout: float):
+-    """Sync registry handler (``handler(args_dict, **kwargs) -> str``) calling an MCP tool via the background loop."""
++    """Sync registry handler returning JSON or a native multimodal result via the background loop."""
+     op = f"tools/call {tool_name}"
+
+-    def _handler(args: dict, **kwargs) -> str:
++    def _handler(args: dict, **kwargs) -> Any:
+         # Security boundary: untrusted-server write tools need approval before ANY transport work (incl. lazy spawn).
+         error = _trust_gate_check(server_name, tool_name) or _check_circuit_breaker(server_name)
+         if error is not None:

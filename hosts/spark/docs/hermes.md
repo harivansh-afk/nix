@@ -9,10 +9,12 @@ The two processes serve different clients: `hermes gateway` handles Photon
 iMessage; `hermes serve` exposes the authenticated tailnet API used by the Mac
 desktop app. They share Hermes state. The backend does not serve the web dashboard.
 
-The full native toolset is available in CLI and Photon sessions: terminal/files,
-browser, computer use, delegation, skills, memory and conversation recall. The
-local knowledge-base plugin adds read-only retrieval. Cua's version-matched skill
-pack is linked separately. There are no custom hooks or scheduled jobs.
+CLI and Photon sessions have terminal/files, delegation, skills, memory and
+conversation recall, plus the shared `computer` MCP server for browser and desktop
+work. Hermes's native browser and computer-use toolsets are disabled. The local
+knowledge-base plugin adds read-only retrieval. The `spark-computer` skill and
+Cua's version-matched skill pack are linked into Hermes Home. There are no custom
+hooks or scheduled jobs.
 
 ## Learning from work
 
@@ -59,19 +61,32 @@ native Wayland backend; XWayland stays disabled. Desktop actions share the visib
 VNC session, so concurrent workers must coordinate native GUI actions.
 
 Chromium's original profile stays at `~/.config/chromium/Default`, using GNOME
-Keyring. Nix declares Chromium, accessibility, the Sway-specific default-browser
-association and Hermes's profile selection. Cookies, passwords and profile files
-are private mutable state, never Nix store contents or Git assets.
+Keyring. Cookies, passwords and profile files remain private mutable state.
+The shared `computer` MCP server attaches to its loopback CDP endpoint and uses
+the Nix-owned `cua-driver` user service for native desktop actions.
 
-For original-browser attachment, regular coding-agent defaults and CUA display
-setup, follow [Spark browser and desktop automation](browser.md).
+For browser interaction, screenshots or native applications, load the shared
+[spark-computer skill](../../../dots/agents/skills/spark-computer/SKILL.md).
+Hermes exposes `mcp__computer__computer_exec` and
+`mcp__computer__computer_close`. Each task uses a unique session name with
+persistent Python variables and imports. The browser helper creates one owned
+tab in the existing profile; sessions share its logins and site storage. Native
+actions use `desktop: true`, which locks desktop input across participating
+agents for that execution. Finish with `computer_close(session=...)`; it closes
+the owned tab and connection while leaving Chromium and other tabs running.
+Close additional pages or contexts created by the task separately.
 
-Hermes snapshots that profile into its own private browser state at each fresh
-browser session and drives a visible window. Existing logins are copied, but
-extensions and some storage (including IndexedDB) are not. Log in through the
-original browser when refreshing the source identity. Changes inside a snapshot
-are not a backup of the original profile. Named browser sessions support parallel
-work without reusing a single automation tab.
+`display(...)` returns browser images as MCP image blocks, and CUA screenshots
+are forwarded automatically. The declarative patch at
+`pkgs/spark-computer/hermes-mcp-images.patch` passes these images to Astra's native
+vision context while retaining Hermes's cached media output. Images emitted
+before a code error remain visible alongside the error. Text-only results and
+nonvision models retain the ordinary text response path. The patch applies to
+the pinned Hermes Python source during its package build.
+
+For CDP connectivity, display diagnostics and measured acceptance results, follow
+[Spark browser and desktop automation](browser.md). If the browser restarts or a
+task's owned tab closes, close the stale computer session and create a new one.
 
 ## iMessage
 
@@ -89,10 +104,10 @@ and screenshots are the supported baseline.
 
 ## Updating and acceptance
 
-Update `hermes-agent` with `nix flake update hermes-agent`. Browser Use has a
-separate uv2nix environment: update its pyproject constraint and run
-`uv lock --project pkgs/browser-use`. Cua's binary and skill archive share a
-release version and fixed hashes. Rebuild through the normal PR/deployment flow.
+Update `hermes-agent` with `nix flake update hermes-agent` and recheck the MCP
+image patch against that revision. The shared computer package takes Python,
+Playwright and Pillow from nixpkgs. Cua's binary and skill archive share a release
+version and fixed hashes. Rebuild through the normal PR/deployment flow.
 
 `nix build .#checks.aarch64-linux.hermes-runtime` tests packaged startup and Photon
 module resolution without credentials or network access. Before calling a
@@ -100,10 +115,13 @@ new deployment operational:
 
 1. Check both Hermes services and their journals; confirm Photon connected and
    retained the sender allowlist. An expired Photon account needs reauthentication.
-2. Run `hermes computer-use doctor` in Spark's Sway session. Verify accessibility,
-   capture and a harmless action in a scratch application.
-3. Ask for a harmless authenticated browser read; confirm the expected account
-   and return a screenshot. Test steering and cancellation during a task.
+2. Start a named computer session with `desktop: true`; use
+   `await desktop.list_windows()` and inspect a scratch application's state.
+   Verify a harmless action and an actual screenshot in Astra's context.
+3. In a distinct named session, ask for a harmless authenticated browser read;
+   confirm the expected account and return a screenshot with `display(...)`.
+   Test steering and cancellation during a task, then close both sessions and
+   verify the task's browser tab closed while pre-existing tabs remain.
 4. Text the existing Photon line from Hari's phone, have it perform a harmless
    task, and check its reply and attachment. No outbound test is automatic.
 5. Restart the services and repeat a request to verify persistence.

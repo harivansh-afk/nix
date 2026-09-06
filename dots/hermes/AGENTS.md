@@ -6,27 +6,22 @@ AGENTS.md before changing it. Forgejo at git.harivan.sh is canonical; use tea fo
 its pull requests. Keep PR creation, merge, deployment and runtime proof distinct.
 
 Use kb_search for personal context. The KB plugin provides read-only retrieval.
-Use terminal and file tools for code and local work, browser_exec for websites,
-and computer_use for native desktop applications. Load the relevant bundled
-skills when doing browser or computer work.
+Use terminal and file tools for code and local work. For websites, screenshots,
+visual checks, dialogs or native applications on Spark, load the shared
+`spark-computer` skill and use its `computer` MCP tools.
 
 After a nontrivial task yields a reusable procedure, or feedback corrects a
 workflow, load self-evolve to propose the verified lesson through a Nix skill PR.
 
-Browser automation uses a snapshot of Chromium's existing Default profile. Logins
-added in the original browser are copied at the next fresh browser session. The
-original profile remains /home/rathi/.config/chromium; it is private mutable state.
-Snapshots omit extensions and some site storage. If an app is signed out in the
-snapshot, report it and use the visible original browser only within Hari's task.
-For tasks in the original visible browser, read
-`/home/rathi/Documents/Git/nix/hosts/spark/docs/browser.md` and attach with its
-explicit CDP workflow.
+Browser automation uses Hari's existing Chromium profile through a task-owned
+tab. Give each task a unique computer session name, retain it across calls, and
+finish with `mcp__computer__computer_close`. Use `display(...)` to return browser
+images to your vision context; CUA screenshots arrive as images automatically.
 
-Spark's Sway desktop is visible through Hari's existing VNC connection. Desktop
-actions share that session: coordinate GUI work across subagents and yield when
-Hari takes over. Use named browser sessions for independent parallel browser work.
-Wayland background actions depend on application accessibility support; inspect
-the actual result after acting and report unsupported actions accurately.
+Spark's Sway desktop is visible through Hari's existing VNC connection. Set
+`desktop: true` for native actions, coordinate GUI work across subagents, and
+yield when Hari takes over. Sessions have separate Python state and owned tabs;
+they share browser logins, site storage and the visible desktop.
 
 Photon accepts text commands and can send files/screenshots back. Its inbound
 attachments may contain only metadata; ask for the text or an accessible file

@@ -38,6 +38,30 @@
         logitech = lint "logitech" [ pkgs.python3 ] "python3 hosts/macbook/logitech/test_apply.py";
       }
       // pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "aarch64-linux") {
+        spark-computer =
+          let
+            computer = import ../pkgs/spark-computer { inherit pkgs; };
+          in
+          pkgs.runCommand "spark-computer-tests" { } ''
+            export HOME=$TMPDIR/home PYTHONDONTWRITEBYTECODE=1
+            mkdir -p "$HOME"
+            ${computer.python}/bin/python ${../pkgs/spark-computer}/test_server.py
+            touch $out
+          '';
+
+        hermes-mcp-images =
+          pkgs.runCommand "hermes-mcp-images-tests"
+            {
+              HERMES_TEST_SOURCE = "${hermes.package.hermesVenv}/${pkgs.python312.sitePackages}";
+            }
+            ''
+              export HOME=$TMPDIR/home HERMES_HOME=$TMPDIR/home/.hermes
+              export PYTHONDONTWRITEBYTECODE=1
+              mkdir -p "$HERMES_HOME"
+              ${hermes.package.hermesVenv}/bin/python ${../pkgs/spark-computer/test_hermes_images.py}
+              touch $out
+            '';
+
         hermes-runtime =
           pkgs.runCommand "hermes-runtime"
             {
@@ -55,8 +79,6 @@
               mkdir -p "$HERMES_HOME"
               hermes --version
               hermes computer-use status
-              browser-use --version
-              agent-browser --version
               cd "$PHOTON_SIDECAR_DIR"
               node --input-type=module -e '
                 await import("spectrum-ts");

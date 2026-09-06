@@ -11,7 +11,20 @@ let
   stateDir = "${home}/.local/state/hermes";
   runtimeDir = "/run/user/${toString config.users.users.${username}.uid}";
   cuaDriver = pkgs.callPackage ../../../pkgs/cua-driver { };
-  browserUse = import ../../../pkgs/browser-use { inherit pkgs inputs; };
+  computer = import ../../../pkgs/spark-computer { inherit pkgs; };
+  hermesPackage = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+    callPackage =
+      path: args:
+      pkgs.callPackage path (
+        args
+        // lib.optionalAttrs (baseNameOf path == "python.nix") {
+          pythonSrc = pkgs.applyPatches {
+            src = args.pythonSrc;
+            patches = [ ../../../pkgs/spark-computer/hermes-mcp-images.patch ];
+          };
+        }
+      );
+  };
   photonSrc = "${inputs.hermes-agent}/plugins/platforms/photon/sidecar";
   photonDeps = pkgs.importNpmLock.buildNodeModules {
     npmRoot = photonSrc;
@@ -37,6 +50,7 @@ let
   toolsets = [
     "hermes-cli"
     "knowledge_base"
+    "computer"
   ];
   skillsDir = ../../../dots/hermes/skills;
   skillNames = lib.filter (name: builtins.pathExists (skillsDir + "/${name}/SKILL.md")) (
@@ -52,11 +66,13 @@ in
     "L+ ${stateDir}/.hermes/plugins/knowledge-base - - - - /home/rathi/Documents/Git/nix/dots/hermes/plugins/knowledge-base"
     "L+ ${stateDir}/workspace/kb-staging - - - - /var/lib/kb/staging"
     "L+ ${stateDir}/.hermes/skills/cua-driver - - - - ${cuaDriver.skills}"
+    "L+ ${stateDir}/.hermes/skills/spark-computer - - - - ${../../../dots/agents/skills/spark-computer}"
   ]
   ++ map (name: "L+ ${stateDir}/.hermes/skills/${name} - - - - ${skillsDir + "/${name}"}") skillNames;
 
   services.hermes-agent = {
     enable = true;
+    package = hermesPackage;
     user = username;
     group = "users";
     createUser = false;
@@ -65,8 +81,7 @@ in
     addToSystemPackages = true;
     extraPackages = [
       cuaDriver
-      browserUse
-      pkgs.agent-browser
+      computer
       pkgs.uv
       pkgs.tea
       pkgs.jq
@@ -104,21 +119,26 @@ in
       };
       agent = {
         reasoning_effort = "medium";
-        disabled_toolsets = [ ];
+        disabled_toolsets = [
+          "browser"
+          "computer_use"
+        ];
       };
       providers.spark = {
         base_url = "http://127.0.0.1:18080/v1";
         api_mode = "chat_completions";
         model = "qwen3.8-27b";
       };
-      browser = {
-        cloud_provider = "local";
-        backend = "browser-use";
-        use_real_profile = true;
-        real_profile_pin = "Default";
-        headed = true;
+      mcp_servers.computer = {
+        command = "${computer}/bin/spark-computer";
+        args = [ ];
+        timeout = 180;
+        lazy = false;
+        tools.include = [
+          "computer_exec"
+          "computer_close"
+        ];
       };
-      computer_use.native_wayland = true;
       approvals.mode = "off";
       security.protected_instruction_files = false;
       plugins.enabled = [ "knowledge-base" ];

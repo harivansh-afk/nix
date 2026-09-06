@@ -274,11 +274,13 @@ Source of truth is the jj-native ix forge (RPC `https://forge.ix.dev:8447/rpc`, 
 Hermes runs through upstream's NixOS module in `hosts/spark/services/hermes.nix`.
 The gateway and dashboard share `~/.local/state/hermes/.hermes`; the `~/.hermes`
 symlink keeps existing CLI state reachable. Astra uses Codex OAuth at medium
-reasoning. Native browser, CUA, delegation, memory and skills are enabled for CLI
-and Photon iMessage. The knowledge-base plugin remains read-only.
+reasoning. Browser and desktop actions use the shared `computer` MCP server
+through the `spark-computer` skill, also installed for coding agents. Delegation,
+memory and skills are enabled for CLI and Photon iMessage. The knowledge-base
+plugin remains read-only.
 
-Chromium's existing Default profile is private mutable state; Hermes uses its
-native snapshot feature. Never commit browser profiles or put their credentials
+Chromium's existing Default profile is private mutable state; agents attach to
+the running browser and create task-owned tabs. Never commit profiles or put credentials
 in the store. For browser identity, Sway/CUA diagnostics, Photon recovery or
 post-deployment acceptance, read `hosts/spark/docs/hermes.md`.
 

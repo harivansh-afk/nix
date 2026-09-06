@@ -47,7 +47,7 @@ let
 
   mkPkgs =
     system:
-    import inputs.nixpkgs {
+    import (if lib.hasSuffix "-darwin" system then inputs.nixpkgs-macbook else inputs.nixpkgs) {
       inherit system;
       config.allowUnfree = true;
     };

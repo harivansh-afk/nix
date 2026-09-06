@@ -1,56 +1,59 @@
 diff --git a/VoiceInk/Models/TranscriptionModel.swift b/VoiceInk/Models/TranscriptionModel.swift
-index 8d7b4ae..52f23eb 100644
+index 00d7c82..c0dca1d 100644
 --- a/VoiceInk/Models/TranscriptionModel.swift
 +++ b/VoiceInk/Models/TranscriptionModel.swift
-@@ -138,13 +138,17 @@ struct CustomCloudModel: TranscriptionModel, Codable {
-     let modelName: String
+@@ -164,6 +164,11 @@ struct CustomCloudModel: TranscriptionModel, Codable {
      let isMultilingualModel: Bool
      let supportedLanguages: [String: String]
+
 +    /// Opt-in flag for realtime streaming against a self-hosted realtime endpoint.
 +    let isStreamingModel: Bool?
 +
 +    var supportsStreaming: Bool { isStreamingModel ?? false }
- 
++
      /// API key retrieved from Keychain by model ID.
      var apiKey: String {
          APIKeyManager.shared.getCustomModelAPIKey(forModelId: id) ?? ""
-     }
- 
--    init(id: UUID = UUID(), name: String, displayName: String, description: String, apiEndpoint: String, modelName: String, isMultilingual: Bool = true, supportedLanguages: [String: String]? = nil) {
-+    init(id: UUID = UUID(), name: String, displayName: String, description: String, apiEndpoint: String, modelName: String, isMultilingual: Bool = true, supportedLanguages: [String: String]? = nil, isStreamingModel: Bool? = nil) {
+@@ -171,7 +176,8 @@ struct CustomCloudModel: TranscriptionModel, Codable {
+
+     init(
+         id: UUID = UUID(), name: String, displayName: String, description: String, apiEndpoint: String,
+-        modelName: String, isMultilingual: Bool = true, supportedLanguages: [String: String]? = nil
++        modelName: String, isMultilingual: Bool = true, supportedLanguages: [String: String]? = nil,
++        isStreamingModel: Bool? = nil
+     ) {
          self.id = id
          self.name = name
-         self.displayName = displayName
-@@ -153,11 +157,12 @@ struct CustomCloudModel: TranscriptionModel, Codable {
+@@ -181,11 +187,12 @@ struct CustomCloudModel: TranscriptionModel, Codable {
          self.modelName = modelName
          self.isMultilingualModel = isMultilingual
          self.supportedLanguages = supportedLanguages ?? LanguageDictionary.forProvider(isMultilingual: isMultilingual)
 +        self.isStreamingModel = isStreamingModel
      }
- 
+
      /// Custom Codable to migrate legacy apiKey from JSON to Keychain.
      private enum CodingKeys: String, CodingKey {
 -        case id, name, displayName, description, apiEndpoint, modelName, isMultilingualModel, supportedLanguages
 +        case id, name, displayName, description, apiEndpoint, modelName, isMultilingualModel, supportedLanguages, isStreamingModel
          case apiKey
      }
- 
-@@ -171,6 +176,7 @@ struct CustomCloudModel: TranscriptionModel, Codable {
+
+@@ -199,6 +206,7 @@ struct CustomCloudModel: TranscriptionModel, Codable {
          modelName = try container.decode(String.self, forKey: .modelName)
          isMultilingualModel = try container.decode(Bool.self, forKey: .isMultilingualModel)
          supportedLanguages = try container.decode([String: String].self, forKey: .supportedLanguages)
 +        isStreamingModel = try container.decodeIfPresent(Bool.self, forKey: .isStreamingModel)
- 
+
          if let legacyApiKey = try container.decodeIfPresent(String.self, forKey: .apiKey), !legacyApiKey.isEmpty {
              APIKeyManager.shared.saveCustomModelAPIKey(legacyApiKey, forModelId: id)
-@@ -187,6 +193,7 @@ struct CustomCloudModel: TranscriptionModel, Codable {
+@@ -215,6 +223,7 @@ struct CustomCloudModel: TranscriptionModel, Codable {
          try container.encode(modelName, forKey: .modelName)
          try container.encode(isMultilingualModel, forKey: .isMultilingualModel)
          try container.encode(supportedLanguages, forKey: .supportedLanguages)
 +        try container.encodeIfPresent(isStreamingModel, forKey: .isStreamingModel)
      }
- } 
- 
+ }
+
 diff --git a/VoiceInk/Transcription/Streaming/SelfHostedStreamingProvider.swift b/VoiceInk/Transcription/Streaming/SelfHostedStreamingProvider.swift
 new file mode 100644
 index 0000000..0345089
@@ -287,10 +290,10 @@ index 0000000..0345089
 +    }
 +}
 diff --git a/VoiceInk/Transcription/Streaming/StreamingTranscriptionService.swift b/VoiceInk/Transcription/Streaming/StreamingTranscriptionService.swift
-index dbab620..7491158 100644
+index e59ca40..334460d 100644
 --- a/VoiceInk/Transcription/Streaming/StreamingTranscriptionService.swift
 +++ b/VoiceInk/Transcription/Streaming/StreamingTranscriptionService.swift
-@@ -264,6 +264,9 @@ class StreamingTranscriptionService {
+@@ -314,6 +314,9 @@ class StreamingTranscriptionService {
              }
              return FluidAudioStreamingProvider(fluidAudioService: fluidAudioService)
          }
@@ -298,13 +301,13 @@ index dbab620..7491158 100644
 +            return SelfHostedStreamingProvider()
 +        }
          guard let cloudProvider = CloudProviderRegistry.provider(for: model.provider),
-               let streamingProvider = cloudProvider.makeStreamingProvider(modelContext: modelContext) else {
-             fatalError("Unsupported streaming provider: \(model.provider). Check shouldUseRealtimeTranscription() before calling startStreaming().")
+             let streamingProvider = cloudProvider.makeStreamingProvider(modelContext: modelContext)
+         else {
 diff --git a/VoiceInk/Views/AI Models/CustomProviderManagementView.swift b/VoiceInk/Views/AI Models/CustomProviderManagementView.swift
-index 66614cc..d72d92e 100644
+index 7c76d4b..5258aee 100644
 --- a/VoiceInk/Views/AI Models/CustomProviderManagementView.swift	
 +++ b/VoiceInk/Views/AI Models/CustomProviderManagementView.swift	
-@@ -283,7 +283,8 @@ struct CustomTranscriptionModelEditorPanel: View {
+@@ -328,7 +328,8 @@ struct CustomTranscriptionModelEditorPanel: View {
                  description: "Custom transcription model",
                  apiEndpoint: trimmedEndpoint,
                  modelName: trimmedModelName,
@@ -312,5 +315,5 @@ index 66614cc..d72d92e 100644
 +                isMultilingual: isMultilingual,
 +                isStreamingModel: editingModel.isStreamingModel
              )
- 
-             customModelManager.updateCustomModel(updatedModel)
+
+             guard customModelManager.updateCustomModel(updatedModel, apiKey: trimmedKey) else {

@@ -12,19 +12,6 @@ let
   runtimeDir = "/run/user/${toString config.users.users.${username}.uid}";
   cuaDriver = pkgs.callPackage ../../../pkgs/cua-driver { };
   computer = import ../../../pkgs/spark-computer { inherit pkgs; };
-  hermesPackage = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
-    callPackage =
-      path: args:
-      pkgs.callPackage path (
-        args
-        // lib.optionalAttrs (baseNameOf path == "python.nix") {
-          pythonSrc = pkgs.applyPatches {
-            src = args.pythonSrc;
-            patches = [ ../../../pkgs/spark-computer/hermes-mcp-images.patch ];
-          };
-        }
-      );
-  };
   photonSrc = "${inputs.hermes-agent}/plugins/platforms/photon/sidecar";
   photonDeps = pkgs.importNpmLock.buildNodeModules {
     npmRoot = photonSrc;
@@ -63,7 +50,6 @@ in
 
   services.hermes-agent = {
     enable = true;
-    package = hermesPackage;
     user = username;
     group = "users";
     createUser = false;

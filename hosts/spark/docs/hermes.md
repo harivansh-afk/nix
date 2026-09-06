@@ -59,8 +59,9 @@ and CUA daemon without waiting for a display at gateway startup. Load the
 browser/native actions, named sessions and cleanup. Tool names are
 `mcp__computer__computer_exec` and `mcp__computer__computer_close`.
 
-The pinned package's MCP image patch makes screenshots visible to Astra.
-For service ownership, image-coordinate handling, diagnosis and repeatable tests,
+Use the normal `vision_analyze` tool to load each returned MCP `MEDIA:` path
+into Astra's image context. Hermes uses the unmodified upstream package.
+For service ownership, image-coordinate handling, diagnosis and validation results,
 see [Spark browser and desktop](browser.md).
 
 ## iMessage
@@ -79,9 +80,8 @@ and screenshots are the supported baseline.
 
 ## Updating and acceptance
 
-Update `hermes-agent` with `nix flake update hermes-agent` and recheck the MCP
-image patch against that revision. The shared computer package takes Python,
-and Playwright from nixpkgs. Cua's binary and skill archive share a release
+Update `hermes-agent` with `nix flake update hermes-agent`. The shared computer
+package takes Python and Playwright from nixpkgs. Cua's binary and skill archive share a release
 version and fixed hashes. Rebuild through the normal PR/deployment flow.
 
 `nix build .#checks.aarch64-linux.hermes-runtime` tests packaged startup and Photon

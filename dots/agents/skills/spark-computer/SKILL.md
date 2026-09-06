@@ -23,8 +23,11 @@ display(await page.screenshot())
 The helper creates one owned tab in Hari's existing Chromium profile. Use
 observed roles, labels and DOM state for controls; screenshots for canvas and
 visual checks. Group known steps and wait on specific locators/events rather
-than sleeping. `display(image_bytes_or_path)` returns an actual image to the
-model; printing a path does not.
+than sleeping. `display(image_bytes_or_path)` emits an MCP image. In Hermes,
+pass the path after `MEDIA:` to its separate `vision_analyze` tool as `image_url`,
+with a `question` describing what to inspect. This loads the screenshot into
+your visual context; a file path alone is not a visible image. Other harnesses
+can display MCP images directly.
 
 `await browser.tabs()` lists tab metadata. When explicitly asked to operate an
 existing tab, resolve its exact reference from `page.context.pages`. Preserve
@@ -45,8 +48,8 @@ print(await desktop.describe("get_window_state"))
 ```
 
 Select the exact window's observed `pid` and `window_id`, then call
-`await desktop.get_window_state(pid=PID, window_id=WINDOW_ID)`. CUA images are
-forwarded automatically. Discover unfamiliar action schemas with
+`await desktop.get_window_state(pid=PID, window_id=WINDOW_ID)`. CUA screenshots
+use the same image route above. Discover unfamiliar action schemas with
 `await desktop.describe("tool_name")`, then call `await desktop.tool_name(...)`.
 
 Prefer fresh accessibility `element_token` values (or matching snapshot/index).

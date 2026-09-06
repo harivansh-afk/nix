@@ -13,16 +13,6 @@ visual checks, dialogs or native applications on Spark, load the shared
 After a nontrivial task yields a reusable procedure, or feedback corrects a
 workflow, load self-evolve to propose the verified lesson through a Nix skill PR.
 
-Browser automation uses Hari's existing Chromium profile through a task-owned
-tab. Give each task a unique computer session name, retain it across calls, and
-finish with `mcp__computer__computer_close`. Use `display(...)` to return browser
-images to your vision context; CUA screenshots arrive as images automatically.
-
-Spark's Sway desktop is visible through Hari's existing VNC connection. Set
-`desktop: true` for native actions, coordinate GUI work across subagents, and
-yield when Hari takes over. Sessions have separate Python state and owned tabs;
-they share browser logins, site storage and the visible desktop.
-
 Photon accepts text commands and can send files/screenshots back. Its inbound
 attachments may contain only metadata; ask for the text or an accessible file
 when the bytes are unavailable.

@@ -36,57 +36,49 @@ bare `cua-driver mcp` otherwise starts its own runtime.
 
 Hermes needs neither display environment discovery nor a Sway startup gate:
 its browser and desktop calls use CDP and the shared CUA socket. Its separate
-native toolsets are disabled. The [image patch](../../../pkgs/spark-computer/hermes-mcp-images.patch)
-turns cached MCP images into native model input while retaining media references
-and error semantics. It uses upstream image preparation, including resizing;
-map displayed coordinates to original screenshot dimensions. Remove the patch
-when the pinned upstream provides equivalent support.
+native toolsets are disabled. Hermes runs unpatched upstream: MCP screenshots
+arrive as `MEDIA:` references; `vision_analyze` loads that path into the model's
+image context using upstream image processing. Coding harnesses can consume MCP
+images directly. Account for image resizing when choosing pixel coordinates.
+If a failed call has no usable screenshot reference, capture fresh state in a
+successful call before interpreting it.
 
 Calls default to 60 seconds, maximum 120; all harness deadlines allow 180.
 There are at most 16 sessions per process. Output is bounded to 64 KiB of text
 and eight images / 20 MiB encoded. Timeouts are cooperative, not a Python sandbox.
 
-## Tests
+## Validation
 
-CI runs [runtime tests](../../../pkgs/spark-computer/test_server.py),
-[Hermes image regressions](../../../pkgs/spark-computer/test_hermes_images.py)
-and packaged Hermes/Photon startup checks. Manual acceptance uses real Spark
-services, disposable pages and an independently observable GTK fixture:
+CI retains the repository's flake/lint checks and packaged Hermes/Photon startup
+check. This PR adds no test files. Browser/native fixtures and model comparisons
+were run temporarily on Spark; they are validation evidence, not ongoing regression
+coverage.
 
-```sh
-nix build --impure --expr 'let f = builtins.getFlake ("git+file://" + toString ./.); in import ./pkgs/spark-computer { pkgs = f.nixosConfigurations.spark.pkgs; }' --out-link /tmp/spark-computer-check
-nix build --impure --expr 'let f = builtins.getFlake ("git+file://" + toString ./.); in (import ./pkgs/spark-computer { pkgs = f.nixosConfigurations.spark.pkgs; }).python' --out-link /tmp/spark-computer-python
-export SPARK_COMPUTER_COMMAND=/tmp/spark-computer-check/bin/spark-computer
-uv run --no-project --python /tmp/spark-computer-python/bin/python pkgs/spark-computer/test_acceptance.py
-```
+Initial acceptance on 2026-09-06 verified real browser forms, delayed controls,
+canvas, downloads, persistent sessions, tab cleanup and cross-process locking.
+Native accessibility and foreground keyboard/pixel actions were checked against
+app-owned JSON and screenshots. Chromium restarted after SIGTERM and restored
+three tab locations; one site changed its query string during reload. These
+service trials used runtime-only systemd links, not a full system deployment.
 
-The browser test covers forms, delayed controls, canvas, downloads, draft state,
-persistent sessions, tab cleanup and a separate-process lock. It uses its own
-local HTTP fixture and test lock, with no native input. For native acceptance,
-use the visible desktop only when available for a test:
+### Hermes image comparison
 
-```sh
-nix build --impure --expr 'let f = builtins.getFlake ("git+file://" + toString ./.); in import ./pkgs/spark-computer/fixtures { pkgs = f.nixosConfigurations.spark.pkgs; }' --out-link /tmp/spark-native-fixture
-systemd-run --user --collect --unit=spark-native-acceptance /tmp/spark-native-fixture/bin/spark-computer-native-fixture --state /tmp/spark-native-acceptance.json
-uv run --no-project --python /tmp/spark-computer-python/bin/python pkgs/spark-computer/test_native.py --state /tmp/spark-native-acceptance.json
-systemctl --user stop spark-native-acceptance
-```
+On upstream `c5594ec` (2026-09-06), three matched pairs used the same browser
+screenshots, prompt, Astra High and available `computer`/`vision` tools. Each task
+read an image-only random marker, reused Python state and closed its owned tab.
 
-The native test verifies semantic and foreground keyboard/pixel actions against
-app-owned JSON, saves screenshots, and leaves fixture shutdown to the caller.
+| Route | Correct tasks | Tool calls / model requests per task | Median wall time |
+|---|---|---|---|
+| Unmodified upstream + `vision_analyze` | 3/3 | 5 / 6 | 32.43 s |
+| Local automatic-image patch + vision available | 3/3 | 5 / 6 | 33.66 s |
 
-Initial acceptance on 2026-09-06:
-
-| Check | Result |
-|---|---|
-| Actual Codex / Hermes Astra High | Both read pixel-only random markers, reused Python variables and closed their tabs; native image delivery confirmed |
-| Browser / native fixtures | Passed; pre-existing browser tabs preserved; native JSON and screenshots verified |
-| Chromium lifecycle | Service owned the browser, restarted after SIGTERM and restored three tab locations; one site changed its query string on reload |
-| Regression checks | 19 runtime, 12 image and 138 upstream Hermes tests passed |
-
-The initial service tests used runtime-only systemd links and temporary harness
-configuration. They did not deploy the full system. Fixture success is not a
-comparative benchmark or proof of every application's behavior.
+The five calls included discovery, two code executions, vision and cleanup.
+Request metadata confirmed Astra High and native image input. Patched runs still
+called `vision_analyze`, retaining two copies of the screenshot in subsequent
+model requests; upstream retained one. The patch saved no turns here, so it and
+its package override were removed. This small sample supports the existing route
+for this task, not a general reliability or speed ranking. Temporary credentials
+were deleted and all task tabs closed. No upstream endorsement is inferred.
 
 ## Design evidence
 

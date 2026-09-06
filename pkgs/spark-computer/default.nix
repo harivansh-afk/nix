@@ -8,7 +8,6 @@ let
 in
 pkgs.writeShellApplication {
   name = "spark-computer";
-  passthru = { inherit python; };
   runtimeInputs = [ python ];
   runtimeEnv = {
     CUA_DRIVER_COMMAND = "${cuaDriver}/bin/cua-driver";

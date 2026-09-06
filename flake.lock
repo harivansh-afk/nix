@@ -637,11 +637,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788717704,
-        "narHash": "sha256-Bbtps/CqpSFURfOdkZnk9kn+2hJTUL744gcx0WI0+Uw=",
+        "lastModified": 1788718348,
+        "narHash": "sha256-T2oRmi7M2xWK2eoOz0tQjC1otfcToi0WiMD9pchSK+4=",
         "ref": "master",
-        "rev": "6abac3f1f0b7b6b59f1fe07d8758392195f0bb99",
-        "revCount": 292,
+        "rev": "f89c1ad9349456c1542f8e4eace065bd57ab4813",
+        "revCount": 293,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/mixbridge-web.git"
       },

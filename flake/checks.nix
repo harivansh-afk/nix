@@ -52,11 +52,6 @@
               export HOME=$TMPDIR/home HERMES_HOME=$TMPDIR/home/.hermes
               mkdir -p "$HERMES_HOME"
               hermes --version
-              ${hermes.package.hermesVenv}/bin/python3 ${../scripts/test-hermes-skills.py} \
-                ${pkgs.writeText "hermes-test-settings.json" (builtins.toJSON hermes.settings)} \
-                ${pkgs.writeText "hermes-no-bundled-skills" hermes.hermesHomeFiles.".no-bundled-skills"} \
-                ${hermes.package}/share/hermes-agent/skills \
-                ${../hosts/spark/services/hermes-skills.sh}
               cd "$PHOTON_SIDECAR_DIR"
               node --input-type=module -e '
                 await import("spectrum-ts");

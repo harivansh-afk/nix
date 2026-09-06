@@ -14,6 +14,18 @@ browser, computer use, delegation, skills, memory and conversation recall. The
 local knowledge-base plugin adds read-only retrieval. Cua's version-matched skill
 pack is linked separately. There are no custom hooks or scheduled jobs.
 
+## Learning from work
+
+The Nix-owned `self-evolve` skill guides learning from completed tasks and verified
+corrections using Hermes' native `skill_view` and `skill_manage` tools. Agent
+guidance points to it when those triggers occur. Learned skills remain writable
+under `HERMES_HOME/skills` and persist across rebuilds. This is model-guided
+learning, not a guarantee that every task creates or improves a skill.
+
+This adds no service, hook, schedule, model provider or account integration. It
+does not install Nous' separate DSPy/GEPA Self-Evolution research optimizer. Skill
+files stay on Spark; reasoning still uses the configured Astra Codex provider.
+
 ## Desktop and browser
 
 The services run as Hari with his home, user D-Bus and Sway display. Startup waits

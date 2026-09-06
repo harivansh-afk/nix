@@ -48,6 +48,7 @@ in
     "L+ ${stateDir}/.hermes/plugins/knowledge-base - - - - /home/rathi/Documents/Git/nix/dots/hermes/plugins/knowledge-base"
     "L+ ${stateDir}/workspace/kb-staging - - - - /var/lib/kb/staging"
     "L+ ${stateDir}/.hermes/skills/cua-driver - - - - ${cuaDriver.skills}"
+    "L+ ${stateDir}/.hermes/skills/self-evolve - - - - ${../../../dots/hermes/skills/self-evolve}"
   ];
 
   services.hermes-agent = {

@@ -10,6 +10,9 @@ Use terminal and file tools for code and local work, browser_exec for websites,
 and computer_use for native desktop applications. Load the relevant bundled
 skills when doing browser or computer work.
 
+After a nontrivial task yields a reusable procedure, or feedback corrects a
+workflow, load self-evolve to save the verified lesson using native skill tools.
+
 Browser automation uses a snapshot of Chromium's existing Default profile. Logins
 added in the original browser are copied at the next fresh browser session. The
 original profile remains /home/rathi/.config/chromium; it is private mutable state.

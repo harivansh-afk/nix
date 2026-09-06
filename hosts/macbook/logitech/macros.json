@@ -1,0 +1,95 @@
+{
+  "macro_infos": {
+    "macroInfos": [
+      {
+        "cards": [
+          {
+            "attribute": "MACRO_PLAYBACK",
+            "macro": {
+              "inputSequence": {
+                "componentLists": [
+                  {
+                    "components": [
+                      {
+                        "delay": {
+                          "durationMs": 21
+                        }
+                      },
+                      {
+                        "keyboard": {
+                          "displayName": "\u2318Cmd",
+                          "hidUsage": 227,
+                          "isDown": true
+                        }
+                      },
+                      {
+                        "keyboard": {
+                          "displayName": "^Ctrl",
+                          "hidUsage": 224,
+                          "isDown": true
+                        }
+                      },
+                      {
+                        "keyboard": {
+                          "displayName": "\u21e7Shift",
+                          "hidUsage": 225,
+                          "isDown": true
+                        }
+                      },
+                      {
+                        "keyboard": {
+                          "displayName": "4",
+                          "hidUsage": 33,
+                          "isDown": true,
+                          "virtualKeyId": "VK_4"
+                        }
+                      },
+                      {
+                        "keyboard": {
+                          "displayName": "4",
+                          "hidUsage": 33,
+                          "virtualKeyId": "VK_4"
+                        }
+                      },
+                      {
+                        "keyboard": {
+                          "displayName": "\u2318Cmd",
+                          "hidUsage": 227
+                        }
+                      },
+                      {
+                        "keyboard": {
+                          "displayName": "\u21e7Shift",
+                          "hidUsage": 225
+                        }
+                      },
+                      {
+                        "keyboard": {
+                          "displayName": "^Ctrl",
+                          "hidUsage": 224
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "defaultDelay": 21,
+                "useDefaultDelay": true
+              },
+              "type": "INPUT_SEQUENCE"
+            },
+            "tags": [
+              "PRESET_TAG_KEY_OR_BUTTON"
+            ]
+          }
+        ],
+        "customCategories": {},
+        "id": "a3e39599-5c16-4b41-89db-4055a77b00bc",
+        "lastEditTimestamp": "1734819362160",
+        "name": "screen shot",
+        "platform": "OSX",
+        "usageCount": 3
+      }
+    ]
+  },
+  "macros_settings_transferred": true
+}

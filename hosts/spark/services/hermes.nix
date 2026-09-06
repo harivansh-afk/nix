@@ -34,6 +34,32 @@ let
   skillNames = lib.filter (name: builtins.pathExists (skillsDir + "/${name}/SKILL.md")) (
     lib.attrNames (lib.filterAttrs (_: type: type == "directory") (builtins.readDir skillsDir))
   );
+  upstreamSkills = {
+    hermes-agent = "autonomous-ai-agents/hermes-agent";
+  };
+  skillLinks = pkgs.linkFarm "hermes-skill-sources" (
+    lib.mapAttrsToList (name: path: {
+      inherit name;
+      path = inputs.hermes-agent + "/skills/${path}";
+    }) upstreamSkills
+    ++ [
+      {
+        name = "cua-driver";
+        path = cuaDriver.skills;
+      }
+      {
+        name = "spark-computer";
+        path = ../../../dots/agents/skills/spark-computer;
+      }
+    ]
+    ++ map (name: {
+      inherit name;
+      path = skillsDir + "/${name}";
+    }) skillNames
+  );
+  skills = pkgs.runCommand "hermes-skills" { } ''
+    cp -rL ${skillLinks} $out
+  '';
 in
 {
   imports = [ inputs.hermes-agent.nixosModules.default ];
@@ -43,10 +69,13 @@ in
   systemd.tmpfiles.rules = [
     "L+ ${stateDir}/.hermes/plugins/knowledge-base - - - - /home/rathi/Documents/Git/nix/dots/hermes/plugins/knowledge-base"
     "L+ ${stateDir}/workspace/kb-staging - - - - /var/lib/kb/staging"
-    "L+ ${stateDir}/.hermes/skills/cua-driver - - - - ${cuaDriver.skills}"
-    "L+ ${stateDir}/.hermes/skills/spark-computer - - - - ${../../../dots/agents/skills/spark-computer}"
-  ]
-  ++ map (name: "L+ ${stateDir}/.hermes/skills/${name} - - - - ${skillsDir + "/${name}"}") skillNames;
+  ];
+
+  system.activationScripts.hermes-skills = lib.stringAfter [ "hermes-agent-setup" ] ''
+    ${pkgs.util-linux}/bin/runuser -u ${username} -- \
+      ${pkgs.bash}/bin/bash ${./hermes-skills.sh} \
+      ${stateDir}/.hermes ${stateDir}/skills-backups
+  '';
 
   services.hermes-agent = {
     enable = true;
@@ -74,6 +103,8 @@ in
       HERMES_GATEWAY_BUSY_ACK_ENABLED = "false";
     };
     hermesHomeFiles."SOUL.md" = ../../../dots/hermes/SOUL.md;
+    hermesHomeFiles.".no-bundled-skills" =
+      "Skills are selected by Nix in hosts/spark/services/hermes.nix.\n";
     documents."AGENTS.md" = ../../../dots/hermes/AGENTS.md;
 
     backend = {
@@ -116,7 +147,8 @@ in
       plugins.enabled = [ "knowledge-base" ];
       skills = {
         creation_nudge_interval = 0;
-        disabled = [ "computer-use" ];
+        external_dirs = [ "${skills}" ];
+        project_discovery = false;
       };
       platform_toolsets = {
         cli = toolsets;

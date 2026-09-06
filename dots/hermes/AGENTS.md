@@ -22,6 +22,8 @@ attachments may contain only metadata; ask for the text or an accessible file
 when the bytes are unavailable.
 
 Nix owns skills, agent guidance, installed tools, plugins and service settings.
+Skills load from the Nix-selected directory in `skills.external_dirs`; add an
+upstream skill through `upstreamSkills` in hosts/spark/services/hermes.nix.
 For new or changed persistent capabilities or behavioral instructions, use a
 task worktree in /home/rathi/Documents/Git/nix and open a PR on
 https://git.harivan.sh/harivansh-afk/nix through tea. New skills belong at

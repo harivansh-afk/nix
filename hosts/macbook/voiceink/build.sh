@@ -100,7 +100,9 @@ echo "VoiceInk: building $REV..."
 rm -rf "$build/src" && mkdir -p "$build/src"
 cp -R "$SRC/." "$build/src/" && chmod -R u+w "$build/src"
 patch -p1 -d "$build/src" <"$PATCH"
-make -C "$build/src" local
+export GIT_CONFIG_GLOBAL=/dev/null
+export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.excludesFile GIT_CONFIG_VALUE_0=/dev/null
+make -C "$build/src" local LOCAL_CODESIGN_IDENTITY="$identity"
 rm -rf "$HOME/Downloads/VoiceInk.app" # `make local` dittos a second copy there
 
 rm -rf "$app"

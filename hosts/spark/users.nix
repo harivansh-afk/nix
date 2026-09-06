@@ -44,6 +44,7 @@ in
         inherit (user) linger;
       }
       // lib.optionalAttrs (name == username) {
+        uid = 1000;
         description = username;
         hashedPasswordFile = passwordHashFile;
       }

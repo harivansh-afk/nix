@@ -34,31 +34,17 @@ let
   skillNames = lib.filter (name: builtins.pathExists (skillsDir + "/${name}/SKILL.md")) (
     lib.attrNames (lib.filterAttrs (_: type: type == "directory") (builtins.readDir skillsDir))
   );
-  upstreamSkills = {
-    hermes-agent = "autonomous-ai-agents/hermes-agent";
-  };
-  skillLinks = pkgs.linkFarm "hermes-skill-sources" (
-    lib.mapAttrsToList (name: path: {
-      inherit name;
-      path = inputs.hermes-agent + "/skills/${path}";
-    }) upstreamSkills
-    ++ [
-      {
-        name = "cua-driver";
-        path = cuaDriver.skills;
-      }
-      {
-        name = "spark-computer";
-        path = ../../../dots/agents/skills/spark-computer;
-      }
-    ]
-    ++ map (name: {
-      inherit name;
-      path = skillsDir + "/${name}";
-    }) skillNames
-  );
+  skillSources = {
+    hermes-agent = inputs.hermes-agent + "/skills/autonomous-ai-agents/hermes-agent";
+    cua-driver = cuaDriver.skills;
+    spark-computer = ../../../dots/agents/skills/spark-computer;
+  }
+  // lib.genAttrs skillNames (name: skillsDir + "/${name}");
   skills = pkgs.runCommand "hermes-skills" { } ''
-    cp -rL ${skillLinks} $out
+    mkdir -p $out
+    ${lib.concatStringsSep "\n" (
+      lib.mapAttrsToList (name: path: "cp -rL ${path} $out/${name}") skillSources
+    )}
   '';
 in
 {
@@ -72,9 +58,11 @@ in
   ];
 
   system.activationScripts.hermes-skills = lib.stringAfter [ "hermes-agent-setup" ] ''
-    ${pkgs.util-linux}/bin/runuser -u ${username} -- \
-      ${pkgs.bash}/bin/bash ${./hermes-skills.sh} \
-      ${stateDir}/.hermes ${stateDir}/skills-backups
+    if [ ! -e ${stateDir}/skills-before-nix ]; then
+      mv ${stateDir}/.hermes/skills ${stateDir}/skills-before-nix
+      chmod 0700 ${stateDir}/skills-before-nix
+      install -d -o ${username} -g users -m 0700 ${stateDir}/.hermes/skills
+    fi
   '';
 
   services.hermes-agent = {

@@ -13,36 +13,22 @@ CLI and Photon sessions have terminal/files, delegation, skills, memory and
 conversation recall, plus the shared `computer` MCP server for browser and desktop
 work. Hermes's native browser and computer-use toolsets are disabled. The local
 knowledge-base plugin adds read-only retrieval. The `spark-computer` skill and
-Cua's version-matched skill pack cover the shared MCP workflow and native desktop
-driver respectively. There are no custom
+Cua's version-matched skill pack are supplied by Nix. There are no custom
 hooks or scheduled jobs.
 
-## Skill inventory
-
-`hermes.nix` builds the selected skills into a store directory and sets
-`skills.external_dirs` to that directory. `upstreamSkills` explicitly selects
-upstream skills from the pinned Hermes source; initially only `hermes-agent`,
-which upstream requires. The directory also contains `spark-computer`,
-`cua-driver`, and every skill under `dots/hermes/skills/`. Project skill discovery
-is disabled so changing the working directory does not expand this inventory.
-The build copies these sources into real directories: upstream's bundle-sync
-scanner uses `Path.rglob`, which does not follow directory symlinks.
-
-Nix writes `.no-bundled-skills` to opt out of upstream bundle seeding. Hermes
-recognizes the externally supplied `hermes-agent` and does not copy it locally.
-On activation, `hermes-skills.sh` moves runtime skill directories and symlinks
-out of discovery into private `~/.local/state/hermes/skills-backups/migration.*`
-directories. It preserves runtime metadata files and leaves memory, conversations,
-credentials and browser state alone. Repeated activation with no runtime skills
-creates no backup. New runtime skills are archived on the next activation;
-this is declarative reconciliation, not a sandbox against terminal writes.
+`skillSources` in `hermes.nix` selects the upstream skills and includes
+`dots/hermes/skills/`. Hermes reads the resulting store directory through
+`skills.external_dirs`; bundled seeding and project discovery are disabled.
+The first activation archives the old skill tree at
+`~/.local/state/hermes/skills-before-nix`. The store tree uses real directories
+because upstream's bundle-sync scanner does not follow directory symlinks.
 
 ## Learning from work
 
 The Nix-owned `self-evolve` skill routes verified lessons through PRs to
 https://git.harivan.sh/harivansh-afk/nix. Add or edit
-`dots/hermes/skills/<name>/SKILL.md`; Nix discovers these directories and includes
-them in the store skill directory on deployment. No per-skill module edit is needed.
+`dots/hermes/skills/<name>/SKILL.md`; Nix includes these directories in the store
+skill tree on deployment. No per-skill module edit is needed.
 Supporting scripts and references live alongside SKILL.md. Agent guidance
 requires this path for skills, plugins, configuration and durable behavioral
 instructions. Private memory, conversations, credentials and browser state stay

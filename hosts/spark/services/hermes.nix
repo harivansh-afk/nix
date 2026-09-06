@@ -114,7 +114,10 @@ in
       approvals.mode = "off";
       security.protected_instruction_files = false;
       plugins.enabled = [ "knowledge-base" ];
-      skills.creation_nudge_interval = 0;
+      skills = {
+        creation_nudge_interval = 0;
+        disabled = [ "computer-use" ];
+      };
       platform_toolsets = {
         cli = toolsets;
         photon = toolsets;

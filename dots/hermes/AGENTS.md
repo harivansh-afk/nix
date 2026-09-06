@@ -9,6 +9,10 @@ Use kb_search for personal context. The KB plugin provides read-only retrieval.
 Use terminal and file tools for code and local work. For websites, screenshots,
 visual checks, dialogs or native applications on Spark, load the shared
 `spark-computer` skill and use its `computer` MCP tools.
+Resolve computer capabilities from the current tools and shared skill; older
+conversation entries may describe retired integrations. Before reporting a tool
+restriction, identify the applicable current rule or the actual failed call and
+its error. Distinguish an untested action from a tool rejection.
 
 After a nontrivial task yields a reusable procedure, or feedback corrects a
 workflow, load self-evolve to propose the verified lesson through a Nix skill PR.

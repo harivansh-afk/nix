@@ -21,8 +21,19 @@ let
     '';
   };
   photonSidecar = pkgs.runCommand "hermes-photon-sidecar" { } ''
+    cp ${./roommate-agent/router.mjs} router.mjs
+    cp ${./roommate-agent/test_router.mjs} test_router.mjs
+    ${pkgs.nodejs}/bin/node --test test_router.mjs
     mkdir -p $out
     cp ${photonSrc}/* $out/
+    cp ${./roommate-agent/router.mjs} $out/roommate-router.mjs
+    substituteInPlace $out/index.mjs \
+      --replace-fail 'type: space.type ?? msgSpace.type ?? "dm",' \
+      'type: space.type ?? msgSpace.type ?? "unknown",' \
+      --replace-fail 'await deliver(JSON.stringify(event));' \
+      'if (!routeGroup(event, (text) => space.send(spectrumText(text)))) await deliver(JSON.stringify(event));'
+    sed -i '1i import { routeGroup } from "./roommate-router.mjs";' $out/index.mjs
+    ${pkgs.nodejs}/bin/node --check $out/index.mjs
     ln -s ${photonDeps}/node_modules $out/node_modules
   '';
   toolsets = [
@@ -36,7 +47,10 @@ let
   );
 in
 {
-  imports = [ inputs.hermes-agent.nixosModules.default ];
+  imports = [
+    inputs.hermes-agent.nixosModules.default
+    ./roommate-agent
+  ];
 
   networking.hosts."100.114.116.11" = [ "spark-ix.tail368802.ts.net" ];
 

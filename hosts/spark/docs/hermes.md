@@ -72,6 +72,9 @@ entire Node sidecar and its locked dependencies are built in Nix, including help
 modules omitted by upstream's writable-mirror fallback at the pinned revision.
 Photon binds its control endpoint to loopback port 18789.
 
+Group TV requests use the separate [roommate agent](roomcast.md#roommate-agent).
+Groups do not enter the personal gateway.
+
 The existing `PHOTON_ALLOWED_USERS` should identify Hari. Verify that allowlist and
 credentials after activation; unknown senders must not be able to start work.
 Photon is a managed iMessage bridge, requiring no Mac relay or public webhook.

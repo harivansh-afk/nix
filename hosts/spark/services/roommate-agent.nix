@@ -36,15 +36,15 @@ in
   services.hermes-agent = {
     environmentFiles = [ config.sops.secrets."hermes-telegram.env".path ];
     settings.gateway = policy.gateway;
-    settings.platform_toolsets.telegram = [ "roomcast" ];
+    settings.platform_toolsets.telegram = [ "roommates_tv" ];
     hermesHomeFiles = {
       "profiles/roommates/config.yaml" = builtins.toJSON {
         model = hermes.settings.model;
         agent.reasoning_effort = hermes.settings.agent.reasoning_effort;
         terminal.cwd = profileHome;
         platform_toolsets = {
-          cli = [ "roomcast" ];
-          telegram = [ "roomcast" ];
+          cli = [ "roommates_tv" ];
+          telegram = [ "roommates_tv" ];
         };
         tools.tool_search.enabled = "off";
         memory = {
@@ -60,7 +60,7 @@ in
             "roomcast"
           ];
         };
-        mcp_servers.roomcast = {
+        mcp_servers.roommates_tv = {
           command = "${config.services.roomcast.package}/bin/roomcast-mcp";
           lazy = false;
           tools = {

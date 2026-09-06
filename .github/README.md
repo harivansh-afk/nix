@@ -1,35 +1,69 @@
 > [!IMPORTANT]
 > This is a read-only mirror of <https://git.harivan.sh/harivansh-afk/nix>. Use Forgejo for issues, PRs, and active development.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/harivansh-afk/nix/main/assets/hero.svg" alt="system map: one flake driving a nix-darwin macbook and a NixOS DGX Spark, with edge routing, services, theme, mux, and secrets" width="100%">
-</p>
+# Nix
 
-One flake, two machines, declared with [flake-parts](https://github.com/hercules-ci/flake-parts) and managed by [Determinate Nix](https://docs.determinate.systems/determinate-nix/):
+This repo is the home for all my configs and creations.
 
-| host | hardware | system | role |
-|---|---|---|---|
-| `macbook` | MacBook (aarch64-darwin) | nix-darwin + nix-homebrew | dev workstation |
-| `spark` | NVIDIA DGX Spark, GB10 (aarch64-linux) | NixOS | shared server |
+Everything is a single flake, declared with [flake-parts](https://github.com/hercules-ci/flake-parts) and managed by [Determinate Nix](https://docs.determinate.systems/determinate-nix/).
 
-Configs live in `dots/` and get symlinked into XDG paths, no home-manager. NVIDIA kernel, drivers, and container support come from the upstream [nixos-dgx-spark](https://github.com/graham33/nixos-dgx-spark) module. Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix). [cozybox.nvim](https://github.com/harivansh-afk/cozybox.nvim) provides the unified theme for everything.
+## Tour
 
-The full tour lives in the [Forgejo README](https://git.harivan.sh/harivansh-afk/nix).
+**`dots/`**
+
+- plain-file configs for ~28 tools: ghostty, zsh, git, lazygit, and more
+- no home-manager: an activation script symlinks them into place
+- my links point at the live checkout, so edits apply without a rebuild
+
+**`dots/nvim/`**
+
+- `pr` - code review inside Neovim: PR list, file tree, review marks, CI status, `pr://` buffers
+
+**`hosts/spark/services/`**
+
+- [Forgejo](https://git.harivan.sh) - my git
+- llama.cpp - local model inference
+- Whisper Large v3 - for speech-to-text using voice-ink
+- Vaultwarden - password manager
+
+**`lib/theme.nix`**
+
+- [cozybox.nvim](https://git.harivan.sh/harivansh-afk/cozybox.nvim) is my custom palette for all my software
+
+**`pkgs/sets.nix`**
+
+- one shared package set for both machines
+- only truly macOS-specific things stay on Homebrew, rest is nix
+
+
+## Spark
+
+My NixOS workstation ( NVIDIA DGX Spark [GB10, aarch64-linux])
+
+- friends who want access get a user definition in `users/`
+- NVIDIA kernel, drivers, and container support come from the upstream [nixos-dgx-spark](https://github.com/graham33/nixos-dgx-spark) module
+- disks declared with [disko](https://github.com/nix-community/disko); from-scratch provisioning via [nixos-anywhere](https://github.com/nix-community/nixos-anywhere)
 
 ## Structure
 
 ```
-flake.nix          entrypoint - inputs and outputs
-flake/             host assembly, devshell, args
-lib/               host metadata, theme palette
-inventory/         typed host inventory via evalModules
-hosts/             per-host config (macbook/, spark/)
-users/             multi-user definitions for spark
-dots/              app configs symlinked into XDG paths (live-editable)
-modules/           reusable modules (services, security, users/dotfiles)
-system/            shared system-level config and packages
-scripts/           runtime scripts wired via modules/users/user-config.nix
-secrets/           sops-encrypted secrets per host
-terraform/         declarative Cloudflare DNS via terranix
-assets/            readme artwork
+flake.nix            entrypoint - inputs and outputs
+flake/               host assembly, packages, devshell, args (incl. the host records)
+lib/                 theme palette, remote registry, nvim plugin pinning
+hosts/               per-host config; everything single-host lives here
+  macbook/           darwin defaults, homebrew, launchd services, voiceink
+  spark/             NixOS base + services/ (forgejo, inference, whisper, caddy, ...)
+  ix/                the throwaway dev VM template
+dots/                app configs symlinked into XDG paths (live-editable)
+  nvim/              the Neovim setup: pr, statusline
+  ...                one directory per tool
+modules/             genuinely shared modules
+  common.nix         nix settings, overlays, the shared package set
+  security/          sops
+  users/             shared dotfile and user setup, accounts/ user registry
+pkgs/                derivations: package sets, jj-ix, packaged scripts
+scripts/             repo tooling (CI smoke tests, lock regeneration)
+secrets/             sops-encrypted secrets per host
+terraform/           declarative Cloudflare DNS via terranix
+assets/              readme artwork, wallpapers
 ```

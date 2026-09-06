@@ -85,7 +85,7 @@ in
     documents."AGENTS.md" = ../../../dots/hermes/AGENTS.md;
 
     backend = {
-      mode = "dashboard";
+      mode = "serve";
       host = "spark-ix.tail368802.ts.net";
       waitFor = "hostname";
     };

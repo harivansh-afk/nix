@@ -28,7 +28,7 @@
     "SUEnableAutomaticChecks": false,
     "VoiceInkChecksForUpdatesOnLaunch": false,
     "enableAnnouncements": true,
-    "restoreClipboardAfterPaste": true,
+    "restoreClipboardAfterPaste": false,
     "clipboardRestoreDelay": 2.0,
     "isSystemMuteEnabled": true,
     "audioResumptionDelay": 0.0,

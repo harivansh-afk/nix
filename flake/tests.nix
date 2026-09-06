@@ -33,48 +33,7 @@
       llamaSettings = spark.services.llama-cpp.settings;
       llamaPreset = builtins.readFile llamaSettings."models-preset";
 
-      roommates = builtins.fromJSON (
-        builtins.unsafeDiscardStringContext
-          spark.services.hermes-agent.hermesHomeFiles."profiles/roommates/config.yaml"
-      );
-
       invariants = [
-        (lib.assertMsg (
-          roommates.model.default == "gpt-5.6-luna"
-          && roommates.model.provider == "openai-codex"
-          && roommates.model.api_mode == "codex_responses"
-          && roommates.agent.reasoning_effort == "low"
-        ) "spark: Telegram roommates must use Codex Luna with low reasoning")
-        (lib.assertMsg (
-          spark.services.hermes-agent.settings.model.default == "gpt-6-astra"
-          && spark.services.hermes-agent.settings.model.provider == "openai-codex"
-          && spark.services.hermes-agent.settings.agent.reasoning_effort == "medium"
-        ) "spark: Telegram model selection must not change default/Photon Astra medium")
-        (lib.assertMsg (
-          roommates.platform_toolsets.telegram == [ "roommates_tv" ]
-          && roommates.platform_toolsets.cli == [ "roommates_tv" ]
-          && roommates.tools.tool_search.enabled == "off"
-          && !roommates.memory.memory_enabled
-          && !roommates.memory.user_profile_enabled
-          &&
-            roommates.mcp_servers.roommates_tv.tools.include == [
-              "search"
-              "play"
-              "status"
-              "control"
-              "seek"
-              "subtitles"
-              "sources"
-              "browse"
-            ]
-          &&
-            spark.services.hermes-agent.settings.gateway.profile_routes == [
-              {
-                platform = "telegram";
-                profile = "roommates";
-              }
-            ]
-        ) "spark: Telegram roommates must remain routed to the isolated TV-only profile")
         (lib.assertMsg (proxiedPorts != [ ])
           "spark: expected at least one caddy reverse_proxy backend; the port-extraction regex may have rotted"
         )

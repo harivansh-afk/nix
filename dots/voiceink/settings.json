@@ -26,7 +26,37 @@
     "hasCompletedOnboardingV2": true,
     "SUAutomaticallyChecksForUpdates": false,
     "SUEnableAutomaticChecks": false,
-    "VoiceInkChecksForUpdatesOnLaunch": false
+    "VoiceInkChecksForUpdatesOnLaunch": false,
+    "enableAnnouncements": true,
+    "restoreClipboardAfterPaste": true,
+    "clipboardRestoreDelay": 2.0,
+    "isSystemMuteEnabled": true,
+    "audioResumptionDelay": 0.0,
+    "IsTextFormattingEnabled": true,
+    "IsVADEnabled": true,
+    "SelectedLanguage": "en",
+    "AppendTrailingSpace": true,
+    "IsTranscriptionCleanupEnabled": false,
+    "TranscriptionRetentionMinutes": 1440,
+    "IsAudioCleanupEnabled": false,
+    "AudioRetentionPeriod": 7,
+    "AppAppearancePreference": "system",
+    "AppLanguagePreference": "system",
+    "isMiddleClickToggleEnabled": false,
+    "middleClickActivationDelay": 200,
+    "SkipShortEnhancement": true,
+    "ShortEnhancementWordThreshold": 3,
+    "EnhancementTimeoutSeconds": 7,
+    "EnhancementRetryOnTimeout": true,
+    "PrewarmModelOnWake": true,
+    "secondaryRecordingShortcutMode": "hybrid",
+    "Shortcut_primaryRecording_cleared": false,
+    "TranscriptionPrompt": "Hello, how are you doing? Nice to meet you.",
+    "selectedPromptId": "00000000-0000-0000-0000-000000000001",
+    "Shortcut_LegacyCustomRecordingShortcutsMigrated": true,
+    "Shortcut_LegacyKeyboardShortcutsMigrated": true,
+    "streaming-keys-migrated": true,
+    "Shortcut_mode_03AFF9B3-CACC-4A5A-ACFB-BB5C7B421D86_cleared": true
   },
   "jsonData": {
     "customCloudModels": [
@@ -71,6 +101,7 @@
       "modifierFlagsRawValue": 8388608,
       "kind": "modifierOnly",
       "keyCode": 63
-    }
+    },
+    "customPrompts": []
   }
 }

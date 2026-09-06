@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -42,11 +43,6 @@ DENYLIST = [
 
 # Supported document extensions -> extractor dispatch happens in extract_text.
 TEXT_EXTS = {".pdf", ".docx", ".xlsx", ".txt"}
-
-# Media (and other binary) extensions we explicitly skip. Anything not in
-# TEXT_EXTS is skipped anyway; this set just documents the expected media.
-MEDIA_EXTS = {".mp4", ".mov", ".png", ".jpg", ".jpeg", ".heic", ".psd", ".otf"}
-
 
 def _is_denied(path: Path) -> bool:
     """True if path is inside any denylisted directory (absolute prefix match)."""
@@ -118,21 +114,45 @@ def note_path(src: Path) -> Path:
     return STAGING / f"{src.stem}_{digest}.md"
 
 
-def existing_hash(note: Path) -> str | None:
-    """Read the content_hash from an existing note's frontmatter, if present."""
-    if not note.exists():
-        return None
+def frontmatter(note: Path) -> dict[str, str]:
+    """Read only the generated metadata, never the document body."""
     try:
         with note.open(errors="ignore") as f:
-            for line in f:
-                if line.startswith("content_hash:"):
-                    return line.split(":", 1)[1].strip()
-                if line.strip() == "---" and f.tell() > 4:
-                    # end of frontmatter without a hash
-                    break
+            if f.readline().strip() != "---":
+                return {}
+            fields = {}
+            for _ in range(16):
+                line = f.readline(4096)
+                if line.strip() == "---":
+                    return fields
+                key, separator, value = line.partition(":")
+                if separator:
+                    fields[key] = value.strip()
     except OSError:
-        return None
-    return None
+        pass
+    return {}
+
+
+def existing_hash(note: Path) -> str | None:
+    return frontmatter(note).get("content_hash")
+
+
+def prune_notes(current: set[Path]) -> int:
+    """Remove generated notes whose sources are no longer eligible."""
+    removed = 0
+    for note in STAGING.glob("*.md"):
+        if note in current or note.is_symlink():
+            continue
+        fields = frontmatter(note)
+        source = Path(fields.get("source", ""))
+        if (fields.get("source_kind") != "downloads"
+                or not source.is_absolute() or not source.is_relative_to(ROOT)
+                or not re.fullmatch(r".+_[0-9a-f]{16}\.md", note.name)
+                or not re.fullmatch(r"[0-9a-f]{64}", fields.get("content_hash", ""))):
+            continue
+        note.unlink()
+        removed += 1
+    return removed
 
 
 def write_note(src: Path, ext: str, content_hash: str, text: str) -> None:
@@ -161,8 +181,10 @@ def main() -> int:
         return 0
 
     written = skipped = denied = unchanged = 0
+    current = set()
+    walk_errors = []
 
-    for dirpath, dirnames, filenames in os.walk(ROOT):
+    for dirpath, dirnames, filenames in os.walk(ROOT, onerror=walk_errors.append):
         d = Path(dirpath)
         # Prune denylisted subtrees in place so we never descend into them.
         dirnames[:] = [
@@ -176,6 +198,9 @@ def main() -> int:
 
         for name in filenames:
             f = d / name
+            if name.startswith(".") or f.is_symlink():
+                skipped += 1
+                continue
             if _is_denied(f):
                 denied += 1
                 continue
@@ -183,6 +208,7 @@ def main() -> int:
             if ext not in TEXT_EXTS:
                 skipped += 1
                 continue
+            current.add(note_path(f))
             try:
                 h = sha256_file(f)
             except OSError:
@@ -200,9 +226,14 @@ def main() -> int:
             write_note(f, ext, h, text)
             written += 1
 
+    removed = 0
+    if walk_errors:
+        print("downloads: incomplete directory walk; retaining existing notes", file=sys.stderr)
+    else:
+        removed = prune_notes(current)
     print(
         f"downloads: wrote {written}, unchanged {unchanged}, "
-        f"skipped {skipped}, denied {denied} -> {STAGING}"
+        f"skipped {skipped}, denied {denied}, removed {removed} -> {STAGING}"
     )
     return 0
 

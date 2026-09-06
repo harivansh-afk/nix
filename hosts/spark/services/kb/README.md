@@ -27,6 +27,11 @@ default. Separate local-only workflows handle finance data.
 The downloads connector never reads the directories listed in `DENYLIST` in
 `downloads_connector.py` (security, finance-tax, travel-identity,
 legal-business), and skips hidden files and directories.
+It also skips source symlinks. After a complete scan it removes its generated
+staging notes for deleted, moved, or newly excluded sources, including documents
+moved into a denied directory. The next successful index rebuild removes those
+notes from search. An unavailable source root or incomplete directory walk keeps
+existing staging notes; it does not treat an incomplete scan as an empty source.
 
 ## Ingestion
 

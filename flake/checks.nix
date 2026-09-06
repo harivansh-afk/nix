@@ -36,6 +36,9 @@
 
         stylua = lint "stylua" [ pkgs.stylua ] "stylua --check dots/nvim";
         logitech = lint "logitech" [ pkgs.python3 ] "python3 hosts/macbook/logitech/test_apply.py";
+        kb-downloads = lint "kb-downloads" [
+          pkgs.python3
+        ] "python3 hosts/spark/services/kb/test_downloads.py";
       }
       // pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "aarch64-linux") {
         hermes-runtime =

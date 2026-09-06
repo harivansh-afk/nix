@@ -48,7 +48,10 @@ let
   '';
 in
 {
-  imports = [ inputs.hermes-agent.nixosModules.default ];
+  imports = [
+    inputs.hermes-agent.nixosModules.default
+    ./roommate-agent.nix
+  ];
 
   networking.hosts."100.114.116.11" = [ "spark-ix.tail368802.ts.net" ];
 

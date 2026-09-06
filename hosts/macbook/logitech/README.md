@@ -8,10 +8,19 @@ the original key press/release events and timing.
 device serial numbers, analytics, or the installed-app inventory. The profile's
 desktop application record and schema version are retained for Options+.
 
-Nix seeds writable SQLite databases before Homebrew installs Options+ on a
-fresh setup. Existing databases are preserved: Options+ owns their migrations
-and runtime writes. These are recovery defaults, not an enforcement loop;
-changing the JSON does not overwrite an existing live profile.
+`mappings.json` defines the current controls for both mice: forward button
+pastes, thumb-click copies, and thumb-up/down adjusts volume. Thumb-left/right
+navigates back/forward only in Helium, Dia, Zen and Safari; elsewhere these
+gestures do nothing. Screenshot buttons, wheels and pointer settings retain
+their existing assignments.
+
+Before Homebrew installation, Nix seeds missing databases from the recovered
+records and applies the current controls to existing installations. The apply
+step merges only the two owned button assignments per mouse and the browser
+profiles. Other settings and the original screenshot macro are retained.
+When changes are needed, it stops the vendor agent, saves a SQLite backup in
+`~/Library/Application Support/LogiOptionsPlus-backups`, updates the database,
+and restarts the agent. An unchanged configuration does not restart it.
 
 The Homebrew cask installs the vendor launchd services. Their names are allowed
 in `../startup/default.nix`; no competing Nix agent starts the same backend.

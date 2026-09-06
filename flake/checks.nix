@@ -35,6 +35,7 @@
         ] "bash scripts/pr-smoke.sh";
 
         stylua = lint "stylua" [ pkgs.stylua ] "stylua --check dots/nvim";
+        logitech = lint "logitech" [ pkgs.python3 ] "python3 hosts/macbook/logitech/test_apply.py";
       }
       // pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "aarch64-linux") {
         hermes-runtime =

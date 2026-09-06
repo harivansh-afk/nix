@@ -41,6 +41,8 @@ working directory, instructions and conversation state; personal memory and
 plugins are disabled. Hermes supplies its native shared Codex OAuth fallback.
 There is one Photon connection, and Hermes replies to the originating chat.
 Members of a group share its conversation session through Hermes's native setting.
+Its Nix-selected skills are only `hermes-agent` and `roomcast`; bundled seeding,
+project skill discovery and skill-creation nudges are disabled for this profile.
 
 Profiles share a gateway process and Unix user. They separate agent context and
 tool availability; they are not a filesystem or process sandbox. Guests have no

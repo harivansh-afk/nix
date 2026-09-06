@@ -1,9 +1,13 @@
 # Hermes on Spark
 
-`hosts/spark/services/hermes.nix` owns the gateway, dashboard, model, tool selection
+`hosts/spark/services/hermes.nix` owns the messaging gateway, desktop backend, model, tool selection
 and pinned runtimes. The Hermes flake input tracks an exact upstream revision;
 Astra uses the existing Codex OAuth identity with medium reasoning. Activation
 clears the old main-model localhost URL while retaining the separate Spark model.
+
+The two processes serve different clients: `hermes gateway` handles Photon
+iMessage; `hermes serve` exposes the authenticated tailnet API used by the Mac
+desktop app. They share Hermes state. The backend does not serve the web dashboard.
 
 The full native toolset is available in CLI and Photon sessions: terminal/files,
 browser, computer use, delegation, skills, memory and conversation recall. The

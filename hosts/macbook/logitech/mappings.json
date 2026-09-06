@@ -1,0 +1,46 @@
+{
+  "devices": [
+    "mx-master-3-6b023",
+    "mx-master-3s-2b034"
+  ],
+  "buttons": {
+    "c86": "paste"
+  },
+  "gestures": {
+    "click": "copy",
+    "up": "volume_up",
+    "down": "volume_down",
+    "left": "nothing",
+    "right": "nothing"
+  },
+  "browserGestures": {
+    "left": "back",
+    "right": "forward"
+  },
+  "browsers": [
+    {
+      "name": "Helium",
+      "bundleId": "net.imput.helium",
+      "applicationPath": "/Applications/Helium.app",
+      "applicationId": "nix-browser-helium"
+    },
+    {
+      "name": "Dia",
+      "bundleId": "company.thebrowser.dia",
+      "applicationPath": "/Applications/Dia.app",
+      "applicationId": "nix-browser-dia"
+    },
+    {
+      "name": "Zen",
+      "bundleId": "app.zen-browser.zen",
+      "applicationPath": "/Applications/Zen.app",
+      "applicationId": "nix-browser-zen"
+    },
+    {
+      "name": "Safari",
+      "bundleId": "com.apple.Safari",
+      "applicationPath": "/Applications/Safari.app",
+      "applicationId": "application_id_apple_safari"
+    }
+  ]
+}

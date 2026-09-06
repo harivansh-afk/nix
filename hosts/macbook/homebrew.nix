@@ -51,6 +51,7 @@ in
       "humanlayer"
       "karabiner-elements"
       "linear"
+      "logi-options+"
       "markdown-preview"
       "riptide-beta"
       "signal"

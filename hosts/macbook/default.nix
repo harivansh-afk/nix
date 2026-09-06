@@ -16,6 +16,7 @@
     ./apps.nix
     ./defaults.nix
     ./homebrew.nix
+    ./logitech
     ./mux
     ./muxd.nix
     ./services.nix

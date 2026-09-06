@@ -12,12 +12,16 @@ let
   runtimeDir = "/run/user/${toString config.users.users.${username}.uid}";
   cuaDriver = pkgs.callPackage ../../../pkgs/cua-driver { };
   computer = import ../../../pkgs/spark-computer { inherit pkgs; };
-  photonSrc = "${inputs.hermes-agent}/plugins/platforms/photon/sidecar";
+  photon = import ../../../pkgs/hermes-photon {
+    inherit pkgs;
+    hermes = inputs.hermes-agent;
+  };
+  photonSrc = "${photon.plugins}/platforms/photon/sidecar";
   photonDeps = pkgs.importNpmLock.buildNodeModules {
-    npmRoot = photonSrc;
+    npmRoot = "${inputs.hermes-agent}/plugins/platforms/photon/sidecar";
     inherit (pkgs) nodejs;
     derivationArgs.postPatch = ''
-      cp ${photonSrc}/patch-spectrum-mixed-attachments.mjs .
+      cp ${inputs.hermes-agent}/plugins/platforms/photon/sidecar/patch-spectrum-mixed-attachments.mjs .
     '';
   };
   photonSidecar = pkgs.runCommand "hermes-photon-sidecar" { } ''
@@ -69,6 +73,7 @@ in
 
   services.hermes-agent = {
     enable = true;
+    inherit (photon) package;
     user = username;
     group = "users";
     createUser = false;

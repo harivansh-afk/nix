@@ -1,0 +1,448 @@
+--- a/platforms/photon/adapter.py
++++ b/platforms/photon/adapter.py
+@@ -820,7 +820,18 @@
+                 return
+             text = self._clean_mention_text(text)
+         self._record_recent_richlink(space_id, _richlink_url_from_content(content) or text)
+-        await self.handle_message(_event(text, mtype, media_urls=media_urls, media_types=media_types))
++        # The sidecar unwraps the new body; the quote is separate, untrusted
++        # context, never fresh text for mention matching or busy-turn steering.
++        target = content.get("replyTarget")
++        target = target if isinstance(target, dict) else {}
++        target_id, target_text = target.get("id"), target.get("text")
++        target_id = target_id if isinstance(target_id, str) and len(target_id) <= 512 else None
++        target_text = target_text[:2000] if isinstance(target_text, str) else None
++        await self.handle_message(_event(
++            text, mtype, media_urls=media_urls, media_types=media_types,
++            reply_to_message_id=target_id, reply_to_text=target_text or None,
++            # SDK outbound direction identifies the account, not this bot.
++            reply_to_is_own_message=bool(target_id and target_id in self._sent_message_ids)))
+
+     # -- Sidecar lifecycle ---------------------------------------------------------
+
+--- a/platforms/photon/sidecar/index.mjs
++++ b/platforms/photon/sidecar/index.mjs
+@@ -62,6 +62,7 @@
+ //   PHOTON_TELEMETRY       enable Spectrum SDK telemetry ("true"/"1"/"on"/"yes";
+ //                          default off — toggle with `hermes photon telemetry`)
+
++import { normalizeContent } from "./normalize-content.mjs";
+ import http from "node:http";
+ import crypto from "node:crypto";
+ import { once } from "node:events";
+@@ -82,13 +83,6 @@
+   (process.env.PHOTON_TELEMETRY || "").trim()
+ );
+
+-// Inbound binary content is read into memory and base64-inlined on the NDJSON
+-// event so the Python adapter can cache the real bytes (and the agent can see
+-// images / transcribe voice). Cap the size we inline — above it we forward
+-// metadata only and the adapter surfaces a text marker, so one large clip can't
+-// balloon a single NDJSON line. Override via PHOTON_MAX_INLINE_ATTACHMENT_BYTES.
+-const MAX_INLINE_ATTACHMENT_BYTES =
+-  Number(process.env.PHOTON_MAX_INLINE_ATTACHMENT_BYTES) || 20 * 1024 * 1024;
+ const DM_CHAT_GUID_RE = /^any;-;(\+\d{6,})$/;
+ const E164_RE = /^\+\d{6,}$/;
+ const MAX_KNOWN_SPACES = 2048;
+@@ -429,174 +423,6 @@
+   }
+ }
+
+-async function normalizeBinaryContent(content) {
+-  const meta = {
+-    type: content.type,
+-    id: content.id ?? null,
+-    name: content.name ?? null,
+-    mimeType: content.mimeType ?? null,
+-    size: typeof content.size === "number" ? content.size : null,
+-  };
+-  if (content.type === "voice" && typeof content.duration === "number") {
+-    meta.duration = content.duration;
+-  }
+-
+-  // Read the bytes eagerly and base64-inline them as `data` so the Python
+-  // adapter can cache the real file (the agent then sees images and can run
+-  // STT on voice notes). Spectrum content objects may not outlive this stream
+-  // iteration, so a lazy/on-demand fetch isn't safe. Over-cap content (when
+-  // size is known up front) is forwarded as metadata only and the adapter falls
+-  // back to a text marker. A read failure must never break the inbound loop.
+-  const label = `${content.type} ${meta.name ?? meta.id ?? "(unnamed)"}`;
+-  if (meta.size !== null && meta.size > MAX_INLINE_ATTACHMENT_BYTES) {
+-    console.error(
+-      `photon-sidecar: ${label} (${meta.size} bytes) ` +
+-        `exceeds inline cap ${MAX_INLINE_ATTACHMENT_BYTES}; forwarding metadata only`
+-    );
+-    return meta;
+-  }
+-  if (typeof content.read === "function") {
+-    try {
+-      const buf = await content.read();
+-      // Guard the case where size was unknown but the bytes turn out to be
+-      // over the cap.
+-      if (buf && buf.length > MAX_INLINE_ATTACHMENT_BYTES) {
+-        console.error(
+-          `photon-sidecar: ${label} (${buf.length} bytes) ` +
+-            `exceeds inline cap after read; forwarding metadata only`
+-        );
+-        return meta;
+-      }
+-      meta.data = Buffer.from(buf).toString("base64");
+-      meta.encoding = "base64";
+-    } catch (e) {
+-      console.error(
+-        `photon-sidecar: failed to read ${content.type} bytes ` +
+-          "(forwarding metadata only): " +
+-          (e && e.stack ? e.stack : String(e))
+-      );
+-    }
+-  }
+-  return meta;
+-}
+-
+-// Best-effort text preview of a reaction's resolved target Message, so the
+-// Python adapter can populate the gateway's `reply_to_text` (context: WHAT was
+-// tapped back). The SDK only emits a reaction once it has resolved the full
+-// target Message (toReactionMessages bails otherwise), so `target.content` is
+-// hydrated here — no extra round trip. Handles plain text and our patched mixed
+-// text+attachment groups (first text child); null for attachment/voice-only
+-// targets. Capped so one long bubble can't balloon the NDJSON line.
+-const REACTION_TARGET_TEXT_CAP = 2000;
+-function reactionTargetText(target) {
+-  const c = target && typeof target === "object" ? target.content : null;
+-  if (!c || typeof c !== "object") return null;
+-  let text = null;
+-  if (c.type === "text") {
+-    text = c.text;
+-  } else if (c.type === "richlink") {
+-    text = c.url;
+-  } else if (c.type === "group") {
+-    for (const item of Array.isArray(c.items) ? c.items : []) {
+-      const ic = item && typeof item === "object" ? item.content : null;
+-      if (ic && ic.type === "text" && ic.text) {
+-        text = ic.text;
+-        break;
+-      }
+-      if (ic && ic.type === "richlink" && ic.url) {
+-        text = ic.url;
+-        break;
+-      }
+-    }
+-  }
+-  if (typeof text !== "string" || !text) return null;
+-  return text.length > REACTION_TARGET_TEXT_CAP
+-    ? text.slice(0, REACTION_TARGET_TEXT_CAP)
+-    : text;
+-}
+-
+-async function normalizeContent(content) {
+-  if (!content || typeof content !== "object") {
+-    return { type: "unknown" };
+-  }
+-  if (content.type === "text") {
+-    return { type: "text", text: content.text || "" };
+-  }
+-  if (content.type === "richlink") {
+-    const out = { type: "richlink", url: content.url || "" };
+-    if (typeof content.title === "string") {
+-      out.title = content.title;
+-    }
+-    if (typeof content.summary === "string") {
+-      out.summary = content.summary;
+-    }
+-    return out;
+-  }
+-  if (content.type === "attachment" || content.type === "voice") {
+-    return await normalizeBinaryContent(content);
+-  }
+-  if (content.type === "group") {
+-    const items = [];
+-    for (const item of Array.isArray(content.items) ? content.items : []) {
+-      items.push({
+-        id: item && typeof item === "object" ? item.id ?? null : null,
+-        content: await normalizeContent(item?.content),
+-      });
+-    }
+-    return { type: "group", items };
+-  }
+-  if (content.type === "read") {
+-    // spectrum-ts v12.5+ surfaces an inbound read receipt only after it has
+-    // verified that the target is one of our outbound messages. Keep the
+-    // receipt lightweight: Python records it as telemetry, never as an agent
+-    // prompt.
+-    return {
+-      type: "read",
+-      targetMessageId: content.target?.id ?? null,
+-      targetDirection: content.target?.direction ?? null,
+-    };
+-  }
+-  if (content.type === "reaction") {
+-    const target = content.target;
+-    return {
+-      type: "reaction",
+-      emoji: content.emoji || "",
+-      targetMessageId: target?.id ?? null,
+-      // Lets Python gate "is this a reaction to one of MY messages" without
+-      // tracking every outbound id. May be null if the provider doesn't
+-      // hydrate the target — Python falls back to its own sent-id cache.
+-      targetDirection: target?.direction ?? null,
+-      // Text of the reacted-to message, so Python can correlate the tapback to
+-      // the gateway's reply_to_text. Null for attachment/voice-only targets.
+-      targetText: reactionTargetText(target),
+-    };
+-  }
+-  // A user tapping a poll choice arrives as `poll_option` carrying the chosen
+-  // option title + whether it was selected (true) or deselected (false). This
+-  // is how a native iMessage poll's vote streams back — Python turns a
+-  // selection into the answer that resolves a pending `clarify`.
+-  if (content.type === "poll_option") {
+-    return {
+-      type: "poll_option",
+-      title: content.option?.title ?? content.title ?? "",
+-      selected: content.selected !== false,
+-      pollTitle: content.poll?.title ?? null,
+-    };
+-  }
+-  // The poll message itself (its creation) — surfaced for completeness so the
+-  // agent isn't told "content type not handled" if it sees the echo.
+-  if (content.type === "poll") {
+-    return {
+-      type: "poll",
+-      title: content.title ?? "",
+-      options: Array.isArray(content.options)
+-        ? content.options.map((o) => o?.title ?? "")
+-        : [],
+-    };
+-  }
+-  return { type: content.type || "unknown" };
+-}
+-
+ // The iMessage SDK exposes `message.read()` for inbound messages. Mark after
+ // the event has crossed the sidecar boundary: this means the gateway has
+ // actually received it, while a transient agent/tool delay does not leave the
+--- /dev/null
++++ b/platforms/photon/sidecar/normalize-content.mjs
+@@ -0,0 +1,224 @@
++// Inbound binary content is read into memory and base64-inlined on the NDJSON
++// event so the Python adapter can cache the real bytes (and the agent can see
++// images / transcribe voice). Cap the size we inline — above it we forward
++// metadata only and the adapter surfaces a text marker, so one large clip can't
++// balloon a single NDJSON line. Override via PHOTON_MAX_INLINE_ATTACHMENT_BYTES.
++const MAX_INLINE_ATTACHMENT_BYTES =
++  Number(process.env.PHOTON_MAX_INLINE_ATTACHMENT_BYTES) || 20 * 1024 * 1024;
++
++async function normalizeBinaryContent(content, budget) {
++  const inlineCap = Math.max(0, Math.min(MAX_INLINE_ATTACHMENT_BYTES, budget.bytes));
++  const meta = {
++    type: content.type,
++    id: content.id ?? null,
++    name: content.name ?? null,
++    mimeType: content.mimeType ?? null,
++    size: typeof content.size === "number" ? content.size : null,
++  };
++  if (content.type === "voice" && typeof content.duration === "number") {
++    meta.duration = content.duration;
++  }
++
++  // Read the bytes eagerly and base64-inline them as `data` so the Python
++  // adapter can cache the real file (the agent then sees images and can run
++  // STT on voice notes). Spectrum content objects may not outlive this stream
++  // iteration, so a lazy/on-demand fetch isn't safe. Over-cap content (when
++  // size is known up front) is forwarded as metadata only and the adapter falls
++  // back to a text marker. A read failure must never break the inbound loop.
++  const label = `${content.type} ${meta.name ?? meta.id ?? "(unnamed)"}`;
++  if (inlineCap === 0 || (meta.size !== null && meta.size > inlineCap)) {
++    console.error(
++      `photon-sidecar: ${label} (${meta.size} bytes) ` +
++        `exceeds remaining inline cap ${inlineCap}; forwarding metadata only`
++    );
++    return meta;
++  }
++  if (typeof content.read === "function") {
++    try {
++      const buf = await content.read();
++      // Guard the case where size was unknown but the bytes turn out to be
++      // over the cap.
++      if (buf && buf.length > inlineCap) {
++        console.error(
++          `photon-sidecar: ${label} (${buf.length} bytes) ` +
++            `exceeds inline cap after read; forwarding metadata only`
++        );
++        return meta;
++      }
++      const bytes = Buffer.from(buf);
++      budget.bytes -= bytes.length;
++      meta.data = bytes.toString("base64");
++      meta.encoding = "base64";
++    } catch (e) {
++      console.error(
++        `photon-sidecar: failed to read ${content.type} bytes ` +
++          "(forwarding metadata only): " +
++          (e && e.stack ? e.stack : String(e))
++      );
++    }
++  }
++  return meta;
++}
++
++// Best-effort text preview of a reaction's resolved target Message, so the
++// Python adapter can populate the gateway's `reply_to_text` (context: WHAT was
++// tapped back). The SDK only emits a reaction once it has resolved the full
++// target Message (toReactionMessages bails otherwise), so `target.content` is
++// hydrated here — no extra round trip. Handles plain text and our patched mixed
++// text+attachment groups (first text child); null for attachment/voice-only
++// targets. Capped so one long bubble can't balloon the NDJSON line.
++const REACTION_TARGET_TEXT_CAP = 2000;
++function reactionTargetText(target) {
++  const c = target && typeof target === "object" ? target.content : null;
++  if (!c || typeof c !== "object") return null;
++  let text = null;
++  if (c.type === "text") {
++    text = c.text;
++  } else if (c.type === "richlink") {
++    text = c.url;
++  } else if (c.type === "group") {
++    for (const item of Array.isArray(c.items) ? c.items : []) {
++      const ic = item && typeof item === "object" ? item.content : null;
++      if (ic && ic.type === "text" && ic.text) {
++        text = ic.text;
++        break;
++      }
++      if (ic && ic.type === "richlink" && ic.url) {
++        text = ic.url;
++        break;
++      }
++    }
++  }
++  if (typeof text !== "string" || !text) return null;
++  return text.length > REACTION_TARGET_TEXT_CAP
++    ? text.slice(0, REACTION_TARGET_TEXT_CAP)
++    : text;
++}
++
++// Quoted targets are metadata only: never hydrate their media or follow target
++// chains. SDK fallback targets contain just an id and custom/stub content.
++function replyTarget(target) {
++  const pending = [target?.content];
++  let text = null;
++  for (let visited = 0; pending.length && visited < 128; visited++) {
++    const c = pending.pop();
++    if (!c || typeof c !== "object") continue;
++    const candidate = c.type === "text" ? c.text : c.type === "richlink" ? c.url : null;
++    if (typeof candidate === "string" && candidate) {
++      text = candidate.slice(0, 2000);
++      break;
++    }
++    if (c.type === "reply") pending.push(c.content);
++    if (c.type === "group") {
++      const items = Array.isArray(c.items) ? c.items.slice(0, 128) : [];
++      for (let i = items.length - 1; i >= 0; i--) pending.push(items[i]?.content);
++    }
++  }
++  const id = target?.id;
++  return { id: typeof id === "string" && id.length <= 512 ? id : null, text };
++}
++
++export async function normalizeContent(
++  content, budget = { nodes: 128, bytes: MAX_INLINE_ATTACHMENT_BYTES }, depth = 0,
++) {
++  if (depth >= 16 || budget.nodes-- <= 0) {
++    return { type: "text", text: "[Photon content truncated: nesting/item limit]" };
++  }
++  if (!content || typeof content !== "object") {
++    return { type: "unknown" };
++  }
++  if (content.type === "reply") {
++    // Keep the body type at the wire boundary so all existing Python media,
++    // mention, URL-preview and placeholder paths see the newly authored body.
++    const body = await normalizeContent(content.content, budget, depth + 1);
++    return { ...body, replyTarget: replyTarget(content.target) };
++  }
++  if (content.type === "text") {
++    return { type: "text", text: content.text || "" };
++  }
++  if (content.type === "richlink") {
++    const out = { type: "richlink", url: content.url || "" };
++    if (typeof content.title === "string") {
++      out.title = content.title;
++    }
++    if (typeof content.summary === "string") {
++      out.summary = content.summary;
++    }
++    return out;
++  }
++  if (content.type === "attachment" || content.type === "voice") {
++    return await normalizeBinaryContent(content, budget);
++  }
++  if (content.type === "group") {
++    const items = [];
++    for (const item of Array.isArray(content.items) ? content.items : []) {
++      if (budget.nodes <= 0) {
++        items.push({ content: { type: "text", text: "[Photon content truncated: item limit]" } });
++        break;
++      }
++      const normalized = await normalizeContent(item?.content, budget, depth + 1);
++      // Python's group parser consumes flat body parts; preserve nested reply
++      // groups in order without ever adding their quoted targets as body parts.
++      if (normalized.type === "group") {
++        items.push(...normalized.items);
++      } else {
++        items.push({
++          id: item && typeof item === "object" ? item.id ?? null : null,
++          content: normalized,
++        });
++      }
++    }
++    return { type: "group", items };
++  }
++  if (content.type === "read") {
++    // spectrum-ts v12.5+ surfaces an inbound read receipt only after it has
++    // verified that the target is one of our outbound messages. Keep the
++    // receipt lightweight: Python records it as telemetry, never as an agent
++    // prompt.
++    return {
++      type: "read",
++      targetMessageId: content.target?.id ?? null,
++      targetDirection: content.target?.direction ?? null,
++    };
++  }
++  if (content.type === "reaction") {
++    const target = content.target;
++    return {
++      type: "reaction",
++      emoji: content.emoji || "",
++      targetMessageId: target?.id ?? null,
++      // Lets Python gate "is this a reaction to one of MY messages" without
++      // tracking every outbound id. May be null if the provider doesn't
++      // hydrate the target — Python falls back to its own sent-id cache.
++      targetDirection: target?.direction ?? null,
++      // Text of the reacted-to message, so Python can correlate the tapback to
++      // the gateway's reply_to_text. Null for attachment/voice-only targets.
++      targetText: reactionTargetText(target),
++    };
++  }
++  // A user tapping a poll choice arrives as `poll_option` carrying the chosen
++  // option title + whether it was selected (true) or deselected (false). This
++  // is how a native iMessage poll's vote streams back — Python turns a
++  // selection into the answer that resolves a pending `clarify`.
++  if (content.type === "poll_option") {
++    return {
++      type: "poll_option",
++      title: content.option?.title ?? content.title ?? "",
++      selected: content.selected !== false,
++      pollTitle: content.poll?.title ?? null,
++    };
++  }
++  // The poll message itself (its creation) — surfaced for completeness so the
++  // agent isn't told "content type not handled" if it sees the echo.
++  if (content.type === "poll") {
++    return {
++      type: "poll",
++      title: content.title ?? "",
++      options: Array.isArray(content.options)
++        ? content.options.map((o) => o?.title ?? "")
++        : [],
++    };
++  }
++  return { type: content.type || "unknown" };
++}
++

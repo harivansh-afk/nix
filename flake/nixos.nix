@@ -32,4 +32,6 @@ in
   flake.nixosConfigurations = lib.mapAttrs (_: mkNixos) nixosHosts // {
     inherit ix;
   };
+  flake.checks.${hosts.spark.system}.photon-replies =
+    self.nixosConfigurations.spark.config.services.hermes-agent.package.tests.photon-replies;
 }

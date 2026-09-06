@@ -69,4 +69,5 @@ hide_rate_limit_model_nudge = true
 "gpt-5.2" = "gpt-5.2-codex"
 
 [tui]
+terminal_title = ["activity", "thread-title", "project-name"]
 status_line = ["model-with-reasoning", "git-branch", "task-progress", "context-remaining"]

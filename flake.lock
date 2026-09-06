@@ -1065,22 +1065,6 @@
         "type": "github"
       }
     },
-    "nixpkgs_7": {
-      "locked": {
-        "lastModified": 1767640445,
-        "narHash": "sha256-UWYqmD7JFBEDBHWYcqE6s6c77pWdcU/i+bwD6XxMb8A=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "9f0c42f8bc7151b8e7e5840fb3bd454ad850d8c5",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "npm-lockfile-fix": {
       "inputs": {
         "nixpkgs": [
@@ -1099,24 +1083,6 @@
       "original": {
         "owner": "jeslie0",
         "repo": "npm-lockfile-fix",
-        "type": "github"
-      }
-    },
-    "openspec": {
-      "inputs": {
-        "nixpkgs": "nixpkgs_7"
-      },
-      "locked": {
-        "lastModified": 1788393656,
-        "narHash": "sha256-mh4Mue78wmJC85JtVLwOApuKiVVkPcQ0Og1Ka4CuPMg=",
-        "owner": "Fission-AI",
-        "repo": "OpenSpec",
-        "rev": "e062b9572be933564ba3899d059377dfa1393e32",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Fission-AI",
-        "repo": "OpenSpec",
         "type": "github"
       }
     },
@@ -1255,7 +1221,6 @@
         "nixpkgs": "nixpkgs_6",
         "nixpkgs-macbook": "nixpkgs-macbook",
         "nixpkgs-nushell": "nixpkgs-nushell",
-        "openspec": "openspec",
         "pierrejo": "pierrejo",
         "rust-overlay": "rust-overlay_2",
         "sops-nix": "sops-nix",

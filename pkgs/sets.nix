@@ -7,7 +7,6 @@
 let
   inherit (pkgs.stdenv.hostPlatform) system;
   gwsPackage = inputs.googleworkspace-cli.packages.${system}.default or null;
-  openspecPackage = inputs.openspec.packages.${system}.default or null;
   # jj-ix: the patched jj that speaks the ix forge's store backend
   # (pkgs/jj-ix). Toolchain comes from rust-overlay via mkRustBin so the
   # main package set needs no overlay.
@@ -85,7 +84,6 @@ in
     ])
     ++ (builtins.filter (p: p != null) [
       gwsPackage
-      openspecPackage
     ])
     ++ [ jjIxPackage ];
 

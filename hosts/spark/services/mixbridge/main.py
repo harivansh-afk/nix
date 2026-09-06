@@ -1,17 +1,58 @@
-"""
-yt-dlp API for SoundCloud and Spotify stream extraction.
-Deploy to Railway/Render/Fly.io for free.
-"""
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+"""Authenticated SoundCloud and Spotify extraction for Mixbridge clients."""
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 import yt_dlp
 import os
 import re
 import base64
 import requests
 from typing import Optional
+from urllib.parse import urlsplit
 
-app = FastAPI(title="yt-dlp API")
+from auth import require_user
+
+app = FastAPI(title="Mixbridge streaming API", docs_url=None, redoc_url=None, openapi_url=None)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://mixbridge.app", "https://www.mixbridge.app"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Authorization", "Content-Type"],
+    expose_headers=["X-Track-Title", "X-Track-Artist", "X-Track-Album", "Retry-After"],
+)
+api = APIRouter(dependencies=[Depends(require_user)])
+MAX_AUDIO_BYTES = 50 * 1024 * 1024
+
+
+def soundcloud_url(value: str) -> str:
+    try:
+        url = urlsplit(value)
+        if (url.scheme != "https" or url.hostname not in {"soundcloud.com", "www.soundcloud.com"}
+                or url.username is not None or url.password is not None
+                or url.port not in (None, 443)
+                or not re.fullmatch(r"/[A-Za-z0-9_-]+/[A-Za-z0-9_-]+/?", url.path)
+                or url.path.strip("/").split("/")[1] == "sets"):
+            raise ValueError
+    except ValueError:
+        raise HTTPException(400, "A public SoundCloud track URL is required") from None
+    return "https://soundcloud.com" + url.path.rstrip("/")
+
+
+def bound_download(status):
+    if (status.get("downloaded_bytes") or 0) > MAX_AUDIO_BYTES:
+        raise yt_dlp.DownloadError("Audio download exceeds 50 MiB")
+
+
+def downloader(options):
+    return yt_dlp.YoutubeDL({
+        **options,
+        "noplaylist": True,
+        "socket_timeout": 15,
+        "retries": 2,
+        "fragment_retries": 2,
+        "max_filesize": MAX_AUDIO_BYTES,
+        "progress_hooks": [bound_download],
+    })
 
 # Spotify API helpers
 SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID")
@@ -60,18 +101,23 @@ def get_spotify_track(track_id: str) -> dict:
 
 def parse_spotify_url(url: str) -> str:
     """Extract track ID from Spotify URL."""
-    patterns = [
-        r"spotify\.com/track/([a-zA-Z0-9]+)",
-        r"spotify:track:([a-zA-Z0-9]+)",
-    ]
-    for pattern in patterns:
-        match = re.search(pattern, url)
-        if match:
-            return match.group(1)
+    match = re.fullmatch(r"spotify:track:([a-zA-Z0-9]{22})", url)
+    if match:
+        return match.group(1)
+    try:
+        parsed = urlsplit(url)
+        if (parsed.scheme == "https" and parsed.hostname == "open.spotify.com"
+                and parsed.username is None and parsed.password is None
+                and parsed.port in (None, 443)):
+            match = re.fullmatch(r"/track/([a-zA-Z0-9]{22})/?", parsed.path)
+            if match:
+                return match.group(1)
+    except ValueError:
+        pass
     raise HTTPException(400, "Invalid Spotify track URL")
 
 class StreamRequest(BaseModel):
-    url: str
+    url: str = Field(min_length=1, max_length=2048)
 
 class StreamResponse(BaseModel):
     stream_url: str
@@ -84,12 +130,11 @@ class StreamResponse(BaseModel):
 def health():
     return {"status": "ok"}
 
-@app.post("/stream", response_model=StreamResponse)
+@api.post("/stream", response_model=StreamResponse)
 def get_stream(request: StreamRequest):
-    """Extract stream URL from SoundCloud (or other supported sites)."""
+    """Extract an audio stream from a public SoundCloud track."""
     
-    if "soundcloud.com" not in request.url:
-        raise HTTPException(400, "Only SoundCloud URLs are supported")
+    url = soundcloud_url(request.url)
     
     # iOS needs direct HTTP download URLs, not HLS streams
     # Priority: HTTP MP3 (direct download) > HLS AAC if no HTTP available
@@ -101,8 +146,8 @@ def get_stream(request: StreamRequest):
     }
     
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(request.url, download=False)
+        with downloader(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False, ie_key="Soundcloud")
             
             formats = info.get("formats", [])
             
@@ -133,17 +178,18 @@ def get_stream(request: StreamRequest):
             )
     except yt_dlp.DownloadError as e:
         raise HTTPException(400, f"Extraction failed: {str(e)}")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, f"Server error: {str(e)}")
 
-@app.post("/download")
+@api.post("/download")
 def download_track(request: StreamRequest):
     """Download track and return the audio file directly (handles HLS)."""
     from fastapi.responses import Response
     import tempfile
     
-    if "soundcloud.com" not in request.url:
-        raise HTTPException(400, "Only SoundCloud URLs are supported")
+    url = soundcloud_url(request.url)
     
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = os.path.join(tmpdir, "audio.mp3")
@@ -161,8 +207,8 @@ def download_track(request: StreamRequest):
         }
         
         try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([request.url])
+            with downloader(ydl_opts) as ydl:
+                ydl.extract_info(url, download=True, ie_key="Soundcloud")
             
             # Find the output file (might have different extension)
             for f in os.listdir(tmpdir):
@@ -173,6 +219,8 @@ def download_track(request: StreamRequest):
             if not os.path.exists(output_path):
                 raise HTTPException(500, "Download failed - no output file")
             
+            if os.path.getsize(output_path) > MAX_AUDIO_BYTES:
+                raise HTTPException(413, "Audio download exceeds 50 MiB")
             with open(output_path, "rb") as f:
                 audio_data = f.read()
             
@@ -183,13 +231,15 @@ def download_track(request: StreamRequest):
             )
         except yt_dlp.DownloadError as e:
             raise HTTPException(400, f"Download failed: {str(e)}")
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(500, f"Server error: {str(e)}")
 
 # --- Spotify Endpoints ---
 
 class SpotifyRequest(BaseModel):
-    url: str
+    url: str = Field(min_length=1, max_length=2048)
 
 class SpotifyStreamResponse(BaseModel):
     stream_url: str
@@ -201,7 +251,7 @@ class SpotifyStreamResponse(BaseModel):
     cover_url: Optional[str] = None
     youtube_url: str
 
-@app.post("/spotify/stream", response_model=SpotifyStreamResponse)
+@api.post("/spotify/stream", response_model=SpotifyStreamResponse)
 def spotify_stream(request: SpotifyRequest):
     """Get stream URL for a Spotify track (searches YouTube)."""
     track_id = parse_spotify_url(request.url)
@@ -218,7 +268,7 @@ def spotify_stream(request: SpotifyRequest):
     }
 
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        with downloader(ydl_opts) as ydl:
             info = ydl.extract_info(f"ytsearch:{search_query}", download=False)
             if not info.get("entries"):
                 raise HTTPException(404, "No YouTube match found")
@@ -254,7 +304,7 @@ def spotify_stream(request: SpotifyRequest):
     except yt_dlp.DownloadError as e:
         raise HTTPException(400, f"YouTube search failed: {str(e)}")
 
-@app.post("/spotify/download")
+@api.post("/spotify/download")
 def spotify_download(request: SpotifyRequest):
     """Download Spotify track as M4A (via YouTube)."""
     from fastapi.responses import Response
@@ -278,7 +328,7 @@ def spotify_download(request: SpotifyRequest):
         }
 
         try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            with downloader(ydl_opts) as ydl:
                 ydl.download([f"ytsearch:{search_query}"])
 
             # Find the downloaded file
@@ -291,6 +341,8 @@ def spotify_download(request: SpotifyRequest):
             if not audio_file or not os.path.exists(audio_file):
                 raise HTTPException(500, "Download failed - no output file")
 
+            if os.path.getsize(audio_file) > MAX_AUDIO_BYTES:
+                raise HTTPException(413, "Audio download exceeds 50 MiB")
             with open(audio_file, "rb") as f:
                 audio_data = f.read()
 
@@ -313,9 +365,11 @@ def spotify_download(request: SpotifyRequest):
         except yt_dlp.DownloadError as e:
             raise HTTPException(400, f"Download failed: {str(e)}")
 
-@app.get("/spotify/search")
+@api.get("/spotify/search")
 def spotify_search(q: str, limit: int = 10):
     """Search Spotify for tracks."""
+    if not q.strip() or len(q) > 200 or not 1 <= limit <= 50:
+        raise HTTPException(400, "Search requires a query of 1–200 characters and a limit of 1–50")
     token = get_spotify_token()
     resp = requests.get(
         "https://api.spotify.com/v1/search",
@@ -342,6 +396,9 @@ def spotify_search(q: str, limit: int = 10):
             for t in tracks
         ]
     }
+
+app.include_router(api)
+
 
 if __name__ == "__main__":
     import uvicorn

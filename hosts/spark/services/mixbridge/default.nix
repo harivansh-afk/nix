@@ -1,8 +1,3 @@
-# yt-dlp extraction API for the mixbridge iOS app: SoundCloud stream URLs and
-# server-side HLS downloads, Spotify metadata with YouTube-sourced audio.
-# main.py is vendored from ytdlp-api in the mixbridge monorepo - keep in sync.
-# Same runtime-uv-venv pattern as whisper: yt-dlp extractors break often, so
-# updating it must not wait on a nixpkgs bump (edit setup.sh, bump reqVersion).
 {
   lib,
   pkgs,
@@ -15,7 +10,7 @@ let
   port = 19400;
   stateDir = "/var/lib/mixbridge";
   venv = "${stateDir}/venv";
-  reqVersion = "1";
+  reqVersion = "2";
   runtimeBins = lib.makeBinPath [
     pkgs.uv
     pkgs.ffmpeg
@@ -23,10 +18,6 @@ let
   ];
 in
 {
-  systemd.tmpfiles.rules = [
-    "d ${stateDir} 0750 root root -"
-  ];
-
   systemd.services.mixbridge-api = {
     description = "mixbridge yt-dlp extraction API";
     after = [ "network-online.target" ];
@@ -38,9 +29,14 @@ in
       VENV = venv;
       PYTHON = "${pkgs.python312}/bin/python3.12";
       APP_PY = ./main.py;
+      AUTH_PY = ./auth.py;
       REQ_VERSION = reqVersion;
+      UV_CACHE_DIR = "${stateDir}/uv-cache";
     };
     serviceConfig = {
+      DynamicUser = true;
+      StateDirectory = "mixbridge";
+      StateDirectoryMode = "0750";
       WorkingDirectory = stateDir;
       # SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET
       EnvironmentFile = config.sops.secrets."mixbridge.env".path;
@@ -50,6 +46,16 @@ in
       RestartSec = 5;
       TimeoutStartSec = "600";
       PrivateTmp = true;
+      PrivateDevices = true;
+      ProtectHome = true;
+      ProtectSystem = "strict";
+      ProtectKernelTunables = true;
+      ProtectKernelModules = true;
+      ProtectControlGroups = true;
+      RestrictSUIDSGID = true;
+      CapabilityBoundingSet = "";
+      MemoryMax = "1G";
+      TasksMax = 128;
       NoNewPrivileges = true;
     };
   };

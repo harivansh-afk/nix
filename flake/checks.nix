@@ -36,6 +36,16 @@
 
         stylua = lint "stylua" [ pkgs.stylua ] "stylua --check dots/nvim";
         logitech = lint "logitech" [ pkgs.python3 ] "python3 hosts/macbook/logitech/test_apply.py";
+        mixbridge = lint "mixbridge" [
+          (pkgs.python3.withPackages (ps: [
+            ps.fastapi
+            ps.httpx
+            ps.pyjwt
+            ps.cryptography
+            ps.requests
+            ps.yt-dlp
+          ]))
+        ] "python3 hosts/spark/services/mixbridge/test_api.py";
       }
       // pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "aarch64-linux") {
         hermes-runtime =

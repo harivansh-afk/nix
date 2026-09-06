@@ -28,6 +28,11 @@ let
   managed = pkgs.writeTextDir "config.yaml" (builtins.toJSON policy);
 in
 {
+  systemd.tmpfiles.rules = [
+    "d ${hermes.stateDir}/.hermes/profiles 0700 ${hermes.user} ${hermes.group} - -"
+    "d ${profileHome} 0700 ${hermes.user} ${hermes.group} - -"
+  ];
+
   services.hermes-agent = {
     environmentFiles = [ config.sops.secrets."hermes-telegram.env".path ];
     settings.gateway = policy.gateway;

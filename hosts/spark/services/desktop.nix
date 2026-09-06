@@ -5,6 +5,7 @@
   ...
 }:
 let
+  cuaDriver = pkgs.callPackage ../../../pkgs/cua-driver { };
   chromium = pkgs.chromium.override {
     commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret --force-renderer-accessibility --remote-debugging-port=19222";
   };
@@ -21,7 +22,7 @@ let
     bindsym Mod4+f fullscreen toggle
     bindsym Mod4+Left focus left
     bindsym Mod4+Right focus right
-    exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP && ${pkgs.systemd}/bin/systemctl --user start wayvnc
+    exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP && ${pkgs.systemd}/bin/systemctl --user start wayvnc cua-driver
     exec ${pkgs.ghostty}/bin/ghostty
     exec ${chromium}/bin/chromium
   '';
@@ -29,6 +30,8 @@ in
 {
   environment.systemPackages = [
     chromium
+    pkgs.agent-browser
+    cuaDriver
     pkgs.ghostty
     pkgs.sway
     pkgs.grim
@@ -56,6 +59,24 @@ in
     enable = true;
     extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
     config.sway.default = [ "gtk" ];
+  };
+
+  systemd.user.services.cua-driver = {
+    description = "Cua desktop automation";
+    partOf = [ "sway.service" ];
+    after = [ "sway.service" ];
+    unitConfig.ConditionUser = username;
+    environment = {
+      CUA_DRIVER_RS_ENABLE_WAYLAND = "1";
+      CUA_DRIVER_RS_TELEMETRY_ENABLED = "0";
+      XDG_SESSION_TYPE = "wayland";
+    };
+    serviceConfig = {
+      ExecStart = "${cuaDriver}/bin/cua-driver serve";
+      Restart = "on-failure";
+      RestartSec = 3;
+      UMask = "0077";
+    };
   };
 
   systemd.user.services.wayvnc = {

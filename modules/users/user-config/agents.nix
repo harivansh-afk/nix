@@ -2,6 +2,7 @@
   lib,
   pkgs,
   homeDirectory,
+  hostname,
   isDarwin,
   theme,
   skillSources,
@@ -57,7 +58,15 @@ in
 {
   claudeMd = agentInstructions.claude;
   codexAgentsMd = agentInstructions.codex;
-  agentSkills = pkgs.linkFarm "agent-skills" pocockSkills;
+  agentSkills = pkgs.linkFarm "agent-skills" (
+    pocockSkills
+    ++ lib.optionals (hostname == "spark") [
+      {
+        name = "cua-driver";
+        path = (pkgs.callPackage ../../../pkgs/cua-driver { }).skills;
+      }
+    ]
+  );
 
   claudeSettings = jsonFormat.generate "claude-settings.json" {
     "$schema" = "https://json.schemastore.org/claude-code-settings.json";

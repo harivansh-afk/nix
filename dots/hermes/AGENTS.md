@@ -18,6 +18,9 @@ added in the original browser are copied at the next fresh browser session. The
 original profile remains /home/rathi/.config/chromium; it is private mutable state.
 Snapshots omit extensions and some site storage. If an app is signed out in the
 snapshot, report it and use the visible original browser only within Hari's task.
+For tasks in the original visible browser, read
+`/home/rathi/Documents/Git/nix/hosts/spark/docs/browser.md` and attach with its
+explicit CDP workflow.
 
 Spark's Sway desktop is visible through Hari's existing VNC connection. Desktop
 actions share that session: coordinate GUI work across subagents and yield when

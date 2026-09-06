@@ -16,11 +16,28 @@ pack is linked separately. There are no custom hooks or scheduled jobs.
 
 ## Learning from work
 
-The Nix-owned `self-evolve` skill guides learning from completed tasks and verified
-corrections using Hermes' native `skill_view` and `skill_manage` tools. Agent
-guidance points to it when those triggers occur. Learned skills remain writable
-under `HERMES_HOME/skills` and persist across rebuilds. This is model-guided
-learning, not a guarantee that every task creates or improves a skill.
+The Nix-owned `self-evolve` skill routes verified lessons through PRs to
+https://git.harivan.sh/harivansh-afk/nix. Add or edit
+`dots/hermes/skills/<name>/SKILL.md`; Nix discovers these directories and links
+them into Hermes Home on deployment. No per-skill module edit is needed.
+Supporting scripts and references live alongside SKILL.md. Agent guidance
+requires this path for skills, plugins, configuration and durable behavioral
+instructions. Private memory, conversations, credentials and browser state stay
+outside Git. This is instruction-based governance, not a filesystem sandbox.
+
+The native skill-creation nudge is disabled so it does not request direct runtime
+skill writes; the task/correction trigger in AGENTS.md points to self-evolve.
+Hermes completes and validates the PR, presents its link and checks, then merges
+routine skill-only changes after green checks unless Hari requests review first.
+Broader changes require scoped authorization or explicit yes/no identifying the
+PR. Changes after approval must be rechecked and material changes reapproved.
+Merge, deployment and runtime proof are reported separately.
+
+The installed Photon adapter supports text approval replies, not interactive
+mini-app buttons. Use `yes #123` / `no #123` in the conversation; `/approve` is
+for a pending command approval, not generic PR approval. Photon offers
+[mini-app cards](https://photon.codes/docs/spectrum-ts/content/app), but a button
+flow would require a separate UI/callback and adapter integration.
 
 This adds no service, hook, schedule, model provider or account integration. It
 does not install Nous' separate DSPy/GEPA Self-Evolution research optimizer. Skill

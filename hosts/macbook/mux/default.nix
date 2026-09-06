@@ -1,8 +1,3 @@
-# Mux.app built from the flake's pinned mux rev into /Applications. Needs the
-# system Xcode (swift build against AppKit/Metal, ghostty's xcframework via
-# xcrun), so like voiceink it runs as an activation step keyed on mux rev +
-# ghostty rev. The bundled muxd and mux-attach are the mux flake's package,
-# the same rev the org.nixos.muxd agent (../muxd.nix) runs.
 {
   lib,
   pkgs,
@@ -17,6 +12,7 @@ let
   home = "/Users/${username}";
 
   build = pkgs.writeShellScript "mux-app-build" ''
+    export MUX_BUILD_ID="$0"
     export HOME=${lib.escapeShellArg home}
     export PATH="/usr/bin:/bin:/usr/sbin:/sbin:${
       lib.makeBinPath [

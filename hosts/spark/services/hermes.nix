@@ -34,6 +34,22 @@ let
   skillNames = lib.filter (name: builtins.pathExists (skillsDir + "/${name}/SKILL.md")) (
     lib.attrNames (lib.filterAttrs (_: type: type == "directory") (builtins.readDir skillsDir))
   );
+  managedSkills = pkgs.linkFarm "hermes-managed-skills" (
+    [
+      {
+        name = "cua-driver";
+        path = cuaDriver.skills;
+      }
+      {
+        name = "spark-computer";
+        path = ../../../dots/agents/skills/spark-computer;
+      }
+    ]
+    ++ map (name: {
+      inherit name;
+      path = skillsDir + "/${name}";
+    }) skillNames
+  );
 in
 {
   imports = [ inputs.hermes-agent.nixosModules.default ];
@@ -43,10 +59,22 @@ in
   systemd.tmpfiles.rules = [
     "L+ ${stateDir}/.hermes/plugins/knowledge-base - - - - /home/rathi/Documents/Git/nix/dots/hermes/plugins/knowledge-base"
     "L+ ${stateDir}/workspace/kb-staging - - - - /var/lib/kb/staging"
-    "L+ ${stateDir}/.hermes/skills/cua-driver - - - - ${cuaDriver.skills}"
-    "L+ ${stateDir}/.hermes/skills/spark-computer - - - - ${../../../dots/agents/skills/spark-computer}"
   ]
-  ++ map (name: "L+ ${stateDir}/.hermes/skills/${name} - - - - ${skillsDir + "/${name}"}") skillNames;
+  ++ map (name: "L+ ${stateDir}/.hermes/skills/${name} - - - - ${managedSkills}/${name}") (
+    [
+      "cua-driver"
+      "spark-computer"
+    ]
+    ++ skillNames
+  );
+
+  system.activationScripts.hermes-managed-skills = {
+    deps = [ "hermes-agent-setup" ];
+    text = ''
+      ${pkgs.util-linux}/bin/runuser -u ${username} -- ${pkgs.bash}/bin/bash \
+        ${./hermes-prune-skills.sh} ${lib.escapeShellArg "${stateDir}/.hermes/skills"} ${managedSkills}
+    '';
+  };
 
   services.hermes-agent = {
     enable = true;

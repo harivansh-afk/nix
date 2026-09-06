@@ -19,7 +19,7 @@ let
       extra = {
         allowed_chats = [ chatId ];
         group_allowed_chats = [ chatId ];
-        require_mention = true;
+        require_mention = false;
       };
       group_allow_admin_from = "\${TELEGRAM_ALLOWED_USERS}";
       group_user_allowed_commands = [ ];

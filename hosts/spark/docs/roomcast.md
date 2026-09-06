@@ -47,16 +47,17 @@ as its own service user with its own browser state.
 
 ### Enrollment
 
-The existing `@sparkotron_bot` is enrolled in Roommates TV (`-5343368090`). Nix
+The existing `@sparkotron_bot` is enrolled in Home (`-5343368090`). Nix
 owns this exact group allowlist; the recovered token and owner ID remain in
 `secrets/hosts/spark/hermes-telegram.env`. Roommates' Telegram DMs and other groups are
 rejected; the owner's Telegram DM reaches the TV profile. Photon remains configured independently for Hari.
 
-Telegram privacy mode is enabled. Use `/whoami@sparkotron_bot` for identity and
-reply directly to the bot for TV requests. Ordinary messages need privacy mode
-disabled before Telegram delivers them; `require_mention = true` still limits
-agent replies to explicit triggers. Do not grant group-admin powers just to
-receive ordinary messages.
+Ordinary group messages are TV requests; no mention or reply is required.
+Nix sets `require_mention = false`. Telegram must also deliver ordinary messages:
+disable privacy for `@sparkotron_bot` using BotFather's `/setprivacy`, then remove
+and re-add the bot if needed for the existing group. Telegram owns that account
+setting; it is not a Hermes or Nix option. Do not grant group-admin powers just
+to receive ordinary messages. Use `/whoami@sparkotron_bot` for identity.
 
 Members of the enrolled group, including later additions, can control the TV.
 Guests can use `/help` and `/whoami`, but cannot change profiles or configuration.

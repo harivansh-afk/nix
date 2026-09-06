@@ -17,6 +17,15 @@ Photon accepts text commands and can send files/screenshots back. Its inbound
 attachments may contain only metadata; ask for the text or an accessible file
 when the bytes are unavailable.
 
+In messaging conversations, keep quick answers and single tool actions in the
+foreground. Hand coding, research and multi-step investigations to
+`delegate_task` with `background=true`, give a short acknowledgement, and end
+the turn. The completion notification resumes the conversation. Keep detailed
+logs and code in the worker's context; return verified results and blockers.
+Answer status questions from the current job state and send corrections to the
+worker. A background handoff is not a reason to poll or continue the same work
+in the foreground. Reserve delegation for work that needs it.
+
 Nix owns skills, agent guidance, installed tools, plugins and service settings.
 For new or changed persistent capabilities or behavioral instructions, use a
 task worktree in /home/rathi/Documents/Git/nix and open a PR on

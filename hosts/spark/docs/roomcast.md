@@ -30,6 +30,20 @@ precise seeking; credentials stay in private Roomcast state.
 
 ## Roommate agent
 
+`roomcast-mcp.service` serves the existing Roomcast MCP application through the
+SDK's Streamable HTTP transport at `http://127.0.0.1:18796/mcp`. The gateway's
+personal and roommate profiles and the dashboard share this one process. The
+MCP service forwards requests to the single playback service over
+`/run/roomcast/control.sock`; restarting Hermes does not restart playback or MCP.
+The endpoint accepts local connections from root and the repo owner's UID only.
+It has no public route. The MCP service runs as a dynamic user with the Roomcast
+socket group and has no home-directory access.
+
+Keep the logical connection names `roomcast` and `roommates_tv` distinct even
+though their URL is shared: this Hermes version keys connection discovery by
+name while tool registration belongs to a profile. Reusing the name causes the
+second profile to lose its tools. HTTP sessions do not spawn MCP subprocesses.
+
 `hosts/spark/services/roommate-agent.nix` configures Hermes's native
 multiplexed profiles. Roomcast contains no messaging transport, identities or
 chat permissions. The existing Photon connection stays on the personal profile.

@@ -8,11 +8,19 @@
 }:
 let
   cfg = config.services.roomcast;
+  mcpPort = 18796;
+  mcpPython = pkgs.python3.withPackages (ps: [
+    (ps.toPythonModule cfg.package)
+    ps.uvicorn
+  ]);
   egressRules = pkgs.writeText "roomcast-egress.nft" ''
     destroy table inet roomcast
     table inet roomcast {
       chain output {
         type filter hook output priority -5; policy accept;
+        ip daddr 127.0.0.1 tcp dport ${toString mcpPort} meta skuid != { 0, ${
+          toString config.users.users.${username}.uid
+        } } reject
         meta skuid != "roomcast" return
         tcp sport ${toString cfg.port} return
         ip daddr 127.0.0.53 udp dport 53 return
@@ -43,6 +51,46 @@ in
     after = [ "firewall.service" ];
   };
 
+  systemd.services.roomcast-mcp = {
+    description = "Shared Roomcast MCP endpoint";
+    wantedBy = [ "multi-user.target" ];
+    requires = [ "firewall.service" ];
+    wants = [ "roomcast.service" ];
+    after = [
+      "firewall.service"
+      "roomcast.service"
+    ];
+    environment.ROOMCAST_SOCKET = "/run/roomcast/control.sock";
+    serviceConfig = {
+      ExecStart = "${mcpPython}/bin/uvicorn roomcast.mcp:app.streamable_http_app --factory --host 127.0.0.1 --port ${toString mcpPort} --no-access-log";
+      DynamicUser = true;
+      SupplementaryGroups = [ "roomcast" ];
+      Restart = "on-failure";
+      RestartSec = 2;
+      TimeoutStopSec = 15;
+      NoNewPrivileges = true;
+      ProtectSystem = "strict";
+      ProtectHome = true;
+      PrivateTmp = true;
+      PrivateDevices = true;
+      RestrictAddressFamilies = [
+        "AF_UNIX"
+        "AF_INET"
+      ];
+      IPAddressDeny = "any";
+      IPAddressAllow = "localhost";
+    };
+  };
+
+  systemd.services.hermes-agent = {
+    wants = [ "roomcast-mcp.service" ];
+    after = [ "roomcast-mcp.service" ];
+  };
+  systemd.services.hermes-backend = {
+    wants = [ "roomcast-mcp.service" ];
+    after = [ "roomcast-mcp.service" ];
+  };
+
   services.roomcast = {
     enable = true;
     lanInterface = "wlP9s9";
@@ -60,6 +108,8 @@ in
   systemd.services.hermes-backend.serviceConfig.SupplementaryGroups = [ "roomcast" ];
 
   services.hermes-agent.settings.mcp_servers.roomcast = {
-    command = "${config.services.roomcast.package}/bin/roomcast-mcp";
+    url = "http://127.0.0.1:${toString mcpPort}/mcp";
+    transport = "http";
+    lazy = false;
   };
 }

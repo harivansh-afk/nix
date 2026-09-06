@@ -39,8 +39,10 @@ in
     settings.platform_toolsets.telegram = [ "roommates_tv" ];
     hermesHomeFiles = {
       "profiles/roommates/config.yaml" = builtins.toJSON {
-        model = hermes.settings.model;
-        agent.reasoning_effort = hermes.settings.agent.reasoning_effort;
+        model = hermes.settings.model // {
+          default = "gpt-5.6-luna";
+        };
+        agent.reasoning_effort = "low";
         terminal.cwd = profileHome;
         platform_toolsets = {
           cli = [ "roommates_tv" ];

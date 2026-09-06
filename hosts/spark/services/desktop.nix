@@ -5,8 +5,10 @@
   ...
 }:
 let
+  cuaDriver = pkgs.callPackage ../../../pkgs/cua-driver { };
+  computer = import ../../../pkgs/spark-computer { inherit pkgs; };
   chromium = pkgs.chromium.override {
-    commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret --force-renderer-accessibility";
+    commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret --force-renderer-accessibility --remote-debugging-port=19222";
   };
   swayConfig = pkgs.writeText "sway.conf" ''
     xwayland disable
@@ -21,14 +23,15 @@ let
     bindsym Mod4+f fullscreen toggle
     bindsym Mod4+Left focus left
     bindsym Mod4+Right focus right
-    exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP && ${pkgs.systemd}/bin/systemctl --user start wayvnc
+    exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE GTK_A11Y NO_AT_BRIDGE && ${pkgs.systemd}/bin/systemctl --user start wayvnc cua-driver chromium
     exec ${pkgs.ghostty}/bin/ghostty
-    exec ${chromium}/bin/chromium
   '';
 in
 {
   environment.systemPackages = [
     chromium
+    computer
+    cuaDriver
     pkgs.ghostty
     pkgs.sway
     pkgs.grim
@@ -58,6 +61,43 @@ in
     config.sway.default = [ "gtk" ];
   };
 
+  systemd.user.services.cua-driver = {
+    description = "Cua desktop automation";
+    partOf = [ "sway.service" ];
+    after = [ "sway.service" ];
+    unitConfig.ConditionUser = username;
+    environment = {
+      CUA_DRIVER_RS_ENABLE_WAYLAND = "1";
+      CUA_DRIVER_RS_TELEMETRY_ENABLED = "0";
+      XDG_SESSION_TYPE = "wayland";
+    };
+    serviceConfig = {
+      ExecStart = "${cuaDriver}/bin/cua-driver serve --socket %t/cua-driver/control.sock";
+      RuntimeDirectory = "cua-driver";
+      RuntimeDirectoryMode = "0700";
+      Restart = "on-failure";
+      RestartSec = 3;
+      UMask = "0077";
+    };
+  };
+
+  systemd.user.services.chromium = {
+    description = "Chromium agent desktop browser";
+    partOf = [ "sway.service" ];
+    after = [ "sway.service" ];
+    unitConfig.ConditionUser = username;
+    environment = {
+      GTK_A11Y = "always";
+      NO_AT_BRIDGE = "0";
+    };
+    serviceConfig = {
+      ExecStart = "${chromium}/bin/chromium --restore-last-session";
+      Restart = "always";
+      RestartSec = 3;
+      UMask = "0077";
+    };
+  };
+
   systemd.user.services.wayvnc = {
     description = "WayVNC remote desktop";
     environment.XKB_DEFAULT_OPTIONS = "altwin:meta_win";
@@ -85,6 +125,7 @@ in
       XDG_CURRENT_DESKTOP = "sway";
       XDG_SESSION_TYPE = "wayland";
       GTK_A11Y = "always";
+      NO_AT_BRIDGE = "0";
     };
     serviceConfig = {
       ExecStart = "${pkgs.sway}/bin/sway --unsupported-gpu --config ${swayConfig}";

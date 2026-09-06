@@ -2,6 +2,7 @@
   lib,
   pkgs,
   homeDirectory,
+  hostname,
   isDarwin,
   theme,
   skillSources,
@@ -9,6 +10,11 @@
 }:
 let
   agentInstructions = import ../../../lib/agent-instructions.nix { inherit pkgs; };
+  computer = import ../../../pkgs/spark-computer { inherit pkgs; };
+  computerServer = {
+    command = "${computer}/bin/spark-computer";
+    args = [ ];
+  };
 
   # Opt-in allowlist: each upstream skill costs context on every turn (its
   # description is always loaded), so add one here only after reading it.
@@ -47,17 +53,46 @@ let
   # indexable Python-kernel MCP server; the `ix-mcp` on PATH is the spark-only
   # wrapper around the live checkout (hosts/spark/omp.nix), so the entry is
   # emitted only off-darwin.
-  ompMcpServers = lib.optionalAttrs (!isDarwin) {
-    index = {
-      command = "ix-mcp";
-      args = [ "serve" ];
+  ompMcpServers =
+    (lib.optionalAttrs (!isDarwin) {
+      index = {
+        command = "ix-mcp";
+        args = [ "serve" ];
+      };
+    })
+    // lib.optionalAttrs (hostname == "spark") {
+      computer = computerServer // {
+        timeout = 180000;
+      };
     };
-  };
 in
 {
   claudeMd = agentInstructions.claude;
   codexAgentsMd = agentInstructions.codex;
-  agentSkills = pkgs.linkFarm "agent-skills" pocockSkills;
+  agentSkills = pkgs.linkFarm "agent-skills" (
+    pocockSkills
+    ++ lib.optionals (hostname == "spark") [
+      {
+        name = "cua-driver";
+        path = (pkgs.callPackage ../../../pkgs/cua-driver { }).skills;
+      }
+      {
+        name = "spark-computer";
+        path = ../../../dots/agents/skills/spark-computer;
+      }
+    ]
+  );
+  claudeComputerSource =
+    if hostname == "spark" then
+      jsonFormat.generate "claude-computer.json" (
+        computerServer
+        // {
+          type = "stdio";
+          timeout = 180000;
+        }
+      )
+    else
+      null;
 
   claudeSettings = jsonFormat.generate "claude-settings.json" {
     "$schema" = "https://json.schemastore.org/claude-code-settings.json";
@@ -78,6 +113,14 @@ in
 
   codexConfigSource = pkgs.writeText "codex-config.toml" (
     builtins.readFile ../../../dots/codex/config.toml
+    + lib.optionalString (hostname == "spark") ''
+
+      [mcp_servers.computer]
+      command = "${computer}/bin/spark-computer"
+      startup_timeout_sec = 20
+      tool_timeout_sec = 180
+      enabled_tools = ["computer_exec", "computer_close"]
+    ''
   );
 
   readXattr = mkReadXattr codexXattr;

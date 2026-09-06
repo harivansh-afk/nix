@@ -11,7 +11,7 @@ let
   stateDir = "${home}/.local/state/hermes";
   runtimeDir = "/run/user/${toString config.users.users.${username}.uid}";
   cuaDriver = pkgs.callPackage ../../../pkgs/cua-driver { };
-  browserUse = import ../../../pkgs/browser-use { inherit pkgs inputs; };
+  computer = import ../../../pkgs/spark-computer { inherit pkgs; };
   photonSrc = "${inputs.hermes-agent}/plugins/platforms/photon/sidecar";
   photonDeps = pkgs.importNpmLock.buildNodeModules {
     npmRoot = photonSrc;
@@ -25,18 +25,10 @@ let
     cp ${photonSrc}/* $out/
     ln -s ${photonDeps}/node_modules $out/node_modules
   '';
-  desktopEnv = pkgs.writeShellApplication {
-    name = "hermes-desktop-env";
-    runtimeInputs = [
-      pkgs.systemd
-      pkgs.coreutils
-      pkgs.gnused
-    ];
-    text = builtins.readFile ./hermes-desktop-env.sh;
-  };
   toolsets = [
     "hermes-cli"
     "knowledge_base"
+    "computer"
   ];
   skillsDir = ../../../dots/hermes/skills;
   skillNames = lib.filter (name: builtins.pathExists (skillsDir + "/${name}/SKILL.md")) (
@@ -52,6 +44,7 @@ in
     "L+ ${stateDir}/.hermes/plugins/knowledge-base - - - - /home/rathi/Documents/Git/nix/dots/hermes/plugins/knowledge-base"
     "L+ ${stateDir}/workspace/kb-staging - - - - /var/lib/kb/staging"
     "L+ ${stateDir}/.hermes/skills/cua-driver - - - - ${cuaDriver.skills}"
+    "L+ ${stateDir}/.hermes/skills/spark-computer - - - - ${../../../dots/agents/skills/spark-computer}"
   ]
   ++ map (name: "L+ ${stateDir}/.hermes/skills/${name} - - - - ${skillsDir + "/${name}"}") skillNames;
 
@@ -64,9 +57,6 @@ in
     workingDirectory = "${stateDir}/workspace";
     addToSystemPackages = true;
     extraPackages = [
-      cuaDriver
-      browserUse
-      pkgs.agent-browser
       pkgs.uv
       pkgs.tea
       pkgs.jq
@@ -78,12 +68,9 @@ in
       config.sops.secrets."hermes-photon.env".path
     ];
     environment = {
-      HERMES_CUA_DRIVER_CMD = "${cuaDriver}/bin/cua-driver";
       PHOTON_SIDECAR_DIR = "${photonSidecar}";
       PHOTON_NODE_BIN = "${pkgs.nodejs}/bin/node";
       PHOTON_SIDECAR_PORT = "18789";
-      CUA_DRIVER_RS_TELEMETRY_ENABLED = "0";
-      ANONYMIZED_TELEMETRY = "false";
       HERMES_GATEWAY_BUSY_ACK_ENABLED = "false";
     };
     hermesHomeFiles."SOUL.md" = ../../../dots/hermes/SOUL.md;
@@ -104,21 +91,26 @@ in
       };
       agent = {
         reasoning_effort = "medium";
-        disabled_toolsets = [ ];
+        disabled_toolsets = [
+          "browser"
+          "computer_use"
+        ];
       };
       providers.spark = {
         base_url = "http://127.0.0.1:18080/v1";
         api_mode = "chat_completions";
         model = "qwen3.8-27b";
       };
-      browser = {
-        cloud_provider = "local";
-        backend = "browser-use";
-        use_real_profile = true;
-        real_profile_pin = "Default";
-        headed = true;
+      mcp_servers.computer = {
+        command = "${computer}/bin/spark-computer";
+        args = [ ];
+        timeout = 180;
+        lazy = false;
+        tools.include = [
+          "computer_exec"
+          "computer_close"
+        ];
       };
-      computer_use.native_wayland = true;
       approvals.mode = "off";
       security.protected_instruction_files = false;
       plugins.enabled = [ "knowledge-base" ];
@@ -160,17 +152,12 @@ in
       XDG_CONFIG_HOME = "${home}/.config";
       XDG_RUNTIME_DIR = runtimeDir;
       DBUS_SESSION_BUS_ADDRESS = "unix:path=${runtimeDir}/bus";
-      XDG_SESSION_TYPE = "wayland";
-      XDG_CURRENT_DESKTOP = "sway";
-      GTK_A11Y = "always";
     };
     path = [
       "/run/current-system/sw"
       "/etc/profiles/per-user/${username}"
     ];
     serviceConfig = {
-      ExecStartPre = "${desktopEnv}/bin/hermes-desktop-env";
-      EnvironmentFile = "-${stateDir}/.hermes/desktop.env";
       ReadWritePaths = [
         home
         runtimeDir

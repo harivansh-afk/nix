@@ -4,6 +4,10 @@
   fetchurl,
   fetchzip,
   autoPatchelfHook,
+  makeWrapper,
+  sway,
+  wtype,
+  grim,
   libx11,
   libxi,
   libxkbcommon,
@@ -17,7 +21,10 @@ stdenv.mkDerivation {
     hash = "sha256-viJ2iiB3lqS8HeUMUvMvnvaAtehuWMBZ4C7sLKui57s=";
   };
   sourceRoot = ".";
-  nativeBuildInputs = [ autoPatchelfHook ];
+  nativeBuildInputs = [
+    autoPatchelfHook
+    makeWrapper
+  ];
   buildInputs = [
     libx11
     libxi
@@ -27,6 +34,13 @@ stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
     install -Dm755 cua-driver $out/bin/cua-driver
+    wrapProgram $out/bin/cua-driver --prefix PATH : ${
+      lib.makeBinPath [
+        sway
+        wtype
+        grim
+      ]
+    }
     runHook postInstall
   '';
   passthru.skills = fetchzip {

@@ -93,6 +93,7 @@ let
       inherit (git) gitCredentialsInc gitDeltaThemesInc;
       inherit (agents)
         claudeSettings
+        claudeComputerSource
         claudeMd
         codexAgentsMd
         agentSkills

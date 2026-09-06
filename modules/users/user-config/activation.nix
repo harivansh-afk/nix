@@ -86,6 +86,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${configHome}/devin" \
     "${configHome}/gcloud/configurations" \
     "${configHome}/tea" \
+    "${homeDirectory}/.claude" \
     "${homeDirectory}/.agents" \
     "${homeDirectory}/.codex" \
     "${homeDirectory}/.omp/agent/themes" \

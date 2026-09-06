@@ -1186,6 +1186,27 @@
         "type": "github"
       }
     },
+    "roomcast": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788714075,
+        "narHash": "sha256-YhRPdB5RHvWwOmNmoMp+gyK1TsRV+7kEzdOZ6WKgheY=",
+        "ref": "main",
+        "rev": "bf448ec258957c0c8cc103fc0c8aba94ff7952dd",
+        "revCount": 6,
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/roomcast.git"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/roomcast.git"
+      }
+    },
     "root": {
       "inputs": {
         "determinate": "determinate",
@@ -1205,6 +1226,7 @@
         "nixpkgs": "nixpkgs_6",
         "nixpkgs-macbook": "nixpkgs-macbook",
         "pierrejo": "pierrejo",
+        "roomcast": "roomcast",
         "rust-overlay": "rust-overlay_2",
         "sops-nix": "sops-nix",
         "terranix": "terranix",

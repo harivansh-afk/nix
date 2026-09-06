@@ -7,6 +7,7 @@ let
 
   actionsEnabledRepos = [
     "${ownedOwner}/nix"
+    "${ownedOwner}/roomcast"
     "${ownedOwner}/pierrejo"
     "${ownedOwner}/deskctl"
     "${ownedOwner}/betternas"

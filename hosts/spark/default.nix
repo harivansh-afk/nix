@@ -21,6 +21,7 @@
     ./services/cloudflared.nix
     ./services/forgejo
     ./services/hermes.nix
+    ./services/roomcast.nix
     ./services/inference.nix
     ./services/kb
     ./services/mixbridge

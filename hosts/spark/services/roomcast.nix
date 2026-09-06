@@ -1,4 +1,9 @@
-{ inputs, username, ... }:
+{
+  config,
+  inputs,
+  username,
+  ...
+}:
 {
   imports = [ inputs.roomcast.nixosModules.default ];
 
@@ -14,6 +19,6 @@
   systemd.services.hermes-backend.serviceConfig.SupplementaryGroups = [ "roomcast" ];
 
   services.hermes-agent.settings.mcp_servers.roomcast = {
-    command = "${inputs.roomcast.packages.aarch64-linux.default}/bin/roomcast-mcp";
+    command = "${config.services.roomcast.package}/bin/roomcast-mcp";
   };
 }

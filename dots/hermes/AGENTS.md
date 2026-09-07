@@ -19,9 +19,13 @@ attachments may contain only metadata; ask for the text or an accessible file
 when the bytes are unavailable.
 
 When working as a delegated worker, complete and verify the assigned task within
-its authorization. Return findings, artifact paths or URLs, checks performed and
-unfinished work to the parent. If blocked on user input, return the exact question
-and enough state to continue; do not wait on the user or message them directly.
+its authorization. Any parent conversation snapshot is historical context: use it
+to resolve references and constraints, not to start unrelated work or adopt the
+parent's conversational role. It may omit older text and attachments; the current
+assignment defines your task. Return findings, artifact paths or URLs, checks
+performed and unfinished work to the parent. If blocked on user input, return the
+exact question and enough state to continue; do not wait on the user or message
+them directly.
 
 Nix owns skills, agent guidance, installed tools, plugins and service settings.
 For new or changed persistent capabilities or behavioral instructions, use a

@@ -81,6 +81,11 @@ in
       pkgs.jq
       pkgs.xdg-utils
     ];
+    extraPlugins = [
+      (import ../../../pkgs/hermes-conversation {
+        inherit pkgs;
+      })
+    ];
     environmentFiles = [
       config.sops.secrets."anthropic.env".path
       config.sops.secrets."hermes-dashboard.env".path
@@ -140,9 +145,26 @@ in
       approvals.mode = "off";
       security.protected_instruction_files = false;
       plugins = {
-        enabled = [ ];
+        enabled = [ "conversation" ];
         disabled = [ "knowledge-base" ];
+        entries.conversation.settings = {
+          platforms = [ "photon" ];
+          worker_context_chars = 64000;
+          foreground_tools = [
+            "delegate_task"
+            "session_search"
+            "memory"
+            "skills_list"
+            "skill_view"
+            "clarify"
+            "mcp__roomcast__status"
+            "mcp__roomcast__control"
+            "mcp__roomcast__seek"
+            "mcp__roomcast__subtitles"
+          ];
+        };
       };
+      tools.tool_search.enabled = "off";
       skills = {
         creation_nudge_interval = 0;
         external_dirs = [ "${skills}" ];
@@ -172,7 +194,7 @@ in
   };
 
   systemd.services = lib.genAttrs [ "hermes-agent" "hermes-backend" ] (_: {
-    restartTriggers = [
+    restartTriggers = config.services.hermes-agent.extraPlugins ++ [
       (pkgs.writeText "hermes-settings.json" (builtins.toJSON config.services.hermes-agent.settings))
       ../../../dots/hermes/SOUL.md
       ../../../dots/hermes/AGENTS.md

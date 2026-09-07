@@ -1214,12 +1214,11 @@
         ]
       },
       "locked": {
-        "allRefs": true,
-        "lastModified": 1788728555,
-        "narHash": "sha256-Sc50p97dvh6cLE05MiOq9GGKILdFCFPYBTDgz6OKuXg=",
-        "ref": "refs/heads/main",
-        "rev": "f5194cb7815bea2ba4447b6932cecf648c5017cc",
-        "revCount": 18,
+        "lastModified": 1788746027,
+        "narHash": "sha256-3eafVPpcmHxaBwJ2vsbZ9ZKBgkjsCFK5cWlC54nzRTw=",
+        "ref": "main",
+        "rev": "7cf227a841bfdbebbba100b27dff5ee8ef1fc940",
+        "revCount": 21,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/roomcast.git"
       },

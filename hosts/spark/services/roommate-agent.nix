@@ -54,7 +54,6 @@ in
           user_profile_enabled = false;
         };
         plugins.enabled = [ ];
-        context.engine = "compressor";
         skills = {
           creation_nudge_interval = 0;
           project_discovery = false;

@@ -84,7 +84,6 @@ in
     extraPlugins = [
       (import ../../../pkgs/hermes-conversation {
         inherit pkgs;
-        hermes = config.services.hermes-agent.package;
       })
     ];
     environmentFiles = [
@@ -127,7 +126,6 @@ in
         model = "gpt-6-astra";
         reasoning_effort = "low";
         max_spawn_depth = 1;
-        max_concurrent_children = 2;
       };
       providers.spark = {
         base_url = "http://127.0.0.1:18080/v1";
@@ -151,9 +149,6 @@ in
         disabled = [ "knowledge-base" ];
         entries.conversation.settings = {
           platforms = [ "photon" ];
-          input_tokens = 18000;
-          recent_turns = 8;
-          max_active = config.services.hermes-agent.settings.delegation.max_concurrent_children;
           foreground_tools = [
             "delegate_task"
             "session_search"
@@ -168,14 +163,7 @@ in
           ];
         };
       };
-      context.engine = "conversation";
       tools.tool_search.enabled = "off";
-      auxiliary.conversation_summary = {
-        provider = "openai-codex";
-        model = "gpt-6-astra";
-        timeout = 30;
-        extra_body.reasoning.effort = "low";
-      };
       skills = {
         creation_nudge_interval = 0;
         external_dirs = [ "${skills}" ];

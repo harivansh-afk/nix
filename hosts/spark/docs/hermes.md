@@ -12,12 +12,11 @@ desktop app. They share Hermes state. The backend does not serve the web dashboa
 Automatic busy acknowledgements stay disabled; messaging updates should be
 agent-written responses. The foreground handles quick requests; repo-owned
 agent guidance sends long investigations to background delegation. The Nix-owned
-`conversation` plugin limits Photon tool visibility, ends tool use after confirmed
-dispatch, and supplies recent context with background summaries. Astra medium
-handles conversation; Astra low handles delegated work. Native batch width and
-background pool admission are set to two. The roommates profile retains Luna low
-and no plugins.
-See the [plugin contract and evaluation harness](../../../pkgs/hermes-conversation/README.md).
+`conversation` plugin limits Photon tool visibility and requests a final reply
+after confirmed dispatch, retaining the allowed tool schemas. Astra medium handles
+conversation; Astra low handles native delegated work. Native concurrency defaults
+remain in place. The roommates profile retains Luna low and no plugins.
+See the [plugin contract](../../../pkgs/hermes-conversation/README.md).
 This is an agent workflow, not a separate chat scheduler or a
 hard response-time guarantee. Profiles can run concurrently but share gateway
 restarts. Roomcast's shared HTTP MCP service is independent of those restarts;

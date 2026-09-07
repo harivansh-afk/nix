@@ -39,10 +39,6 @@
         mixbridge = inputs.mixbridge-web.checks.${pkgs.stdenv.hostPlatform.system}.streaming-api;
       }
       // pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "aarch64-linux") {
-        hermes-conversation = import ../pkgs/hermes-conversation {
-          inherit pkgs;
-          hermes = hermes.package;
-        };
         hermes-runtime =
           pkgs.runCommand "hermes-runtime"
             {

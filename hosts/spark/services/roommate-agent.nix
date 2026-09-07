@@ -6,9 +6,16 @@ let
   policy = {
     gateway = {
       multiplex_profiles = true;
-      multiplex_profile_allowlist = [ "roommates" ];
+      multiplex_profile_allowlist = [
+        "imessage"
+        "roommates"
+      ];
       group_sessions_per_user = false;
       profile_routes = [
+        {
+          platform = "photon";
+          profile = "imessage";
+        }
         {
           platform = "telegram";
           profile = "roommates";

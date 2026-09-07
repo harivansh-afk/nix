@@ -25,7 +25,7 @@ Roomcast and its skill are absent. The backend
 also stops depending on the Roomcast MCP service. Photon and roommates retain
 their current tools and prompts.
 
-The gateway is explicitly pinned to the default profile so changing Desktop's
+The gateway is explicitly pinned to the `imessage` profile so changing Desktop's
 sticky profile selection cannot retarget messaging on restart. Profiles remain
 selectable in the UI: deliberately selecting another profile uses that profile's
 tools and persona. This is configuration separation, not a security sandbox.

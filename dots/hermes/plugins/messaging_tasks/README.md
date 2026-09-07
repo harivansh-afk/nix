@@ -35,8 +35,8 @@ them. This is retained task context, not durable execution across restarts.
 
 ## Review and deferred acceptance
 
-This is a draft. Only static checks are authorized for this iteration. The isolated
-contract tests are provided but have not been run. Before enabling in production,
+This is a draft. Only static checks are authorized for this iteration.
+Before enabling in production,
 exercise the real plugin loader, profile routing and production models with:
 
 - A slow worker plus an unrelated message; no synchronous fallback or polling.

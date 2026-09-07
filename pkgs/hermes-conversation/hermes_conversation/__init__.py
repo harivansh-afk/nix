@@ -12,6 +12,9 @@ def register(ctx):
     def request_policy(request, platform="", **kwargs):
         if platform not in platforms:
             return None
-        return {"request": conversation_request(request, tools), "source": "conversation"}
+        return {
+            "request": conversation_request(request, tools),
+            "source": "conversation",
+        }
 
     ctx.register_middleware("llm_request", request_policy)

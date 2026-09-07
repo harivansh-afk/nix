@@ -1,13 +1,37 @@
 diff --git a/VoiceInk/Views/Recorder/MiniRecorderView.swift b/VoiceInk/Views/Recorder/MiniRecorderView.swift
+index 26adb67..dacc41e 100644
 --- a/VoiceInk/Views/Recorder/MiniRecorderView.swift
 +++ b/VoiceInk/Views/Recorder/MiniRecorderView.swift
-@@ -14,3 +14,3 @@
+@@ -14,3 +14,3 @@ struct MiniRecorderView<S: RecorderStateProvider & ObservableObject>: View {
      private let controlBarHeight: CGFloat = 40
 -    private let compactWidth: CGFloat = 184
 +    private let compactWidth: CGFloat = 150
      private let expandedWidth: CGFloat = 300
-@@ -54,16 +54,16 @@
-
+@@ -42,9 +42,15 @@ struct MiniRecorderView<S: RecorderStateProvider & ObservableObject>: View {
+         HStack(spacing: 0) {
++            if shouldShowCloseButton {
++                RecorderCloseButton(action: onCloseTapped)
++                    .padding(.leading, 10)
++            }
++
+             Group {
+-                if shouldShowCloseButton {
+-                    RecorderCloseButton(action: onCloseTapped)
++                if stateProvider.recordingState == .transcribing {
++                    ProgressAnimation(color: .white, fillsWidth: true)
++                        .accessibilityLabel("Transcribing")
+                 } else {
+-                    RecorderRecordButton(
+-                        recordingState: stateProvider.recordingState,
+-                        action: onRecordButtonTapped
++                    RecorderStatusDisplay(
++                        currentState: stateProvider.recordingState,
++                        audioMeterProvider: recorder.audioMeterSnapshot
+                     )
+@@ -52,18 +58,5 @@ struct MiniRecorderView<S: RecorderStateProvider & ObservableObject>: View {
+             }
+-            .padding(.leading, 10)
+-
 -            Spacer(minLength: 0)
 -
 -            RecorderStatusDisplay(
@@ -22,48 +46,34 @@ diff --git a/VoiceInk/Views/Recorder/MiniRecorderView.swift b/VoiceInk/Views/Rec
 -                padding: EdgeInsets()
 -            )
 -            .padding(.trailing, 12)
-+            Group {
-+                if stateProvider.recordingState == .transcribing {
-+                    ProgressAnimation(color: .white, dotCount: 12, fillsWidth: true)
-+                        .accessibilityLabel("Transcribing")
-+                } else {
-+                    RecorderStatusDisplay(
-+                        currentState: stateProvider.recordingState,
-+                        audioMeterProvider: recorder.audioMeterSnapshot
-+                    )
-+                }
-+            }
 +            .frame(maxWidth: .infinity)
 +            .padding(.horizontal, 12)
 +            .frame(height: controlBarHeight, alignment: .center)
          }
 diff --git a/VoiceInk/Views/Recorder/RecorderComponents.swift b/VoiceInk/Views/Recorder/RecorderComponents.swift
+index 635e6dc..0ef3db4 100644
 --- a/VoiceInk/Views/Recorder/RecorderComponents.swift
 +++ b/VoiceInk/Views/Recorder/RecorderComponents.swift
-@@ -208,3 +208,4 @@
+@@ -208,3 +208,4 @@ struct ProgressAnimation: View {
 
 -    private let dotCount = 5
-+    private let dotCount: Int
++    private var dotCount: Int { fillsWidth ? 12 : 5 }
 +    private let fillsWidth: Bool
      private let dotSize: CGFloat = 3
-@@ -215,9 +216,11 @@
+@@ -215,5 +216,6 @@ struct ProgressAnimation: View {
 
 -    init(color: Color = .white, animationSpeed: Double = 0.3) {
-+    init(color: Color = .white, animationSpeed: Double = 0.3, dotCount: Int = 5, fillsWidth: Bool = false) {
++    init(color: Color = .white, animationSpeed: Double = 0.3, fillsWidth: Bool = false) {
          self.color = color
          self.animationSpeed = animationSpeed
--    }
--
--    var body: some View {
--        HStack(spacing: dotSpacing) {
-+        self.dotCount = dotCount
 +        self.fillsWidth = fillsWidth
-+    }
-+
-+    var body: some View {
+     }
+@@ -221,3 +223,3 @@ struct ProgressAnimation: View {
+     var body: some View {
+-        HStack(spacing: dotSpacing) {
 +        HStack(spacing: fillsWidth ? 0 : dotSpacing) {
              ForEach(0..<dotCount, id: \.self) { index in
-@@ -226,2 +229,3 @@
+@@ -226,2 +228,3 @@ struct ProgressAnimation: View {
                      .frame(width: dotSize, height: dotSize)
 +                    .frame(maxWidth: fillsWidth ? .infinity : nil)
              }

@@ -1,0 +1,3 @@
+name: messaging-tasks
+version: 0.1.0
+description: Background task handoffs for the personal messaging assistant.

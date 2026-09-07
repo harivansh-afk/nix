@@ -81,6 +81,12 @@ in
       pkgs.jq
       pkgs.xdg-utils
     ];
+    extraPlugins = [
+      (pkgs.runCommand "hermes-messaging-tasks" { } ''
+        mkdir -p $out
+        cp ${../../../dots/hermes/plugins/messaging_tasks}/{__init__.py,plugin.yaml,worker.md} $out/
+      '')
+    ];
     environmentFiles = [
       config.sops.secrets."anthropic.env".path
       config.sops.secrets."hermes-dashboard.env".path
@@ -140,8 +146,18 @@ in
       approvals.mode = "off";
       security.protected_instruction_files = false;
       plugins = {
-        enabled = [ ];
+        enabled = [ "messaging-tasks" ];
         disabled = [ "knowledge-base" ];
+        entries.messaging-tasks = {
+          allow_gateway_injection = true;
+          settings = {
+            max_active = 2;
+            worker_model =
+              config.services.hermes-agent.settings.delegation.model
+                or config.services.hermes-agent.settings.model.default;
+            worker_toolsets = toolsets;
+          };
+        };
       };
       skills = {
         creation_nudge_interval = 0;
@@ -150,7 +166,7 @@ in
       };
       platform_toolsets = {
         cli = toolsets;
-        photon = toolsets;
+        photon = toolsets ++ [ "messaging_tasks" ];
       };
       memory = {
         memory_enabled = true;
@@ -177,7 +193,8 @@ in
       ../../../dots/hermes/SOUL.md
       ../../../dots/hermes/AGENTS.md
       config.sops.secrets."hermes-photon.env".sopsFile
-    ];
+    ]
+    ++ config.services.hermes-agent.extraPlugins;
     after = [ "user@${toString config.users.users.${username}.uid}.service" ];
     wants = [ "user@${toString config.users.users.${username}.uid}.service" ];
     environment = {

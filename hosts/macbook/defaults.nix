@@ -54,6 +54,7 @@
   # startup has exactly one owner per app (see ./apps.nix). Was previously
   # set imperatively; declared here so a fresh machine gets it.
   system.defaults.CustomUserPreferences."com.apple.loginwindow".TALLogoutSavesState = false;
+  system.defaults.CustomUserPreferences.NSGlobalDomain.AppleMenuBarVisibleInFullscreen = false;
 
   system.defaults.screencapture = {
     location = "~/Desktop/screenshots";

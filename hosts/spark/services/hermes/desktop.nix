@@ -67,7 +67,7 @@ in
       "profiles/desktop/.managed" = "nixos\n";
       "profiles/desktop/.no-bundled-skills" = "Skills are selected by Nix.\n";
       "profiles/desktop/SOUL.md" = "";
-      "profiles/desktop/workspace/AGENTS.md" = ../../../dots/hermes/desktop/AGENTS.md;
+      "profiles/desktop/workspace/AGENTS.md" = ../../../../dots/hermes/desktop/AGENTS.md;
     };
   };
 
@@ -80,7 +80,7 @@ in
     };
     restartTriggers = [
       (pkgs.writeText "hermes-desktop-config.json" hermes.hermesHomeFiles."profiles/desktop/config.yaml")
-      ../../../dots/hermes/desktop/AGENTS.md
+      ../../../../dots/hermes/desktop/AGENTS.md
       config.sops.secrets."hermes-dashboard.env".sopsFile
     ];
   };

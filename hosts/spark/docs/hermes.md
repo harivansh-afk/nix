@@ -1,6 +1,6 @@
 # Hermes on Spark
 
-`hosts/spark/services/hermes.nix` owns the messaging gateway, desktop backend, model, tool selection
+`hosts/spark/services/hermes/default.nix` owns the messaging gateway, desktop backend, model, tool selection
 and pinned runtimes. The Hermes flake input tracks an exact upstream revision;
 Astra uses the existing Codex OAuth identity with medium reasoning. Activation
 clears the old main-model localhost URL while retaining the separate Spark model.
@@ -32,7 +32,7 @@ saved connection or grant control over another process's active workers.
 
 ## Messaging behavior
 
-`hosts/spark/services/hermes-imessage.nix` owns the named Photon profile. The
+`hosts/spark/services/hermes/imessage.nix` owns the named Photon profile. The
 upstream module's `settings` remain the source for its generated config; an
 explicit `configFile` leaves the root/default profile with no configured CLI
 tools, MCP connections, custom persona or enabled memory. Root credentials and
@@ -78,7 +78,7 @@ The `spark-computer` skill and
 Cua's version-matched skill pack are supplied by Nix. There are no custom
 hooks or scheduled jobs.
 
-`skillSources` in `hermes.nix` selects the upstream skills and includes
+`skillSources` in `hermes/default.nix` selects the upstream skills and includes
 `dots/hermes/skills/`. Hermes reads the resulting store directory through
 `skills.external_dirs`; bundled seeding and project discovery are disabled.
 The first activation archives the old skill tree at

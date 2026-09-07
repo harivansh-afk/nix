@@ -3,7 +3,7 @@
 ## Configuration boundary
 
 `hosts/macbook/hermes-desktop.nix` owns the Mac client package.
-`hosts/spark/services/hermes-desktop.nix` scopes the existing Spark backend to
+`hosts/spark/services/hermes/desktop.nix` scopes the existing Spark backend to
 `~/.local/state/hermes/.hermes/profiles/desktop`. It adds no service or plugin.
 Keep the existing Spark connection in Desktop; this change needs a Spark deploy,
 not another Mac rebuild. Reconnect afterward, explicitly select **desktop** in

@@ -8,7 +8,7 @@ clears the old main-model localhost URL while retaining the separate Spark model
 The two processes serve different clients: `hermes gateway` handles Photon and Telegram;
 `hermes serve` exposes the authenticated tailnet API used by the Mac
 desktop app. Desktop starts in its own `desktop` profile; Photon stays in the
-default profile and Telegram uses `roommates`. The backend does not serve the
+`imessage` profile and Telegram uses `roommates`. The backend does not serve the
 web dashboard. See [Desktop setup and features](hermes-desktop.md) for the state
 boundary and recommended workflow.
 
@@ -31,6 +31,29 @@ using Spark's sessions, models and tools. Rebuilding the app does not change its
 saved connection or grant control over another process's active workers.
 
 ## Messaging behavior
+
+`hosts/spark/services/hermes-imessage.nix` owns the named Photon profile. The
+upstream module's `settings` remain the source for its generated config; an
+explicit `configFile` leaves the root/default profile with no configured CLI
+tools, MCP connections, custom persona or enabled memory. Root credentials and
+the Nix-installed plugin directory remain shared infrastructure.
+
+On the first gateway start, with the old gateway stopped, its pre-start migration
+backs up the root SQLite database, preserves session IDs and messages, and
+changes default routing to `imessage`. It moves memories, session files, cron
+state, pending messages, platform state and local skills into the profile.
+Legacy `sessions.json` is archived so the old namespace cannot be reimported.
+The backend starts after the gateway; migration refuses an open root database.
+Backups live in `~/.local/state/hermes/imessage-migration-backup`. Subsequent
+starts skip the completed migration.
+
+Deploy while agents are idle and no CLI/Desktop session is using `default`.
+After deployment, verify a new iMessage resumes the existing conversation and
+memory, and check Telegram independently. Existing active workers are not
+migrated between running processes. Shared OAuth grants are not copied.
+
+Desktop's empty SOUL is intentional; the UI may report that it is empty. Select
+`desktop` for work, `imessage` for the personal assistant and `roommates` for TV.
 
 Automatic busy acknowledgements stay disabled; messaging updates should be
 agent-written responses. The foreground handles quick requests; repo-owned

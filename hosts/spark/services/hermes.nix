@@ -50,6 +50,7 @@ in
   imports = [
     inputs.hermes-agent.nixosModules.default
     ./hermes-desktop.nix
+    ./hermes-imessage.nix
     ./roommate-agent.nix
   ];
 
@@ -98,7 +99,7 @@ in
       PHOTON_SIDECAR_PORT = "18789";
       HERMES_GATEWAY_BUSY_ACK_ENABLED = "false";
     };
-    hermesHomeFiles."SOUL.md" = ../../../dots/hermes/SOUL.md;
+    hermesHomeFiles."SOUL.md" = "";
     hermesHomeFiles.".no-bundled-skills" =
       "Skills are selected by Nix in hosts/spark/services/hermes.nix.\n";
     documents."AGENTS.md" = ../../../dots/hermes/AGENTS.md;

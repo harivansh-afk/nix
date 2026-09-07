@@ -23,10 +23,6 @@ in
   );
 
   services.hermes-agent = {
-    extraArgs = [
-      "--profile"
-      "default"
-    ];
     hermesHomeFiles = {
       "profiles/desktop/config.yaml" = builtins.toJSON {
         inherit (hermes.settings) model providers approvals;
@@ -76,6 +72,7 @@ in
   };
 
   systemd.services.hermes-backend = {
+    after = [ "hermes-agent.service" ];
     environment.HERMES_HOME = lib.mkForce profileHome;
     serviceConfig = {
       WorkingDirectory = lib.mkForce "${profileHome}/workspace";

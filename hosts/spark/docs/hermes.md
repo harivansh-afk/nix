@@ -9,6 +9,26 @@ The two processes serve different clients: `hermes gateway` handles Photon and T
 `hermes serve` exposes the authenticated tailnet API used by the Mac
 desktop app. They share Hermes state. The backend does not serve the web dashboard.
 
+## Mac Desktop
+
+`hosts/macbook/hermes-desktop.nix` installs `/Applications/Hermes.app` from the
+upstream `minimal.hermesDesktop` Nix package and exposes `hermes-desktop` on PATH.
+Desktop and Spark use the same `hermes-agent` flake input. The app's install stamp
+records that input's revision; upstream's Desktop version can remain unchanged
+across many commits. Existing Desktop preferences and saved connections remain
+in their current user-data directory.
+
+Update the `hermes-agent` flake input through a Nix PR. After merging, pull the
+repo on the Mac and run `just switch`, then quit and reopen Hermes. A Spark
+deployment alone does not update the Mac app. Use Nix rebuilds to update these
+installations rather than Desktop's updater.
+
+Select the existing Spark connection in Desktop's Settings → Gateways to keep
+using Spark's sessions, models and tools. Rebuilding the app does not change its
+saved connection or grant control over another process's active workers.
+
+## Messaging behavior
+
 Automatic busy acknowledgements stay disabled; messaging updates should be
 agent-written responses. The foreground handles quick requests; repo-owned
 agent guidance sends long investigations to background delegation. The Nix-owned

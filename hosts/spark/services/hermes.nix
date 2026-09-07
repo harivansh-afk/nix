@@ -81,6 +81,12 @@ in
       pkgs.jq
       pkgs.xdg-utils
     ];
+    extraPlugins = [
+      (import ../../../pkgs/hermes-conversation {
+        inherit pkgs;
+        hermes = config.services.hermes-agent.package;
+      })
+    ];
     environmentFiles = [
       config.sops.secrets."anthropic.env".path
       config.sops.secrets."hermes-dashboard.env".path
@@ -121,6 +127,7 @@ in
         model = "gpt-6-astra";
         reasoning_effort = "low";
         max_spawn_depth = 1;
+        max_concurrent_children = 2;
       };
       providers.spark = {
         base_url = "http://127.0.0.1:18080/v1";
@@ -140,8 +147,34 @@ in
       approvals.mode = "off";
       security.protected_instruction_files = false;
       plugins = {
-        enabled = [ ];
+        enabled = [ "conversation" ];
         disabled = [ "knowledge-base" ];
+        entries.conversation.settings = {
+          platforms = [ "photon" ];
+          input_tokens = 18000;
+          recent_turns = 8;
+          max_active = config.services.hermes-agent.settings.delegation.max_concurrent_children;
+          foreground_tools = [
+            "delegate_task"
+            "session_search"
+            "memory"
+            "skills_list"
+            "skill_view"
+            "clarify"
+            "mcp__roomcast__status"
+            "mcp__roomcast__control"
+            "mcp__roomcast__seek"
+            "mcp__roomcast__subtitles"
+          ];
+        };
+      };
+      context.engine = "conversation";
+      tools.tool_search.enabled = "off";
+      auxiliary.conversation_summary = {
+        provider = "openai-codex";
+        model = "gpt-6-astra";
+        timeout = 30;
+        extra_body.reasoning.effort = "low";
       };
       skills = {
         creation_nudge_interval = 0;
@@ -172,7 +205,7 @@ in
   };
 
   systemd.services = lib.genAttrs [ "hermes-agent" "hermes-backend" ] (_: {
-    restartTriggers = [
+    restartTriggers = config.services.hermes-agent.extraPlugins ++ [
       (pkgs.writeText "hermes-settings.json" (builtins.toJSON config.services.hermes-agent.settings))
       ../../../dots/hermes/SOUL.md
       ../../../dots/hermes/AGENTS.md

@@ -30,8 +30,13 @@ in
     hermesHomeFiles = {
       "profiles/desktop/config.yaml" = builtins.toJSON {
         inherit (hermes.settings) model providers approvals;
-        agent = hermes.settings.agent;
-        delegation = hermes.settings.delegation;
+        agent = {
+          inherit (hermes.settings.agent) reasoning_effort disabled_toolsets;
+        };
+        delegation = {
+          inherit (hermes.settings.delegation) model reasoning_effort max_spawn_depth;
+        };
+        display.busy_input_mode = "steer";
         terminal.cwd = "${profileHome}/workspace";
         desktop.repo_scan_roots = [ "${config.users.users.${hermes.user}.home}/Documents/Git" ];
         platform_toolsets.cli = [
@@ -46,7 +51,7 @@ in
             "knowledge-base"
           ];
         };
-        tools.tool_search.enabled = "off";
+        tools.tool_search.enabled = "auto";
         skills = {
           creation_nudge_interval = 0;
           project_discovery = false;

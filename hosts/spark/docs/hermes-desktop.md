@@ -11,7 +11,11 @@ the profile picker, and start a new session. Desktop persists its own profile
 selection and can explicitly request `default` even when the server starts in
 `desktop`; changing the server home does not rewrite the Mac's selection.
 
-The Desktop profile has its own SOUL, workspace guidance, sessions and memory.
+The Desktop profile has an explicitly empty SOUL and three workspace facts:
+the backend host, repo/forge location and Nix ownership. Generic personality,
+execution and tool-use instructions are left to stock Hermes and the tools.
+An empty SOUL prevents file seeding; Hermes still supplies its stock identity.
+Sessions and memory are separate from messaging.
 It uses Astra medium with native Astra low delegation available, but no Photon
 foreground restriction, automatic conversation snapshot plugin or texting prompt.
 Computer tools and native Desktop/project tools remain available. Tool discovery
@@ -106,13 +110,14 @@ or a GUI acceptance test.
 
 ## Acceptance after deployment
 
-The PR's checks load the generated config and SOUL through native Hermes code
+The PR's checks load the generated config and empty SOUL through native Hermes code
 in a temporary profile, with a different root prompt and Roomcast config. They
-verify isolation, model-independent settings and the credential fallback path.
+verify isolation, preservation of the empty SOUL, model-independent settings and
+the credential fallback path.
 They do not prove a live OAuth refresh, model behavior or the Mac UI.
 
 After selecting `desktop`, verify the current profile and Astra medium, then
-start a fresh session. Inspect its context/tools for the Desktop prompt and
+start a fresh session. Inspect its context/tools for the absence of Photon's prompt and
 absence of Roomcast. Run a bounded task, send `/steer`, queue a follow-up with
 Cmd+Enter, and verify ordered delivery. Finally check Photon and the roommates
 chat still use their own prompts and tools. No scheduled work is needed.

@@ -9,6 +9,11 @@ Use the `computer` MCP server's `computer_exec` and `computer_close` tools.
 Hermes prefixes these with `mcp__computer__`. Give each task a unique `session`;
 Python variables, imports and page references persist across calls in that session.
 
+For short browser tasks, use this session directly rather than spawning a worker.
+Batch known navigation, a justified readiness check and screenshot capture in one
+execution. Split only where a returned observation is needed to choose the next
+action; the Python runtime is fast, but every model round trip adds latency.
+
 ## Browser
 
 Use async Playwright with top-level `await`:
@@ -28,6 +33,15 @@ pass the path after `MEDIA:` to its separate `vision_analyze` tool as `image_url
 with a `question` describing what to inspect. This loads the screenshot into
 your visual context; a file path alone is not a visible image. Other harnesses
 can display MCP images directly.
+
+Wait for observed controls in the active view, not guessed CSS classes or a
+different layout. A dashboard can show a list while its course-card elements
+remain hidden. For quick captures, use a short explicit readiness timeout (for
+example 5 seconds); on timeout inspect current state before extending the wait.
+Do not blindly retry or assume a page is ready just because navigation completed.
+Capture and inspect loading states rather than spending the default 30 seconds
+waiting for an unverified selector. Keep text output limited to what the task
+needs; a screenshot request does not require dumping the entire page.
 
 `await browser.tabs()` lists tab metadata. When explicitly asked to operate an
 existing tab, resolve its exact reference from `page.context.pages`. Preserve

@@ -36,6 +36,12 @@ run = 'layout floating'
 if.app-id = 'com.apple.systempreferences'
 run = 'layout floating'
 
+# Mux's borderless terminal has no fullscreen button, so AeroSpace's dialog
+# heuristic floats it unless explicitly tiled.
+[[on-window-detected]]
+if.app-id = 'sh.harivan.mux'
+run = 'layout tiling'
+
 [gaps]
 inner.horizontal = 0
 inner.vertical = 0

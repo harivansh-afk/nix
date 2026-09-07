@@ -75,8 +75,9 @@ tell application "System Events"
 end tell
 EOF
   elif [[ "$(uname -s)" == "Linux" ]]; then
+    DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/bus}" \
     GSETTINGS_SCHEMA_DIR="@GSETTINGS_SCHEMA_DIR@" \
-      GIO_EXTRA_MODULES="@GIO_EXTRA_MODULES@" \
+    GIO_EXTRA_MODULES="@GIO_EXTRA_MODULES@" \
       gsettings set org.gnome.desktop.interface color-scheme "prefer-$mode"
   fi
 

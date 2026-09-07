@@ -65,7 +65,7 @@ though their URL is shared: this Hermes version keys connection discovery by
 name while tool registration belongs to a profile. Reusing the name causes the
 second profile to lose its tools. HTTP sessions do not spawn MCP subprocesses.
 
-`hosts/spark/services/roommate-agent.nix` configures Hermes's native
+`hosts/spark/services/hermes/roommates.nix` configures Hermes's native
 multiplexed profiles. Roomcast contains no messaging transport, identities or
 chat permissions. The existing Photon connection stays on the personal profile.
 Telegram routes to `roommates`, which exposes only eight Roomcast MCP tools:

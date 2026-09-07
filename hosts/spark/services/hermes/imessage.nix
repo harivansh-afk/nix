@@ -43,7 +43,7 @@ in
     );
     hermesHomeFiles = {
       "profiles/imessage/config.yaml" = settings;
-      "profiles/imessage/SOUL.md" = ../../../dots/hermes/SOUL.md;
+      "profiles/imessage/SOUL.md" = ../../../../dots/hermes/SOUL.md;
       "profiles/imessage/.managed" = "nixos\n";
       "profiles/imessage/.no-bundled-skills" = "Skills are selected by Nix.\n";
     };

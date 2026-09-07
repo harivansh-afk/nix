@@ -98,7 +98,7 @@ in
         You have no personal assistant or messaging tools. Hermes delivers replies
         to the originating conversation.
       '';
-      "profiles/roommates/AGENTS.md" = ../../../dots/hermes/skills/roomcast/SKILL.md;
+      "profiles/roommates/AGENTS.md" = ../../../../dots/hermes/skills/roomcast/SKILL.md;
     };
   };
   systemd.services.hermes-agent.environment.HERMES_MANAGED_DIR = "${managed}";

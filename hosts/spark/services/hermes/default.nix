@@ -10,8 +10,8 @@ let
   home = config.users.users.${username}.home;
   stateDir = "${home}/.local/state/hermes";
   runtimeDir = "/run/user/${toString config.users.users.${username}.uid}";
-  cuaDriver = pkgs.callPackage ../../../pkgs/cua-driver { };
-  computer = import ../../../pkgs/spark-computer { inherit pkgs; };
+  cuaDriver = pkgs.callPackage ../../../../pkgs/cua-driver { };
+  computer = import ../../../../pkgs/spark-computer { inherit pkgs; };
   photonSrc = "${inputs.hermes-agent}/plugins/platforms/photon/sidecar";
   photonDeps = pkgs.importNpmLock.buildNodeModules {
     npmRoot = photonSrc;
@@ -29,14 +29,14 @@ let
     "hermes-cli"
     "computer"
   ];
-  skillsDir = ../../../dots/hermes/skills;
+  skillsDir = ../../../../dots/hermes/skills;
   skillNames = lib.filter (name: builtins.pathExists (skillsDir + "/${name}/SKILL.md")) (
     lib.attrNames (lib.filterAttrs (_: type: type == "directory") (builtins.readDir skillsDir))
   );
   skillSources = {
     hermes-agent = inputs.hermes-agent + "/skills/autonomous-ai-agents/hermes-agent";
     cua-driver = cuaDriver.skills;
-    spark-computer = ../../../dots/agents/skills/spark-computer;
+    spark-computer = ../../../../dots/agents/skills/spark-computer;
   }
   // lib.genAttrs skillNames (name: skillsDir + "/${name}");
   skills = pkgs.runCommand "hermes-skills" { } ''
@@ -49,9 +49,9 @@ in
 {
   imports = [
     inputs.hermes-agent.nixosModules.default
-    ./hermes-desktop.nix
-    ./hermes-imessage.nix
-    ./roommate-agent.nix
+    ./desktop.nix
+    ./imessage.nix
+    ./roommates.nix
   ];
 
   networking.hosts."100.114.116.11" = [ "spark-ix.tail368802.ts.net" ];
@@ -84,7 +84,7 @@ in
       pkgs.xdg-utils
     ];
     extraPlugins = [
-      (import ../../../pkgs/hermes-conversation {
+      (import ../../../../pkgs/hermes-conversation {
         inherit pkgs;
       })
     ];
@@ -101,8 +101,8 @@ in
     };
     hermesHomeFiles."SOUL.md" = "";
     hermesHomeFiles.".no-bundled-skills" =
-      "Skills are selected by Nix in hosts/spark/services/hermes.nix.\n";
-    documents."AGENTS.md" = ../../../dots/hermes/AGENTS.md;
+      "Skills are selected by Nix in hosts/spark/services/hermes/default.nix.\n";
+    documents."AGENTS.md" = ../../../../dots/hermes/AGENTS.md;
 
     backend = {
       mode = "serve";
@@ -198,8 +198,8 @@ in
   systemd.services = lib.genAttrs [ "hermes-agent" "hermes-backend" ] (_: {
     restartTriggers = config.services.hermes-agent.extraPlugins ++ [
       (pkgs.writeText "hermes-settings.json" (builtins.toJSON config.services.hermes-agent.settings))
-      ../../../dots/hermes/SOUL.md
-      ../../../dots/hermes/AGENTS.md
+      ../../../../dots/hermes/SOUL.md
+      ../../../../dots/hermes/AGENTS.md
       config.sops.secrets."hermes-photon.env".sopsFile
     ];
     after = [ "user@${toString config.users.users.${username}.uid}.service" ];

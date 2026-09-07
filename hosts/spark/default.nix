@@ -20,7 +20,7 @@
     ./services/desktop.nix
     ./services/cloudflared.nix
     ./services/forgejo
-    ./services/hermes.nix
+    ./services/hermes
     ./services/roomcast.nix
     ./services/inference.nix
     ./services/mixbridge.nix

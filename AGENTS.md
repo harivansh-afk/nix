@@ -117,7 +117,7 @@ hosts/
     services/          Every spark service; single-host, so they live with the host
       caddy.nix        Reverse proxy on loopback, loopbackVhost helper
       cloudflared.nix  Cloudflare tunnel to Caddy
-      hermes.nix       Hermes agent gateway + dashboard
+      hermes/          Hermes gateway, desktop backend and messaging profiles
       inference.nix    Local llama.cpp inference server (GPU)
       mosh.nix         Mosh UDP server config
       vaultwarden.nix  Vaultwarden password manager
@@ -271,7 +271,7 @@ Source of truth is the jj-native ix forge (RPC `https://forge.ix.dev:8447/rpc`, 
 
 ## Hermes
 
-Hermes runs through upstream's NixOS module in `hosts/spark/services/hermes.nix`.
+Hermes runs through upstream's NixOS module in `hosts/spark/services/hermes/default.nix`.
 The gateway and dashboard share `~/.local/state/hermes/.hermes`; the `~/.hermes`
 symlink keeps existing CLI state reachable. Astra uses Codex OAuth at medium
 reasoning. Browser and desktop actions use the shared `computer` MCP server

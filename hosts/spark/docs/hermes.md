@@ -14,7 +14,9 @@ agent-written responses. The foreground handles quick requests; repo-owned
 agent guidance sends long investigations to background delegation. The Nix-owned
 `conversation` plugin limits Photon tool visibility and requests a final reply
 after confirmed dispatch, retaining the allowed tool schemas. Astra medium handles
-conversation; Astra low handles native delegated work. Native concurrency defaults
+conversation; Astra low handles native delegated work. Each Photon worker receives
+a bounded snapshot of parent conversation text through its native context argument;
+Nix controls the character budget. Native concurrency defaults
 remain in place. The roommates profile retains Luna low and no plugins.
 See the [plugin contract](../../../pkgs/hermes-conversation/README.md).
 This is an agent workflow, not a separate chat scheduler or a

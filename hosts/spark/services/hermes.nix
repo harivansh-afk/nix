@@ -149,6 +149,7 @@ in
         disabled = [ "knowledge-base" ];
         entries.conversation.settings = {
           platforms = [ "photon" ];
+          worker_context_chars = 64000;
           foreground_tools = [
             "delegate_task"
             "session_search"

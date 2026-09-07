@@ -7,7 +7,10 @@ clears the old main-model localhost URL while retaining the separate Spark model
 
 The two processes serve different clients: `hermes gateway` handles Photon and Telegram;
 `hermes serve` exposes the authenticated tailnet API used by the Mac
-desktop app. They share Hermes state. The backend does not serve the web dashboard.
+desktop app. Desktop starts in its own `desktop` profile; Photon stays in the
+default profile and Telegram uses `roommates`. The backend does not serve the
+web dashboard. See [Desktop setup and features](hermes-desktop.md) for the state
+boundary and recommended workflow.
 
 ## Mac Desktop
 

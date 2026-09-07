@@ -49,6 +49,7 @@ in
 {
   imports = [
     inputs.hermes-agent.nixosModules.default
+    ./hermes-desktop.nix
     ./roommate-agent.nix
   ];
 

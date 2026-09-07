@@ -117,6 +117,11 @@ in
           "computer_use"
         ];
       };
+      delegation = {
+        model = "gpt-6-astra";
+        reasoning_effort = "low";
+        max_spawn_depth = 1;
+      };
       providers.spark = {
         base_url = "http://127.0.0.1:18080/v1";
         api_mode = "chat_completions";

@@ -301,14 +301,24 @@ class MessagingTasks:
                     pending_input=predecessor.get("pending_input", ""),
                 )
             raise
+        watcher = None
         try:
             record = self.update(task_id, handle=handle.to_dict(), state="running")
-            self.ctx.spawn_task(self.watch(record), name=f"messaging-task:{task_id}")
+            watcher = self.watch(record)
+            self.ctx.spawn_task(watcher, name=f"messaging-task:{task_id}")
         except Exception:
-            self.service.cancel(
+            logger.exception("Admitted task could not be persisted or supervised")
+            if watcher is not None:
+                watcher.close()
+            cancelled = self.service.cancel(
                 handle, reason="Could not persist or supervise admitted task"
             )
-            raise
+            return {
+                "id": task_id,
+                "state": "uncertain",
+                "error": "Worker launched, but supervision failed. Inspect its effects before retrying.",
+                "cancellation": asdict(cancelled),
+            }
         return self.public(record)
 
     async def handle(self, args, *, session_id="", **kwargs):

@@ -4,7 +4,7 @@ A Photon-only tool plugin using stock Hermes. Nix installs it through
 `services.hermes-agent.extraPlugins`; `plugins.entries.messaging-tasks` grants
 completion injection and sets the active-task limit. No hooks or source patches.
 
-`messaging_task` supports start, status, cancel and continue. Launch uses
+`messaging_task` supports start, status, cancel, revise and continue. Launch uses
 `ctx.subagent_lifecycle`, which schedules worker execution asynchronously rather
 than using `delegate_task`'s synchronous fallback. A full admission budget returns
 an error before launch. The budget covers this plugin instance, not other Hermes
@@ -25,7 +25,8 @@ retain the raw response. A continuation passes the prior assignment, report and
 new input to a fresh worker. It does not resume the original transcript. Each
 predecessor can have one continuation; active or uncertain work is not restarted.
 Cancellation is cooperative and cannot reverse effects. There is no live steering
-API here: corrections require cancellation followed by a continuation after stop.
+API here: revise saves the correction and requests cancellation; continue uses
+that saved input after stop. Cancellation alone does not schedule replacement work.
 
 State holds at most 128 indexed tasks, pruning finished records first. Questions,
 blockers and uncertain outcomes remain until resolved. Process/plugin replacement

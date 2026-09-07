@@ -179,7 +179,7 @@ in
         user_profile_enabled = true;
       };
       display = {
-        busy_input_mode = "steer";
+        busy_input_mode = "interrupt";
         memory_notifications = "off";
         platforms.photon = {
           tool_progress = false;

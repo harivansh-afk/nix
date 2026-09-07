@@ -43,6 +43,7 @@ in
           default = "gpt-5.6-luna";
         };
         agent.reasoning_effort = "low";
+        display.busy_input_mode = "steer";
         terminal.cwd = profileHome;
         platform_toolsets = {
           cli = [ "roommates_tv" ];

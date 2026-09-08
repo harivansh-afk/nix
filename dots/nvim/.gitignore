@@ -7,8 +7,6 @@
 *~
 rpi/
 
-# Plugin-manager lockfiles are runtime state, not config. Tracking them breaks
-# read-only deployments (e.g. home-manager xdg.configFile, which symlinks into
-# the nix store) because tools try to rewrite the lockfile in place.
+# Leftover local state from earlier plugin managers.
 lazy-lock.json
 nvim-pack-lock.json

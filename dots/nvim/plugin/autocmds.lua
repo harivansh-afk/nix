@@ -6,7 +6,7 @@ local function ensure_canola_loaded()
   canola_config.setup_globals()
 
   local ok_lz, lz = pcall(require, "lz.n")
-  if ok_lz then pcall(lz.trigger_load, "barrettruth/canola.nvim") end
+  if ok_lz then pcall(lz.trigger_load, "canola.nvim") end
 
   if vim.fn.exists ":Canola" ~= 2 then pcall(vim.cmd.packadd, "canola.nvim") end
 

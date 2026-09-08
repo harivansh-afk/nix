@@ -1,7 +1,3 @@
-vim.pack.add({
-  "https://github.com/ibhagwan/fzf-lua",
-}, { load = function() end })
-
 ---@param kind 'issue'|'pr'
 ---@param state 'all'|'open'|'closed'
 local function gh_picker(kind, state)
@@ -27,7 +23,7 @@ local function gh_picker(kind, state)
 end
 
 return {
-  "ibhagwan/fzf-lua",
+  "fzf-lua",
   cmd = "FzfLua",
   before = function()
     pcall(vim.cmd.packadd, "nvim-web-devicons")

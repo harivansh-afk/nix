@@ -4,6 +4,12 @@
   perSystem =
     { pkgs, ... }:
     let
+      neovim = import ../lib/neovim.nix {
+        inherit pkgs;
+        inherit (pkgs) lib;
+        configDir = ../dots/nvim;
+        curated = true;
+      };
       hermes = self.nixosConfigurations.spark.config.services.hermes-agent;
       lint =
         name: tools: script:
@@ -34,6 +40,7 @@
           pkgs.neovim
         ] "bash scripts/pr-smoke.sh";
 
+        neovim = lint "neovim" [ pkgs.bash pkgs.coreutils pkgs.git neovim ] "bash scripts/nvim-smoke.sh";
         stylua = lint "stylua" [ pkgs.stylua ] "stylua --check dots/nvim";
         logitech = lint "logitech" [ pkgs.python3 ] "python3 hosts/macbook/logitech/test_apply.py";
         mixbridge = inputs.mixbridge-web.checks.${pkgs.stdenv.hostPlatform.system}.streaming-api;

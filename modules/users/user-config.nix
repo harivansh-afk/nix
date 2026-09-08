@@ -22,14 +22,13 @@
   forgeUsers ? { },
   installMutableTools ? true,
   skillSources ? { },
-  nvimTreesitterEnv ? null,
+  nvimCurated ? false,
 }:
 let
   inherit (user) name homeDirectory;
-  nvimPack = import ../../lib/nvim-pack.nix { inherit lib pkgs; };
-  nvimTreesitter = {
-    plugin = nvimPack.treesitter.plugin;
-    env = if nvimTreesitterEnv != null then nvimTreesitterEnv else nvimPack.treesitter.full;
+  neovim = import ../../lib/neovim.nix {
+    inherit lib pkgs;
+    curated = nvimCurated;
   };
   forgeLogins = {
     harivan = "harivansh-afk";
@@ -66,7 +65,7 @@ let
       forgeLogins
       installMutableTools
       skillSources
-      nvimTreesitter
+      neovim
       ;
   };
 
@@ -124,6 +123,6 @@ let
   );
 in
 {
-  inherit script packages;
+  inherit script packages neovim;
   inherit (apps) nvimAliases;
 }

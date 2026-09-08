@@ -1,20 +1,11 @@
-vim.pack.add({
-  "https://github.com/echasnovski/mini.pairs",
-  "https://github.com/nvim-mini/mini.completion",
-  "https://github.com/kylechui/nvim-surround",
-  "https://github.com/kevinhwang91/nvim-ufo",
-  "https://github.com/kevinhwang91/promise-async",
-  "https://github.com/barrettruth/preview.nvim",
-}, { load = function() end })
-
 return {
   {
-    "echasnovski/mini.pairs",
+    "mini.pairs",
     event = "InsertEnter",
     after = function() require("mini.pairs").setup() end,
   },
   {
-    "nvim-mini/mini.completion",
+    "mini.completion",
     event = "InsertEnter",
     after = function()
       local completion = require "mini.completion"
@@ -73,7 +64,7 @@ return {
     end,
   },
   {
-    "kylechui/nvim-surround",
+    "nvim-surround",
     after = function() require("nvim-surround").setup() end,
     keys = {
       { "cs", mode = "n" },
@@ -85,7 +76,7 @@ return {
     },
   },
   {
-    "kevinhwang91/nvim-ufo",
+    "nvim-ufo",
     event = "BufReadPost",
     before = function() vim.cmd.packadd "promise-async" end,
     after = function()
@@ -107,7 +98,7 @@ return {
     },
   },
   {
-    "barrettruth/preview.nvim",
+    "preview.nvim",
     cmd = "Preview",
     ft = { "markdown", "tex", "typst" },
     before = function()

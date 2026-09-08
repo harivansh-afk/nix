@@ -48,7 +48,6 @@
   heliumExtJson,
   heliumExtensions,
   installMutableTools,
-  nvimTreesitter,
   ...
 }:
 pkgs.writeShellScript "user-config-${name}" ''
@@ -127,55 +126,10 @@ pkgs.writeShellScript "user-config-${name}" ''
     mkSymlink "${dotsRoot}/bin/xclip" "${homeDirectory}/.local/bin/xclip"
   ''}
 
-  # --- nvim: keep the config directory writable for vim.pack's lockfile,
-  # while symlinking every managed config entry from the dotfiles tree.
   if [ -d "${configHome}/nvim" ] && [ ! -L "${configHome}/nvim" ]; then
-    for lock in lazy-lock.json nvim-pack-lock.json; do
-      if [ -f "${configHome}/nvim/$lock" ] && [ ! -L "${configHome}/nvim/$lock" ] \
-        && [ -w "${dotsRoot}/nvim" ] && [ ! -e "${dotsRoot}/nvim/$lock" ]; then
-        cp "${configHome}/nvim/$lock" "${dotsRoot}/nvim/$lock"
-      fi
-    done
+    mv "${configHome}/nvim" "$(mktemp -d "${configHome}/nvim-backup.XXXXXX")/nvim"
   fi
-  if [ -L "${configHome}/nvim" ]; then
-    rm -f "${configHome}/nvim"
-  fi
-  mkdir -p "${configHome}/nvim"
-  # drop managed links from earlier generations so removed dots entries
-  # do not linger
-  for entry in "${configHome}/nvim"/* "${configHome}/nvim"/.[!.]* "${configHome}/nvim"/..?*; do
-    if [ -L "$entry" ]; then
-      rm -f "$entry"
-    fi
-  done
-  for source in "${dotsRoot}/nvim"/* "${dotsRoot}/nvim"/.[!.]* "${dotsRoot}/nvim"/..?*; do
-    [ -e "$source" ] || continue
-    name="''${source##*/}"
-    case "$name" in
-      lazy-lock.json|nvim-pack-lock.json)
-        if [ -w "${dotsRoot}/nvim" ]; then
-          mkSymlink "$source" "${configHome}/nvim/$name"
-        else
-          install -m 0644 "$source" "${configHome}/nvim/$name"
-        fi
-        ;;
-      *)
-        mkSymlink "$source" "${configHome}/nvim/$name"
-        ;;
-    esac
-  done
-
-  # --- nvim treesitter: the plugin, every parser, and its matched queries come
-  # from the nixpkgs pin, so nothing is compiled or downloaded at runtime.
-  # vim.pack must never manage nvim-treesitter again (the runtime installer is
-  # dead config with nix-delivered parsers), so a stale pack copy is cleared
-  # the same way omp extensions are.
-  mkdir -p "${dataHome}/nvim/site/pack/nix/start"
-  mkSymlink "${nvimTreesitter.plugin}" "${dataHome}/nvim/site/pack/nix/start/nvim-treesitter"
-  mkSymlink "${nvimTreesitter.env}/parser" "${dataHome}/nvim/site/parser"
-  mkSymlink "${nvimTreesitter.env}/queries" "${dataHome}/nvim/site/queries"
-  rm -rf "${dataHome}/nvim/site/parser-info" \
-         "${dataHome}/nvim/site/pack/core/opt/nvim-treesitter"
+  mkSymlink "${dotsRoot}/nvim" "${configHome}/nvim"
 
   # --- assorted app configs ---
   # btop: rendered (not symlinked) so custom_cpu_name shows the node's own

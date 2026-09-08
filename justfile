@@ -44,8 +44,8 @@ dns-plan:
 dns-apply:
     nix run .#cloudflare-dns -- apply
 
-nvim-pack-sources:
-    nix shell nixpkgs#nix-prefetch-git nixpkgs#jq -c bash scripts/nvim-pack-sources.sh
+nvim-update plugin rev="":
+    nix shell nixpkgs#nix-prefetch-git nixpkgs#jq -c bash scripts/nvim-update.sh {{quote(plugin)}} {{quote(rev)}}
 
 # --- secrets ---
 

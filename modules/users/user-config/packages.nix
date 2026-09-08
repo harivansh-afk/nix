@@ -8,6 +8,7 @@
   isDarwin,
   customScripts,
   nvimAliases,
+  neovim,
   extraPackages,
   ...
 }:
@@ -19,10 +20,10 @@ in
   direnv
   eza
   k9s
-  neovim
   nvimAliases
   tea
 ])
+++ [ neovim ]
 ++ nvimPackages
 ++ extraPackages
 ++ builtins.attrValues customScripts.commonPackages

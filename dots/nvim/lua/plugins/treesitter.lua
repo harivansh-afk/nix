@@ -1,11 +1,3 @@
--- Parsers, queries, and the nvim-treesitter plugin itself are delivered by
--- nix into ~/.local/share/nvim/site (see modules/users/user-config/activation.nix),
--- version-matched to one nixpkgs pin. Nothing installs at runtime; a filetype
--- with no parser silently keeps regex highlighting.
-vim.pack.add({
-  "https://github.com/nvim-treesitter/nvim-treesitter-textobjects",
-}, { load = function() end })
-
 vim.api.nvim_create_autocmd("FileType", {
   group = vim.api.nvim_create_augroup("user_treesitter", { clear = true }),
   callback = function(ev)
@@ -41,7 +33,7 @@ local move_maps = {
 
 return {
   {
-    "nvim-treesitter/nvim-treesitter-textobjects",
+    "nvim-treesitter-textobjects",
     after = function()
       require("nvim-treesitter-textobjects").setup {
         select = { lookahead = true },

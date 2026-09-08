@@ -6,8 +6,6 @@
 }:
 let
   inherit (pkgs.stdenv.hostPlatform) system;
-  nvimPack = import ../../lib/nvim-pack.nix { inherit lib pkgs; };
-  packDir = "/root/.local/share/nvim/site/pack/core/opt";
   userConfig = import ../../modules/users/user-config.nix {
     inherit lib pkgs;
     user = {
@@ -18,7 +16,7 @@ let
     hostname = "ix";
     isDarwin = false;
     installMutableTools = false;
-    nvimTreesitterEnv = nvimPack.treesitter.curated;
+    nvimCurated = true;
   };
 
   # Pin claude-code to the latest release: the nixpkgs pin lags behind.
@@ -53,6 +51,7 @@ in
   users.users.root = {
     packages = [
       self.packages.${system}.omp
+      userConfig.neovim
       userConfig.nvimAliases
       claudeCode
     ]
@@ -67,7 +66,6 @@ in
       gh
       git
       lua-language-server
-      neovim
       ripgrep
       stylua
       tree-sitter
@@ -82,26 +80,6 @@ in
       "groups"
     ];
     text = "${userConfig.script}";
-  };
-
-  system.activationScripts.nvimPack = {
-    deps = [ "userConfig-root" ];
-    text = ''
-      mkdir -p "${packDir}" /root/.config/nvim
-
-      if [ ! -e /root/.config/nvim/nvim-pack-lock.json ]; then
-        install -m 0644 ${nvimPack.lockFile} /root/.config/nvim/nvim-pack-lock.json
-      fi
-
-      ${lib.concatStringsSep "\n" (
-        lib.mapAttrsToList (name: src: ''
-          if [ ! -e "${packDir}/${name}" ]; then
-            cp -r ${src} "${packDir}/${name}"
-            chmod -R u+w "${packDir}/${name}"
-          fi
-        '') nvimPack.plugins
-      )}
-    '';
   };
 
   system.stateVersion = "25.11";

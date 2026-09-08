@@ -119,7 +119,7 @@ function M.setup_integrations()
 
       local function load_fzf()
         local ok_lz, lz = pcall(require, "lz.n")
-        if ok_lz then pcall(lz.trigger_load, "ibhagwan/fzf-lua") end
+        if ok_lz then pcall(lz.trigger_load, "fzf-lua") end
         if vim.fn.exists ":FzfLua" ~= 2 then pcall(vim.cmd.packadd, "fzf-lua") end
         return require "fzf-lua"
       end

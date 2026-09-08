@@ -41,10 +41,8 @@ memories. No public listener or tailnet ingress is required. Relay transports
 the messages through its service; the Hermes backend remains on Spark.
 
 The agent token and `RELAY_ALLOWED_CONTACTS` live in the sops-encrypted
-`secrets/hosts/spark/hermes-relay.env`. Until phone enrollment identifies Hari's
-Relay Contact UUID, the allowlist is `pending-enrollment`, which matches no
-Relay Contact. Add the agent in the phone app, read the Contact UUID from its
-authenticated Chat participants, replace that allowlist value and deploy.
+`secrets/hosts/spark/hermes-relay.env`. The allowlist contains Hari's enrolled
+Relay Contact UUID, verified against the authenticated direct Chat participants.
 An empty allowlist permits every reachable Contact and must not be used for
 this personal assistant. Keep webhook subscriptions empty: they disable Relay's
 WebSocket transport. The plugin stores its durable inbox under the active

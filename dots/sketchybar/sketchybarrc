@@ -155,7 +155,7 @@ for _ in $(seq 1 60); do
   sleep 0.5
 done
 
-for sid in $(aerospace list-workspaces --all); do
+for sid in 1 2 3 4 5 6 7 8 9 Desk; do
   # tab internals are visually compensated for font side bearings (digits
   # render ~2pt inside their advance, the app glyphs ~1pt): 10/11/10 makes
   # all three gaps measure ~12pt on screen (verified by pixel measurement);

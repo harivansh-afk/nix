@@ -377,13 +377,12 @@ static void spaces_push(void) {
 
   // tab internals mirror the rc: 10/11/10pt compensates font side bearings
   NSMutableArray *args = [NSMutableArray array];
-  for (int sid = 1; sid <= 9; sid++) {
-    NSString *id = [NSString stringWithFormat:@"%d", sid];
+  for (NSString *id in @[ @"1", @"2", @"3", @"4", @"5", @"6", @"7", @"8", @"9", @"Desk" ]) {
     NSString *item = [@"space." stringByAppendingString:id];
     NSString *app = first[id];
     NSString *icon = app ? icon_for(app) : @"";
     BOOL isFocused = [id isEqualToString:focused];
-    if (!isFocused && icon.length == 0) {
+    if (!isFocused && icon.length == 0 && ![id isEqualToString:@"Desk"]) {
       [args addObjectsFromArray:@[ @"--set", item, @"drawing=off" ]];
       continue;
     }

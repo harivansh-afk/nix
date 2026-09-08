@@ -4,10 +4,10 @@
     extraPlugins = [
       (pkgs.fetchFromGitHub {
         name = "relay-hermes";
-        owner = "RelayMessenger";
+        owner = "harivansh-afk";
         repo = "Relay-Hermes";
-        rev = "002b12cd0fa6e0f7ece7f90f57de6c11bd035bf5";
-        hash = "sha256-+dDlPeJwlAalAn/oM3vK9k7qdVt+LWg5mwMV0Hf3G5I=";
+        rev = "15ba776994be3c53edb66b9e84958e97247fab75";
+        hash = "sha256-W7HnUKFw51fyNF74F0efqXtFxgSXqcj5RWmzFVty4XA=";
       })
     ];
     environmentFiles = [ config.sops.secrets."hermes-relay.env".path ];

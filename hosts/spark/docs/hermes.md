@@ -35,6 +35,9 @@ saved connection or grant control over another process's active workers.
 ### Relay
 
 `hosts/spark/services/hermes/relay.nix` pins the official Relay-Hermes plugin.
+The temporary fork pin includes [upstream fix #7](https://github.com/RelayMessenger/Relay-Hermes/pull/7),
+which uses Hermes's shared adapter credential reader for primary-profile startup.
+Return to the upstream owner/revision when that fix is merged; Hermes itself is unmodified.
 `@hermes.hari4902` connects outbound to Relay over WebSocket through the existing
 gateway and routes to `imessage`, sharing the personal assistant's tools and
 memories. No public listener or tailnet ingress is required. Relay transports

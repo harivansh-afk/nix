@@ -51,7 +51,6 @@ in
     inputs.hermes-agent.nixosModules.default
     ./desktop.nix
     ./imessage.nix
-    ./relay.nix
     ./roommates.nix
   ];
 
@@ -148,10 +147,7 @@ in
       approvals.mode = "off";
       security.protected_instruction_files = false;
       plugins = {
-        enabled = [
-          "conversation"
-          "relay-hermes"
-        ];
+        enabled = [ "conversation" ];
         disabled = [ "knowledge-base" ];
         entries.conversation.settings = {
           platforms = [ "photon" ];

@@ -13,10 +13,6 @@ let
       group_sessions_per_user = false;
       profile_routes = [
         {
-          platform = "relayapp";
-          profile = "imessage";
-        }
-        {
           platform = "photon";
           profile = "imessage";
         }

@@ -11,5 +11,5 @@ source=$(nix-prefetch-git --url "$url" --rev "$rev" --quiet)
 tmp=$(mktemp "$sources.XXXXXX")
 trap 'rm -f "$tmp"' EXIT
 jq --arg name "$name" --argjson source "$source" \
-	'.[$name] += ($source | {rev, hash})' "$sources" >"$tmp"
+  '.[$name] += ($source | {rev, hash})' "$sources" >"$tmp"
 mv "$tmp" "$sources"

@@ -15,9 +15,9 @@ mkdir -p "$XDG_CONFIG_HOME/$NVIM_APPNAME/plugin"
 echo 'error("legacy config loaded")' >"$XDG_CONFIG_HOME/$NVIM_APPNAME/plugin/legacy.lua"
 
 for run in 1 2; do
-	nvim --headless -i NONE -c "luafile $root/dots/nvim/tests/startup.lua" </dev/null
-	test ! -e "$XDG_CONFIG_HOME/$NVIM_APPNAME/nvim-pack-lock.json"
-	test ! -e "$XDG_DATA_HOME/$NVIM_APPNAME/site/pack/core/opt"
+  nvim --headless -i NONE -c "luafile $root/dots/nvim/tests/startup.lua" </dev/null
+  test ! -e "$XDG_CONFIG_HOME/$NVIM_APPNAME/nvim-pack-lock.json"
+  test ! -e "$XDG_DATA_HOME/$NVIM_APPNAME/site/pack/core/opt"
 done
 
 ln -s "$(command -v nvim)" "$work/view"

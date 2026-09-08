@@ -61,6 +61,7 @@ ensure_identity() {
 }
 
 sign_app() {
+  chmod -R u+w "$app"
   security unlock-keychain -p "$keychain_pass" "$keychain"
   codesign --force --deep --sign "$identity" --keychain "$keychain" "$app"
   xattr -cr "$app"
@@ -83,8 +84,8 @@ if built_ok; then
   exit 0
 fi
 command -v xcodebuild >/dev/null || {
-  echo "Mux: Xcode missing, skipping" >&2
-  exit 0
+  echo "Mux: Xcode missing, cannot build" >&2
+  exit 1
 }
 
 # GhosttyKit.xcframework + ghostty's share/ (terminfo, shell integration),
@@ -121,7 +122,6 @@ rm -rf "$bundle"
 mkdir -p "$bundle/Contents/MacOS" "$bundle/Contents/Resources"
 cp "$bin" "$bundle/Contents/MacOS/Mux"
 cp "$MUXD/bin/muxd" "$MUXD/bin/mux-attach" "$bundle/Contents/MacOS/"
-chmod u+w "$bundle/Contents/MacOS/"*
 cp "$MUX_SRC/app/Assets/Mux.icns" "$bundle/Contents/Resources/Mux.icns"
 cp -R "$gk/zig-out/share/ghostty" "$bundle/Contents/Resources/ghostty"
 cp -R "$gk/zig-out/share/terminfo" "$bundle/Contents/Resources/terminfo"

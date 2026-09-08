@@ -28,6 +28,9 @@ let
 in
 {
   system.activationScripts.postActivation.text = lib.mkAfter ''
-    sudo -u ${username} ${build} || echo "warning: Mux build failed" >&2
+    sudo -u ${username} ${build} || {
+      echo "error: Mux build failed" >&2
+      exit 1
+    }
   '';
 }

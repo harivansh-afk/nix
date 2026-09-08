@@ -25,7 +25,7 @@ APP_FONT="sketchybar-app-font"
 FONT_SIZE=18.0
 APP_FONT_SIZE=20.0
 
-# External displays use the same 32pt height that aerospace reserves for them.
+# The bar is shown only on the main display (the MacBook).
 # Notched displays override that base with NSScreen.safeAreaInsets.top, a POINT
 # value that changes with the scaled resolution (43 @ 2048x1330, 49 @
 # 2294x1490). Max across screens, via `notch-inset`: a tiny AppKit binary
@@ -77,7 +77,7 @@ sketchybar --bar \
   y_offset=0 \
   padding_left=0 \
   padding_right=0 \
-  display=all \
+  display=main \
   sticky=on
 
 # Tabs paint the main cozybox background (BAR_COLOR, #101010 dark), matching

@@ -42,12 +42,6 @@
       restartUnits = [ "hermes-agent.service" ];
     };
 
-    "hermes-relay.env" = {
-      format = "dotenv";
-      owner = username;
-      restartUnits = [ "hermes-agent.service" ];
-    };
-
     # gws OAuth token, read by the gmail and calendar KB connectors (run as the user).
     "gws-credentials.json" = {
       owner = username;

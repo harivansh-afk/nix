@@ -57,12 +57,8 @@ vim.api.nvim_create_autocmd("BufEnter", {
   end,
 })
 
-vim.g.lz_n = {
-  load = function(name) vim.cmd.packadd(name:match "[^/]+$" or name) end,
-}
-
-vim.pack.add {
-  "https://github.com/lumen-oss/lz.n",
-}
+vim.cmd.packadd "nvim-treesitter"
+vim.cmd.packadd "vim-fugitive"
+vim.cmd.packadd "lz.n"
 
 require("lz.n").load "plugins"

@@ -1,15 +1,6 @@
-vim.pack.add({
-  "https://github.com/lewis6991/gitsigns.nvim",
-  -- barrettruth deleted his forge.nvim; the public fork is the source now.
-  -- Upstream gone means GitHub answers the anonymous clone with an auth
-  -- prompt, which kills vim.pack on any box doing a fresh install.
-  "https://github.com/harivansh-afk/forge.nvim",
-  "https://github.com/barrettruth/diffs.nvim",
-}, { load = function() end })
-
 return {
   {
-    "lewis6991/gitsigns.nvim",
+    "gitsigns.nvim",
     event = "BufReadPre",
     after = function()
       require("gitsigns").setup {
@@ -40,7 +31,7 @@ return {
     end,
   },
   {
-    "harivansh-afk/forge.nvim",
+    "forge.nvim",
     cmd = "Forge",
     before = function()
       vim.g.forge = {
@@ -59,7 +50,7 @@ return {
     },
   },
   {
-    "barrettruth/diffs.nvim",
+    "diffs.nvim",
     before = function()
       vim.g.diffs = {
         integrations = {

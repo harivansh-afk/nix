@@ -12,14 +12,9 @@ local function info(msg) vim.notify("pr: " .. msg, vim.log.levels.INFO) end
 
 local function state() return require("pr").state end
 
---- Load fzf-lua THROUGH lz.n so its `after` hook (fzf.setup with fullscreen,
---- borders, ...) runs; a raw packadd skips setup and yields stock winopts.
 local function fzf()
-  local ok_lz, lzn = pcall(require, "lz.n")
-  if ok_lz then pcall(lzn.trigger_load, "fzf-lua") end
-  pcall(vim.cmd.packadd, "fzf-lua")
-  local ok, mod = pcall(require, "fzf-lua")
-  return ok and mod or nil
+  require("lz.n").trigger_load "fzf-lua"
+  return require "fzf-lua"
 end
 
 -- ---------------------------------------------------------------- columns ---
@@ -42,7 +37,6 @@ function M.pr()
   end
 
   local f = fzf()
-  if not f then return warn "fzf-lua not available" end
 
   info "loading PRs..."
   data.prs(root, function(prs, err)
@@ -98,7 +92,6 @@ function M.commit()
   local S = state()
   if #S.commits == 0 then return warn "no PR loaded - <leader>gP first" end
   local f = fzf()
-  if not f then return warn "fzf-lua not available" end
 
   -- git-log semantics: sha yellow, author blue, age grey.
   local A = require("fzf-lua.utils").ansi_codes

@@ -12,7 +12,7 @@ CONTENTS                                                    *config-contents*
 ==============================================================================
 1. OVERVIEW                                                 *config-overview*
 
-Neovim config built on vim.pack and lz.n. Cozybox provides the colorscheme,
+Neovim config with Nix-managed plugins and lz.n lazy loading. Cozybox provides the colorscheme,
 and a small native Lua statusline handles the editor state.
 
 Global helpers defined in init.lua:
@@ -40,7 +40,7 @@ Options: >
 3. STRUCTURE                                                *config-structure*
 
 >
-    init.lua                    Leader, helpers, vim.pack/lz.n bootstrap
+    init.lua                    Leader, helpers, lz.n bootstrap
     plugin/
       options.lua               Vim options
       keymaps.lua               Global keymaps
@@ -49,7 +49,7 @@ Options: >
       elixirls.lua              Custom server definition
     lua/
       config/
-        lsp.lua                 Shared on_attach
+        canola.lua              File explorer integrations
       plugins/
         editor.lua              Completion, pairs, surround, ufo, preview
         lsp.lua                 nvim-lspconfig
@@ -86,7 +86,15 @@ Options: >
 ==============================================================================
 4. PLUGINS                                                  *config-plugins*
 
-Plugins are declared with vim.pack and loaded through lz.n.
+Plugins are pinned in pack-sources.json and built by lib/neovim.nix.
+The same package supplies plugins, parsers, and queries on workstations,
+the ix VM, and `nix run .#nvim`. Startup does not install or update plugins.
+Lua specs under lua/plugins/ control lazy loading and configuration.
+
+Update one plugin with `just nvim-update <plugin> [revision]`, review the
+manifest diff, then rebuild. Canola follows its `canola` branch by default.
+The portable command uses the repo config directly from the Nix store;
+normal workstation launches use ~/.config/nvim for live Lua edits.
 
     Plugin                          Purpose ~
     https://git.harivan.sh/harivansh-afk/cozybox.nvim      Colorscheme

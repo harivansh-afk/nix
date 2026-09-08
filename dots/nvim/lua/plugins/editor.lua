@@ -1,20 +1,11 @@
-vim.pack.add({
-  "https://github.com/echasnovski/mini.pairs",
-  "https://github.com/nvim-mini/mini.completion",
-  "https://github.com/kylechui/nvim-surround",
-  "https://github.com/kevinhwang91/nvim-ufo",
-  "https://github.com/kevinhwang91/promise-async",
-  "https://github.com/barrettruth/preview.nvim",
-}, { load = function() end })
-
 return {
   {
-    "echasnovski/mini.pairs",
+    "mini.pairs",
     event = "InsertEnter",
     after = function() require("mini.pairs").setup() end,
   },
   {
-    "nvim-mini/mini.completion",
+    "mini.completion",
     event = "InsertEnter",
     after = function()
       local completion = require "mini.completion"
@@ -33,19 +24,25 @@ return {
         },
       }
 
-      local function set_omnifunc(bufnr)
+      local function set_omnifunc(bufnr, excluded_client)
         if not vim.api.nvim_buf_is_valid(bufnr) then return end
         for _, client in ipairs(vim.lsp.get_clients { bufnr = bufnr }) do
-          if client:supports_method "textDocument/completion" then
+          if client.id ~= excluded_client and client:supports_method "textDocument/completion" then
             vim.bo[bufnr].omnifunc = "v:lua.MiniCompletion.completefunc_lsp"
             return
           end
         end
+        if vim.bo[bufnr].omnifunc == "v:lua.MiniCompletion.completefunc_lsp" then vim.bo[bufnr].omnifunc = "" end
       end
 
       vim.api.nvim_create_autocmd("LspAttach", {
         group = vim.api.nvim_create_augroup("AMiniCompletionLsp", { clear = true }),
         callback = function(ev) set_omnifunc(ev.buf) end,
+      })
+
+      vim.api.nvim_create_autocmd("LspDetach", {
+        group = "AMiniCompletionLsp",
+        callback = function(ev) set_omnifunc(ev.buf, ev.data.client_id) end,
       })
 
       for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
@@ -73,7 +70,7 @@ return {
     end,
   },
   {
-    "kylechui/nvim-surround",
+    "nvim-surround",
     after = function() require("nvim-surround").setup() end,
     keys = {
       { "cs", mode = "n" },
@@ -85,7 +82,7 @@ return {
     },
   },
   {
-    "kevinhwang91/nvim-ufo",
+    "nvim-ufo",
     event = "BufReadPost",
     before = function() vim.cmd.packadd "promise-async" end,
     after = function()
@@ -107,7 +104,7 @@ return {
     },
   },
   {
-    "barrettruth/preview.nvim",
+    "preview.nvim",
     cmd = "Preview",
     ft = { "markdown", "tex", "typst" },
     before = function()

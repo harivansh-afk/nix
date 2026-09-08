@@ -1,7 +1,3 @@
-vim.pack.add {
-  "https://github.com/tpope/vim-fugitive",
-}
-
 map("n", "<C-g>", "<cmd>Git<cr><cmd>only<cr>")
 map("n", "<leader>gg", "<cmd>Git<cr><cmd>only<cr>")
 map("n", "<leader>gc", "<cmd>Git commit<cr>")

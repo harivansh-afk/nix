@@ -18,25 +18,10 @@
       # renderers, so the placeholder is never dereferenced here.
       theme = import ../lib/theme.nix { homeDirectory = "/homeless-shelter"; };
 
-      # vim.pack needs a writable config dir for its lockfile, so the wrapper
-      # reseeds a copy of dots/nvim under $XDG_CONFIG_HOME/nvim-portable on
-      # every launch: the committed nvim-pack-lock.json stays authoritative,
-      # and NVIM_APPNAME scopes data/state/cache away from any resident nvim
-      # install. Plugins clone themselves into that scoped data dir on first
-      # run (network + git, both on the wrapper PATH).
-      nvim = pkgs.writeShellApplication {
-        name = "nvim";
-        runtimeInputs = [ pkgs.neovim ] ++ nvimPackages;
-        text = ''
-          config_root="''${XDG_CONFIG_HOME:-$HOME/.config}"
-          config_dir="$config_root/nvim-portable"
-          rm -rf "$config_dir"
-          mkdir -p "$config_root"
-          cp -R ${../dots/nvim} "$config_dir"
-          chmod -R u+w "$config_dir"
-          export NVIM_APPNAME=nvim-portable
-          exec nvim "$@"
-        '';
+      nvim = import ../lib/neovim.nix {
+        inherit lib pkgs;
+        configDir = ../dots/nvim;
+        extraPackages = nvimPackages;
       };
 
       # Same base-plus-theme concatenation as lazygitConfigs in

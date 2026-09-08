@@ -113,47 +113,16 @@ local function read_mode()
   return "dark"
 end
 
-local function colorscheme_for_mode(mode)
-  if mode == "light" then return "cozybox-light" end
-
-  return "cozybox"
-end
-
 function M.apply(mode)
-  local next_mode = mode or read_mode()
-  local next_scheme = colorscheme_for_mode(next_mode)
+  mode = mode or read_mode()
+  local scheme = mode == "light" and "cozybox-light" or "cozybox"
+  if vim.o.background == mode and vim.g.colors_name == scheme then return end
 
-  if vim.o.background ~= next_mode then vim.o.background = next_mode end
-
-  -- nvim-web-devicons picks its dark/light colour table when it is first
-  -- required and only swaps on OptionSet, which does not fire for the
-  -- background change during startup: without this, fzf-lua and canola ship
-  -- the dark-variant icon colours (#DDDDDD-style near-white) on a light
-  -- background. Refresh before the colorscheme so nonicons' ColorScheme hook
-  -- re-applies its glyphs over the fresh tables.
-  if package.loaded["nvim-web-devicons"] then pcall(require("nvim-web-devicons").refresh) end
-
-  local mode_changed = vim.g.cozybox_theme_mode ~= next_mode
-  if mode_changed or vim.g.colors_name ~= next_scheme then vim.cmd.colorscheme(next_scheme) end
-
-  -- fzf-lua caches its own icon table keyed only on background, so a
-  -- refreshed devicons set is never re-read; drop the cache after nonicons'
-  -- scheduled re-override so the next picker rebuilds it. Only on a real mode
-  -- change: apply() also runs on VimEnter and FocusGained, and a picker opened
-  -- from the command line (`nvim +'FzfLua files'`) is already running when
-  -- VimEnter fires. Its producer fetches the icon state over RPC, and a
-  -- scheduled unload (from the setup-time apply, or VimEnter) hands it nil,
-  -- so fzf lists zero files.
-  if mode_changed and package.loaded["fzf-lua.devicons"] then
-    vim.schedule(function() pcall(require("fzf-lua.devicons").unload) end)
-  end
-
-  vim.g.cozybox_theme_mode = next_mode
-  apply_terminal_palette(next_mode)
-  apply_cozybox_overrides()
-  local ok_reload, fzf_reload = pcall(require, "config.fzf_reload")
-  if ok_reload then pcall(fzf_reload.reload) end
-  vim.schedule(function() pcall(vim.cmd, "redrawstatus!") end)
+  vim.o.background = mode
+  if package.loaded["nvim-web-devicons"] then require("nvim-web-devicons").refresh() end
+  vim.cmd.colorscheme(scheme)
+  vim.g.cozybox_theme_mode = mode
+  vim.cmd "redrawstatus!"
 end
 
 function M.setup()

@@ -1,8 +1,5 @@
 local M = {}
 
-local globals_configured = false
-local integrations_configured = false
-
 local ns = vim.api.nvim_create_namespace "canola_git_trailing"
 local symbols = {
   M = { "M", "DiagnosticWarn" },
@@ -17,14 +14,12 @@ local function apply_git_status(buf)
   if not vim.api.nvim_buf_is_valid(buf) then return end
   vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
 
-  local ok, canola = pcall(require, "canola")
-  if not ok then return end
+  local canola = require "canola"
 
   local dir = canola.get_current_dir(buf)
   if not dir then return end
 
-  local git_ok, git = pcall(require, "canola-git")
-  if not git_ok then return end
+  local git = require "canola-git"
 
   local lines = vim.api.nvim_buf_line_count(buf)
   for lnum = 0, lines - 1 do
@@ -47,11 +42,6 @@ local function apply_git_status(buf)
 end
 
 function M.setup_globals()
-  if globals_configured then return end
-  globals_configured = true
-
-  pcall(vim.cmd.packadd, "nvim-web-devicons")
-  pcall(vim.cmd.packadd, "nonicons.nvim")
   vim.g.canola_git = vim.g.canola_git or {}
 
   vim.g.canola = {
@@ -78,9 +68,6 @@ function M.setup_globals()
 end
 
 function M.setup_integrations()
-  if integrations_configured then return end
-  integrations_configured = true
-
   vim.cmd.packadd "canola-collection"
 
   local augroup = vim.api.nvim_create_augroup("UserCanolaConfig", { clear = true })
@@ -117,31 +104,19 @@ function M.setup_integrations()
         end,
       })
 
-      local function load_fzf()
-        local ok_lz, lz = pcall(require, "lz.n")
-        if ok_lz then pcall(lz.trigger_load, "ibhagwan/fzf-lua") end
-        if vim.fn.exists ":FzfLua" ~= 2 then pcall(vim.cmd.packadd, "fzf-lua") end
-        return require "fzf-lua"
+      local function find(method)
+        require("lz.n").trigger_load "fzf-lua"
+        require("fzf-lua")[method] { cwd = require("canola").get_current_dir(bufnr) }
       end
 
-      local function canola_cwd()
-        local ok, canola = pcall(require, "canola")
-        if not ok then return nil end
-        return canola.get_current_dir(bufnr)
-      end
-
-      vim.keymap.set(
-        "n",
-        "<C-f>",
-        function() load_fzf().files { cwd = canola_cwd() } end,
-        { buffer = bufnr, desc = "fzf files in canola dir" }
-      )
-      vim.keymap.set(
-        "n",
-        "<C-s>",
-        function() load_fzf().live_grep { cwd = canola_cwd() } end,
-        { buffer = bufnr, desc = "live grep in canola dir" }
-      )
+      vim.keymap.set("n", "<C-f>", function() find "files" end, {
+        buffer = bufnr,
+        desc = "fzf files in canola dir",
+      })
+      vim.keymap.set("n", "<C-s>", function() find "live_grep" end, {
+        buffer = bufnr,
+        desc = "live grep in canola dir",
+      })
 
       vim.keymap.set("n", "gC", function()
         show_all = not show_all

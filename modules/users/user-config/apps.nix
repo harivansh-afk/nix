@@ -2,6 +2,7 @@
 # aliases and the darwin-only helium managed-extension manifest.
 {
   pkgs,
+  neovim,
   theme,
   isDarwin,
   ...
@@ -12,10 +13,10 @@ in
 {
   nvimAliases = pkgs.runCommand "nvim-command-aliases" { } ''
     mkdir -p "$out/bin"
-    ln -s ${pkgs.neovim}/bin/nvim "$out/bin/vi"
-    ln -s ${pkgs.neovim}/bin/nvim "$out/bin/vim"
-    ln -s ${pkgs.neovim}/bin/nvim "$out/bin/view"
-    ln -s ${pkgs.neovim}/bin/nvim "$out/bin/vimdiff"
+    ln -s ${neovim}/bin/nvim "$out/bin/vi"
+    ln -s ${neovim}/bin/nvim "$out/bin/vim"
+    ln -s ${neovim}/bin/nvim "$out/bin/view"
+    ln -s ${neovim}/bin/nvim "$out/bin/vimdiff"
   '';
 
   # @HOSTNAME@ is substituted at activation time with the node's runtime

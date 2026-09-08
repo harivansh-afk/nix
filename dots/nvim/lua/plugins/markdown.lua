@@ -1,10 +1,6 @@
-vim.pack.add({
-  "https://github.com/MeanderingProgrammer/render-markdown.nvim",
-}, { load = function() end })
-
 return {
   {
-    "MeanderingProgrammer/render-markdown.nvim",
+    "render-markdown.nvim",
     ft = "markdown",
     after = function()
       require("render-markdown").setup {

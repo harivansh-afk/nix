@@ -311,6 +311,7 @@ in
   systemd.services.forgejo = {
     after = [ "pierre-ssr.service" ];
     wants = [ "pierre-ssr.service" ];
+    environment.GIT_HTTP_LOW_SPEED_TIME = "600";
     serviceConfig.Environment = [
       "PIERRE_FILE_TREE=true"
       "PIERRE_SSR_SOCKET=${config.services.pierre-ssr.socketPath}"

@@ -18,6 +18,7 @@ let
       lib.makeBinPath [
         pkgs.zig_0_16
         pkgs.openssl
+        pkgs.gettext
       ]
     }"
     export MUX_SRC=${mux} MUX_REV=${mux.rev}

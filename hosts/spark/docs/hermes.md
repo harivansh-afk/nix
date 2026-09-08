@@ -32,6 +32,24 @@ saved connection or grant control over another process's active workers.
 
 ## Messaging behavior
 
+### Relay
+
+`hosts/spark/services/hermes/relay.nix` pins the official Relay-Hermes plugin.
+`@hermes.hari4902` connects outbound to Relay over WebSocket through the existing
+gateway and routes to `imessage`, sharing the personal assistant's tools and
+memories. No public listener or tailnet ingress is required. Relay transports
+the messages through its service; the Hermes backend remains on Spark.
+
+The agent token and `RELAY_ALLOWED_CONTACTS` live in the sops-encrypted
+`secrets/hosts/spark/hermes-relay.env`. The allowlist contains Hari's enrolled
+Relay Contact UUID, verified against the authenticated direct Chat participants.
+An empty allowlist permits every reachable Contact and must not be used for
+this personal assistant. Keep webhook subscriptions empty: they disable Relay's
+WebSocket transport. The plugin stores its durable inbox under the active
+profile's `relay/` directory and rejects slash commands on this Hermes version.
+
+### Profiles
+
 `hosts/spark/services/hermes/imessage.nix` owns the named Photon profile. The
 upstream module's `settings` remain the source for its generated config; an
 explicit `configFile` leaves the root/default profile with no configured CLI

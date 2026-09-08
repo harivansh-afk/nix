@@ -64,6 +64,36 @@ local function check()
   end
   assert(require("nvim-treesitter").indentexpr, "Treesitter indentation missing")
   assert(MiniCompletion and MiniPairs, "completion or pairs missing")
+  local icons = require "fzf-lua.devicons"
+  for _, mode in ipairs { "dark", "light", "dark" } do
+    require("theme").apply(mode)
+    vim.wait(20)
+    assert(icons.load { plugin = true })
+    local glyph = icons.get_devicon "example.lua"
+    local expected = require("nvim-web-devicons").get_icon("example.lua", "lua", { default = true })
+    assert(glyph == expected and icons.state().bg == mode, "picker icons did not follow the theme")
+    assert(vim.g.terminal_color_0 == (mode == "dark" and "#1d2021" or "#f9f5d7"))
+  end
+
+  local get_clients = vim.lsp.get_clients
+  local first = { id = 1, supports_method = function() return true end }
+  local second = { id = 2, supports_method = function() return true end }
+  local clients = { first, second }
+  vim.lsp.get_clients = function() return clients end
+  local function event(name)
+    vim.api.nvim_exec_autocmds(name, { group = "AMiniCompletionLsp", buffer = 0, data = { client_id = 1 } })
+  end
+  event "LspAttach"
+  assert(vim.bo.omnifunc == "v:lua.MiniCompletion.completefunc_lsp")
+  event "LspDetach"
+  assert(vim.bo.omnifunc == "v:lua.MiniCompletion.completefunc_lsp", "second client still provides completion")
+  clients = { first }
+  event "LspDetach"
+  assert(vim.bo.omnifunc == "", "last client left a stale completion function")
+  vim.bo.omnifunc = "syntaxcomplete#Complete"
+  event "LspDetach"
+  assert(vim.bo.omnifunc == "syntaxcomplete#Complete", "detach removed another completion provider")
+  vim.lsp.get_clients = get_clients
   assert(#vim.fn.getcompletion("fzf-lua", "help") > 0, "plugin help tags missing")
   assert(#errors == 0, table.concat(errors, "\n"))
   print "Neovim smoke passed: keymaps, lazy loading, commands, completion, indentation, 11 parser/query pairs"

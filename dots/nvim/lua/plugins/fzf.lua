@@ -25,13 +25,10 @@ end
 return {
   "fzf-lua",
   cmd = "FzfLua",
-  before = function()
-    pcall(vim.cmd.packadd, "nvim-web-devicons")
-    pcall(vim.cmd.packadd, "nonicons.nvim")
-  end,
   after = function()
     local fzf = require "fzf-lua"
-    local opts = {
+    fzf.setup {
+      fzf_colors = true,
       "default-title",
       winopts = {
         fullscreen = true,
@@ -57,14 +54,6 @@ return {
         _headers = {},
       },
     }
-
-    fzf.setup(opts)
-
-    local ok, fzf_reload = pcall(require, "config.fzf_reload")
-    if ok then
-      fzf_reload.setup(opts)
-      fzf_reload.reload()
-    end
   end,
   keys = {
     { "<C-f>", "<cmd>FzfLua files<cr>" },

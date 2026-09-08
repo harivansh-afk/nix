@@ -49,7 +49,7 @@ Options: >
       elixirls.lua              Custom server definition
     lua/
       config/
-        lsp.lua                 Shared on_attach
+        canola.lua              File explorer integrations
       plugins/
         editor.lua              Completion, pairs, surround, ufo, preview
         lsp.lua                 nvim-lspconfig

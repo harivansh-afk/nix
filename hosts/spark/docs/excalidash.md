@@ -11,15 +11,18 @@ client IP; the backend trusts the two proxy hops (Nginx and Caddy).
 
 ## First deployment
 
-Merge the Forgejo PR and verify the Spark deploy job. Apply the DNS change with
-`just dns-plan` followed by `just dns-apply`; system activation does not apply
-Terraform records.
+Merge the Forgejo PR and verify the Spark deploy job. Before publishing DNS
+or importing any drawings, open the loopback frontend on Spark at
+`http://127.0.0.1:19462` and complete upstream's one-time setup: enable
+email/password authentication, then register the owner using the setup code.
+For this local setup, use a browser connection to `https://draw.harivan.sh`
+through Caddy so the production origin and secure cookies are preserved.
+The backend expects that HTTPS origin; a plain loopback browser URL is not
+sufficient for authentication. DNS should remain unpublished until setup is
+complete.
 
-The backend post-start script uses upstream's onboarding API to enable local
-email/password authentication before systemd starts the frontend. It is
-idempotent and refuses startup if authentication was subsequently disabled.
-Public registration remains closed. Initial admin registration requires the
-single-use setup code, available locally with:
+Initial admin registration requires the single-use setup code, available
+locally with:
 
 ```sh
 sudo journalctl -u podman-excalidash-backend --since '15 minutes ago' | rg 'BOOTSTRAP SETUP'
@@ -27,7 +30,10 @@ sudo journalctl -u podman-excalidash-backend --since '15 minutes ago' | rg 'BOOT
 
 Enter the code on the registration page and create the owner's account. Do not
 copy the setup code or passwords into commits, PRs, or agent output. Expired
-codes are renewed by the upstream bootstrap flow.
+codes are renewed by the upstream bootstrap flow. Confirm authentication is
+enabled, public registration is disabled, and anonymous drawing access returns
+401. Then apply the DNS change with `just dns-plan` and `just dns-apply`.
+System activation does not apply Terraform records.
 
 ## Storage and backups
 

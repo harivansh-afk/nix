@@ -17,7 +17,6 @@
         };
         volumes = [
           "/var/lib/excalidash/prisma:/app/prisma"
-          "${./initialize-auth.cjs}:/app/initialize-auth.cjs:ro"
           "/var/lib/excalidash/uploads:/app/uploads"
         ];
         extraOptions = [
@@ -58,7 +57,6 @@
   };
 
   systemd.services.podman-excalidash-backend = {
-    postStart = "${pkgs.podman}/bin/podman exec excalidash-backend node /app/initialize-auth.cjs";
     requires = [ "excalidash-network.service" ];
     after = [
       "excalidash-network.service"

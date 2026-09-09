@@ -19,17 +19,15 @@
           "/var/lib/excalidash/prisma:/app/prisma"
           "/var/lib/excalidash/uploads:/app/uploads"
         ];
-        extraOptions = [
-          "--network=excalidash"
-          "--init"
-        ];
+        networks = [ "excalidash" ];
+        extraOptions = [ "--init" ];
       };
       excalidash-frontend = {
         image = "docker.io/zimengxiong/excalidash-frontend@sha256:482be5d38f81db0abcbb966219e3a18b298e5be2fab3d710cb9f58f912ffd1be";
         dependsOn = [ "excalidash-backend" ];
         environment.BACKEND_URL = "excalidash-backend:8000";
         ports = [ "127.0.0.1:19462:80" ];
-        extraOptions = [ "--network=excalidash" ];
+        networks = [ "excalidash" ];
       };
     };
   };
@@ -42,18 +40,11 @@
   ];
 
   systemd.services.excalidash-network = {
-    before = [
-      "podman-excalidash-backend.service"
-      "podman-excalidash-frontend.service"
-    ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
+      ExecStart = "${pkgs.podman}/bin/podman network create --ignore excalidash";
     };
-    path = [ pkgs.podman ];
-    script = ''
-      podman network exists excalidash || podman network create excalidash
-    '';
   };
 
   systemd.services.podman-excalidash-backend = {
@@ -66,8 +57,6 @@
 
   systemd.services.podman-excalidash-frontend = {
     partOf = [ "podman-excalidash-backend.service" ];
-    requires = [ "excalidash-network.service" ];
-    after = [ "excalidash-network.service" ];
   };
 
   systemd.services.excalidash-backup = {

@@ -12,14 +12,13 @@ client IP; the backend trusts the two proxy hops (Nginx and Caddy).
 ## First deployment
 
 Merge the Forgejo PR and verify the Spark deploy job. Before publishing DNS
-or importing any drawings, open the loopback frontend on Spark at
-`http://127.0.0.1:19462` and complete upstream's one-time setup: enable
-email/password authentication, then register the owner using the setup code.
-For this local setup, use a browser connection to `https://draw.harivan.sh`
-through Caddy so the production origin and secure cookies are preserved.
-The backend expects that HTTPS origin; a plain loopback browser URL is not
-sufficient for authentication. DNS should remain unpublished until setup is
-complete.
+or importing drawings, complete upstream's one-time setup over the local
+frontend at `127.0.0.1:19462`: enable authentication with
+`POST /api/auth/onboarding-choice` (`{"enableAuth":true}`), then register the
+owner with `POST /api/auth/register`. These are one-time application operations,
+not startup hooks. API requests need the CSRF token and cookie from
+`/api/csrf-token`, `Origin: https://draw.harivan.sh`, and
+`X-Forwarded-Proto: https`, matching the production proxy context.
 
 Initial admin registration requires the single-use setup code, available
 locally with:
@@ -28,7 +27,7 @@ locally with:
 sudo journalctl -u podman-excalidash-backend --since '15 minutes ago' | rg 'BOOTSTRAP SETUP'
 ```
 
-Enter the code on the registration page and create the owner's account. Do not
+Use the code to register the owner's account. Do not
 copy the setup code or passwords into commits, PRs, or agent output. Expired
 codes are renewed by the upstream bootstrap flow. Confirm authentication is
 enabled, public registration is disabled, and anonymous drawing access returns

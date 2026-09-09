@@ -12,6 +12,7 @@ let
     "${ownedOwner}/deskctl"
     "${ownedOwner}/betternas"
     "${ownedOwner}/agentikube"
+    "${ownedOwner}/draw"
   ];
 
   # Owned repos whose source of truth is GitHub: they live on the forge as

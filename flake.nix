@@ -41,6 +41,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    draw = {
+      url = "git+https://git.harivan.sh/harivansh-afk/draw.git?ref=main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     mixbridge-web = {
       url = "git+https://git.harivan.sh/harivansh-afk/mixbridge-web.git?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";

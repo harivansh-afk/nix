@@ -175,6 +175,27 @@
         "type": "github"
       }
     },
+    "draw": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788986041,
+        "narHash": "sha256-pT2Wi3TjtZ0LzwLOhqTp7Mlwl1X+t6YA9LoP2Mw9fJw=",
+        "ref": "main",
+        "rev": "037832dfedcad848bdda9fb9a2db783f860f09f2",
+        "revCount": 4114,
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/draw.git"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/draw.git"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -1233,6 +1254,7 @@
         "determinate": "determinate",
         "dgx-spark": "dgx-spark",
         "disko": "disko_2",
+        "draw": "draw",
         "flake-parts": "flake-parts_5",
         "googleworkspace-cli": "googleworkspace-cli",
         "hermes-agent": "hermes-agent",

@@ -67,6 +67,7 @@
   };
 
   systemd.services.podman-excalidash-frontend = {
+    partOf = [ "podman-excalidash-backend.service" ];
     requires = [ "excalidash-network.service" ];
     after = [ "excalidash-network.service" ];
   };

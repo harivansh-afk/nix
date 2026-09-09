@@ -24,7 +24,7 @@
     ./services/roomcast.nix
     ./services/inference.nix
     ./services/mixbridge.nix
-    ./services/excalidash
+    ./services/draw.nix
     ./services/mosh.nix
     ./services/muxd.nix
     ./services/whisper

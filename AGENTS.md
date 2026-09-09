@@ -20,7 +20,7 @@ Both are declared as host records in `flake/args.nix` and assembled in `flake/ho
 
 Internet traffic hits Cloudflare edge (TLS termination), then cloudflared tunnel delivers plain HTTP to Caddy on 127.0.0.1:80. Caddy dispatches by Host header to backend services, each bound to 127.0.0.1 on their own port. No ACME, no public firewall ports for web traffic.
 
-Services: Forgejo (`git.harivan.sh`), Vaultwarden (`vault.harivan.sh`).
+Services: Forgejo (`git.harivan.sh`), Vaultwarden (`vault.harivan.sh`), draw (`draw.harivan.sh`, self-hosted Excalidraw+ from the `draw` flake input; see `hosts/spark/docs/draw.md`).
 
 ### Secrets
 
@@ -117,6 +117,7 @@ hosts/
     services/          Every spark service; single-host, so they live with the host
       caddy.nix        Reverse proxy on loopback, loopbackVhost helper
       cloudflared.nix  Cloudflare tunnel to Caddy
+      draw.nix         draw (self-hosted Excalidraw+) via the draw flake's NixOS module
       hermes/          Hermes gateway, desktop backend and messaging profiles
       inference.nix    Local llama.cpp inference server (GPU)
       mosh.nix         Mosh UDP server config

@@ -89,6 +89,9 @@
 
   services.caddy.virtualHosts."http://draw.harivan.sh" = (loopbackVhost 19462) // {
     extraConfig = ''
+      @insecure header X-Forwarded-Proto http
+      redir @insecure https://draw.harivan.sh{uri} 308
+      header Strict-Transport-Security "max-age=31536000"
       encode zstd gzip
       reverse_proxy 127.0.0.1:19462 {
         header_up X-Forwarded-Proto https

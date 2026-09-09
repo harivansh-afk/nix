@@ -81,7 +81,10 @@
           && !(lib.hasInfix "[qwen3.6-35b-a3b]" llamaPreset)
         ) "spark: llama.cpp must serve exactly the main and unchained local models")
         (lib.assertMsg (
-          spark.virtualisation.oci-containers.containers == { }
+          lib.attrNames spark.virtualisation.oci-containers.containers == [
+            "excalidash-backend"
+            "excalidash-frontend"
+          ]
         ) "spark: no always-on inference containers; local models go behind the llama.cpp router")
         (lib.assertMsg (
           lib.all (name: !(lib.hasPrefix "kb-" name) && !(lib.hasPrefix "llama-cpp-embed" name)) (

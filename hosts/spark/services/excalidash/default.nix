@@ -1,4 +1,9 @@
-{ pkgs, loopbackVhost, ... }:
+{
+  config,
+  pkgs,
+  loopbackVhost,
+  ...
+}:
 {
   virtualisation.oci-containers = {
     backend = "podman";
@@ -10,11 +15,17 @@
           PORT = "8000";
           DATABASE_PROVIDER = "sqlite";
           DATABASE_URL = "file:/app/prisma/dev.db";
-          AUTH_MODE = "local";
+          AUTH_MODE = "hybrid";
+          OIDC_PROVIDER_NAME = "Google";
+          OIDC_ISSUER_URL = "https://accounts.google.com";
+          OIDC_REDIRECT_URI = "https://draw.harivan.sh/api/auth/oidc/callback";
+          OIDC_JIT_PROVISIONING = "false";
+          OIDC_REQUIRE_EMAIL_VERIFIED = "true";
           FRONTEND_URL = "https://draw.harivan.sh";
           TRUST_PROXY = "2";
           UPDATE_CHECK_OUTBOUND = "false";
         };
+        environmentFiles = [ config.sops.secrets."excalidash-google-oauth.env".path ];
         volumes = [
           "/var/lib/excalidash/prisma:/app/prisma"
           "/var/lib/excalidash/uploads:/app/uploads"

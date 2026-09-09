@@ -23,6 +23,11 @@
   };
 
   hosts.spark = {
+    "excalidash-google-oauth.env" = {
+      format = "dotenv";
+      restartUnits = [ "podman-excalidash-backend.service" ];
+    };
+
     "wayvnc.conf".owner = username;
     "user-password-hash".neededForUsers = true;
 

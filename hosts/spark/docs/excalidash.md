@@ -9,6 +9,32 @@ Cloudflare terminates HTTPS, cloudflared forwards to Caddy, and Caddy forwards
 to the frontend Nginx proxy. Caddy supplies the HTTPS scheme and Cloudflare's
 client IP; the backend trusts the two proxy hops (Nginx and Caddy).
 
+## Google sign-in
+
+ExcaliDash uses its native OIDC integration with Google in hybrid mode, keeping
+local password login available as a fallback. The Google Cloud project
+`hari-495022` has a dedicated web client named `draw.harivan.sh`, with the sole
+redirect URI `https://draw.harivan.sh/api/auth/oidc/callback`. Its client ID and
+secret are encrypted in `secrets/hosts/spark/excalidash-google-oauth.env` and
+injected through the backend container's environment file at runtime.
+
+Google must attest that the email is verified. The first Google login for
+`rathiharivansh@gmail.com` links to the existing owner account by email, preserving
+its drawings and collections. The requested scopes are `openid profile email`.
+Local registration stays disabled, and `OIDC_JIT_PROVISIONING=false` prevents
+unknown Google identities from creating accounts. The admin UI can override
+that provisioning default; keep its auto-provisioning toggle off as well.
+
+Shared links retain their individual view/edit permissions and expiry. Guests
+can use an enabled public link without an account; signing in with Google does
+not grant access to the owner's library. Additional named users must be created
+deliberately before they can use Google sign-in.
+
+After deployment, verify `/api/auth/status` advertises Google, both registration
+and OIDC auto-provisioning are disabled, and a Google login returns to the same
+owner account with the existing drawings. Never put OAuth tokens or client
+secrets in diagnostic output.
+
 ## First deployment
 
 Merge the Forgejo PR and verify the Spark deploy job. Before publishing DNS

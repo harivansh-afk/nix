@@ -23,8 +23,6 @@
   };
 
   hosts.spark = {
-    "jarvis-deploy-key".owner = "gitea-runner";
-
     "draw-google-oauth.env" = {
       format = "dotenv";
       restartUnits = [ "draw.service" ];

@@ -46,11 +46,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    jarvis = {
-      url = "git+https://git.harivan.sh/harivansh-afk/jarvis.git?ref=main";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     mixbridge-web = {
       url = "git+https://git.harivan.sh/harivansh-afk/mixbridge-web.git?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -81,6 +81,12 @@ in
         path = ../../../dots/agents/skills/spark-computer;
       }
     ]
+    ++ [
+      {
+        name = "paper-deck";
+        path = ../../../dots/agents/skills/paper-deck;
+      }
+    ]
   );
   claudeComputerSource =
     if hostname == "spark" then

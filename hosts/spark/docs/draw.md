@@ -69,9 +69,9 @@ and `/var/backup/excalidash`.
 ## Dashboard
 
 The dashboard is draw's own code (`excalidraw-app/dashboard/` in the draw
-repo); the editor is upstream Excalidraw and is never patched. It follows
-harivan.sh's look (Berkeley Mono, three colours per theme, dotted underlines)
-and is keyboard-driven: vim motions over the scene grid, `cmd+k` for a command
+repo); the editor is upstream Excalidraw and is never patched. It keeps
+Excalidraw's look with a neutral greyscale in place of the purple and is
+keyboard-driven: vim motions over the scene grid, `cmd+k` for a command
 palette, `?` for the key sheet. One document-level key engine owns every
 binding; the registry in `dashboard/keyboard/commands.ts` is where a shortcut
 is added or changed. The right-hand rail is the owner's activity timeline,

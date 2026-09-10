@@ -66,10 +66,24 @@ and collections; embedded images are re-wrapped in Excalidraw's file envelope.
 After verifying scene counts and a few canvases, delete `/var/lib/excalidash`
 and `/var/backup/excalidash`.
 
+## Dashboard
+
+The dashboard is draw's own code (`excalidraw-app/dashboard/` in the draw
+repo); the editor is upstream Excalidraw and is never patched. It follows
+harivan.sh's look (Berkeley Mono, three colours per theme, dotted underlines)
+and is keyboard-driven: vim motions over the scene grid, `cmd+k` for a command
+palette, `?` for the key sheet. One document-level key engine owns every
+binding; the registry in `dashboard/keyboard/commands.ts` is where a shortcut
+is added or changed. The right-hand rail is the owner's activity timeline,
+served by `GET /api/activity` from the `activity` table (rows outlive their
+scene, purged after 90 days; autosaves fold into one entry per session).
+
 ## Verification after a deploy
 
 - `curl -s https://draw.harivan.sh/api/health` returns `{"ok":true,...}`.
-- Sign in with Google and land on the dashboard.
+- Sign in with Google and land on the dashboard; `j` outlines the first card,
+  `cmd+k` opens the palette, `?` the key sheet, and the activity rail shows
+  the last actions.
 - Open a scene in two tabs: cursors and edits sync live.
 - Set a scene to "can view", open it in a private window: renders read-only.
 - `journalctl -u draw --since -10m` shows one line per request and no panics.

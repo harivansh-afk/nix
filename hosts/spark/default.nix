@@ -27,6 +27,7 @@
     ./services/draw.nix
     ./services/mosh.nix
     ./services/muxd.nix
+    ./services/jarvis.nix
     ./services/whisper
     ./services/vaultwarden.nix
     ./services/website.nix

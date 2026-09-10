@@ -611,6 +611,27 @@
         "type": "github"
       }
     },
+    "jarvis": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1789066807,
+        "narHash": "sha256-uZV6IOeoTxzxe3WqX/enIdaLvDGH7t1SKoPQjVfiidM=",
+        "ref": "main",
+        "rev": "448725f360c5eef5478a923ccea5fb63b4f3c6dc",
+        "revCount": 4,
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/jarvis.git"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/jarvis.git"
+      }
+    },
     "lanzaboote": {
       "inputs": {
         "crane": "crane",
@@ -679,11 +700,11 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1788889092,
-        "narHash": "sha256-pHgvl2ybx/JVx8NZakqwoEWGCWfjfe5l5sCMZGWaIp8=",
+        "lastModified": 1789066806,
+        "narHash": "sha256-UlsXQgFDY5hHqQb/Yjb5On1KbwFFoCJkcVc+ciulwxM=",
         "ref": "main",
-        "rev": "7ee248dbb576b41a3982b762135cfad5f782877a",
-        "revCount": 383,
+        "rev": "409126325668126fc8c98766681d5787b9b68b26",
+        "revCount": 386,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/mux.git"
       },
@@ -1259,6 +1280,7 @@
         "googleworkspace-cli": "googleworkspace-cli",
         "hermes-agent": "hermes-agent",
         "ix-src": "ix-src",
+        "jarvis": "jarvis",
         "lanzaboote": "lanzaboote",
         "mattpocock-skills": "mattpocock-skills",
         "mixbridge-web": "mixbridge-web",

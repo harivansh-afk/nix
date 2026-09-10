@@ -13,6 +13,7 @@ let
     "${ownedOwner}/betternas"
     "${ownedOwner}/agentikube"
     "${ownedOwner}/draw"
+    "${ownedOwner}/jarvis"
   ];
 
   # Owned repos whose source of truth is GitHub: they live on the forge as

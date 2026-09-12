@@ -132,7 +132,7 @@ in
       providers.spark = {
         base_url = "http://127.0.0.1:18080/v1";
         api_mode = "chat_completions";
-        model = "qwen3.8-27b";
+        model = "qwen3.8-flash-next";
       };
       mcp_servers.computer = {
         command = "${computer}/bin/spark-computer";

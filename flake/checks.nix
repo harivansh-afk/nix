@@ -43,6 +43,9 @@
         neovim = lint "neovim" [ pkgs.bash pkgs.coreutils pkgs.git neovim ] "bash scripts/nvim-smoke.sh";
         stylua = lint "stylua" [ pkgs.stylua ] "stylua --check dots/nvim";
         logitech = lint "logitech" [ pkgs.python3 ] "python3 hosts/macbook/logitech/test_apply.py";
+        vllm-preparation = lint "vllm-preparation" [
+          pkgs.python3
+        ] "python3 hosts/spark/services/inference/test_prepare.py";
         mixbridge = inputs.mixbridge-web.checks.${pkgs.stdenv.hostPlatform.system}.streaming-api;
       }
       // pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "aarch64-linux") {

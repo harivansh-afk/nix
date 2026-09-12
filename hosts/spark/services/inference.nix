@@ -1,110 +1,175 @@
 { lib, pkgs, ... }:
 let
-  llamaCpp = pkgs.llama-cpp.override {
-    cudaSupport = true;
-    cudaPackages = pkgs.cudaPackages_13_1;
+  stateDir = "/var/lib/vllm";
+  modelId = "Mia-AiLab/Qwen3.8-Flash-Next-NVFP4";
+  modelRevision = "925d7be6c14c6c9442ef83e8f05b5a3c39304f69";
+  baseImage = "docker.io/vllm/vllm-openai@sha256:3b0e188ffceb3d07e09c3cb5215433a0020eacf02d7f882ed3a8bfd15454477e";
+  recipe = pkgs.fetchFromGitHub {
+    owner = "MiaAI-Lab";
+    repo = "Qwen3.8-Flash-Next-Single-DGX-Spark";
+    rev = "d03809008834124e80223c3482f2ddb59577a48f";
+    hash = "sha256-ObY98FYR1iSF8HbDaU80do6s12wXDvgXV20Ak/YcDjU=";
   };
-  huggingfaceCli = pkgs.python3.withPackages (pythonPackages: [
-    pythonPackages.huggingface-hub
-    pythonPackages.hf-transfer
-  ]);
-
-  # The main model is the unsloth GGUF of Qwen3.8-27B, not the NVFP4
-  # safetensors: llama.cpp cannot load NVFP4, and the router's autoload +
-  # idle-unload semantics matter more than the Blackwell FP4 kernels for a
-  # model that sits idle most of the day. UD-Q4_K_XL is the same 4-bit class.
-  qwenRepo = "unsloth/Qwen3.8-27B-GGUF";
-  qwenDir = "/var/lib/llama-cpp/models/qwen3.8-27b";
-  qwenFile = "Qwen3.8-27B-UD-Q4_K_XL.gguf";
-  qwenPath = "${qwenDir}/${qwenFile}";
-
-  unchainedRepo = "huihui-ai/Huihui-Qwen3.8-27B-abliterated-GGUF";
-  unchainedDir = "/var/lib/llama-cpp/models/huihui-qwen3.8-27b-abliterated";
-  unchainedFile = "Huihui-Qwen3.8-27B-abliterated-Q4_K.gguf";
-  unchainedPath = "${unchainedDir}/${unchainedFile}";
-
-  # No top-level `version = 1` line: llama.cpp's ini parser starts in an
-  # implicit section named "default", so any key before the first header
-  # creates a [default] preset with no model. The router then advertises
-  # "default" as a model and spawns a llama-server without --model when a
-  # client probes it. The version key itself is skipped by the parser.
-  modelPresets = pkgs.writeText "llama-cpp-models.ini" ''
-    [qwen3.8-27b]
-    model = ${qwenPath}
-
-    [huihui-qwen3.8-27b-abliterated]
-    model = ${unchainedPath}
+  imageContext = pkgs.runCommand "vllm-flash-next-image-context" { } ''
+    mkdir -p $out/recipe
+    cp -r ${recipe}/files $out/recipe/files
+    cp ${recipe}/LICENSE $out/recipe/LICENSE
+    cp ${./inference/Containerfile} $out/Containerfile
+    cp ${./inference/apply-patches.py} $out/apply-patches.py
   '';
-
-  downloadModels = pkgs.writeShellScript "download-llama-cpp-models" ''
-    set -euo pipefail
-    if [ ! -s "${qwenPath}" ]; then
-      ${huggingfaceCli}/bin/hf download ${qwenRepo} --include "${qwenFile}" --local-dir "${qwenDir}"
-    fi
-    if [ ! -s "${unchainedPath}" ]; then
-      ${huggingfaceCli}/bin/hf download ${unchainedRepo} --include "${unchainedFile}" --local-dir "${unchainedDir}"
-    fi
-  '';
+  image = "localhost/qwen-flash-next:${
+    builtins.substring 0 20 (builtins.hashString "sha256" "${baseImage}:${imageContext}")
+  }";
+  preparation = pkgs.writeText "vllm-preparation.json" (
+    builtins.toJSON {
+      inherit
+        stateDir
+        modelId
+        modelRevision
+        baseImage
+        imageContext
+        image
+        ;
+      manifest = ./inference/model-files.json;
+    }
+  );
+  python = pkgs.python3.withPackages (p: [ p.huggingface-hub ]);
+  guard = "${pkgs.python3}/bin/python3 ${./inference/memory-guard.py}";
 in
 {
   services.ollama.enable = lib.mkForce false;
+  services.llama-cpp.enable = lib.mkForce false;
 
-  services.llama-cpp = {
-    enable = true;
-    package = llamaCpp;
-    settings = {
-      host = "127.0.0.1";
-      port = 18080;
-      "models-preset" = modelPresets;
-      "models-max" = 1;
-      "models-autoload" = true;
-      "ctx-size" = 65536;
-      parallel = 1;
-      "n-gpu-layers" = 99;
-      "no-mmap" = true;
-      mlock = true;
-      jinja = true;
-      "flash-attn" = "on";
-      "sleep-idle-seconds" = 300;
-      temp = "0.7";
-      "top-p" = "0.8";
-      "top-k" = 20;
-      "min-p" = "0.0";
-      "presence-penalty" = "1.5";
-    };
-  };
+  system.build.vllmImageContext = imageContext;
+  system.build.vllmPreparation = preparation;
 
-  systemd.tmpfiles.rules = [
-    "d /var/lib/llama-cpp 0755 root root -"
-    "d /var/lib/llama-cpp/models 0755 root root -"
-    "d ${qwenDir} 0755 root root -"
-    "d ${unchainedDir} 0755 root root -"
-    "d /var/lib/llama-cpp/huggingface 0755 root root -"
-    "w /sys/block/nvme0n1/queue/read_ahead_kb - - - - 8192"
-  ];
-
-  systemd.services.llama-cpp-model-download = {
-    before = [ "llama-cpp.service" ];
+  systemd.services.vllm-prepare = {
+    description = "Prepare pinned Qwen Flash Next runtime and weights";
     wants = [ "network-online.target" ];
     after = [ "network-online.target" ];
-    environment = {
-      HF_HOME = "/var/lib/llama-cpp/huggingface";
-      HF_HUB_ENABLE_HF_TRANSFER = "1";
-    };
+    path = [ pkgs.podman ];
+    environment.HF_HUB_DISABLE_IMPLICIT_TOKEN = "1";
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = downloadModels;
+      RemainAfterExit = true;
+      StateDirectory = "vllm";
+      StateDirectoryMode = "0750";
+      ExecStart = "${python}/bin/python3 ${./inference/prepare.py} ${preparation}";
+      TimeoutStartSec = "2h";
+      OOMScoreAdjust = 750;
+      MemoryMax = "8G";
     };
   };
 
-  systemd.services.llama-cpp = {
-    after = [ "llama-cpp-model-download.service" ];
-    requires = [ "llama-cpp-model-download.service" ];
+  virtualisation.oci-containers = {
+    backend = "podman";
+    containers.vllm = {
+      inherit image;
+      pull = "never";
+      devices = [ "nvidia.com/gpu=all" ];
+      networks = [ "host" ];
+      capabilities = {
+        SYS_NICE = true;
+        SYS_PTRACE = true;
+      };
+      volumes = [
+        "${stateDir}/models/${modelRevision}:/model:ro"
+        "${stateDir}/ple/${modelRevision}:/packed:ro"
+        "${stateDir}/cache:/root/.cache/vllm"
+      ];
+      environment = {
+        HF_HUB_OFFLINE = "1";
+        TRANSFORMERS_OFFLINE = "1";
+        VLLM_USE_V2_MODEL_RUNNER = "1";
+        VLLM_PLE_CPU_OFFLOAD = "1";
+        VLLM_PLE_PACKED_TABLE_DIR = "/packed";
+        VLLM_PLE_OFFLOAD_STEP_TIMEOUT = "300";
+        VLLM_MTP_DRAFT_VOCAB = "/opt/spark-recipe/files/draft_vocab_en_code_47k.txt";
+      };
+      extraOptions = [
+        "--shm-size=2g"
+        "--ulimit=memlock=-1:-1"
+        "--ulimit=stack=67108864:67108864"
+        "--memory=94g"
+        "--memory-swap=94g"
+        "--stop-timeout=60"
+      ];
+      cmd = [
+        "/model"
+        "--served-model-name"
+        "qwen3.8-flash-next"
+        "--host"
+        "127.0.0.1"
+        "--port"
+        "18080"
+        "--tensor-parallel-size"
+        "1"
+        "--gpu-memory-utilization"
+        "0.70"
+        "--max-model-len"
+        "65536"
+        "--max-num-seqs"
+        "1"
+        "--max-num-batched-tokens"
+        "2048"
+        "--kv-cache-dtype"
+        "fp8"
+        "--mamba-ssm-cache-dtype"
+        "bfloat16"
+        "--load-format"
+        "safetensors"
+        "--safetensors-load-strategy"
+        "lazy"
+        "--enable-chunked-prefill"
+        "--reasoning-parser"
+        "qwen3"
+        "--enable-auto-tool-choice"
+        "--tool-call-parser"
+        "qwen3_coder"
+        "--distributed-executor-backend"
+        "mp"
+        "--speculative-config"
+        (builtins.toJSON {
+          method = "mtp";
+          num_speculative_tokens = 3;
+          use_local_argmax_reduction = true;
+        })
+        "--compilation-config"
+        (builtins.toJSON {
+          mode = 0;
+          cudagraph_mode = "FULL_DECODE_ONLY";
+          cudagraph_capture_sizes = [ 4 ];
+        })
+      ];
+    };
+  };
+
+  systemd.services.podman-vllm = {
+    requires = [ "vllm-prepare.service" ];
+    after = [
+      "vllm-prepare.service"
+      "llama-cpp.service"
+    ];
+    conflicts = [ "llama-cpp.service" ];
+    wants = [ "vllm-memory-watch.service" ];
     serviceConfig = {
+      ExecStartPre = [ "${guard} preflight" ];
+      Restart = lib.mkForce "no";
       OOMScoreAdjust = 1000;
       LimitMEMLOCK = "infinity";
-      ProcSubset = lib.mkForce "all";
-      ProtectProc = lib.mkForce "default";
+    };
+  };
+
+  systemd.services.vllm-memory-watch = {
+    description = "Stop vLLM when Spark host memory loses its reserve";
+    after = [ "podman-vllm.service" ];
+    bindsTo = [ "podman-vllm.service" ];
+    partOf = [ "podman-vllm.service" ];
+    path = [ pkgs.systemd ];
+    serviceConfig = {
+      ExecStart = "${guard} watch";
+      Restart = "on-failure";
+      RestartSec = 1;
     };
   };
 }

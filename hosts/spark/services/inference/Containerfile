@@ -1,0 +1,5 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+COPY recipe /opt/spark-recipe
+COPY apply-patches.py /opt/apply-patches.py
+RUN python3 /opt/apply-patches.py

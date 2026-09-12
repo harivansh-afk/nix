@@ -144,8 +144,8 @@ in
   # model, `task` is what subagents resolve at spawn time.
   ompLocalSource = yamlFormat.generate "omp-local-mode.yml" {
     modelRoles = {
-      default = "spark-local/qwen3.8-27b:medium";
-      task = "spark-local/huihui-qwen3.8-27b-abliterated:medium";
+      default = "spark-local/qwen3.8-flash-next:medium";
+      task = "spark-local/qwen3.8-flash-next:medium";
     };
   };
 
@@ -163,16 +163,8 @@ in
       };
       models = [
         {
-          id = "qwen3.8-27b";
-          name = "Qwen 3.8 27B UD-Q4_K_XL";
-          reasoning = true;
-          input = [ "text" ];
-          contextWindow = 65536;
-          maxTokens = 32768;
-        }
-        {
-          id = "huihui-qwen3.8-27b-abliterated";
-          name = "Huihui Qwen 3.8 27B Abliterated Q4_K";
+          id = "qwen3.8-flash-next";
+          name = "Qwen 3.8 Flash Next NVFP4";
           reasoning = true;
           input = [ "text" ];
           contextWindow = 65536;

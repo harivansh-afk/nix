@@ -30,8 +30,10 @@
         lib.optional (m != null) (lib.toInt (builtins.head m))
       ) (lib.attrValues spark.services.caddy.virtualHosts);
 
-      llamaSettings = spark.services.llama-cpp.settings;
-      llamaPreset = builtins.readFile llamaSettings."models-preset";
+      vllm = spark.virtualisation.oci-containers.containers.vllm;
+      vllmSettings = builtins.fromJSON (
+        builtins.readFile spark.environment.etc."vllm/config.yaml".source
+      );
 
       invariants = [
         (lib.assertMsg (proxiedPorts != [ ])
@@ -70,19 +72,30 @@
           !spark.programs.mosh.openFirewall
         ) "spark: mosh must rely on the tailscale trust boundary")
         (lib.assertMsg (
-          !(llamaSettings ? model)
-          && llamaSettings."models-max" == 1
-          && llamaSettings."models-autoload"
-          && llamaSettings."sleep-idle-seconds" == 300
-        ) "spark: llama.cpp must run as the bounded autoloading model router")
+          !spark.services.llama-cpp.enable
+          && !spark.services.ollama.enable
+          && spark.virtualisation.oci-containers.backend == "podman"
+          && !spark.virtualisation.docker.enable
+          && lib.hasInfix "@sha256:" vllm.image
+          && vllm.devices == [ "nvidia.com/gpu=all" ]
+        ) "spark: inference must use a pinned vLLM image through Podman and NVIDIA CDI")
         (lib.assertMsg (
-          lib.hasInfix "[qwen3.8-27b]" llamaPreset
-          && lib.hasInfix "[huihui-qwen3.8-27b-abliterated]" llamaPreset
-          && !(lib.hasInfix "[qwen3.6-35b-a3b]" llamaPreset)
-        ) "spark: llama.cpp must serve exactly the main and unchained local models")
+          vllmSettings.host == "127.0.0.1"
+          && vllmSettings.port == 18080
+          && vllm.ports == [ ]
+          && vllmSettings.max-num-seqs == 1
+          && vllmSettings.max-model-len == 65536
+          && vllmSettings.gpu-memory-utilization <= 0.80
+          && lib.elem "--memory-swap=100g" vllm.extraOptions
+          && lib.elem "--memory=100g" vllm.extraOptions
+          && lib.hasInfix "Restart=no" spark.systemd.units."podman-vllm.service".text
+        ) "spark: vLLM must stay loopback-only, bounded, and stop after a failed experiment")
         (lib.assertMsg (
-          spark.virtualisation.oci-containers.containers == { }
-        ) "spark: no always-on inference containers; local models go behind the llama.cpp router")
+          vllmSettings.served-model-name == spark.services.hermes-agent.settings.providers.spark.model
+          && vllmSettings.speculative-config.method == "mtp"
+          && vllmSettings.speculative-config.num_speculative_tokens == 2
+          && lib.elem "vllm-model-download.service" spark.systemd.services.podman-vllm.requires
+        ) "spark: the local provider must match vLLM, with MTP and weights staged before startup")
         (lib.assertMsg (
           lib.all (name: !(lib.hasPrefix "kb-" name) && !(lib.hasPrefix "llama-cpp-embed" name)) (
             lib.attrNames spark.systemd.units

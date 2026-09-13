@@ -5,6 +5,11 @@ NixOS's Podman container module. OMP's local overlay uses it for both roles;
 Hermes's optional `spark` provider uses it too. Hermes's default stays Astra.
 The old GGUF files remain on disk, but llama.cpp is disabled.
 
+Qwen starts only when explicitly requested with
+`sudo systemctl start podman-vllm`. Wait for `/health` before using it, and
+run `sudo systemctl stop podman-vllm` when finished to release its memory.
+It does not start at boot or unload automatically while idle.
+
 ## Runtime and model
 
 The ARM64 image is built by [lancelind/qwen3.8-Flash-DGX](https://github.com/lancelind/qwen3.8-Flash-DGX/tree/a35c3cc2935dff63eea8a664509a5931b4b82ea2)

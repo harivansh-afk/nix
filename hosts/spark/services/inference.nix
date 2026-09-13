@@ -65,6 +65,7 @@ in
   };
 
   virtualisation.oci-containers.containers.vllm = {
+    autoStart = false;
     image = "ghcr.io/lancelind/qwen38-flash-dgx@sha256:c949df1ba87e1ecda351ef2cf8e58b9d7e7e973dda7998b476eec446fd6d0872";
     pull = "missing";
     devices = [ "nvidia.com/gpu=all" ];

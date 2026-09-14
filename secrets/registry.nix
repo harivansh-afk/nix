@@ -37,6 +37,12 @@
       restartUnits = [ "hermes-backend.service" ];
     };
 
+    "hermes-voice.env" = {
+      format = "dotenv";
+      owner = "root";
+      restartUnits = [ "hermes-backend.service" ];
+    };
+
     "hermes-photon.env" = {
       owner = username;
       restartUnits = [ "hermes-agent.service" ];

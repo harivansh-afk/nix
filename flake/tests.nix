@@ -36,6 +36,22 @@
       );
 
       invariants = [
+        (lib.assertMsg (
+          let
+            desktop = builtins.fromJSON (
+              builtins.unsafeDiscardStringContext
+                spark.services.hermes-agent.hermesHomeFiles."profiles/desktop/config.yaml"
+            );
+            secret = spark.sops.secrets."hermes-voice.env";
+          in
+          desktop.voice.voice_chat_mode == "gpt-live"
+          && desktop.voice.gpt_live.voice == "marin"
+          && !(desktop.voice.gpt_live ? api_key)
+          && secret.format == "dotenv"
+          && secret.owner == "root"
+          && lib.elem "hermes-backend.service" secret.restartUnits
+          && lib.elem secret.path spark.systemd.services.hermes-backend.serviceConfig.EnvironmentFile
+        ) "spark: desktop GPT-Live must use the runtime SOPS voice credential, not a store-embedded key")
         (lib.assertMsg (proxiedPorts != [ ])
           "spark: expected at least one caddy reverse_proxy backend; the port-extraction regex may have rotted"
         )

@@ -33,6 +33,10 @@ in
           inherit (hermes.settings.delegation) model reasoning_effort max_spawn_depth;
         };
         display.busy_input_mode = "steer";
+        voice = {
+          voice_chat_mode = "gpt-live";
+          gpt_live.voice = "marin";
+        };
         terminal.cwd = "${profileHome}/workspace";
         desktop.repo_scan_roots = [ "${config.users.users.${hermes.user}.home}/Documents/Git" ];
         platform_toolsets.cli = [
@@ -76,7 +80,10 @@ in
     environment.HERMES_HOME = lib.mkForce profileHome;
     serviceConfig = {
       WorkingDirectory = lib.mkForce "${profileHome}/workspace";
-      EnvironmentFile = [ config.sops.secrets."hermes-dashboard.env".path ];
+      EnvironmentFile = [
+        config.sops.secrets."hermes-dashboard.env".path
+        config.sops.secrets."hermes-voice.env".path
+      ];
     };
     restartTriggers = [
       (pkgs.writeText "hermes-desktop-config.json" hermes.hermesHomeFiles."profiles/desktop/config.yaml")

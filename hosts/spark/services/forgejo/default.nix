@@ -221,6 +221,7 @@ in
     group = "git";
     secrets.mailer.PASSWD = smtpPasswordFile;
     settings = {
+      "git.timeout".MIRROR = 1800;
       server = {
         DOMAIN = forgejoDomain;
         ROOT_URL = "https://${forgejoDomain}/";

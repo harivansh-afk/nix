@@ -19,7 +19,7 @@ Everything is a single flake, declared with [flake-parts](https://github.com/her
 **`hosts/spark/services/`**
 
 - [Forgejo](https://git.harivan.sh) - my git
-- llama.cpp - local model inference
+- vLLM - local model inference
 - Whisper Large v3 - for speech-to-text using voice-ink
 - Vaultwarden - password manager
 

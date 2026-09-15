@@ -91,7 +91,7 @@
 <text x="354" y="440" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="11" fill="#d97757" font-weight="bold" text-anchor="start" letter-spacing="1.5">AI</text>
 <text x="606" y="440" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10" fill="#7c6f64" font-weight="normal" text-anchor="end">GB10 GPU</text>
 <rect x="354" y="448" width="182.025" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
-<text x="366" y="462.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">llama.cpp · GPU inference</text>
+<text x="366" y="462.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">vLLM · GPU inference</text>
 <rect x="354" y="476" width="182.025" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
 <text x="366" y="490.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">whisper v3 · speech-to-text</text>
 <line x1="180" y1="596" x2="180" y2="616" stroke="#504945" stroke-width="1.2"/>

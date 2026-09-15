@@ -119,11 +119,10 @@ hosts/
       cloudflared.nix  Cloudflare tunnel to Caddy
       draw.nix         draw (self-hosted Excalidraw+) via the draw flake's NixOS module
       hermes/          Hermes gateway, desktop backend and messaging profiles
-      inference.nix    Local llama.cpp inference server (GPU)
+      inference.nix    Local vLLM inference container (GPU)
       mosh.nix         Mosh UDP server config
       vaultwarden.nix  Vaultwarden password manager
       website.nix      harivan.sh static site + page counter (counter code lives in the website repo, counter/counter.py)
-      kb/              Disabled personal KB source; see kb/README.md for retained data
       whisper/         GPU speech-to-text server (default.nix + setup.sh + server.py)
       forgejo/         Forgejo server, cozybox css in assets/, mirror manifest, Actions runner, run-by-hand scripts/
   ix/
@@ -154,7 +153,7 @@ Accent constraint for agent-facing TUI roles (omp markdown headings/inline code/
 
 omp runs stock upstream: no extensions and no hooks, by policy. The extension monkey-patches (diffs.nvim-style edit rendering, purple tool dots, the /mode command, the Claude agent-def bridge) were removed in #535 after auditing 18.0.11 - do not re-add them by reflex; if upstream grows a native knob for one of these, use the knob. The activation script clears any symlink from `~/.omp/agent/extensions/` on every switch, so a stray extension link does not quietly resurrect the pattern. No agent harness has hooks configured, and none should be created.
 
-Nix seeds omp from `modules/users/user-config/agents.nix`: the cozybox theme JSONs, `models.yml` (the spark-local llama.cpp provider), `mcp.json` (the index MCP server, spark only), `config.yml` (xattr-tracked reseed - omp rewrites it at runtime, so it is a writable copy, not a symlink), and `local.yml`, a session overlay that puts both model roles on local Qwen: `omp --config ~/.omp/agent/local.yml`.
+Nix seeds omp from `modules/users/user-config/agents.nix`: the cozybox theme JSONs, `models.yml` (the spark-local vLLM provider), `mcp.json` (the index MCP server, spark only), `config.yml` (xattr-tracked reseed - omp rewrites it at runtime, so it is a writable copy, not a symlink), and `local.yml`, a session overlay that puts both model roles on local Qwen: `omp --config ~/.omp/agent/local.yml`.
 
 `config.yml`'s `setupVersion` must track upstream's `CURRENT_SETUP_VERSION`: omp's cold-launch gate eagerly imports the whole setup-wizard barrel whenever the stored version is lower, before `startup.setupWizard` is consulted, so a stale pin taxes every launch. Check the constant in `src/modes/setup-version.ts` when bumping omp majors.
 

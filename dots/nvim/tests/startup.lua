@@ -25,6 +25,7 @@ local function check()
     end
   end
   for _, name in ipairs {
+    "pr.nvim",
     "canola.nvim",
     "fzf-lua",
     "forge.nvim",
@@ -38,9 +39,16 @@ local function check()
   } do
     require("lz.n").trigger_load(name)
   end
-  for _, command in ipairs { "Git", "Canola", "FzfLua", "Forge", "Preview", "RenderMarkdown", "ThemeSync" } do
+  for _, command in ipairs { "PR", "Git", "Canola", "FzfLua", "Forge", "Preview", "RenderMarkdown", "ThemeSync" } do
     assert(vim.fn.exists(":" .. command) == 2, command .. " missing")
   end
+  local pr_source = debug.getinfo(require("pr").setup, "S").source
+  assert(pr_source:find("/nix/store/", 1, true), "pr.nvim did not load from the pinned package")
+  assert(type(require("pr.gitstats").fugitive) == "function", "Fugitive stats integration missing")
+  assert(vim.fn.maparg("<C-p>", "n", false, true).desc == "pr: PR list", "PR shortcut missing")
+  assert(vim.fn.maparg("]c", "n", false, true).desc == "pr: next commit / diff jump", "PR next commit overridden")
+  assert(vim.fn.maparg("[c", "n", false, true).desc == "pr: prev commit / diff jump", "PR previous commit overridden")
+  assert(#vim.fn.getcompletion("pr.nvim", "help") > 0, "pr.nvim help tags missing")
   for _, lang in ipairs {
     "bash",
     "c",

@@ -24,6 +24,7 @@ end
 
 return {
   "fzf-lua",
+  lazy = false,
   cmd = "FzfLua",
   after = function()
     local fzf = require "fzf-lua"

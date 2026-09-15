@@ -10,6 +10,8 @@
         configDir = ../dots/nvim;
         curated = true;
       };
+      pluginSources = builtins.fromJSON (builtins.readFile ../dots/nvim/pack-sources.json);
+      prSource = pkgs.fetchgit { inherit (pluginSources."pr.nvim") url rev hash; };
       hermes = self.nixosConfigurations.spark.config.services.hermes-agent;
       lint =
         name: tools: script:
@@ -38,7 +40,8 @@
           pkgs.bash
           pkgs.coreutils
           pkgs.neovim
-        ] "bash scripts/pr-smoke.sh";
+          pkgs.git
+        ] "bash ${prSource}/scripts/test.sh";
 
         neovim = lint "neovim" [ pkgs.bash pkgs.coreutils pkgs.git neovim ] "bash scripts/nvim-smoke.sh";
         stylua = lint "stylua" [ pkgs.stylua ] "stylua --check dots/nvim";

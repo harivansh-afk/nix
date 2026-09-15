@@ -54,16 +54,10 @@ Options: >
         editor.lua              Completion, pairs, surround, ufo, preview
         lsp.lua                 nvim-lspconfig
         fzf.lua                 Fzf-lua fuzzy finder
-        git.lua                 Fugitive, gitsigns, diffs.nvim
+        git.lua                 pr.nvim, Fugitive, gitsigns, diffs.nvim
         canola.lua              Canola file explorer
         treesitter.lua          Treesitter + textobjects
         ui.lua                  Cozybox, statusline, nonicons
-      pr/                       Forge flow (pr://list, pr://log, pr://files)
-        ci/                     CI store, checks pane, job logs (pr://checks)
-        run.lua                 Process engine (git, spawn/await, sh/json, pump)
-        surface.lua             Shared pr:// list buffer (list + log)
-        log.lua                 Commit log with CI orbs (pr://log)
-        tree.lua                PR worktrees, real files at a commit
       statusline.lua            Native statusline renderer
     after/
       lsp/
@@ -112,6 +106,7 @@ normal workstation launches use ~/.config/nvim for live Lua edits.
     tpope/vim-fugitive              Git commands
     lewis6991/gitsigns.nvim         Git gutter signs
     barrettruth/diffs.nvim          Diff highlighting
+    https://git.harivan.sh/harivansh-afk/pr.nvim         PR review
 
     echasnovski/mini.pairs          Auto-close brackets
     nvim-mini/mini.completion       Manual LSP completion and signatures
@@ -165,16 +160,15 @@ GIT ~
     <leader>gB          Toggle line blame
     ]g / [g             Next/prev hunk
 
-CI ~
-    <leader>ci          Checks pane for this branch's PR (pr://checks)
+PULL REQUESTS ~
+    :PR / <C-p>         PR list
+    <leader>gl          Commit log
+    <leader>ci          CI checks
+    <leader>ct          Review threads
 
-    Inside the checks pane:
-    <CR>                Open the full log for the check under the cursor
-    <Tab> / =           Expand or collapse a check
-    ]j / [j             Next/prev job
-    O                   Open on github.com
-    q                   Close the pane
-    g?                  Mappings help
+    pr.nvim owns this workflow. See |pr-commands| and |pr-keymaps| for the
+    commands and global shortcuts enabled by this config; g? shows local
+    mappings in each PR buffer.
 
 FZF ~
     <C-f>               Find files (git-aware)

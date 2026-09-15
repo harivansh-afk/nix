@@ -137,7 +137,7 @@ pkgs/
     lib/               Helpers (wallpaper-gen.py)
 terraform/
   cloudflare/          Declarative Cloudflare DNS for harivan.sh via terranix
-scripts/               Repo tooling: pr-smoke.sh, nvim-smoke.sh, nvim-update.sh
+scripts/               Repo tooling: nvim-smoke.sh, nvim-update.sh
 assets/                Readme artwork + the static wallpapers
 dots/                  Dotfile sources (nvim, karabiner, lazygit, agents/ instructions + skills, etc.)
 ```

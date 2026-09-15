@@ -80,6 +80,11 @@
     "rev": "5f032a85be210cd1c6ac98861eb3b187ff3bd5eb",
     "url": "https://github.com/nvim-tree/nvim-web-devicons"
   },
+  "pr.nvim": {
+    "url": "https://git.harivan.sh/harivansh-afk/pr.nvim",
+    "rev": "2d0648ec9d88de69393b01ba622a8194b99f55e6",
+    "hash": "sha256-kfxVtMVy9VUV2W7K39wNHJzUtBniYMfPpRC4tabrDO0="
+  },
   "preview.nvim": {
     "hash": "sha256-JDAav/3xuhIp0IJKtrWwEchoEnNfnYOtLhraf8D5daY=",
     "rev": "5b250e6e8be47489f02760121fcd1acf9622856e",

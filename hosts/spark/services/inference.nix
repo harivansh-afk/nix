@@ -44,9 +44,6 @@ let
   };
 in
 {
-  services.llama-cpp.enable = lib.mkForce false;
-  services.ollama.enable = lib.mkForce false;
-
   environment.etc."vllm/config.yaml".source = settings;
   systemd.tmpfiles.rules = [ "d /var/lib/vllm/cache 0755 root root -" ];
 
@@ -99,11 +96,7 @@ in
 
   systemd.services.podman-vllm = {
     requires = [ "vllm-model-download.service" ];
-    after = [
-      "vllm-model-download.service"
-      "llama-cpp.service"
-    ];
-    conflicts = [ "llama-cpp.service" ];
+    after = [ "vllm-model-download.service" ];
     serviceConfig = {
       Restart = lib.mkForce "no";
       TimeoutStartSec = lib.mkForce "30min";

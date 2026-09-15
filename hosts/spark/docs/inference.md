@@ -3,7 +3,8 @@
 Spark serves `qwen3.8-flash-next` at `http://127.0.0.1:18080/v1` through
 NixOS's Podman container module. OMP's local overlay uses it for both roles;
 Hermes's optional `spark` provider uses it too. Hermes's default stays Astra.
-The old GGUF files remain on disk, but llama.cpp is disabled.
+llama.cpp and Ollama are not part of the runtime. A retained abliterated GGUF
+is not configured for serving.
 
 Qwen starts only when explicitly requested with
 `sudo systemctl start podman-vllm`. Wait for `/health` before using it, and
@@ -34,12 +35,9 @@ as the GPU. These settings still require measurement on this host.
 
 ## First experiment
 
-**Storage blocks deployment:** on 2026-09-12 the host had about 63 GiB free,
-while the pinned checkpoint totals about 126 GiB. The image adds roughly
-9 GiB compressed plus unpacked layers and compilation caches. Arrange space
-before merging; activation downloads the model and replaces the endpoint.
-No model download, GPU startup, speed or tool-calling test has been completed
-for this configuration.
+The configuration is deployed and model weights are present on disk.
+The runtime is manually started; GPU startup, speed and tool-calling acceptance
+have not been verified by the storage cleanup.
 
 After deployment, follow `journalctl -fu vllm-model-download` and then
 `journalctl -fu podman-vllm`. Systemd's container-active state does not mean
@@ -52,5 +50,12 @@ router, this runtime keeps its model resident while idle.
 A failed container stays stopped. After diagnosing it, use
 `sudo systemctl restart podman-vllm`; a failed download can be resumed with
 `sudo systemctl restart vllm-model-download` first. Change settings in Nix and
-rebuild. Rollback is reverting the migration and rebuilding; the retained
-GGUFs let the former llama.cpp configuration start again.
+rebuild. Restoring an older inference configuration also requires restoring
+its model files; the retired model downloads have been deleted.
+
+## Retired knowledge base
+
+The unused KB implementation has been removed from the repository. Its services
+and Hermes plugin remain disabled. Existing PostgreSQL data, `/var/lib/kb`,
+`/var/lib/llama-cpp-embed`, and `/var/lib/cognee` are retained on disk.
+Removing the source does not delete stored data.

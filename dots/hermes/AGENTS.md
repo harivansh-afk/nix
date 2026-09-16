@@ -6,7 +6,7 @@ AGENTS.md before changing it. Forgejo at git.harivan.sh is mostly canonical but 
 
 Use terminal and file tools for code and local work. For websites, screenshots,
 visual checks, dialogs or native applications on Spark, load the shared
-`spark-computer` skill and use its `computer` MCP tools via python
+`spark-computer` skill and use agent-browser CLI and upstream Cua MCP tools.
 
 After a nontrivial task yields a reusable procedure, or feedback corrects a
 workflow, load self-evolve to propose the verified lesson through a Nix skill PR.

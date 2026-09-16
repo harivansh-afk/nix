@@ -1,86 +1,58 @@
 ---
 name: spark-computer
-description: Use Spark's browser or desktop for websites, screenshots, visual checks, native apps and dialogs.
+description: Use Spark's agent-browser CLI and native Cua MCP.
 ---
 
 # Spark computer
 
-Use the `computer` MCP server's `computer_exec` and `computer_close` tools.
-Hermes prefixes these with `mcp__computer__`. Give each task a unique `session`;
-Python variables, imports and page references persist across calls in that session.
-
-For short browser tasks, use this session directly rather than spawning a worker.
-Batch known navigation, a justified readiness check and screenshot capture in one
-execution. Split only where a returned observation is needed to choose the next
-action; the Python runtime is fast, but every model round trip adds latency.
+Use **agent-browser CLI** for websites and upstream **Cua Driver MCP** (`computer`)
+for native apps. No custom Python execution server or browser MCP.
 
 ## Browser
 
-Use async Playwright with top-level `await`:
+Load the version-matched guide with `agent-browser skills get core`.
+Start Chromium only for a requested browser task:
 
-```python
-page = await browser.page()
-await page.goto("https://example.com")
-print(await page.title())
-display(await page.screenshot())
+```sh
+systemctl --user start chromium
+curl --retry 20 --retry-connrefused --retry-delay 1 --max-time 2 --fail --silent http://127.0.0.1:19222/json/version
+agent-browser --session <unique-task> --cdp 19222 --pin-tab open <url>
+agent-browser --session <unique-task> --cdp 19222 --pin-tab snapshot -i
 ```
 
-The helper creates one owned tab in Hari's existing Chromium profile. Use
-observed roles, labels and DOM state for controls; screenshots for canvas and
-visual checks. Group known steps and wait on specific locators/events rather
-than sleeping. `display(image_bytes_or_path)` emits an MCP image. In Hermes,
-pass the path after `MEDIA:` to its separate `vision_analyze` tool as `image_url`,
-with a `question` describing what to inspect. This loads the screenshot into
-your visual context; a file path alone is not a visible image. Other harnesses
-can display MCP images directly.
+Use a unique session and `--pin-tab` on shared CDP. These create a task-owned
+page instead of navigating an existing user tab. Use observed refs to click/fill;
+refresh snapshots after page changes. Batch known actions with `&&` or upstream
+`batch --bail`, then verify the result. Use screenshots for visual checks; load
+local image paths with `vision_analyze` in Hermes.
 
-Wait for observed controls in the active view, not guessed CSS classes or a
-different layout. A dashboard can show a list while its course-card elements
-remain hidden. For quick captures, use a short explicit readiness timeout (for
-example 5 seconds); on timeout inspect current state before extending the wait.
-Do not blindly retry or assume a page is ready just because navigation completed.
-Capture and inspect loading states rather than spending the default 30 seconds
-waiting for an unverified selector. Keep text output limited to what the task
-needs; a screenshot request does not require dumping the entire page.
+Close only the task's pinned tab with `tab close`, then `close` its CLI session.
+Never use `close --all`. A closed pinned tab must produce an error, not silently
+switch to someone else's tab. Do not retry mutations blindly after transport loss.
+Cookies and account state remain shared: coordinate work on the same account.
+Do not export cookies, copy profiles, or launch a second browser on this profile.
+CDP stays loopback-only.
 
-`await browser.tabs()` lists tab metadata. When explicitly asked to operate an
-existing tab, resolve its exact reference from `page.context.pages`. Preserve
-unrelated tabs. Sessions share cookies, storage and account state: coordinate
-conflicting work on the same site. Extra pages or isolated contexts are your
-responsibility to close; isolated contexts do not inherit the existing login.
+Chromium does not start at desktop login and normal window closure stays closed.
+If you started it and no other task/user needs it, stop it with
+`systemctl --user stop chromium`. Never stop a pre-existing shared browser.
 
-## Desktop
+## Native apps
 
-Set `desktop: true` when using `desktop`. Each execution holds a shared lock
-across participating agents; browser-only calls can continue independently.
-Keep dependent observation/action/verification steps together under that lock.
-Human input and direct clients bypass it; yield when Hari takes over.
+Load `cua-driver` and its `LINUX.md`. The `computer` MCP connects directly to
+`cua-driver mcp --socket "$XDG_RUNTIME_DIR/cua-driver/control.sock"`.
+Discover exact schemas before unfamiliar calls.
 
-```python
-print(await desktop.list_windows())
-print(await desktop.describe("get_window_state"))
-```
+1. `list_windows`: select the observed PID and window ID.
+2. `get_window_state`: inspect that exact window; prefer fresh `element_token`s.
+3. Use upstream actions, then verify through fresh state, pixels, or application
+   output. `unknown` and `unverifiable` do not mean success.
+4. End named sessions after use. Serialize native interactions and yield to the
+   user: separate MCP clients are not separate input seats.
 
-Select the exact window's observed `pid` and `window_id`, then call
-`await desktop.get_window_state(pid=PID, window_id=WINDOW_ID)`. CUA screenshots
-use the same image route above. Discover unfamiliar action schemas with
-`await desktop.describe("tool_name")`, then call `await desktop.tool_name(...)`.
+Stock Sway cannot inject arbitrary background input into occluded windows.
+Foreground escalation needs explicit authorization. Never bypass a refusal.
+GTK field text may be absent from accessibility output; verify visually or through
+application output instead of trusting an action response alone.
 
-Prefer fresh accessibility `element_token` values (or matching snapshot/index).
-Use `delivery_mode="foreground"` for visible input when needed. Window actions
-use window-local screenshot coordinates; account for harness image resizing.
-Reobserve after actions and after reacquiring the lock. Verify application state;
-`effect: unverifiable` does not establish success. For refused native actions,
-read the adjacent `cua-driver/LINUX.md`. Sway cannot independently inject raw
-input into an occluded window.
-
-## Finish and recover
-
-Use async APIs and keep background tasks within the call. Timeouts are cooperative;
-blocking Python cannot be interrupted. Errors preserve variables but may follow
-partial actions: inspect before retrying. After tab loss or a browser/transport
-restart, close the stale session and start another.
-
-Finish with `computer_close(session=...)`; it closes the owned tab and CUA
-connection, preserving Chromium and other tabs. For service failures and test
-commands, read `~/Documents/Git/nix/hosts/spark/docs/browser.md`.
+Diagnostics and disposable tests: `hosts/spark/docs/browser.md` in the Nix repo.

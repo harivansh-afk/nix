@@ -7,9 +7,9 @@
 let
   beeper = pkgs.callPackage ../../../pkgs/beeper { };
   cuaDriver = pkgs.callPackage ../../../pkgs/cua-driver { };
-  computer = import ../../../pkgs/spark-computer { inherit pkgs; };
+  computer = import ../../../pkgs/computer-tools { inherit pkgs; };
   chromium = pkgs.chromium.override {
-    commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret --force-renderer-accessibility --remote-debugging-port=19222";
+    commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret --force-renderer-accessibility --remote-debugging-address=127.0.0.1 --remote-debugging-port=19222";
   };
   swayConfig = pkgs.writeText "sway.conf" ''
     xwayland disable
@@ -24,7 +24,7 @@ let
     bindsym Mod4+f fullscreen toggle
     bindsym Mod4+Left focus left
     bindsym Mod4+Right focus right
-    exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE GTK_A11Y NO_AT_BRIDGE && ${pkgs.systemd}/bin/systemctl --user start wayvnc cua-driver chromium beeper
+    exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE GTK_A11Y NO_AT_BRIDGE && ${pkgs.systemd}/bin/systemctl --user start wayvnc cua-driver beeper
     exec ${pkgs.ghostty}/bin/ghostty
   '';
 in
@@ -32,7 +32,8 @@ in
   environment.systemPackages = [
     beeper
     chromium
-    computer
+    computer.cuaMcp
+    computer.agentBrowser
     cuaDriver
     pkgs.ghostty
     pkgs.sway
@@ -89,12 +90,12 @@ in
     after = [ "sway.service" ];
     unitConfig.ConditionUser = username;
     environment = {
-      GTK_A11Y = "always";
+      GTK_A11Y = "atspi";
       NO_AT_BRIDGE = "0";
     };
     serviceConfig = {
       ExecStart = "${chromium}/bin/chromium --restore-last-session";
-      Restart = "always";
+      Restart = "on-failure";
       RestartSec = 3;
       UMask = "0077";
     };
@@ -139,7 +140,7 @@ in
       WLR_RENDERER = "pixman";
       XDG_CURRENT_DESKTOP = "sway";
       XDG_SESSION_TYPE = "wayland";
-      GTK_A11Y = "always";
+      GTK_A11Y = "atspi";
       NO_AT_BRIDGE = "0";
     };
     serviceConfig = {

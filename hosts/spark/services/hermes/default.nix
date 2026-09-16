@@ -11,7 +11,7 @@ let
   stateDir = "${home}/.local/state/hermes";
   runtimeDir = "/run/user/${toString config.users.users.${username}.uid}";
   cuaDriver = pkgs.callPackage ../../../../pkgs/cua-driver { };
-  computer = import ../../../../pkgs/spark-computer { inherit pkgs; };
+  computer = import ../../../../pkgs/computer-tools { inherit pkgs; };
   photonSrc = "${inputs.hermes-agent}/plugins/platforms/photon/sidecar";
   photonDeps = pkgs.importNpmLock.buildNodeModules {
     npmRoot = photonSrc;
@@ -134,16 +134,14 @@ in
         api_mode = "chat_completions";
         model = "qwen3.8-flash-next";
       };
-      mcp_servers.computer = {
-        command = "${computer}/bin/spark-computer";
-        args = [ ];
-        timeout = 180;
-        lazy = false;
-        tools.include = [
-          "computer_exec"
-          "computer_close"
-        ];
-      };
+      mcp_servers = lib.mapAttrs (
+        _: server:
+        server
+        // {
+          timeout = 60;
+          lazy = true;
+        }
+      ) computer.servers;
       approvals.mode = "off";
       security.protected_instruction_files = false;
       plugins = {
@@ -159,8 +157,6 @@ in
             "skills_list"
             "skill_view"
             "clarify"
-            "mcp__computer__computer_exec"
-            "mcp__computer__computer_close"
             "vision_analyze"
             "mcp__roomcast__status"
             "mcp__roomcast__control"

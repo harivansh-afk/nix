@@ -37,6 +37,26 @@
 
       invariants = [
         (lib.assertMsg (
+          spark.systemd.user.services.chromium.wantedBy == [ ]
+          && spark.systemd.user.services.chromium.serviceConfig.Restart == "on-failure"
+          && spark.systemd.user.services.sway.environment.GTK_A11Y == "atspi"
+        ) "spark: Chromium must remain on-demand and GTK must expose AT-SPI")
+        (lib.assertMsg
+          (
+            let
+              desktop = builtins.fromJSON (
+                builtins.unsafeDiscardStringContext
+                  spark.services.hermes-agent.hermesHomeFiles."profiles/desktop/config.yaml"
+              );
+            in
+            builtins.attrNames desktop.mcp_servers == [ "computer" ]
+            && lib.hasSuffix "/bin/spark-cua-mcp" desktop.mcp_servers.computer.command
+            && lib.elem "browser" desktop.agent.disabled_toolsets
+            && !(desktop.mcp_servers.computer ? tools)
+          )
+          "spark: desktop must use upstream Cua and CLI-only browser, not duplicate browser MCP or facade filters"
+        )
+        (lib.assertMsg (
           !(lib.elem 23373 proxiedPorts)
         ) "spark: Beeper's local API must not be reverse-proxied")
         (lib.assertMsg (

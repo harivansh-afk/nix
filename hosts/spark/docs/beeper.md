@@ -47,8 +47,28 @@ is already running, use `systemctl --user start beeper`; no Sway restart is need
    expiry (30 days by default); reauthorize when it expires.
    Credentials stay in each profile's runtime OAuth store, never Git or Nix.
 
-After deployment, start a fresh Hermes session and ask it to list connected
-messaging accounts, find a specific chat, and read recent messages. Tool discovery
+## Coding agents
+
+On Spark, Nix registers Beeper globally in Codex's `~/.codex/config.toml` and
+Claude Code's user-scoped `~/.claude.json`. After deploying, authorize each once:
+
+```sh
+codex mcp login beeper --oauth-client-registration dcr
+claude mcp login beeper
+```
+
+Open each authorization URL on Spark and approve its named client in Beeper.
+Codex uses dynamic client registration, matching Hermes's `cimd = false` setup.
+Each client retains its own OAuth credentials across sessions and Nix rebuilds;
+reauthorize when the Beeper approval expires or is revoked. Rebuilds register the
+endpoint but do not grant access or copy Hermes credentials. Mac-local agents
+are not configured to reach Spark's loopback API.
+
+## Verification
+
+After deployment and authorization, start a fresh session in each client and ask
+it to list connected messaging accounts, find a specific chat, and read recent
+messages. Tool discovery
 alone is not acceptance. Check the conversation plugin's foreground allowlist
 when iMessage can delegate Beeper work but cannot perform short reads itself.
 

@@ -38,6 +38,21 @@
       invariants = [
         (lib.assertMsg (
           let
+            beeper = spark.systemd.user.services.beeper;
+          in
+          beeper.partOf == [ "sway.service" ]
+          && beeper.after == [ "sway.service" ]
+          && beeper.wantedBy == [ ]
+          && beeper.unitConfig.ConditionUser == "rathi"
+          && beeper.serviceConfig.Restart == "always"
+          && beeper.serviceConfig.UMask == "0077"
+          && lib.any (p: lib.getName p == "beeper") spark.environment.systemPackages
+          && !(lib.hasInfix "--no-sandbox" beeper.serviceConfig.ExecStart)
+          && !(lib.elem 23373 proxiedPorts)
+          && !(lib.elem 23373 spark.networking.firewall.allowedTCPPorts)
+        ) "spark: Beeper must follow the private Sway session without exposing its API")
+        (lib.assertMsg (
+          let
             desktop = builtins.fromJSON (
               builtins.unsafeDiscardStringContext
                 spark.services.hermes-agent.hermesHomeFiles."profiles/desktop/config.yaml"

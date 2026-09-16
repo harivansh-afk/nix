@@ -55,4 +55,4 @@ Foreground escalation needs explicit authorization. Never bypass a refusal.
 GTK field text may be absent from accessibility output; verify visually or through
 application output instead of trusting an action response alone.
 
-Diagnostics and disposable tests: `hosts/spark/docs/browser.md` in the Nix repo.
+Diagnostics: `hosts/spark/docs/browser.md` in the Nix repo.

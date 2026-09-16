@@ -42,22 +42,3 @@ occluded window; foreground escalation needs explicit authorization.
 systemctl --user status sway chromium cua-driver wayvnc --no-pager
 cua-driver call list_windows '{}' --socket "/run/user/$(id -u)/cua-driver/control.sock"
 ```
-
-## Acceptance
-
-```sh
-nix run .#computer-smoke
-nix fmt
-nix eval .#nixosConfigurations.spark.config.system.build.toplevel.drvPath --raw
-```
-
-The smoke test uses a disposable Chromium profile and a separate Sway/D-Bus/Cua
-session with a GTK dialog. It checks browser form interaction, screenshot output,
-independent pinned tabs, tab-loss errors and sentinel-tab preservation. Native
-verification checks actual application output after a field edit and button
-activation, rather than trusting the action response alone. It does not access
-Beeper, authenticated accounts or the live browser profile.
-
-This replaces the custom-facade approach in PR #658. Deployment and authenticated
-acceptance are separate from package/fixture verification. No end-to-end model
-latency improvement is claimed without a matched benchmark.

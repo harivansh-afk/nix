@@ -102,18 +102,13 @@
       };
     in
     {
-      packages =
-        portableScripts
-        // lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "aarch64-linux") {
-          computer-smoke = import ../pkgs/computer-tools/smoke.nix { inherit pkgs; };
-        }
-        // {
-          inherit
-            btop
-            lazygit
-            nvim
-            tools
-            ;
-        };
+      packages = portableScripts // {
+        inherit
+          btop
+          lazygit
+          nvim
+          tools
+          ;
+      };
     };
 }

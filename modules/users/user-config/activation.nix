@@ -29,7 +29,7 @@
   ghosttyThemes,
   lazygitConfigs,
   claudeSettings,
-  claudeComputerSource,
+  claudeMcpSource,
   claudeMd,
   codexAgentsMd,
   agentSkills,
@@ -171,13 +171,13 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${agentSkills}" "${homeDirectory}/.agents/skills"
   mkSymlink "${agentSkills}" "${homeDirectory}/.claude/skills"
   mkSymlink "${claudeSettings}" "${homeDirectory}/.claude/settings.json"
-  ${lib.optionalString (claudeComputerSource != null) ''
+  ${lib.optionalString (claudeMcpSource != null) ''
     target="${homeDirectory}/.claude.json"
     tmp=$(mktemp "${homeDirectory}/.claude.json.XXXXXX")
     if [ -e "$target" ]; then
-      ${pkgs.jq}/bin/jq --slurpfile computer ${claudeComputerSource} '.mcpServers = ((.mcpServers // {}) + $computer[0])' "$target" > "$tmp"
+      ${pkgs.jq}/bin/jq --slurpfile servers ${claudeMcpSource} '.mcpServers = ((.mcpServers // {}) + $servers[0])' "$target" > "$tmp"
     else
-      ${pkgs.jq}/bin/jq -n --slurpfile computer ${claudeComputerSource} '{mcpServers: $computer[0]}' > "$tmp"
+      ${pkgs.jq}/bin/jq -n --slurpfile servers ${claudeMcpSource} '{mcpServers: $servers[0]}' > "$tmp"
     fi
     chmod 600 "$tmp"
     mv "$tmp" "$target"

@@ -88,17 +88,23 @@ in
       }
     ]
   );
-  claudeComputerSource =
+  claudeMcpSource =
     if hostname == "spark" then
-      jsonFormat.generate "claude-computer.json" (
-        lib.mapAttrs (
+      jsonFormat.generate "claude-mcp.json" (
+        (lib.mapAttrs (
           _: server:
           server
           // {
             type = "stdio";
             timeout = 60000;
           }
-        ) computer.servers
+        ) computer.servers)
+        // {
+          beeper = {
+            type = "http";
+            url = "http://127.0.0.1:23373/v0/mcp";
+          };
+        }
       )
     else
       null;
@@ -128,6 +134,9 @@ in
       command = "${computer.servers.computer.command}"
       startup_timeout_sec = 20
       tool_timeout_sec = 60
+
+      [mcp_servers.beeper]
+      url = "http://127.0.0.1:23373/v0/mcp"
 
     ''
   );

@@ -28,6 +28,7 @@ let
   toolsets = [
     "hermes-cli"
     "computer"
+    "beeper"
   ];
   skillsDir = ../../../../dots/hermes/skills;
   skillNames = lib.filter (name: builtins.pathExists (skillsDir + "/${name}/SKILL.md")) (

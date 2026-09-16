@@ -42,6 +42,7 @@ in
         platform_toolsets.cli = [
           "hermes-cli"
           "computer"
+          "beeper"
         ];
         mcp_servers = {
           inherit (hermes.settings.mcp_servers) computer beeper;

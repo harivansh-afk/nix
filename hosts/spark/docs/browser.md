@@ -1,6 +1,6 @@
 # Spark browser and desktop
 
-Use pinned **agent-browser 0.36.0 CLI** for browser work and **Cua Driver 0.23.2
+Use pinned **agent-browser 0.36.0 CLI** for browser work and **Cua Driver 0.28.2
 MCP** for native apps. There is no Playwright MCP or custom Python execution
 server. Nix installs the upstream binaries and version-matched skills; no runtime
 npm/uvx installs are needed. The [shared skill](../../../dots/agents/skills/spark-computer/SKILL.md)
@@ -15,8 +15,8 @@ window closure. An agent starts it explicitly only when a browser task needs it:
 ```sh
 systemctl --user start chromium
 curl --retry 20 --retry-connrefused --retry-delay 1 --max-time 2 --fail --silent http://127.0.0.1:19222/json/version
-agent-browser --session unique-task --cdp 19222 --pin-tab open https://example.com
-agent-browser --session unique-task --cdp 19222 --pin-tab snapshot -i
+/run/current-system/sw/bin/agent-browser --session unique-task --cdp 19222 --pin-tab open https://example.com
+/run/current-system/sw/bin/agent-browser --session unique-task --cdp 19222 --pin-tab snapshot -i
 ```
 
 Use unique sessions and strict tab pinning. Never navigate someone else's tab,
@@ -24,6 +24,18 @@ copy profiles, export cookies, or expose CDP publicly. Close only the task tab,
 then its CLI session. Stop Chromium afterward only if the task started it and
 nobody else needs it. Explicit task startup is intentional, not a hidden daemon
 that resurrects the browser during tool discovery.
+
+Use the absolute system binary: background/login shells can resolve an older
+user-installed agent-browser without `--pin-tab`.
+
+## Window controls
+
+Waybar shows the focused window's title and a top-right **Close ×** button.
+It requests a normal close of that window, not a process kill. **Alt+F4** and
+**Super+Shift+Q** do the same. Sway does not provide per-window X buttons.
+Beeper's service must remain running for messaging; closing its window is not
+the way to stop its API. After deploying into an existing Sway session, start
+the new bar with `systemctl --user start waybar` if needed.
 
 ## Native apps
 

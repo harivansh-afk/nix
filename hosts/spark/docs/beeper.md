@@ -39,10 +39,19 @@ is already running, use `systemctl --user start beeper`; no Sway restart is need
    The endpoint is `http://localhost:23373/v0/mcp`. Check
    `ss -ltnp '( sport = :23373 )'`: only `127.0.0.1`/`::1` is acceptable.
    Do not expose it through Caddy, cloudflared, firewall rules or the tailnet.
-4. Configure the intended Hermes profile only after authenticated API access
-   works. Keep credentials in runtime secret storage, never the repository or
-   Nix store. No credentials or Hermes configuration are provisioned here.
+4. Desktop and iMessage Hermes profiles declare the Beeper MCP with OAuth.
+   Authorize each separately with `hermes --profile desktop mcp login beeper`
+   and `hermes --profile imessage mcp login beeper`. Open the authorization URL
+   on Spark, then approve the named client in Beeper. Keep the browser navigation
+   asynchronous: it waits for the native approval dialog. The approval has an
+   expiry (30 days by default); reauthorize when it expires.
+   Credentials stay in each profile's runtime OAuth store, never Git or Nix.
 
-Beeper must stay running for its API and on-device connections. Authenticated
-messaging, MCP, attachment picking, audio and keyring persistence need manual
-acceptance; the isolated Wayland smoke test only verifies startup.
+After deployment, start a fresh Hermes session and ask it to list connected
+messaging accounts, find a specific chat, and read recent messages. Tool discovery
+alone is not acceptance. Check the conversation plugin's foreground allowlist
+when iMessage can delegate Beeper work but cannot perform short reads itself.
+
+Beeper must stay running for its API and on-device connections. Reading messages
+does not verify sending, attachments, audio, or every network's synchronization.
+Do not send test messages without a specified recipient and explicit request.

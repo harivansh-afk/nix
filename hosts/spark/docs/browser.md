@@ -12,11 +12,30 @@ that lock. Truly parallel native input requires separate desktops.
 ## Services and recovery
 
 [desktop.nix](../services/desktop.nix) owns Sway, Chromium and CUA. Sway imports
-its display/accessibility environment before starting the user services.
-Chromium restores its session and exposes CDP at `127.0.0.1:19222`; its profile
+its display/accessibility environment before starting WayVNC, CUA and Beeper,
+not Chromium. Chromium starts on demand and a clean close stays closed
+(`Restart=on-failure`; crashes still restart). It restores its session and
+exposes CDP at `127.0.0.1:19222`; its profile
 and GNOME Keyring credentials remain private mutable state. CUA listens at
 `/run/user/<uid>/cua-driver/control.sock` in a mode-0700 directory. Its package
 supplies `swaymsg`, `wtype` and `grim` on PATH.
+
+The first `browser.page()` or `browser.tabs()` attaches to an already-ready
+browser. If the default CDP endpoint is unavailable, the helper runs
+`systemctl --user start chromium.service`, then retries CDP within a shared
+15-second startup/readiness budget (plus the initial one-second connection
+attempt). Startup failure or timeout reports an error, not an ad-hoc browser.
+Cancelling a pending start kills and reaps the systemctl client, but does not
+undo a service start already submitted to systemd. A timeout likewise does not
+stop Chromium or alter other agents' tabs. Calls in one MCP process share a
+connection lock; separate processes use systemd's idempotent start.
+
+Only the exact managed endpoint `http://127.0.0.1:19222` can trigger startup.
+Other `SPARK_BROWSER_CDP` values are attach-only with a 15-second connection
+timeout, including other local ports and WebSocket URLs. Native-only calls and
+MCP startup do not launch Chromium. Direct Playwright/CDP clients must start
+the service themselves if needed. Manual launch: `systemctl --user start
+chromium.service`; explicit stop: `systemctl --user stop chromium.service`.
 
 ```sh
 systemctl --user status sway chromium cua-driver wayvnc --no-pager
@@ -45,42 +64,49 @@ successful call before interpreting it.
 
 Calls default to 60 seconds, maximum 120; all harness deadlines allow 180.
 There are at most 16 sessions per process. Output is bounded to 64 KiB of text
-and eight images / 20 MiB encoded. Timeouts are cooperative, not a Python sandbox.
+and eight images / 20 MiB encoded. Failure diagnostics have a separate 4 KiB
+budget, so full stdout cannot hide an error, cancellation or execution deadline.
+An inner Python `TimeoutError` retains its message instead of being mislabeled
+as the execution deadline. Timeouts are cooperative, not a Python sandbox.
 
 ## Validation
 
 CI retains the repository's flake/lint checks and packaged Hermes/Photon startup
-check. This PR adds no test files. Browser/native fixtures and model comparisons
-were run temporarily on Spark; they are validation evidence, not ongoing regression
-coverage.
+check. `nix build .#checks.aarch64-linux.spark-computer` runs offline lifecycle
+regressions with mocked CDP and systemctl: ready/cold start, concurrent callers,
+failure, timeout, cancellation, custom endpoints, reconnection and tab ownership.
+It also covers diagnostic limits, inner versus execution timeouts, cancellation,
+persistent variables, overlap rejection and the desktop opt-in gate. It never
+starts the live browser. The earlier browser/native trials were temporary
+experiments, not ongoing regression coverage.
 
-Initial acceptance on 2026-09-06 verified real browser forms, delayed controls,
-canvas, downloads, persistent sessions, tab cleanup and cross-process locking.
-Native accessibility and foreground keyboard/pixel actions were checked against
-app-owned JSON and screenshots. Chromium restarted after SIGTERM and restored
-three tab locations; one site changed its query string during reload. These
-service trials used runtime-only systemd links, not a full system deployment.
-
-### Hermes image comparison
-
-On upstream `c5594ec` (2026-09-06), three matched pairs used the same browser
-screenshots, prompt, Astra High and available `computer`/`vision` tools. Each task
-read an image-only random marker, reused Python state and closed its owned tab.
-
-| Route | Correct tasks | Tool calls / model requests per task | Median wall time |
-|---|---|---|---|
-| Unmodified upstream + `vision_analyze` | 3/3 | 5 / 6 | 32.43 s |
-| Local automatic-image patch + vision available | 3/3 | 5 / 6 | 33.66 s |
-
-The five calls included discovery, two code executions, vision and cleanup.
-Request metadata confirmed Astra High and native image input. Patched runs still
-called `vision_analyze`, retaining two copies of the screenshot in subsequent
-model requests; upstream retained one. The patch saved no turns here, so it and
-its package override were removed. This small sample supports the existing route
-for this task, not a general reliability or speed ranking. Temporary credentials
-were deleted and all task tabs closed. No upstream endorsement is inferred.
+Historical trials covered browser forms, screenshots, tab cleanup and native
+input, but do not replace a post-deployment lifecycle smoke test. When deployment
+is explicitly approved, close the last Chromium window, confirm the service stays
+inactive, then request a new browser session and verify CDP readiness and owned-tab
+cleanup. Do not run that live trial while the user wants Chromium closed.
 
 ## Design evidence
+
+### Optional agent-browser CLI
+
+[agent-browser](https://agent-browser.dev) is a native Rust CLI/daemon using
+direct CDP, not a replacement for CDP. Its compact accessibility snapshots and
+element refs are useful for shell-oriented agents. [CDP mode](https://agent-browser.dev/cdp-mode)
+attaches to an existing logged-in browser; [sessions](https://agent-browser.dev/sessions)
+with strict `--pin-tab` support concurrent tab isolation. Without pinning, a
+client can navigate a shared active tab. No cookie export or copied profile is
+needed for attaching to Spark's browser.
+
+Keep it an optional alternative, not another default daemon or dependency in
+this lifecycle fix. The pinned nixpkgs offers agent-browser 0.27.0 for
+aarch64-linux; current upstream documentation does not establish that this older
+package supports every documented flag. No matched Spark task benchmark establishes superiority
+over the current persistent async Playwright sessions, owned tabs and shared
+CUA desktop path. Compact snapshot claims do not compare against this facade's
+selective printed output. Any future CLI integration should retain explicit tab pinning,
+the managed startup boundary and owned-tab-only cleanup. Native app automation
+still needs CUA; this PR does not change that interface.
 
 OpenAI recommends code execution for Astra computer use. Persistent Python lets
 the task model group async Playwright operations and inspect native screenshots

@@ -49,6 +49,12 @@
         mixbridge = inputs.mixbridge-web.checks.${pkgs.stdenv.hostPlatform.system}.streaming-api;
       }
       // pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "aarch64-linux") {
+        spark-computer = lint "spark-computer" [
+          (pkgs.python3.withPackages (ps: [
+            ps.mcp
+            ps.playwright
+          ]))
+        ] "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s pkgs/spark-computer -v";
         hermes-runtime =
           pkgs.runCommand "hermes-runtime"
             {

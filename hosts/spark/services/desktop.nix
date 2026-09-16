@@ -24,7 +24,7 @@ let
     bindsym Mod4+f fullscreen toggle
     bindsym Mod4+Left focus left
     bindsym Mod4+Right focus right
-    exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE GTK_A11Y NO_AT_BRIDGE && ${pkgs.systemd}/bin/systemctl --user start wayvnc cua-driver chromium beeper
+    exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE GTK_A11Y NO_AT_BRIDGE && ${pkgs.systemd}/bin/systemctl --user start wayvnc cua-driver beeper
     exec ${pkgs.ghostty}/bin/ghostty
   '';
 in
@@ -94,7 +94,7 @@ in
     };
     serviceConfig = {
       ExecStart = "${chromium}/bin/chromium --restore-last-session";
-      Restart = "always";
+      Restart = "on-failure";
       RestartSec = 3;
       UMask = "0077";
     };

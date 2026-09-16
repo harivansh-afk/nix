@@ -25,7 +25,8 @@ print(await page.title())
 display(await page.screenshot())
 ```
 
-The helper creates one owned tab in Hari's existing Chromium profile. Use
+The helper starts managed Chromium on demand and creates one owned tab in Hari's
+existing profile. Closing Chromium normally leaves it closed until requested. Use
 observed roles, labels and DOM state for controls; screenshots for canvas and
 visual checks. Group known steps and wait on specific locators/events rather
 than sleeping. `display(image_bytes_or_path)` emits an MCP image. In Hermes,
@@ -34,14 +35,10 @@ with a `question` describing what to inspect. This loads the screenshot into
 your visual context; a file path alone is not a visible image. Other harnesses
 can display MCP images directly.
 
-Wait for observed controls in the active view, not guessed CSS classes or a
-different layout. A dashboard can show a list while its course-card elements
-remain hidden. For quick captures, use a short explicit readiness timeout (for
-example 5 seconds); on timeout inspect current state before extending the wait.
-Do not blindly retry or assume a page is ready just because navigation completed.
-Capture and inspect loading states rather than spending the default 30 seconds
-waiting for an unverified selector. Keep text output limited to what the task
-needs; a screenshot request does not require dumping the entire page.
+Wait for observed controls in the active view with an explicit readiness timeout
+(for example 5 seconds). On timeout inspect state before extending the wait;
+navigation completion alone does not establish readiness. Print only task-relevant
+text; a screenshot request does not require dumping the page.
 
 `await browser.tabs()` lists tab metadata. When explicitly asked to operate an
 existing tab, resolve its exact reference from `page.context.pages`. Preserve

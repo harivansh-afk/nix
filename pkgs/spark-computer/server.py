@@ -17,12 +17,15 @@ from mcp import ClientSession, StdioServerParameters, types
 from mcp.client.stdio import stdio_client
 from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
-from playwright.async_api import async_playwright
+from playwright.async_api import Error as PlaywrightError, async_playwright
 
 
 CURRENT = contextvars.ContextVar("computer_execution", default=None)
 TEXT_LIMIT = 64 * 1024
 IMAGE_LIMIT = 20 * 1024 * 1024
+MANAGED_CDP = "http://127.0.0.1:19222"
+BROWSER_START_TIMEOUT = 15
+CDP_ATTEMPT_TIMEOUT_MS = 1000
 
 
 class CodeStdout:
@@ -67,6 +70,9 @@ class Output:
         self.image_count += 1
         self.image_size += size
         self.blocks.append(block)
+
+    def diagnostic(self, message):
+        self.blocks.append(types.TextContent(type="text", text=message[:4096]))
 
 
 def execution(require_desktop=False):
@@ -324,13 +330,48 @@ class Runtime:
         self.playwright = None
         self.browser = None
 
+    async def connect_browser(self):
+        endpoint = os.environ.get("SPARK_BROWSER_CDP", MANAGED_CDP)
+        connect = self.playwright.chromium.connect_over_cdp
+        if endpoint != MANAGED_CDP:
+            return await connect(endpoint, timeout=BROWSER_START_TIMEOUT * 1000)
+        try:
+            return await connect(endpoint, timeout=CDP_ATTEMPT_TIMEOUT_MS)
+        except PlaywrightError:
+            pass
+        try:
+            async with asyncio.timeout(BROWSER_START_TIMEOUT):
+                process = await asyncio.create_subprocess_exec(
+                    "systemctl", "--user", "start", "chromium.service",
+                    stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.PIPE)
+                try:
+                    _, stderr = await process.communicate()
+                finally:
+                    if process.returncode is None:
+                        process.kill()
+                        await process.wait()
+                if process.returncode:
+                    raise RuntimeError("Could not start chromium.service: "
+                                       + stderr.decode(errors="replace").strip())
+                while True:
+                    try:
+                        return await connect(endpoint, timeout=CDP_ATTEMPT_TIMEOUT_MS)
+                    except PlaywrightError:
+                        await asyncio.sleep(0.2)
+        except TimeoutError as error:
+            raise RuntimeError(
+                f"Chromium CDP was not ready within {BROWSER_START_TIMEOUT}s; "
+                "check systemctl --user status chromium.service and its journal. "
+                "The service may still be starting.") from error
+        except OSError as error:
+            raise RuntimeError(f"Could not start chromium.service: {error}") from error
+
     async def browser_context(self):
         async with self.browser_lock:
             if self.playwright is None:
                 self.playwright = await async_playwright().start()
             if self.browser is None or not self.browser.is_connected():
-                self.browser = await self.playwright.chromium.connect_over_cdp(
-                    os.environ.get("SPARK_BROWSER_CDP", "http://127.0.0.1:19222"))
+                self.browser = await self.connect_browser()
             if not self.browser.contexts:
                 raise RuntimeError("Chromium has no existing browser context")
             return self.browser.contexts[0]
@@ -372,23 +413,27 @@ class Runtime:
             return self.error(f"Session {session!r} is already executing")
         token = CURRENT.set(output)
         failed = False
+        deadline = asyncio.timeout(timeout)
         try:
-            async with task.lock, asyncio.timeout(timeout):
+            async with task.lock, deadline:
                 async with self.desktop_access(desktop):
                     compiled = compile(code, f"<computer:{session}>", "exec",
                                        flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
                     result = eval(compiled, task.globals)
                     if inspect.isawaitable(result):
                         await result
-        except TimeoutError:
-            output.write(f"\nTimed out after {timeout}s; session variables are preserved. "
-                         "An external operation may already have taken effect.\n")
+        except TimeoutError as error:
+            if deadline.expired():
+                output.diagnostic(f"\nTimed out after {timeout}s; session variables are preserved. "
+                                  "An external operation may already have taken effect.\n")
+            else:
+                output.diagnostic(f"\nTimeoutError: {error}\n")
             failed = True
         except asyncio.CancelledError:
-            output.write("\nExecution cancelled; session variables are preserved.\n")
+            output.diagnostic("\nExecution cancelled; session variables are preserved.\n")
             failed = True
         except Exception as error:
-            output.write(f"\n{type(error).__name__}: {error}\n")
+            output.diagnostic(f"\n{type(error).__name__}: {error}\n")
             failed = True
         finally:
             output.active = False

@@ -8,7 +8,10 @@ let
 in
 pkgs.writeShellApplication {
   name = "spark-computer";
-  runtimeInputs = [ python ];
+  runtimeInputs = [
+    python
+    pkgs.systemd
+  ];
   runtimeEnv = {
     CUA_DRIVER_COMMAND = "${cuaDriver}/bin/cua-driver";
     CUA_DRIVER_RS_TELEMETRY_ENABLED = "0";

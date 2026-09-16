@@ -37,6 +37,9 @@
 
       invariants = [
         (lib.assertMsg (
+          !(lib.elem 23373 proxiedPorts)
+        ) "spark: Beeper's local API must not be reverse-proxied")
+        (lib.assertMsg (
           let
             desktop = builtins.fromJSON (
               builtins.unsafeDiscardStringContext

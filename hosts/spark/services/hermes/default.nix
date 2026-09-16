@@ -134,14 +134,27 @@ in
         api_mode = "chat_completions";
         model = "qwen3.8-flash-next";
       };
-      mcp_servers = lib.mapAttrs (
-        _: server:
-        server
+      mcp_servers =
+        (lib.mapAttrs (
+          _: server:
+          server
+          // {
+            timeout = 60;
+            lazy = true;
+          }
+        ) computer.servers)
         // {
-          timeout = 60;
-          lazy = true;
-        }
-      ) computer.servers;
+          beeper = {
+            url = "http://127.0.0.1:23373/v0/mcp";
+            auth = "oauth";
+            oauth = {
+              scope = "read write";
+              cimd = false;
+            };
+            timeout = 30;
+            connect_timeout = 15;
+          };
+        };
       approvals.mode = "off";
       security.protected_instruction_files = false;
       plugins = {
@@ -158,6 +171,12 @@ in
             "skill_view"
             "clarify"
             "vision_analyze"
+            "mcp__beeper__get_accounts"
+            "mcp__beeper__search_chats"
+            "mcp__beeper__get_chat"
+            "mcp__beeper__list_messages"
+            "mcp__beeper__search_messages"
+            "mcp__beeper__send_message"
             "mcp__roomcast__status"
             "mcp__roomcast__control"
             "mcp__roomcast__seek"

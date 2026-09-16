@@ -14,11 +14,11 @@
 }:
 stdenv.mkDerivation {
   pname = "cua-driver";
-  version = "0.23.2";
+  version = "0.28.2";
 
   src = fetchurl {
-    url = "https://github.com/trycua/cua/releases/download/cua-driver-rs-v0.23.2/cua-driver-rs-0.23.2-linux-arm64-binary.tar.gz";
-    hash = "sha256-viJ2iiB3lqS8HeUMUvMvnvaAtehuWMBZ4C7sLKui57s=";
+    url = "https://github.com/trycua/cua/releases/download/cua-driver-rs-v0.28.2/cua-driver-rs-0.28.2-linux-arm64-binary.tar.gz";
+    hash = "sha256-VeijKDmkrDaadz302sh7NFvUVnd5IhreSl45IjpFoug=";
   };
   sourceRoot = ".";
   nativeBuildInputs = [
@@ -44,8 +44,8 @@ stdenv.mkDerivation {
     runHook postInstall
   '';
   passthru.skills = fetchzip {
-    url = "https://github.com/trycua/cua/releases/download/cua-driver-rs-v0.23.2/cua-driver-rs-v0.23.2-skills.tar.gz";
-    hash = "sha256-mlvUttmZR6ISiDrvmj4Lcc7jCC2XlnO/RpJHy0RoNVo=";
+    url = "https://github.com/trycua/cua/releases/download/cua-driver-rs-v0.28.2/cua-driver-rs-v0.28.2-skills.tar.gz";
+    hash = "sha256-ZO7l7IUuvcdDhzTFRhpC0ahLt3drNDWTsRYzAP97Cf0=";
   };
   meta = {
     description = "Native computer-use driver for Spark";

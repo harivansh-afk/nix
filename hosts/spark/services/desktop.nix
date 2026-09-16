@@ -21,12 +21,28 @@ let
     bindsym Mod1+Return exec ${pkgs.ghostty}/bin/ghostty
     bindsym Mod1+b exec ${chromium}/bin/chromium
     bindsym Mod4+Shift+q kill
+    bindsym Mod1+F4 kill
     bindsym Mod4+f fullscreen toggle
     bindsym Mod4+Left focus left
     bindsym Mod4+Right focus right
-    exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE GTK_A11Y NO_AT_BRIDGE && ${pkgs.systemd}/bin/systemctl --user start wayvnc cua-driver beeper
+    exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE GTK_A11Y NO_AT_BRIDGE && ${pkgs.systemd}/bin/systemctl --user start wayvnc cua-driver beeper waybar
     exec ${pkgs.ghostty}/bin/ghostty
   '';
+  waybarConfig = pkgs.writeText "spark-waybar.json" (
+    builtins.toJSON {
+      layer = "top";
+      position = "top";
+      height = 30;
+      modules-left = [ "sway/window" ];
+      modules-right = [ "custom/close" ];
+      "sway/window".max-length = 100;
+      "custom/close" = {
+        format = "Close ×";
+        tooltip = false;
+        on-click = "${pkgs.sway}/bin/swaymsg kill";
+      };
+    }
+  );
 in
 {
   environment.systemPackages = [
@@ -81,6 +97,18 @@ in
       Restart = "on-failure";
       RestartSec = 3;
       UMask = "0077";
+    };
+  };
+
+  systemd.user.services.waybar = {
+    description = "Spark window controls";
+    partOf = [ "sway.service" ];
+    after = [ "sway.service" ];
+    unitConfig.ConditionUser = username;
+    serviceConfig = {
+      ExecStart = "${pkgs.waybar}/bin/waybar --config ${waybarConfig}";
+      Restart = "on-failure";
+      RestartSec = 3;
     };
   };
 

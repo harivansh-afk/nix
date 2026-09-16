@@ -43,7 +43,9 @@ in
           "hermes-cli"
           "computer"
         ];
-        mcp_servers.computer = hermes.settings.mcp_servers.computer;
+        mcp_servers = {
+          inherit (hermes.settings.mcp_servers) computer beeper;
+        };
         plugins = {
           enabled = [ ];
           disabled = [

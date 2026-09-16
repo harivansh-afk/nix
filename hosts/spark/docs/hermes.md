@@ -71,8 +71,8 @@ restarts. Roomcast's shared HTTP MCP service is independent of those restarts;
 see [roomcast.md](roomcast.md).
 
 CLI and Photon sessions have terminal/files, delegation, skills, memory and
-conversation recall, plus the shared `computer` MCP server for browser and desktop
-work. Hermes's native browser and computer-use toolsets are disabled. The personal
+conversation recall, plus agent-browser CLI for browser pages and direct
+Cua MCP for native windows. Hermes's native browser and computer-use toolsets are disabled. The personal
 KB and its search plugin are disabled; conversation memory remains enabled.
 The `spark-computer` skill and
 Cua's version-matched skill pack are supplied by Nix. There are no custom
@@ -122,11 +122,11 @@ files stay on Spark; reasoning still uses the configured Astra Codex provider.
 
 ## Desktop and browser
 
-Hermes uses the shared `computer` MCP server, connecting to the existing browser
-and CUA daemon without waiting for a display at gateway startup. Load the
+Hermes uses agent-browser CLI and upstream Cua (`computer`) MCP.
+Chromium starts only for browser tasks; native calls attach to the existing Cua
+user service. Load the
 [spark-computer skill](../../../dots/agents/skills/spark-computer/SKILL.md) for
-browser/native actions, named sessions and cleanup. Tool names are
-`mcp__computer__computer_exec` and `mcp__computer__computer_close`.
+exact upstream tool names, ownership, serialized input and cleanup.
 
 Use the normal `vision_analyze` tool to load each returned MCP `MEDIA:` path
 into Astra's image context. Hermes uses the unmodified upstream package.
@@ -153,7 +153,7 @@ and screenshots are the supported baseline.
 ## Updating and acceptance
 
 Update `hermes-agent` with `nix flake update hermes-agent`. The shared computer
-package takes Python and Playwright from nixpkgs. Cua's binary and skill archive share a release
+package pins agent-browser's binary and skills. Cua's binary and skill archive share a release
 version and fixed hashes. Rebuild through the normal PR/deployment flow.
 
 `nix build .#checks.aarch64-linux.hermes-runtime` tests packaged startup and Photon
@@ -162,11 +162,10 @@ new deployment operational:
 
 1. Check both Hermes services and their journals; confirm Photon connected and
    retained the sender allowlist. An expired Photon account needs reauthentication.
-2. Start a named computer session with `desktop: true`; use
-   `await desktop.list_windows()` and inspect a scratch application's state.
+2. Use Cua's `list_windows` and inspect a scratch application's state.
    Verify a harmless action and an actual screenshot in Astra's context.
 3. In a distinct named session, ask for a harmless authenticated browser read;
-   confirm the expected account and return a screenshot with `display(...)`.
+   confirm the expected account and return an agent-browser screenshot.
    Test steering and cancellation during a task, then close both sessions and
    verify the task's browser tab closed while pre-existing tabs remain.
 4. Text the existing Photon line from Hari's phone, have it perform a harmless

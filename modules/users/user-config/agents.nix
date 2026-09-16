@@ -10,11 +10,7 @@
 }:
 let
   agentInstructions = import ../../../lib/agent-instructions.nix { inherit pkgs; };
-  computer = import ../../../pkgs/spark-computer { inherit pkgs; };
-  computerServer = {
-    command = "${computer}/bin/spark-computer";
-    args = [ ];
-  };
+  computer = import ../../../pkgs/computer-tools { inherit pkgs; };
 
   # Opt-in allowlist: each upstream skill costs context on every turn (its
   # description is always loaded), so add one here only after reading it.
@@ -60,11 +56,15 @@ let
         args = [ "serve" ];
       };
     })
-    // lib.optionalAttrs (hostname == "spark") {
-      computer = computerServer // {
-        timeout = 180000;
-      };
-    };
+    // lib.optionalAttrs (hostname == "spark") (
+      lib.mapAttrs (
+        _: server:
+        server
+        // {
+          timeout = 60000;
+        }
+      ) computer.servers
+    );
 in
 {
   claudeMd = agentInstructions.claude;
@@ -91,11 +91,14 @@ in
   claudeComputerSource =
     if hostname == "spark" then
       jsonFormat.generate "claude-computer.json" (
-        computerServer
-        // {
-          type = "stdio";
-          timeout = 180000;
-        }
+        lib.mapAttrs (
+          _: server:
+          server
+          // {
+            type = "stdio";
+            timeout = 60000;
+          }
+        ) computer.servers
       )
     else
       null;
@@ -122,10 +125,10 @@ in
     + lib.optionalString (hostname == "spark") ''
 
       [mcp_servers.computer]
-      command = "${computer}/bin/spark-computer"
+      command = "${computer.servers.computer.command}"
       startup_timeout_sec = 20
-      tool_timeout_sec = 180
-      enabled_tools = ["computer_exec", "computer_close"]
+      tool_timeout_sec = 60
+
     ''
   );
 

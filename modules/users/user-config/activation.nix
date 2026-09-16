@@ -175,9 +175,9 @@ pkgs.writeShellScript "user-config-${name}" ''
     target="${homeDirectory}/.claude.json"
     tmp=$(mktemp "${homeDirectory}/.claude.json.XXXXXX")
     if [ -e "$target" ]; then
-      ${pkgs.jq}/bin/jq --slurpfile computer ${claudeComputerSource} '.mcpServers.computer = $computer[0]' "$target" > "$tmp"
+      ${pkgs.jq}/bin/jq --slurpfile computer ${claudeComputerSource} '.mcpServers = ((.mcpServers // {}) + $computer[0])' "$target" > "$tmp"
     else
-      ${pkgs.jq}/bin/jq -n --slurpfile computer ${claudeComputerSource} '{mcpServers: {computer: $computer[0]}}' > "$tmp"
+      ${pkgs.jq}/bin/jq -n --slurpfile computer ${claudeComputerSource} '{mcpServers: $computer[0]}' > "$tmp"
     fi
     chmod 600 "$tmp"
     mv "$tmp" "$target"

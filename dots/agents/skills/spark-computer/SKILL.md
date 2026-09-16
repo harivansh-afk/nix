@@ -32,6 +32,11 @@ the API through the GUI. Reauthorize that profile with `hermes mcp login beeper`
 approve its connection in Beeper. Tokens stay in the profile's runtime OAuth store,
 never Nix or Git. The Beeper desktop service must remain running.
 
+If MCP connection tests pass but tool search omits Beeper, check that `beeper`
+is in the profile's `platform_toolsets` as well as `mcp_servers`. Registration
+alone does not prove model exposure. Scope CLI diagnostics with `HERMES_HOME`
+to the active profile; an unauthenticated curl returning 401 is not an OAuth test.
+
 ## Browser
 
 Load the version-matched guide with `agent-browser skills get core`.

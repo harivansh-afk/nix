@@ -114,7 +114,7 @@ in
     settings = {
       model = {
         provider = "openai-codex";
-        default = "claude-fable-5-1";
+        default = "gpt-6-astra";
         api_mode = "codex_responses";
         base_url = "";
       };
@@ -126,7 +126,7 @@ in
         ];
       };
       delegation = {
-        model = "claude-fable-5-1";
+        model = "gpt-6-astra";
         reasoning_effort = "low";
         max_spawn_depth = 1;
       };

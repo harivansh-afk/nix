@@ -41,6 +41,7 @@ in
       wget
       zoxide
     ])
+    ++ [ inputs.devin-codex.packages.${system}.default ]
     ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
       pkgs.file
       pkgs.gcc

@@ -8,7 +8,7 @@
 { lib, ... }:
 {
   perSystem =
-    { pkgs, ... }:
+    { pkgs, inputs', ... }:
     let
       portableScripts = (import ../pkgs/scripts/portable.nix { inherit lib pkgs; }).packages;
 
@@ -103,6 +103,7 @@
     in
     {
       packages = portableScripts // {
+        devin-codex = inputs'.devin-codex.packages.default;
         inherit
           btop
           lazygit

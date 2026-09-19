@@ -6,6 +6,7 @@ if [[ -f "$HOME/.cargo/env" ]]; then
 fi
 export NODE_NO_WARNINGS=1
 export MANPAGER="nvim +Man!"
+export DEVIN_PERMISSION_MODE=bypass
 
 if [[ "$OSTYPE" == linux* ]]; then
   export BROWSER=macbook-open

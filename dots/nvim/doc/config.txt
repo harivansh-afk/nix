@@ -128,6 +128,8 @@ GENERAL ~
     p  (visual)         Paste without yanking
 
 COMPLETION ~
+    LSP suggestions fall back to words in the current buffer when unavailable.
+
     <C-n>               Open completion or select next item
     <C-p>               Select previous item
     <C-j> / <C-k>       Select next / previous item while completion is open

@@ -89,13 +89,32 @@
         "url": "https://install.determinate.systems/determinate-nixd/tag/v3.22.3/x86_64-linux"
       }
     },
+    "devin-codex": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_3"
+      },
+      "locked": {
+        "lastModified": 1789849646,
+        "narHash": "sha256-ovl2lWK/Ci+j0bF6u7VnENrYFxEwgqU3W/kkjntju6U=",
+        "ref": "refs/heads/main",
+        "rev": "2775b90a7e4fa625ac9b5087743e6482bc47a3d4",
+        "revCount": 8,
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/devin-codex.git"
+      },
+      "original": {
+        "rev": "2775b90a7e4fa625ac9b5087743e6482bc47a3d4",
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/devin-codex.git"
+      }
+    },
     "dgx-spark": {
       "inputs": {
         "disko": "disko",
         "flake-parts": "flake-parts_2",
         "nix-gl-host": "nix-gl-host",
         "nixified-ai": "nixified-ai",
-        "nixpkgs": "nixpkgs_3",
+        "nixpkgs": "nixpkgs_4",
         "pre-commit-hooks": "pre-commit-hooks"
       },
       "locked": {
@@ -553,7 +572,7 @@
       "inputs": {
         "flake-parts": "flake-parts_6",
         "home-manager": "home-manager",
-        "nixpkgs": "nixpkgs_4",
+        "nixpkgs": "nixpkgs_5",
         "npm-lockfile-fix": "npm-lockfile-fix",
         "pyproject-build-systems": "pyproject-build-systems",
         "pyproject-nix": "pyproject-nix",
@@ -676,7 +695,7 @@
       "inputs": {
         "flake-utils": "flake-utils_2",
         "ghostty": "ghostty",
-        "nixpkgs": "nixpkgs_5"
+        "nixpkgs": "nixpkgs_6"
       },
       "locked": {
         "lastModified": 1789790207,
@@ -1030,6 +1049,22 @@
     },
     "nixpkgs_3": {
       "locked": {
+        "lastModified": 1787962033,
+        "narHash": "sha256-u6z9VTZA4Kf3RkHQo9sQI7NI4Ei/uiU9vrMqOiwWP1Y=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "c5c4a43b0e8056328ec4529f735cabdb8f1942bb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "c5c4a43b0e8056328ec4529f735cabdb8f1942bb",
+        "type": "github"
+      }
+    },
+    "nixpkgs_4": {
+      "locked": {
         "lastModified": 1787444820,
         "narHash": "sha256-IQ6htLffb1N2s5TbdYSnaq3q76q07vxtCGeR4J+2TsA=",
         "owner": "NixOS",
@@ -1043,7 +1078,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_4": {
+    "nixpkgs_5": {
       "locked": {
         "lastModified": 1785318670,
         "narHash": "sha256-dN6Ou5x/+23FZLEpYP3IffO+NyJFzUlGumt1uu3MMaY=",
@@ -1059,7 +1094,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_5": {
+    "nixpkgs_6": {
       "locked": {
         "lastModified": 1785975029,
         "narHash": "sha256-X44cn5rzytELc3NNoQsh0aLkjWA/QzPfc6HPQmsG3sU=",
@@ -1075,7 +1110,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_6": {
+    "nixpkgs_7": {
       "locked": {
         "lastModified": 1781607440,
         "narHash": "sha256-rxO+uc/KFbSJp+pgyXRuAX6QlG9hJdnt0BXpEQRXY+U=",
@@ -1252,6 +1287,7 @@
     "root": {
       "inputs": {
         "determinate": "determinate",
+        "devin-codex": "devin-codex",
         "dgx-spark": "dgx-spark",
         "disko": "disko_2",
         "draw": "draw",
@@ -1267,7 +1303,7 @@
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
         "nixos-anywhere": "nixos-anywhere",
-        "nixpkgs": "nixpkgs_6",
+        "nixpkgs": "nixpkgs_7",
         "nixpkgs-macbook": "nixpkgs-macbook",
         "pierrejo": "pierrejo",
         "roomcast": "roomcast",

@@ -51,6 +51,7 @@ sops-nix with age encryption derived from each host's ed25519 SSH key. Secret fi
 - Karabiner config is a directory symlink to `dots/karabiner/` so Karabiner can write freely.
 - Cursor-agent, Claude, and Codex are curl-installed binaries. On NixOS they need nix-ld.
 - Devin config is seeded as a mutable copy since Devin rewrites it.
+- `devin-codex` packages only the adapter; it uses the installed Codex and existing Devin login. Its native `/model` selector writes `~/.codex/devin-codex.config.toml`; leave that profile mutable and keep credentials out of the Nix closure. Protocol fixes belong in `~/Documents/Git/devin-codex`, then update this flake's input.
 
 ## Worktrees
 

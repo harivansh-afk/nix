@@ -60,13 +60,21 @@ return {
         expr = true,
         desc = "complete previous",
       })
+      vim.keymap.set("i", "<c-j>", function() return pumvisible() and "<c-n>" or "<c-j>" end, {
+        expr = true,
+        desc = "complete next",
+      })
+      vim.keymap.set("i", "<c-k>", function() return pumvisible() and "<c-p>" or "<c-k>" end, {
+        expr = true,
+        desc = "complete previous",
+      })
       vim.keymap.set("i", "<c-t>", "<c-x><c-f>", { desc = "file completion" })
       vim.keymap.set("i", "<c-;>", "<c-x><c-v>", { desc = "vim command completion" })
       vim.keymap.set("i", "<c-r>", "<c-x><c-r>", { desc = "register completion" })
       vim.keymap.set("i", "<cr>", function()
-        local cancel = pumvisible() and vim.keycode "<c-e>" or ""
-        return cancel .. MiniPairs.cr()
-      end, { expr = true, replace_keycodes = false, desc = "newline without accepting completion" })
+        if pumvisible() then return vim.keycode(vim.fn.complete_info().selected == -1 and "<c-n><c-y>" or "<c-y>") end
+        return MiniPairs.cr()
+      end, { expr = true, replace_keycodes = false, desc = "accept completion or newline" })
     end,
   },
   {

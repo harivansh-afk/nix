@@ -130,8 +130,9 @@ GENERAL ~
 COMPLETION ~
     <C-n>               Open completion or select next item
     <C-p>               Select previous item
+    <C-j> / <C-k>       Select next / previous item while completion is open
     <C-y>               Accept selected item
-    <CR>                Newline without accepting completion
+    <CR>                Accept selected or first item; otherwise newline
     <C-t>               File completion
     <C-;>               Vim command completion
     <C-r>               Register completion

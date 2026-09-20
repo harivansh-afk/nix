@@ -53,7 +53,7 @@
 
     hermes-agent.url = "github:NousResearch/hermes-agent";
 
-    devin-codex.url = "git+https://git.harivan.sh/harivansh-afk/devin-codex.git?rev=3322a1bb8de15102d4051bc28dee0b5d0b9a5e59";
+    devin-codex.url = "git+https://git.harivan.sh/harivansh-afk/devin-codex.git?rev=d3fd9f833ee45c1b24053ef548e0e20b61183ecc";
 
     # Darwin only: no aarch64-linux cache, spark keeps nixpkgs neovim.
     neovim-nightly = {

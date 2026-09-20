@@ -6,7 +6,7 @@ return {
     "-j=4",
     "--background-index",
     "--completion-style=bundled",
-    "--header-insertion=iwyu",
+    "--header-insertion=never",
     "--header-insertion-decorators=false",
   },
   capabilities = {

@@ -5,6 +5,7 @@ return {
       check = { command = "clippy" },
       cargo = { allFeatures = true },
       procMacro = { enable = true },
+      completion = { autoimport = { enable = false } },
       diagnostics = { enable = true },
       inlayHints = {
         bindingModeHints = { enable = true },

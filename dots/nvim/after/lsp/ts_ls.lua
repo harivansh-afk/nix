@@ -9,6 +9,12 @@ local inlay_hints = {
 }
 
 return {
+  init_options = {
+    preferences = {
+      includeCompletionsForModuleExports = false,
+      includeCompletionsForImportStatements = false,
+    },
+  },
   settings = {
     typescript = { inlayHints = inlay_hints },
     javascript = { inlayHints = inlay_hints },

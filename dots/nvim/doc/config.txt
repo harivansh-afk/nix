@@ -129,6 +129,7 @@ GENERAL ~
 
 COMPLETION ~
     LSP suggestions fall back to words in the current buffer when unavailable.
+    Completion does not automatically add imports, requires, aliases, or C headers.
 
     <C-n>               Open completion or select next item
     <C-p>               Select previous item

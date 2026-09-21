@@ -23,11 +23,9 @@
   };
 
   hosts.spark = {
-    "copyparty-password" = {
+    "filebrowser-password" = {
       owner = username;
-      group = "copyparty";
-      mode = "0440";
-      restartUnits = [ "copyparty.service" ];
+      restartUnits = [ "filebrowser-quantum.service" ];
     };
 
     "draw-google-oauth.env" = {

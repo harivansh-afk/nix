@@ -37,17 +37,11 @@ let
       name = "share";
       file = ./bin/share.sh;
       runtimeInputs = with pkgs; [
-        coreutils
-        curl
-        findutils
-        getopt
-        jq
         openssh
         python3
       ];
       replacements = {
-        "@UPLOADER@" = "${(import ../copyparty { inherit pkgs; }).uploader}/u2c.py";
-        "@VERSION@" = (import ../copyparty { inherit pkgs; }).version;
+        "@SHARE_CLI@" = toString ./lib/share.py;
       };
     };
 

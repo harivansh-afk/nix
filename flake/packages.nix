@@ -103,7 +103,7 @@
     in
     {
       packages = portableScripts // {
-        copyparty = import ../pkgs/copyparty { inherit pkgs; };
+        filebrowser-quantum = import ../pkgs/filebrowser-quantum { inherit pkgs; };
         devin-codex = inputs'.devin-codex.packages.default;
         inherit
           btop

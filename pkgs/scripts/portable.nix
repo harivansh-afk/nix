@@ -33,23 +33,17 @@ let
   ) remotes;
 
   packages = {
-    share = mkScript {
-      name = "share";
-      file = ./bin/share.sh;
-      runtimeInputs = with pkgs; [
-        coreutils
-        curl
-        findutils
-        getopt
-        jq
-        openssh
-        python3
-      ];
-      replacements = {
-        "@UPLOADER@" = "${(import ../copyparty { inherit pkgs; }).uploader}/u2c.py";
-        "@VERSION@" = (import ../copyparty { inherit pkgs; }).version;
-      };
-    };
+    share = pkgs.writeScriptBin "share" (
+      "#!${pkgs.python3}/bin/python3\n"
+      +
+        lib.replaceStrings
+          [ "@SSH@" "@VERSION@" ]
+          [
+            "${pkgs.openssh}/bin/ssh"
+            (import ../filebrowser-quantum { inherit pkgs; }).version
+          ]
+          (builtins.readFile ./bin/share.py)
+    );
 
     ga = mkScript {
       name = "ga";

@@ -17,19 +17,6 @@
         "type": "github"
       }
     },
-    "copyparty-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1789853773,
-        "narHash": "sha256-TiKuvFLcSI9UdQR88lH7vuVb+M/4RK2prul0+7ATXp0=",
-        "type": "tarball",
-        "url": "https://github.com/9001/copyparty/releases/download/v1.20.24/copyparty-1.20.24.tar.gz"
-      },
-      "original": {
-        "type": "tarball",
-        "url": "https://github.com/9001/copyparty/releases/download/v1.20.24/copyparty-1.20.24.tar.gz"
-      }
-    },
     "crane": {
       "locked": {
         "lastModified": 1781825982,
@@ -1299,7 +1286,6 @@
     },
     "root": {
       "inputs": {
-        "copyparty-src": "copyparty-src",
         "determinate": "determinate",
         "devin-codex": "devin-codex",
         "dgx-spark": "dgx-spark",

@@ -41,6 +41,7 @@ let
         curl
         findutils
         jq
+        openssh
         python3
       ];
       replacements = {

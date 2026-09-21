@@ -5,61 +5,19 @@ die() {
 usage() {
   cat <<'EOF'
 Usage: share FILE_OR_DIRECTORY [--edit] [--expires 30m|2h|7d|2w] [--password]
-       share login
 
 Publish a copy and print its public URL. Originals stay unchanged.
 Directory shares exclude dotfiles. Symlinks and special files are rejected.
 --edit permits Markdown/text editing, plus uploads for folder shares.
 Links do not expire unless --expires is given. Manage/revoke links in the web UI.
-On Spark authentication is automatic; elsewhere run share login once.
+Authentication uses Spark's credential locally, or your existing SSH access to Spark.
 EOF
 }
-
-umask 077
-default_server=https://files.harivan.sh
-server=${SHARE_SERVER:-$default_server}
-credential=${SHARE_PASSWORD_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/share/password}
-if [[ $server != "$default_server" ]]; then
-  [[ -n ${SHARE_PASSWORD_FILE:-} ]] || die 'a custom server requires SHARE_PASSWORD_FILE'
-  [[ $server =~ ^https://[a-zA-Z0-9.:-]+$ || $server =~ ^http://127\.0\.0\.1:[0-9]+$ ]] || die 'invalid server origin; HTTPS required'
-elif [[ -z ${SHARE_PASSWORD_FILE:-} && -r /run/secrets/copyparty-password ]]; then
-  credential=/run/secrets/copyparty-password
-fi
 
 [[ $# -gt 0 ]] || {
   usage
   exit 0
 }
-[[ $1 != --help && $1 != -h ]] || {
-  usage
-  exit 0
-}
-work=$(mktemp -d)
-trap 'rm -rf -- "$work"' EXIT
-if [[ $1 == login ]]; then
-  [[ $# == 1 ]] || die 'usage: share login'
-  IFS= read -rs -p 'Copyparty account password: ' account_password
-  printf '\n' >&2
-else
-  [[ -r $credential ]] || die 'run share login first, or set SHARE_PASSWORD_FILE'
-  account_password=$(cat -- "$credential")
-fi
-[[ -n $account_password && $account_password != *$'\r'* && $account_password != *$'\n'* ]] || die 'invalid account password'
-printf 'PW: %s\n' "$account_password" >"$work/headers"
-request() { curl -q --fail --silent --show-error --connect-timeout 10 --max-time 60 --header "@$work/headers" "$@"; }
-request "$server/?ls" | jq -e '.perms | index("write") != null' >/dev/null || die 'authentication failed'
-if [[ $1 == login ]]; then
-  [[ $credential != /run/secrets/* ]] || {
-    echo 'Spark already supplies your credential.' >&2
-    exit 0
-  }
-  mkdir -p -- "$(dirname -- "$credential")"
-  [[ ! -L $credential ]] || die 'credential path must not be a symlink'
-  printf '%s' "$account_password" >"$work/password"
-  install -m 600 "$work/password" "$credential"
-  echo 'Credential saved.' >&2
-  exit 0
-fi
 
 source_path='' edit=false protected=false expires=0
 while [[ $# -gt 0 ]]; do
@@ -102,6 +60,28 @@ name=$(basename -- "$source_path")
 [[ $source_path != *$'\n'* && $source_path != *$'\r'* ]] || die 'path contains a newline'
 tree() { find "$source_path" -mindepth 1 -name '.*' -prune -o "$@"; }
 [[ -z $(tree ! -type f ! -type d -print -quit) ]] || die 'directory contains a symlink or special file'
+umask 077
+work=$(mktemp -d)
+trap 'rm -rf -- "$work"' EXIT
+server=${SHARE_SERVER:-https://files.harivan.sh}
+credential=${SHARE_PASSWORD_FILE:-/run/secrets/copyparty-password}
+if [[ -z ${SHARE_SERVER:-} && -r /run/secrets/copyparty-password ]]; then
+  server=http://127.0.0.1:39473
+elif [[ $server != https://files.harivan.sh ]]; then
+  [[ -n ${SHARE_PASSWORD_FILE:-} ]] || die 'a custom server requires SHARE_PASSWORD_FILE'
+  [[ $server =~ ^https://[a-zA-Z0-9.:-]+$ || $server =~ ^http://127\.0\.0\.1:[0-9]+$ ]] || die 'HTTPS required'
+fi
+if [[ -r $credential ]]; then
+  account_password=$(cat -- "$credential")
+else
+  [[ -z ${SHARE_PASSWORD_FILE:-} ]] || die 'credential file is not readable'
+  account_password=$(ssh -T -o BatchMode=yes -o ConnectTimeout=10 spark cat /run/secrets/copyparty-password) || die 'cannot authenticate; check SSH access to Spark'
+fi
+[[ -n $account_password && $account_password != *$'\r'* && $account_password != *$'\n'* ]] || die 'invalid account credential'
+printf 'PW: %s\n' "$account_password" >"$work/headers"
+http=(curl -q --silent --show-error --connect-timeout 10 --max-time 60 --header "@$work/headers")
+request() { "${http[@]}" --fail "$@"; }
+request "$server/?ls" | jq -e '.perms | index("write") != null' >/dev/null || die 'server rejected the account credential'
 printf '' >"$work/share-password"
 if $protected; then
   IFS= read -rs -p 'Password for this link: ' share_password
@@ -115,7 +95,7 @@ base="/published/$key"
 encode_path() { jq -rn --arg path "$1" '$path | split("/") | map(@uri) | join("/")'; }
 mkdir_remote() {
   local status
-  status=$(curl -q --silent --show-error --connect-timeout 10 --max-time 60 --header "@$work/headers" --request MKCOL --output /dev/null --write-out '%{http_code}' "$server$(encode_path "$1")")
+  status=$("${http[@]}" --request MKCOL --output /dev/null --write-out '%{http_code}' "$server$(encode_path "$1")")
   [[ $status == 201 || $status == 405 ]] || die "could not create upload directory (HTTP $status)"
 }
 mkdir_remote /published
@@ -126,10 +106,13 @@ if [[ -d $source_path ]]; then
     mkdir_remote "$base/${directory#"$(dirname -- "$source_path")"/}"
   done < <(tree -type d -print0)
 fi
-echo 'Uploading a copy…' >&2
+[[ ! -t 2 ]] || printf 'Sharing %s…\n' "$name" >&2
 export U2C_PW=$account_password
 exclude=$(jq -rn --arg path "$source_path" '$path | gsub("(?<c>[.\\\\+*?\\[\\](){}^$|])"; "\\" + .c)')
-python3 @UPLOADER@ -ns --sz 16 --szm 32 --t-hs 30 -x "^$exclude/(?:.*/)?\.[^/]+(?:/|$)" "$server$base/" "$source_path" >&2 || die 'upload failed; partial files remain private in the web file manager'
+if ! python3 @UPLOADER@ -ns --sz 16 --szm 32 --t-hs 30 -x "^$exclude/(?:.*/)?\.[^/]+(?:/|$)" "$server$base/" "$source_path" >"$work/upload.log" 2>&1; then
+  cat "$work/upload.log" >&2
+  die 'upload failed; partial files remain private in the web file manager'
+fi
 unset U2C_PW account_password
 path="$base/$name"
 [[ ! -d $source_path ]] || path+=/

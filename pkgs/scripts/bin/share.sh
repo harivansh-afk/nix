@@ -4,13 +4,13 @@ die() {
 }
 usage() {
   cat <<'EOF'
-Usage: share FILE_OR_DIRECTORY [--edit] [--expires 30m|2h|7d|2w] [--password]
+Usage: share [OPTIONS] <PATH>
 
-Publish a copy and print its public URL. Originals stay unchanged.
-Directory shares exclude dotfiles. Symlinks and special files are rejected.
---edit permits Markdown/text editing, plus uploads for folder shares.
-Links do not expire unless --expires is given. Manage/revoke links in the web UI.
-Authentication uses Spark's credential locally, or your existing SSH access to Spark.
+Options:
+      --edit                Allow editing
+      --expires <DURATION>  Expire after 30m, 2h, 7d, etc.
+      --password            Password-protect the link
+  -h, --help                Show help
 EOF
 }
 

@@ -34,14 +34,17 @@ private and can be removed through the authenticated file manager.
 ## Authentication
 
 On Spark, `share` automatically reads the owner-readable SOPS credential at
-`/run/secrets/copyparty-password`. For web login, retrieve that password locally
+`/run/secrets/copyparty-password` and uploads directly to the loopback backend;
+the returned share URL still uses the public domain. For web login, retrieve that password locally
 and use copyparty's login form (account: `rathi`). Do not paste it into chat or
 commit a decrypted copy.
 
-On the Mac, run `share login` once and enter the same account password. It is
-saved with mode 0600 at `~/.config/share/password`. The command is included in
+On the Mac, `share` retrieves the credential through your existing SSH access
+to Spark, without prompting or saving another password. There is no CLI login.
+The command is included in
 the shared user package set on the next switch and is also a standalone flake
-package, `nix run .#share -- ./notes.md`. No OAuth provider is required. For
+package, `nix run .#share -- ./notes.md`. Successful commands print only the URL;
+the upstream uploader's diagnostics are shown only if it fails. No OAuth provider is required. For
 explicit alternate instances, set both `SHARE_SERVER` and `SHARE_PASSWORD_FILE`;
 the latter is a file path, never a password argument.
 

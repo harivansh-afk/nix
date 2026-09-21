@@ -40,11 +40,14 @@ let
         coreutils
         curl
         findutils
+        getopt
         jq
+        openssh
         python3
       ];
       replacements = {
         "@UPLOADER@" = "${(import ../copyparty { inherit pkgs; }).uploader}/u2c.py";
+        "@VERSION@" = (import ../copyparty { inherit pkgs; }).version;
       };
     };
 

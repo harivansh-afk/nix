@@ -103,6 +103,7 @@
     in
     {
       packages = portableScripts // {
+        copyparty = import ../pkgs/copyparty { inherit pkgs; };
         devin-codex = inputs'.devin-codex.packages.default;
         inherit
           btop

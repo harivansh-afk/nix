@@ -19,6 +19,7 @@
     ./services/caddy.nix
     ./services/desktop.nix
     ./services/cloudflared.nix
+    ./services/copyparty.nix
     ./services/forgejo
     ./services/hermes
     ./services/roomcast.nix

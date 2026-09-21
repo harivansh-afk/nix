@@ -22,7 +22,9 @@ zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-za-z}'
 
 # --- aliases ---
 alias cc="claude --model 'claude-fable-5-1'"
-alias com="devin-codex"
+alias co="_devin_codex_trusted low"
+alias com="_devin_codex_trusted medium"
+alias coh="_devin_codex_trusted xhigh"
 alias cl="clear"
 alias gc="git commit"
 alias gd="git diff"
@@ -147,24 +149,12 @@ _codex_trust_target() {
   builtin cd -q "$target" 2>/dev/null && pwd -P || printf '%s\n' "$target"
 }
 
-_codex_trusted() {
+_devin_codex_trusted() {
   local effort="$1"
   shift
   local target
   target="$(_codex_trust_target)"
-  codex -c "model_reasoning_effort=$effort" -c "projects={\"$target\"={trust_level=\"trusted\"}}" --dangerously-bypass-approvals-and-sandbox "$@"
-}
-
-co() {
-  _codex_trusted low "$@"
-}
-
-cod() {
-  _codex_trusted medium "$@"
-}
-
-coh() {
-  _codex_trusted xhigh "$@"
+  command devin-codex run --reasoning-effort "$effort" --trust-project "$target" -- "$@"
 }
 
 unalias ga 2>/dev/null

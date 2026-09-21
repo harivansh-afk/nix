@@ -4,29 +4,34 @@ die() {
 }
 usage() {
   cat <<'EOF'
-Usage: share [OPTIONS] <PATH>
+Usage: share [OPTION]... PATH
 
 Options:
       --edit                Allow editing
-      --expires <DURATION>  Expire after 30m, 2h, 7d, etc.
+      --expires=DURATION    Expire after 30m, 2h, 7d, etc.
       --password            Password-protect the link
-  -h, --help                Show help
+  -h, --help                Show help and exit
+      --version             Show version and exit
 EOF
 }
 
-[[ $# -gt 0 ]] || {
-  usage
-  exit 0
+usage_error() {
+  printf "share: %s\nTry 'share --help' for more information.\n" "$1" >&2
+  exit 1
 }
-
-source_path='' edit=false protected=false expires=0
-while [[ $# -gt 0 ]]; do
+options=$(getopt --name share --options h --longoptions edit,expires:,password,help,version -- "$@") || {
+  printf "Try 'share --help' for more information.\n" >&2
+  exit 1
+}
+eval "set -- $options"
+edit=false protected=false expires=0
+while true; do
   case $1 in
   --edit) edit=true ;;
   --password) protected=true ;;
   --expires)
     shift
-    [[ ${1:-} =~ ^([1-9][0-9]{0,5})(m|h|d|w)$ ]] || die 'use --expires 30m, 2h, 7d, or 2w'
+    [[ $1 =~ ^([1-9][0-9]{0,5})(m|h|d|w)$ ]] || usage_error "invalid duration '$1' (expected 30m, 2h, 7d, or 2w)"
     expires=${BASH_REMATCH[1]}
     case ${BASH_REMATCH[2]} in
     h) expires=$((expires * 60)) ;;
@@ -38,21 +43,21 @@ while [[ $# -gt 0 ]]; do
     usage
     exit 0
     ;;
+  --version)
+    printf 'share (copyparty wrapper) @VERSION@\n'
+    exit 0
+    ;;
   --)
     shift
-    [[ $# == 1 && -z $source_path ]] || die 'expected one path'
-    source_path=$1
     break
-    ;;
-  -*) die "unknown option: $1" ;;
-  *)
-    [[ -z $source_path ]] || die 'publish one path at a time'
-    source_path=$1
     ;;
   esac
   shift
 done
-[[ -n $source_path && ! -L $source_path ]] || die 'select a regular file or directory, not a symlink'
+[[ $# -gt 0 ]] || usage_error 'missing file operand'
+[[ $# == 1 ]] || usage_error "extra operand '$2'"
+source_path=$1
+[[ ! -L $source_path ]] || die 'cannot publish a symbolic link'
 source_path=$(realpath -e -- "$source_path")
 [[ -f $source_path || -d $source_path ]] || die 'source must be a regular file or directory'
 name=$(basename -- "$source_path")

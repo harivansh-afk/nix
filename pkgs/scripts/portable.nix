@@ -33,17 +33,17 @@ let
   ) remotes;
 
   packages = {
-    share = mkScript {
-      name = "share";
-      file = ./bin/share.sh;
-      runtimeInputs = with pkgs; [
-        openssh
-        python3
-      ];
-      replacements = {
-        "@SHARE_CLI@" = toString ./lib/share.py;
-      };
-    };
+    share = pkgs.writeScriptBin "share" (
+      "#!${pkgs.python3}/bin/python3\n"
+      +
+        lib.replaceStrings
+          [ "@SSH@" "@VERSION@" ]
+          [
+            "${pkgs.openssh}/bin/ssh"
+            (import ../filebrowser-quantum { inherit pkgs; }).version
+          ]
+          (builtins.readFile ./bin/share.py)
+    );
 
     ga = mkScript {
       name = "ga";

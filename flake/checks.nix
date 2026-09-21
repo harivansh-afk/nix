@@ -36,16 +36,6 @@
           pkgs.shfmt
           pkgs.findutils
         ] "shfmt -i 2 -d scripts pkgs hosts $(find dots -mindepth 1 -maxdepth 1 ! -name zsh)";
-        file-sharing =
-          let
-            packages = self.packages.${pkgs.stdenv.hostPlatform.system};
-          in
-          pkgs.runCommand "file-sharing-smoke" { nativeBuildInputs = [ pkgs.python3 ]; } ''
-            python3 ${self}/scripts/share-smoke.py \
-              ${packages.filebrowser-quantum}/bin/filebrowser-quantum \
-              ${packages.share}/bin/share
-            touch $out
-          '';
         pr = lint "pr" [
           pkgs.bash
           pkgs.coreutils

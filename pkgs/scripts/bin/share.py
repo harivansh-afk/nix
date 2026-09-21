@@ -1,13 +1,12 @@
-"""Create FileBrowser Quantum links to existing Spark files."""
-
-import argparse
 import datetime
+import getopt
 import getpass
 import json
 import os
 import re
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import tarfile
@@ -16,6 +15,95 @@ import urllib.parse
 import urllib.request
 import uuid
 from pathlib import Path
+
+HELP = """Usage: share [OPTION]... FILE
+  or:  share --list
+  or:  share --revoke=ID
+Create a link to a file or directory on Spark.
+
+  -c, --copy              copy FILE to Spark before sharing
+  -e, --edit              allow editing the shared file
+  -l, --list              list shares
+  -p, --password          prompt for a link password
+  -r, --revoke=ID         revoke a share by ID or URL
+  -x, --expires=DURATION  expire after DURATION (e.g., 30m, 2h, 7d, 2w)
+  -h, --help              display this help and exit
+  -V, --version           output version information and exit
+
+Links are read-only and do not expire unless specified.
+Live sharing requires a file in a configured Spark source.
+Use --copy for files elsewhere, including on the Mac.
+"""
+
+
+def usage_error(message):
+    print(
+        f"share: {message}\nTry 'share --help' for more information.", file=sys.stderr
+    )
+    sys.exit(2)
+
+
+def parse_args():
+    try:
+        flags, operands = getopt.gnu_getopt(
+            sys.argv[1:],
+            "cehlpr:Vx:",
+            [
+                "copy",
+                "edit",
+                "help",
+                "list",
+                "password",
+                "revoke=",
+                "version",
+                "expires=",
+            ],
+        )
+    except getopt.GetoptError as exc:
+        option = ("-" if len(exc.opt) == 1 else "--") + exc.opt
+        if "not recognized" in exc.msg:
+            usage_error(f"unrecognized option '{option}'")
+        if "requires argument" in exc.msg:
+            usage_error(f"option '{option}' requires an argument")
+        usage_error(str(exc))
+    options = {
+        "copy": False,
+        "edit": False,
+        "password": False,
+        "expires": "",
+        "list": False,
+        "revoke": None,
+    }
+    for flag, value in flags:
+        if flag in ("-h", "--help"):
+            print(HELP, end="")
+            sys.exit(0)
+        if flag in ("-V", "--version"):
+            print("share (FileBrowser Quantum) @VERSION@")
+            sys.exit(0)
+        name = {
+            "-c": "copy",
+            "-e": "edit",
+            "-l": "list",
+            "-p": "password",
+            "-r": "revoke",
+            "-x": "expires",
+        }.get(flag, flag[2:])
+        options[name] = value if name in ("revoke", "expires") else True
+    if options["list"] and options["revoke"] is not None:
+        usage_error("options '--list' and '--revoke' are mutually exclusive")
+    managing = options["list"] or options["revoke"] is not None
+    if managing and any(
+        options[name] for name in ("copy", "edit", "password", "expires")
+    ):
+        usage_error("sharing options cannot be used with '--list' or '--revoke'")
+    if not managing and not operands:
+        usage_error("missing file operand")
+    if len(operands) > (0 if managing else 1):
+        usage_error(f"extra operand '{operands[0 if managing else 1]}'")
+    if any(flag in ("-x", "--expires") for flag, _ in flags):
+        options["expires"] = expiration(options["expires"])
+    return options, operands[0] if operands else None
 
 
 class ShareError(Exception):
@@ -87,7 +175,7 @@ class Client:
 
     def ssh(self, command):
         return [
-            "ssh",
+            "@SSH@",
             "-T",
             "-o",
             "BatchMode=yes",
@@ -118,9 +206,7 @@ class Client:
             with self.opener.open(request, timeout=30) as response:
                 content = response.read()
         except urllib.error.HTTPError as exc:
-            raise ShareError(
-                f"Quantum rejected {method} {path} (HTTP {exc.code})"
-            ) from None
+            raise ShareError(f"{method} {path}: HTTP {exc.code}") from None
         except urllib.error.URLError as exc:
             raise ShareError(f"cannot reach Quantum: {exc.reason}") from None
         if raw or not content:
@@ -131,12 +217,10 @@ class Client:
 def expiration(value):
     match = re.fullmatch(r"([1-9][0-9]{0,5})(m|h|d|w)", value)
     if not match:
-        raise argparse.ArgumentTypeError(
-            "expected a duration such as 30m, 2h, 7d or 2w"
-        )
+        usage_error(f"invalid duration '{value}'")
     seconds = int(match[1]) * {"m": 60, "h": 3600, "d": 86400, "w": 604800}[match[2]]
     if seconds > 9_223_372_036:
-        raise argparse.ArgumentTypeError("expiry exceeds Quantum's duration limit")
+        usage_error(f"duration out of range: '{value}'")
     return str(seconds)
 
 
@@ -157,10 +241,7 @@ def source_for(path, sources):
         ):
             matches.append((root, source))
     if not matches:
-        roots = ", ".join(source["path"] for source in sources)
-        raise ShareError(
-            f"path is outside Quantum's sources ({roots}); use --copy for a snapshot"
-        )
+        raise ShareError(f"'{path}': outside configured sources; use --copy")
     root, source = max(matches, key=lambda item: len(item[0].parts))
     relative = path.relative_to(root)
     if any(part.startswith(".") for part in relative.parts):
@@ -179,7 +260,6 @@ def copied_file(client, path, sources):
     if upload is None:
         raise ShareError("this server has no Uploads source for --copy")
     destination = Path(upload["path"]) / uuid.uuid4().hex
-    print(f"Uploading a snapshot of {path.name} to Spark…", file=sys.stderr)
 
     def archive_filter(member):
         if any(part.startswith(".") for part in Path(member.name).parts[1:]):
@@ -224,39 +304,11 @@ def copied_file(client, path, sources):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        prog="share",
-        description="Share an original Spark file through FileBrowser Quantum.",
-        epilog="share list · share revoke ID · share ./notes.md --edit · share ./file --copy",
-    )
-    parser.add_argument("target", metavar="PATH|list|revoke")
-    parser.add_argument("identifier", nargs="?", metavar="ID")
-    parser.add_argument(
-        "--edit", action="store_true", help="allow saving changes to the shared file"
-    )
-    parser.add_argument(
-        "--expires", type=expiration, help="expire after 30m, 2h, 7d, etc."
-    )
-    parser.add_argument(
-        "--password", action="store_true", help="prompt for a password for this link"
-    )
-    parser.add_argument(
-        "--copy",
-        action="store_true",
-        help="upload a snapshot instead of sharing the original",
-    )
-    parser.add_argument(
-        "--version", action="version", version="share (FileBrowser Quantum)"
-    )
-    args = parser.parse_args()
-    managing = args.target in ("list", "revoke")
-    if managing and (args.edit or args.expires or args.password or args.copy):
-        parser.error("sharing options apply to a file or folder, not list/revoke")
-    if (args.target == "revoke") != (args.identifier is not None):
-        parser.error("use 'share revoke ID', 'share list', or 'share PATH'")
+    options, operand = parse_args()
+    identifier = share_id(options["revoke"]) if options["revoke"] is not None else None
     path = None
-    if not managing:
-        path = Path(args.target).expanduser()
+    if operand is not None:
+        path = Path(operand).expanduser()
         if path.is_symlink():
             raise ShareError("cannot share a symbolic link")
         path = path.resolve(strict=True)
@@ -269,12 +321,12 @@ def main():
                 "hidden paths and paths containing newlines cannot be shared"
             )
     password = None
-    if args.password:
-        password = getpass.getpass("Password for this link: ")
+    if options["password"]:
+        password = getpass.getpass("Password: ")
         if not password:
             raise ShareError("share password must not be empty")
     client = Client()
-    if args.target == "list":
+    if options["list"]:
         for share in client.request("/api/share/list"):
             expiry = share.get("expire", 0)
             until = (
@@ -295,24 +347,20 @@ def main():
                 f"{share['hash']}\t{access}\t{status}\t{until}\t{share.get('source', '')}:{share['path']}\t{share['shareURL']}"
             )
         return
-    if args.target == "revoke":
-        identifier = share_id(args.identifier)
+    if options["revoke"] is not None:
         client.request("/api/share", "DELETE", query={"hash": identifier})
-        print(f"Revoked {identifier}", file=sys.stderr)
         return
-    if not client.local and not args.copy:
-        raise ShareError(
-            "this file is local to this computer; use --copy to upload a snapshot, or run share on Spark for a live link"
-        )
+    if not client.local and not options["copy"]:
+        raise ShareError("live sharing requires Spark; use --copy")
     sources = client.request("/api/settings", query={"property": "sources"})
-    if args.copy:
+    if options["copy"]:
         path = copied_file(client, path, sources)
     source, relative = source_for(path, sources)
     body = {
         "source": source,
         "path": relative,
         "shareType": "normal",
-        "allowModify": args.edit,
+        "allowModify": options["edit"],
         "allowCreate": False,
         "allowDelete": False,
         "allowReplacements": False,
@@ -322,7 +370,7 @@ def main():
         "viewMode": "list",
         "title": path.name,
         "password": password,
-        "expires": args.expires or "",
+        "expires": options["expires"],
         "unit": "seconds",
     }
     result = client.request("/api/share", "POST", body=body)
@@ -334,9 +382,17 @@ def main():
 
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
     try:
         main()
-    except (ShareError, OSError, subprocess.SubprocessError, ValueError) as exc:
+    except OSError as exc:
+        name = f"'{exc.filename}': " if exc.filename else ""
+        print(f"share: {name}{exc.strerror or exc}", file=sys.stderr)
+        sys.exit(1)
+    except subprocess.CalledProcessError as exc:
+        print(f"share: ssh exited with status {exc.returncode}", file=sys.stderr)
+        sys.exit(1)
+    except (ShareError, subprocess.TimeoutExpired, ValueError) as exc:
         print(f"share: {exc}", file=sys.stderr)
         sys.exit(1)
     except KeyboardInterrupt:

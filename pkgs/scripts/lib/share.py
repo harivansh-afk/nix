@@ -134,7 +134,10 @@ def expiration(value):
         raise argparse.ArgumentTypeError(
             "expected a duration such as 30m, 2h, 7d or 2w"
         )
-    return str(int(match[1]) * {"m": 60, "h": 3600, "d": 86400, "w": 604800}[match[2]])
+    seconds = int(match[1]) * {"m": 60, "h": 3600, "d": 86400, "w": 604800}[match[2]]
+    if seconds > 9_223_372_036:
+        raise argparse.ArgumentTypeError("expiry exceeds Quantum's duration limit")
+    return str(seconds)
 
 
 def share_id(value):
@@ -283,6 +286,11 @@ def main():
             )
             access = "edit" if share.get("allowModify") else "read"
             status = "available" if share.get("pathExists") else "missing"
+            if (
+                expiry
+                and expiry <= datetime.datetime.now(datetime.timezone.utc).timestamp()
+            ):
+                status = "expired"
             print(
                 f"{share['hash']}\t{access}\t{status}\t{until}\t{share.get('source', '')}:{share['path']}\t{share['shareURL']}"
             )

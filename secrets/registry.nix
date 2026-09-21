@@ -23,6 +23,13 @@
   };
 
   hosts.spark = {
+    "copyparty-password" = {
+      owner = username;
+      group = "copyparty";
+      mode = "0440";
+      restartUnits = [ "copyparty.service" ];
+    };
+
     "draw-google-oauth.env" = {
       format = "dotenv";
       restartUnits = [ "draw.service" ];

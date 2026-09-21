@@ -5,6 +5,11 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-macbook.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    copyparty-src = {
+      url = "https://github.com/9001/copyparty/releases/download/v1.20.24/copyparty-1.20.24.tar.gz";
+      flake = false;
+    };
+
     flake-parts.url = "github:hercules-ci/flake-parts";
 
     # Owns the nix install and nix.conf; darwin settings go through determinateNix.customSettings.

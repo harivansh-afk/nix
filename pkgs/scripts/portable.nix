@@ -33,6 +33,21 @@ let
   ) remotes;
 
   packages = {
+    share = mkScript {
+      name = "share";
+      file = ./bin/share.sh;
+      runtimeInputs = with pkgs; [
+        coreutils
+        curl
+        findutils
+        jq
+        python3
+      ];
+      replacements = {
+        "@UPLOADER@" = "${(import ../copyparty { inherit pkgs; }).uploader}/u2c.py";
+      };
+    };
+
     ga = mkScript {
       name = "ga";
       file = ./bin/ga.sh;

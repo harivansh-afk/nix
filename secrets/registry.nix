@@ -29,6 +29,8 @@
       restartUnits = [ "sharefs.service" ];
     };
 
+    "sharefs-signing-key".restartUnits = [ "sharefs.service" ];
+
     "draw-google-oauth.env" = {
       format = "dotenv";
       restartUnits = [ "draw.service" ];

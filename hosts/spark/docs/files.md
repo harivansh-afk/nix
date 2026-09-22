@@ -1,29 +1,47 @@
 # files.harivan.sh
 
-Open `https://files.harivan.sh/` and enter `rathi` in the browser's login prompt.
-The password is unchanged. On Spark, display it with:
+Open `https://files.harivan.sh/` and log in as `rathi`. The password is unchanged;
+read it on Spark with `cat /run/secrets/sharefs-password`. To change it, edit
+`secrets/hosts/spark/sharefs-password` with SOPS and deploy the Nix configuration.
+
+Documents, Downloads and Uploads map to `~/Documents`, `~/Downloads` and
+`~/Uploads`. These are the original files. Editing changes them on disk.
+The activation moves the previous upload directory to `~/Uploads`; it refuses
+to overwrite an existing destination. The old SQLite database is retained but
+unused.
+
+## Share a file on Spark
 
 ```sh
-cat /run/secrets/sharefs-password
+share ~/Documents/notes.md
+share --expires=2h ~/Downloads/report.pdf
+share --help
 ```
 
-Documents and Downloads are bind mounts of the original Spark directories.
-Uploads lives at `/var/lib/sharefs/uploads`. Browsing does not copy files.
-Use the browser to upload, download, edit and delete files.
+The Rust client prints one URL and defaults to seven days. Durations accept
+`s`, `m`, `h`, `d` and `w`. Files must be inside a served directory. The browser's
+Share control uses the same signer and lets you select an expiry.
 
-The Nix config is `hosts/spark/services/sharefs.nix`. The server listens on
-`127.0.0.1:39473`; metadata lives in `/var/lib/sharefs/shares.db`, outside the
-served root. Credentials come from SOPS through systemd, outside the Nix store.
-The rest of the home directory is hidden from the service.
+Recipients need no login. Links grant read-only access to one live file path;
+renaming it breaks the link, and edits at the same path change what recipients
+read. Links survive restarts. There is no share registry or individual
+revocation; rotating `sharefs-signing-key` invalidates all links.
 
-The owner API at `/__sharefs__/api/shares` creates, lists and revokes metadata.
-Public-link serving and the new CLI/web Share controls are still being wired.
-The previous `share` command and public links are retired. All requests to
-the domain now go to sharefs; use the root URL instead of old bookmarks.
+The UI supports upload, download, content editing and rename. Rename stays in
+the same directory and cannot replace an existing file. Deletion is disabled
+on the server. Search and ZIP downloads remain disabled.
 
-Static assets retain their cache headers. File and API responses are private
-and not stored by caches. Scripts in served files are blocked; the sharefs UI
-loads its script from its dedicated asset path.
+## Deployment
 
-Previous server databases and upload directories remain on disk. No data
-cleanup is part of this deployment.
+`hosts/spark/services/sharefs.nix` owns the service and Caddy route. The server
+listens on `127.0.0.1:39473`. The local CLI uses `/run/sharefs/control.sock`,
+accessible only to the service owner. Mount mappings come from the same Nix
+attribute set as the service's bind mounts.
+
+Password and signing key are SOPS secrets loaded through systemd credentials.
+The signing key is 32 random bytes, outside the Nix store and served tree.
+The service is sandboxed and the rest of the home directory is hidden.
+
+File responses are not cached; versioned static assets retain immutable caching.
+Scripts in served files are blocked. Both application and proxy logs redact
+share tokens.

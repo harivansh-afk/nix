@@ -1,6 +1,7 @@
 {
   config,
   inputs,
+  lib,
   pkgs,
   username,
   ...
@@ -10,17 +11,48 @@ let
   port = 39473;
   home = config.users.users.${username}.home;
   root = "/run/sharefs/files";
+  sources = {
+    Documents = "${home}/Documents";
+    Downloads = "${home}/Downloads";
+    Uploads = "${home}/Uploads";
+  };
   settings = (pkgs.formats.yaml { }).generate "sharefs.yaml" {
     serve-path = root;
     bind = "127.0.0.1";
     inherit port;
-    share-db = "/var/lib/sharefs/shares.db";
+    public-url = "https://files.harivan.sh";
+    control-socket = "/run/sharefs/control.sock";
+    share-roots = sources;
     allow-upload = true;
-    allow-delete = true;
+    allow-edit = true;
+    allow-rename = true;
     hidden = [ ".*" ];
   };
 in
 {
+  environment.systemPackages = [ package ];
+
+  system.activationScripts.sharefs-uploads = {
+    deps = [ "users" ];
+    text = ''
+      ${pkgs.util-linux}/bin/runuser -u ${username} -- ${pkgs.bash}/bin/bash <<'SHAREFS_UPLOADS'
+      set -eu
+      if [ -L /var/lib/sharefs/uploads ] || [ -L "${home}/Uploads" ]; then
+        echo "sharefs: upload directories must not be symlinks" >&2
+        exit 1
+      fi
+      if [ -d /var/lib/sharefs/uploads ]; then
+        if [ -e "${home}/Uploads" ]; then
+          echo "sharefs: both upload directories exist; refusing to overwrite files" >&2
+          exit 1
+        fi
+        ${pkgs.coreutils}/bin/mv -T --update=none-fail -- /var/lib/sharefs/uploads "${home}/Uploads"
+      fi
+      ${pkgs.coreutils}/bin/install -d -m 0700 "${home}/Uploads"
+      SHAREFS_UPLOADS
+    '';
+  };
+
   systemd.services.sharefs = {
     description = "sharefs";
     wantedBy = [ "multi-user.target" ];
@@ -32,30 +64,26 @@ in
         exit 1
       fi
       export SHAREFS_AUTH="${username}:$password@/:rw"
-      exec ${package}/bin/sharefs --config ${settings}
+      exec ${package}/bin/sharefs --config ${settings} --share-key-file "$CREDENTIALS_DIRECTORY/signing-key"
     '';
     serviceConfig = {
       User = username;
       Group = "users";
       RuntimeDirectory = "sharefs";
       RuntimeDirectoryMode = "0700";
-      StateDirectory = [
-        "sharefs"
-        "sharefs/uploads"
-      ];
+      StateDirectory = "sharefs";
       StateDirectoryMode = "0700";
       WorkingDirectory = "/var/lib/sharefs";
-      LoadCredential = "password:${config.sops.secrets.sharefs-password.path}";
+      LoadCredential = [
+        "password:${config.sops.secrets.sharefs-password.path}"
+        "signing-key:${config.sops.secrets.sharefs-signing-key.path}"
+      ];
       Restart = "on-failure";
       RestartSec = 5;
       UMask = "0077";
       ProtectSystem = "strict";
       ProtectHome = true;
-      BindPaths = [
-        "${home}/Documents:${root}/Documents"
-        "${home}/Downloads:${root}/Downloads"
-        "/var/lib/sharefs/uploads:${root}/Uploads"
-      ];
+      BindPaths = lib.mapAttrsToList (name: path: "${path}:${root}/${name}") sources;
       PrivateTmp = true;
       PrivateDevices = true;
       NoNewPrivileges = true;
@@ -75,6 +103,17 @@ in
 
   services.caddy.virtualHosts."http://files.harivan.sh" = {
     listenAddresses = [ "127.0.0.1" ];
+    logFormat = ''
+      output file /var/log/caddy/access-http:__files.harivan.sh.log
+      format filter {
+        wrap json
+        fields {
+          request>uri query {
+            replace token REDACTED
+          }
+        }
+      }
+    '';
     extraConfig = ''
       header X-Robots-Tag "noindex, nofollow"
       header Referrer-Policy "no-referrer"

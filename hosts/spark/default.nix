@@ -20,6 +20,7 @@
     ./services/desktop.nix
     ./services/cloudflared.nix
     ./services/filebrowser.nix
+    ./services/sharefs.nix
     ./services/forgejo
     ./services/hermes
     ./services/roomcast.nix

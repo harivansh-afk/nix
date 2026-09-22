@@ -1,33 +1,26 @@
 # files.harivan.sh
 
-FileBrowser Quantum serves files from Spark's `~/Documents` and `~/Downloads`.
-Links point to the original file and are read-only unless `--edit` is given.
+sharefs provides the private browser at the domain root. Log in as `rathi`
+with the existing files password. Documents, Downloads and Uploads are bind
+mounts of the original Spark directories; browsing does not copy files.
 
-```sh
-share notes.md
-share --edit notes.md
-share --expires=7d --password notes.md
-share --copy report.pdf
-share --list
-share --revoke=ID
-```
+The Nix config is `hosts/spark/services/sharefs.nix`. The server listens on
+`127.0.0.1:39473`; metadata lives in `/var/lib/sharefs/shares.db`, outside the
+served root. Credentials come from SOPS through systemd, outside the Nix store.
+The rest of the home directory is hidden from the service.
 
-`--copy` uploads a snapshot, including from the Mac. Copies live in
-`/var/lib/filebrowser-quantum/uploads/`; Mac transfers use SSH. Hidden files and
-symlinks are excluded. Revocation removes access without deleting files.
+The owner API at `/__sharefs__/api/shares` creates, lists and revokes metadata.
+Public-link serving and the new CLI/web Share controls are still being wired.
 
-Browser saves overwrite the shared file. Concurrent local/browser edits can
-lose changes; Quantum does not merge them. Local changes appear on reload.
-Share a folder when HTML or Markdown needs relative assets.
+Quantum temporarily remains on `127.0.0.1:39476` for existing `/public/` links,
+its API and the current `share` CLI. Both servers use the same original files
+and password. The CLI still supports `--edit`, `--copy`, `--list`, `--revoke`,
+passwords and expiry through Quantum. Remove this compatibility service once
+sharefs replaces that complete flow.
 
-The owner account is `rathi`. The CLI uses `/run/secrets/filebrowser-password`
-locally or retrieves it over SSH. Overrides: `SHARE_SERVER`,
-`SHARE_PASSWORD_FILE`, `SHARE_USER`, `SHARE_SSH_HOST`. Custom servers require a
-credential file; remote copies also require the matching SSH host.
+Static assets retain their cache headers. File and API responses are private
+and not stored by caches. Scripts in served files are blocked; the sharefs UI
+loads its script from its dedicated asset path.
 
-The service config is `hosts/spark/services/filebrowser.nix`. State lives in
-`/var/lib/filebrowser-quantum`, cache in `/var/cache/filebrowser-quantum`.
-Caddy proxies `files.harivan.sh` to `127.0.0.1:39473`.
-
-Copyparty's data remains on disk. Old `/s/` links return 410 and need replacing.
-The Mac gets the CLI on its next switch; `nix run .#share -- FILE` also works.
+Existing Quantum and Copyparty data is retained. Retired Copyparty `/s/` links
+continue to return 410. No data cleanup is part of this deployment.

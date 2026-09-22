@@ -5,7 +5,7 @@
   ...
 }:
 let
-  port = 39473;
+  port = 39476;
   home = config.users.users.${username}.home;
   state = "/var/lib/filebrowser-quantum";
   package = import ../../../pkgs/filebrowser-quantum { inherit pkgs; };
@@ -125,17 +125,4 @@ in
     };
   };
 
-  services.caddy.virtualHosts."http://files.harivan.sh" = {
-    listenAddresses = [ "127.0.0.1" ];
-    extraConfig = ''
-      header Cache-Control "private, no-store"
-      header X-Robots-Tag "noindex, nofollow"
-      @legacy path /s/*
-      respond @legacy "This Copyparty link has been retired. Ask the owner for a new share link." 410
-      reverse_proxy 127.0.0.1:${toString port} {
-        header_up X-Forwarded-Proto https
-        header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
-      }
-    '';
-  };
 }

@@ -124,7 +124,7 @@ class Client:
         self.ssh_host = os.environ.get("SHARE_SSH_HOST", "spark")
         self.server = os.environ.get(
             "SHARE_SERVER",
-            "http://127.0.0.1:39473"
+            "http://127.0.0.1:39476"
             if readable_credential
             else "https://files.harivan.sh",
         ).rstrip("/")

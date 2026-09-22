@@ -23,12 +23,9 @@
   };
 
   hosts.spark = {
-    "filebrowser-password" = {
+    "sharefs-password" = {
       owner = username;
-      restartUnits = [
-        "filebrowser-quantum.service"
-        "sharefs.service"
-      ];
+      restartUnits = [ "sharefs.service" ];
     };
 
     "draw-google-oauth.env" = {

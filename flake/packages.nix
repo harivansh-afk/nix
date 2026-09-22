@@ -103,7 +103,6 @@
     in
     {
       packages = portableScripts // {
-        filebrowser-quantum = import ../pkgs/filebrowser-quantum { inherit pkgs; };
         sharefs = inputs'.sharefs.packages.default;
         devin-codex = inputs'.devin-codex.packages.default;
         inherit

@@ -21,6 +21,7 @@ let
     bind = "127.0.0.1";
     inherit port;
     public-url = "https://files.harivan.sh";
+    share-key-file = config.sops.secrets.sharefs-signing-key.path;
     control-socket = "/run/sharefs/control.sock";
     share-roots = sources;
     allow-upload = true;
@@ -64,7 +65,7 @@ in
         exit 1
       fi
       export SHAREFS_AUTH="${username}:$password@/:rw"
-      exec ${package}/bin/sharefs --config ${settings} --share-key-file "$CREDENTIALS_DIRECTORY/signing-key"
+      exec ${package}/bin/sharefs --config ${settings}
     '';
     serviceConfig = {
       User = username;
@@ -74,10 +75,7 @@ in
       StateDirectory = "sharefs";
       StateDirectoryMode = "0700";
       WorkingDirectory = "/var/lib/sharefs";
-      LoadCredential = [
-        "password:${config.sops.secrets.sharefs-password.path}"
-        "signing-key:${config.sops.secrets.sharefs-signing-key.path}"
-      ];
+      LoadCredential = "password:${config.sops.secrets.sharefs-password.path}";
       Restart = "on-failure";
       RestartSec = 5;
       UMask = "0077";

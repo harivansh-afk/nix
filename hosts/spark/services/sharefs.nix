@@ -22,6 +22,7 @@ let
     inherit port;
     public-url = "https://files.harivan.sh";
     share-key-file = config.sops.secrets.sharefs-signing-key.path;
+    share-state-dir = "/var/lib/sharefs/shares";
     control-socket = "/run/sharefs/control.sock";
     share-roots = sources;
     allow-upload = true;

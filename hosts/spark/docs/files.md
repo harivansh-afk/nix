@@ -38,8 +38,10 @@ listens on `127.0.0.1:39473`. The local CLI uses `/run/sharefs/control.sock`,
 accessible only to the service owner. Mount mappings come from the same Nix
 attribute set as the service's bind mounts.
 
-Password and signing key are SOPS secrets loaded through systemd credentials.
-The signing key is 32 random bytes, outside the Nix store and served tree.
+The password is a SOPS secret loaded through systemd credentials. The signing
+key is read directly from its owner-only SOPS runtime file, since sharefs
+requires private file permissions. It is 32 random bytes, outside the Nix store
+and served tree.
 The service is sandboxed and the rest of the home directory is hidden.
 
 File responses are not cached; versioned static assets retain immutable caching.

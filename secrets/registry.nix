@@ -29,7 +29,10 @@
       restartUnits = [ "sharefs.service" ];
     };
 
-    "sharefs-signing-key".restartUnits = [ "sharefs.service" ];
+    "sharefs-signing-key" = {
+      owner = username;
+      restartUnits = [ "sharefs.service" ];
+    };
 
     "draw-google-oauth.env" = {
       format = "dotenv";

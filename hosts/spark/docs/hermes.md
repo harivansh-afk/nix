@@ -12,6 +12,9 @@ desktop app. Desktop starts in its own `desktop` profile; Photon stays in the
 web dashboard. See [Desktop setup and features](hermes-desktop.md) for the state
 boundary and recommended workflow.
 
+Personal Desktop and iMessage profiles also expose the [Robinhood MCP](robinhood.md).
+Each profile requires its own Robinhood OAuth login after deployment.
+
 ## Mac Desktop
 
 `hosts/macbook/hermes-desktop.nix` installs `/Applications/Hermes.app` from the

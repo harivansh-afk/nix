@@ -29,6 +29,7 @@ let
     "hermes-cli"
     "computer"
     "beeper"
+    "robinhood"
   ];
   skillsDir = ../../../../dots/hermes/skills;
   skillNames = lib.filter (name: builtins.pathExists (skillsDir + "/${name}/SKILL.md")) (
@@ -155,6 +156,16 @@ in
             timeout = 30;
             connect_timeout = 15;
           };
+          robinhood = {
+            url = "https://agent.robinhood.com/mcp/trading";
+            auth = "oauth";
+            oauth = {
+              scope = "internal";
+              cimd = false;
+            };
+            timeout = 30;
+            connect_timeout = 15;
+          };
         };
       approvals.mode = "off";
       security.protected_instruction_files = false;
@@ -178,6 +189,13 @@ in
             "mcp__beeper__list_messages"
             "mcp__beeper__search_messages"
             "mcp__beeper__send_message"
+            "mcp__robinhood__get_accounts"
+            "mcp__robinhood__get_portfolio"
+            "mcp__robinhood__get_equity_positions"
+            "mcp__robinhood__get_crypto_positions"
+            "mcp__robinhood__get_option_positions"
+            "mcp__robinhood__get_equity_quotes"
+            "mcp__robinhood__get_crypto_quotes"
             "mcp__roomcast__status"
             "mcp__roomcast__control"
             "mcp__roomcast__seek"

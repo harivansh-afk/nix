@@ -43,9 +43,10 @@ in
           "hermes-cli"
           "computer"
           "beeper"
+          "robinhood"
         ];
         mcp_servers = {
-          inherit (hermes.settings.mcp_servers) computer beeper;
+          inherit (hermes.settings.mcp_servers) computer beeper robinhood;
         };
         plugins = {
           enabled = [ ];

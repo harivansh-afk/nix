@@ -27,7 +27,8 @@ renaming it breaks the link, and edits at the same path change what recipients
 read. Links survive restarts. There is no share registry or individual
 revocation; rotating `sharefs-signing-key` invalidates all links.
 
-The UI supports upload, download, content editing and rename. Rename stays in
+The UI exposes share, edit, download and rename as icons in the Actions column.
+The share form contains an expiry selector and copy button. Rename stays in
 the same directory and cannot replace an existing file. Deletion is disabled
 on the server. Search and ZIP downloads remain disabled.
 
@@ -47,3 +48,8 @@ The service is sandboxed and the rest of the home directory is hidden.
 File responses are not cached; versioned static assets retain immutable caching.
 Scripts in served files are blocked. Both application and proxy logs redact
 share tokens.
+
+`RestrictSUIDSGID` must remain disabled for this service: systemd blocks
+`openat2` when it is enabled. sharefs uses that syscall to open shared files
+beneath its root safely and checks support at startup. `NoNewPrivileges` and
+an empty capability set remain enabled.

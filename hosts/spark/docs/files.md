@@ -24,8 +24,17 @@ Share control uses the same signer and lets you select an expiry.
 
 Recipients need no login. Links grant read-only access to one live file path;
 renaming it breaks the link, and edits at the same path change what recipients
-read. Links survive restarts. There is no share registry or individual
-revocation; rotating `sharefs-signing-key` invalidates all links.
+read. Links survive restarts. Rotating `sharefs-signing-key` invalidates all
+links; individual revocation is not supported.
+
+The **Shares** link on the right of the header opens a table of active links,
+with file paths, creation and expiration times, and copy/open actions. It
+includes links created by the browser and CLI. The private index lives in
+`/var/lib/sharefs/shares`, outside the served folders, and survives restarts.
+Expired links and links signed with an old key do not appear. Links created
+before tracking was enabled still work but cannot be reconstructed in this list.
+The index is only used to record and list shares; public reads still validate
+signed tokens directly.
 
 The UI exposes share, edit, download and rename as icons in the Actions column.
 The share form contains an expiry selector and copy button. Rename stays in

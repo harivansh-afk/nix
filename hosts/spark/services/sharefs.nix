@@ -88,7 +88,7 @@ in
       ProtectKernelTunables = true;
       ProtectKernelModules = true;
       ProtectControlGroups = true;
-      RestrictSUIDSGID = true;
+      RestrictSUIDSGID = false;
       LockPersonality = true;
       CapabilityBoundingSet = "";
       RestrictAddressFamilies = [

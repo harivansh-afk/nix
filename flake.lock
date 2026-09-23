@@ -94,16 +94,15 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1790030821,
-        "narHash": "sha256-aGuDgq/C/uR5Iur51LixmphsAg0ay0pCrgDPHgCL3qo=",
+        "lastModified": 1790178669,
+        "narHash": "sha256-voqw07PmOrnVpa4VEuW9IMLR3qX1vs6+LWTRhY7z9Ok=",
         "ref": "refs/heads/main",
-        "rev": "a927b49d7cfd57020256766c2b5bd68b72e5f5fe",
-        "revCount": 18,
+        "rev": "8c6266db8cd5574b872d55374fbd6ad1861d9883",
+        "revCount": 20,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/devin-codex.git"
       },
       "original": {
-        "rev": "a927b49d7cfd57020256766c2b5bd68b72e5f5fe",
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/devin-codex.git"
       }

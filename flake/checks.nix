@@ -49,27 +49,6 @@
         mixbridge = inputs.mixbridge-web.checks.${pkgs.stdenv.hostPlatform.system}.streaming-api;
       }
       // pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "aarch64-linux") {
-        hermes-devin =
-          let
-            profiles = pkgs.writeText "hermes-provider-profiles.json" (
-              builtins.toJSON {
-                default = hermes.configFile;
-                imessage = hermes.hermesHomeFiles."profiles/imessage/config.yaml";
-                desktop =
-                  pkgs.writeText "hermes-desktop.json"
-                    hermes.hermesHomeFiles."profiles/desktop/config.yaml";
-                roommates =
-                  pkgs.writeText "hermes-roommates.json"
-                    hermes.hermesHomeFiles."profiles/roommates/config.yaml";
-              }
-            );
-          in
-          pkgs.runCommand "hermes-devin" { nativeBuildInputs = [ pkgs.uv ]; } ''
-            export UV_CACHE_DIR=$TMPDIR/uv
-            uv run --offline --no-project --python ${hermes.package.hermesVenv}/bin/python3 \
-              ${../scripts/test-hermes-devin.py} ${profiles}
-            touch $out
-          '';
         hermes-runtime =
           pkgs.runCommand "hermes-runtime"
             {

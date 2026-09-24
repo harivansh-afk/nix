@@ -21,7 +21,7 @@ in
     ];
     configFile = pkgs.writeText "hermes-default-config.yaml" (
       builtins.toJSON {
-        model = hermes.settings.model;
+        inherit (hermes.settings) model providers secrets;
         platform_toolsets.cli = [ ];
         plugins = {
           enabled = [ ];

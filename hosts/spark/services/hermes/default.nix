@@ -52,6 +52,7 @@ in
   imports = [
     inputs.hermes-agent.nixosModules.default
     ./desktop.nix
+    ./devin.nix
     ./imessage.nix
     ./roommates.nix
   ];
@@ -114,7 +115,6 @@ in
 
     settings = {
       model = {
-        provider = "openai-codex";
         default = "gpt-6-astra";
         api_mode = "codex_responses";
         base_url = "";

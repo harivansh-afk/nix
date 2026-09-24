@@ -94,11 +94,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1790261688,
+        "lastModified": 1790263320,
         "narHash": "sha256-2wupZ+j1igaD168dbQLYyi9w1SWROBql+O6TVQ+Qb44=",
-        "ref": "refs/heads/fix/hermes-reasoning-replay",
-        "rev": "2c89a6a06307d30e06d5eb3f2354223afa8dc339",
-        "revCount": 23,
+        "ref": "refs/heads/main",
+        "rev": "16a506ed1dd712c5402e06b606cb4c6ec379553a",
+        "revCount": 24,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/devin-codex.git"
       },
@@ -578,11 +578,11 @@
         "uv2nix": "uv2nix"
       },
       "locked": {
-        "lastModified": 1789566404,
-        "narHash": "sha256-TE8LkBIdKyMJ5+WoK59YyQQ1Ez66Xiz95GRYnlef9Hw=",
+        "lastModified": 1790264556,
+        "narHash": "sha256-5YasgHkL56urpxK8ebduP0zpVr1czKjlv7u1Vg07ojQ=",
         "owner": "NousResearch",
         "repo": "hermes-agent",
-        "rev": "03b0c7947262b220f5148b75a30bb7a3faddcbb2",
+        "rev": "421f9592b3afbff1b562f3cc54b56d5726544bad",
         "type": "github"
       },
       "original": {

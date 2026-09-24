@@ -268,8 +268,9 @@ Source of truth is the jj-native ix forge (RPC `https://forge.ix.dev:8447/rpc`, 
 
 Hermes runs through upstream's NixOS module in `hosts/spark/services/hermes/default.nix`.
 The gateway and dashboard share `~/.local/state/hermes/.hermes`; the `~/.hermes`
-symlink keeps existing CLI state reachable. Astra uses Codex OAuth at medium
-reasoning. Browser and desktop actions use agent-browser CLI and upstream Cua MCP
+symlink keeps existing CLI state reachable. Personal profiles use Devin Astra;
+provider setup and limitations are in `hosts/spark/docs/hermes.md`.
+Browser and desktop actions use agent-browser CLI and upstream Cua MCP
 through the `spark-computer` skill, also installed for coding agents. Delegation,
 memory and skills are enabled for CLI and Photon iMessage. The personal KB,
 its ingestion and embedding services, and its Hermes plugin are disabled.

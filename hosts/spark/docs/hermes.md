@@ -2,8 +2,9 @@
 
 `hosts/spark/services/hermes/default.nix` owns the messaging gateway, desktop backend, model, tool selection
 and pinned runtimes. The Hermes flake input tracks an exact upstream revision;
-Astra uses the existing Codex OAuth identity with medium reasoning. Activation
-clears the old main-model localhost URL while retaining the separate Spark model.
+Astra uses Devin inference with medium reasoning through the authenticated
+loopback adapter declared in `hermes/devin.nix`. Codex OAuth and the separate
+Spark provider remain available.
 
 The two processes serve different clients: `hermes gateway` handles Photon and Telegram;
 `hermes serve` exposes the authenticated tailnet API used by the Mac
@@ -14,6 +15,35 @@ boundary and recommended workflow.
 
 Personal Desktop and iMessage profiles also expose the [Robinhood MCP](robinhood.md).
 Each profile requires its own Robinhood OAuth login after deployment.
+
+## Devin inference
+
+`hermes-devin.service` runs the pinned `devin-codex serve --compatibility` on
+`127.0.0.1:19476`. It reads the existing Devin CLI login at
+`~/.local/share/devin/credentials.toml`; sign in with Devin before starting it.
+The service creates a private token under `/var/lib/hermes-devin` on first start
+and retains it across restarts. Hermes's per-profile command secret source loads
+the token for the default, Desktop and iMessage profiles. Credentials never enter
+the Nix store. Both Hermes services wait for the adapter's authenticated health check.
+After renewing the Devin login, restart `hermes-devin`, `hermes-agent` and
+`hermes-backend` together to reload credentials and restore both clients.
+
+Personal profiles default to `devin` / `gpt-6-astra`. Delegated workers inherit
+the parent's provider and use Astra low. The roommates profile keeps Luna low
+through Codex OAuth because the adapter does not support Luna.
+
+Switch a personal session with:
+
+```text
+/model gpt-6-astra --provider devin
+/model gpt-6-astra --provider openai-codex
+```
+
+The adapter's standalone server currently exposes Astra only. Responses are
+buffered, model tool calls are serial, and image input is unsupported. Start a
+fresh session when moving between Codex and Devin: old native Codex reasoning
+was issued by a different backend. New defaults apply after rebuilding Spark;
+existing sessions can retain their saved model selection.
 
 ## Mac Desktop
 
@@ -121,7 +151,7 @@ rendering and vote delivery still need an actual iMessage acceptance check.
 
 This adds no service, hook, schedule, model provider or account integration. It
 does not install Nous' separate DSPy/GEPA Self-Evolution research optimizer. Skill
-files stay on Spark; reasoning still uses the configured Astra Codex provider.
+files stay on Spark; reasoning uses the configured inference provider.
 
 ## Desktop and browser
 
@@ -131,8 +161,9 @@ user service. Load the
 [spark-computer skill](../../../dots/agents/skills/spark-computer/SKILL.md) for
 exact upstream tool names, ownership, serialized input and cleanup.
 
-Use the normal `vision_analyze` tool to load each returned MCP `MEDIA:` path
-into Astra's image context. Hermes uses the unmodified upstream package.
+The Devin adapter does not accept image input. Screenshot interpretation needs
+a separately configured vision provider or a session switched to Codex OAuth.
+Hermes uses the unmodified upstream package.
 For service ownership, image-coordinate handling, diagnosis and validation results,
 see [Spark browser and desktop](browser.md).
 

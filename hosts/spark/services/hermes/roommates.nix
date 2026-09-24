@@ -47,6 +47,7 @@ in
     hermesHomeFiles = {
       "profiles/roommates/config.yaml" = builtins.toJSON {
         model = hermes.settings.model // {
+          provider = "openai-codex";
           default = "gpt-5.6-luna";
         };
         agent.reasoning_effort = "low";

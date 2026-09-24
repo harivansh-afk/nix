@@ -25,7 +25,12 @@ in
   services.hermes-agent = {
     hermesHomeFiles = {
       "profiles/desktop/config.yaml" = builtins.toJSON {
-        inherit (hermes.settings) model providers approvals;
+        inherit (hermes.settings)
+          model
+          providers
+          approvals
+          secrets
+          ;
         agent = {
           inherit (hermes.settings.agent) reasoning_effort disabled_toolsets;
         };

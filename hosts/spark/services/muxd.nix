@@ -7,6 +7,7 @@
 
   services.muxd = {
     enable = true;
+    audio.enable = true;
     # Every pane's shell runs as this user; a system account would get nologin.
     user = "rathi";
     listen = "0.0.0.0:4433";

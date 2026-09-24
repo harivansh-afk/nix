@@ -1,7 +1,9 @@
 # Spark browser and desktop
 
-Use pinned **agent-browser 0.36.0 CLI** for browser work and **Cua Driver 0.28.2
-MCP** for native apps. There is no Playwright MCP or custom Python execution
+Use pinned **agent-browser 0.36.0 CLI** for browser work and **Cua Driver
+0.28.3-nightly.20260924.35955966930 MCP** for native apps. The driver and its
+skills use the same immutable nightly, built from upstream commit
+`6762bcf63b616c6de86ab7b2309686150913105b`. There is no Playwright MCP or custom Python execution
 server. Nix installs the upstream binaries and version-matched skills; no runtime
 npm/uvx installs are needed. The [shared skill](../../../dots/agents/skills/spark-computer/SKILL.md)
 contains the agent workflow.

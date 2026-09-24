@@ -40,7 +40,7 @@ Switch a personal session with:
 ```
 
 The adapter's standalone server currently exposes Astra only. Responses are
-buffered, model tool calls are serial, and image input is unsupported. Start a
+buffered and model tool calls are serial. Inline image input is supported. Start a
 fresh session when moving between Codex and Devin: old native Codex reasoning
 was issued by a different backend. New defaults apply after rebuilding Spark;
 existing sessions can retain their saved model selection.
@@ -161,9 +161,11 @@ user service. Load the
 [spark-computer skill](../../../dots/agents/skills/spark-computer/SKILL.md) for
 exact upstream tool names, ownership, serialized input and cleanup.
 
-The Devin adapter does not accept image input. Screenshot interpretation needs
-a separately configured vision provider or a session switched to Codex OAuth.
-Hermes uses the unmodified upstream package.
+The Devin adapter accepts inline images, including screenshots returned by tools.
+Image consumption is verified through Sol and Astra in Codex; Hermes's own MCP
+image handling still needs a separate acceptance check. Existing Codex processes
+must be restarted to load the image-capable model catalog. Hermes uses the
+unmodified upstream package.
 For service ownership, image-coordinate handling, diagnosis and validation results,
 see [Spark browser and desktop](browser.md).
 

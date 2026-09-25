@@ -38,6 +38,22 @@
         "type": "github"
       }
     },
+    "codex-nixpkgs": {
+      "locked": {
+        "lastModified": 1789264731,
+        "narHash": "sha256-llGJbC0CcU8DfROr6mZjRJgMLQd/SKwfpzxJH/2lHO4=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "02f5696b0e6097e589076d886b317b83ff0437d7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "02f5696b0e6097e589076d886b317b83ff0437d7",
+        "type": "github"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1781825982,
@@ -112,14 +128,15 @@
     },
     "devin-codex": {
       "inputs": {
+        "codex-nixpkgs": "codex-nixpkgs",
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1790270666,
-        "narHash": "sha256-eF52rM59sbBIJrJxNjKzH46f6DXqdrrhVSQwGi4lQdo=",
-        "ref": "refs/heads/main",
-        "rev": "5e9766da9f48aebb5f8dabbccffce3e785f2a2fa",
-        "revCount": 27,
+        "lastModified": 1790302198,
+        "narHash": "sha256-T5oaNT9VT2JImeH4Go2h1dSqAqB+APl8/3JB3krhg2U=",
+        "ref": "fix/serve-models",
+        "rev": "be56e702ecc1a6438229196ceb17c8df1c725e7d",
+        "revCount": 34,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/devin-codex.git"
       },

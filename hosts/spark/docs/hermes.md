@@ -23,14 +23,14 @@ Each profile requires its own Robinhood OAuth login after deployment.
 `~/.local/share/devin/credentials.toml`; sign in with Devin before starting it.
 The service creates a private token under `/var/lib/hermes-devin` on first start
 and retains it across restarts. Hermes's per-profile command secret source loads
-the token for the default, Desktop and iMessage profiles. Credentials never enter
+the token for the default, Desktop, iMessage and roommates profiles. Credentials never enter
 the Nix store. Both Hermes services wait for the adapter's authenticated health check.
 After renewing the Devin login, restart `hermes-devin`, `hermes-agent` and
 `hermes-backend` together to reload credentials and restore both clients.
 
-Personal profiles default to `devin` / `gpt-6-astra`. Delegated workers inherit
-the parent's provider and use Astra low. The roommates profile keeps Luna low
-through Codex OAuth because the adapter does not support Luna.
+Personal profiles default to `devin` / `gpt-6-astra` with medium reasoning. Delegated workers inherit
+the parent's provider and use Astra low. The roommates profile uses Devin
+`gpt-6-sol` with low reasoning.
 
 Switch a personal session with:
 
@@ -39,7 +39,8 @@ Switch a personal session with:
 /model gpt-6-astra --provider openai-codex
 ```
 
-The adapter's standalone server currently exposes Astra only. Responses are
+The adapter loads its account-available model catalog through the installed Devin CLI at startup.
+Responses are
 buffered and model tool calls are serial. Inline image input is supported. Start a
 fresh session when moving between Codex and Devin: old native Codex reasoning
 was issued by a different backend. New defaults apply after rebuilding Spark;
@@ -67,7 +68,8 @@ saved connection or grant control over another process's active workers.
 
 `hosts/spark/services/hermes/imessage.nix` owns the named Photon profile. The
 upstream module's `settings` remain the source for its generated config; an
-explicit `configFile` leaves the root/default profile with no configured CLI
+shared gateway starts from the root/default profile and routes Photon to `imessage`
+and Telegram to `roommates`. Its explicit `configFile` leaves the root/default profile with no configured CLI
 tools, MCP connections, custom persona or enabled memory. Root credentials and
 the Nix-installed plugin directory remain shared infrastructure.
 
@@ -96,7 +98,7 @@ after confirmed dispatch, retaining the allowed tool schemas. Astra medium handl
 conversation; Astra low handles native delegated work. Each Photon worker receives
 a bounded snapshot of parent conversation text through its native context argument;
 Nix controls the character budget. Native concurrency defaults
-remain in place. The roommates profile retains Luna low and no plugins.
+remain in place. The roommates profile uses Sol low and no plugins.
 See the [plugin contract](../../../pkgs/hermes-conversation/README.md).
 This is an agent workflow, not a separate chat scheduler or a
 hard response-time guarantee. Profiles can run concurrently but share gateway

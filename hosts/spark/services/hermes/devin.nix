@@ -41,7 +41,7 @@ in
         StateDirectory = "hermes-devin";
         StateDirectoryMode = "0700";
         UMask = "0077";
-        ExecStart = "${adapter}/bin/devin-codex --credentials ${home}/.local/share/devin/credentials.toml serve --port 19476 --token-file ${token} --compatibility";
+        ExecStart = "${adapter}/bin/devin-codex --credentials ${home}/.local/share/devin/credentials.toml serve --devin ${home}/.local/bin/devin --port 19476 --token-file ${token} --compatibility";
         Restart = "on-failure";
         RestartSec = 5;
         NoNewPrivileges = true;

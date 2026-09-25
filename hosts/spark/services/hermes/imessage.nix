@@ -15,13 +15,14 @@ let
 in
 {
   services.hermes-agent = {
-    extraArgs = [
-      "--profile"
-      "imessage"
-    ];
     configFile = pkgs.writeText "hermes-default-config.yaml" (
       builtins.toJSON {
-        inherit (hermes.settings) model providers secrets;
+        inherit (hermes.settings)
+          model
+          providers
+          secrets
+          gateway
+          ;
         platform_toolsets.cli = [ ];
         plugins = {
           enabled = [ ];
@@ -56,7 +57,6 @@ in
   ];
 
   systemd.services.hermes-agent = {
-    environment.HERMES_HOME = lib.mkForce profileHome;
     restartTriggers = [ settings ];
     preStart = ''
       if [ ! -e ${profileHome}/.migrated-from-default ]; then

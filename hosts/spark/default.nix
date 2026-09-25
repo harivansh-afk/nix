@@ -23,6 +23,7 @@
     ./services/forgejo
     ./services/hermes
     ./services/roomcast.nix
+    ./services/airplay-beacon.nix
     ./services/inference.nix
     ./services/mixbridge.nix
     ./services/draw.nix

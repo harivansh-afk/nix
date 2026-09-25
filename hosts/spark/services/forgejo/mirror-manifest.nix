@@ -9,6 +9,7 @@ let
     "${ownedOwner}/nix"
     "${ownedOwner}/pr.nvim"
     "${ownedOwner}/roomcast"
+    "${ownedOwner}/airplay-at-the-crib"
     "${ownedOwner}/pierrejo"
     "${ownedOwner}/deskctl"
     "${ownedOwner}/betternas"

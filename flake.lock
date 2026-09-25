@@ -1,5 +1,26 @@
 {
   "nodes": {
+    "airplay-at-the-crib": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790301279,
+        "narHash": "sha256-82yiNtwEuXOLd2zbwKjmDNeK/X2g2v3Y8onq5iqY79Y=",
+        "ref": "main",
+        "rev": "d328bc32fd84650609441899c63cb4772547a952",
+        "revCount": 7,
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/airplay-at-the-crib.git"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/airplay-at-the-crib.git"
+      }
+    },
     "brew-src": {
       "flake": false,
       "locked": {
@@ -1301,6 +1322,7 @@
     },
     "root": {
       "inputs": {
+        "airplay-at-the-crib": "airplay-at-the-crib",
         "determinate": "determinate",
         "devin-codex": "devin-codex",
         "dgx-spark": "dgx-spark",

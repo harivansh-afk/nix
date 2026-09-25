@@ -41,6 +41,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    airplay-at-the-crib = {
+      url = "git+https://git.harivan.sh/harivansh-afk/airplay-at-the-crib.git?ref=main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     draw = {
       url = "git+https://git.harivan.sh/harivansh-afk/draw.git?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";

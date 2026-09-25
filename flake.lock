@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790301279,
-        "narHash": "sha256-82yiNtwEuXOLd2zbwKjmDNeK/X2g2v3Y8onq5iqY79Y=",
+        "lastModified": 1790301587,
+        "narHash": "sha256-5W6vX8q1j5Ogb7za+/JYWr0UbhT5JzG5iiUczfG4Jeg=",
         "ref": "main",
-        "rev": "d328bc32fd84650609441899c63cb4772547a952",
-        "revCount": 7,
+        "rev": "defff92396b5d1d48d667691bf18d736dec72886",
+        "revCount": 8,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/airplay-at-the-crib.git"
       },

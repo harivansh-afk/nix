@@ -49,6 +49,7 @@ in
         PrivateDevices = true;
         ProtectSystem = "strict";
         ProtectHome = "read-only";
+        ReadWritePaths = [ "${home}/.local/share/devin/cli/logs" ];
       };
       preStart = ''
         if [ ! -e ${token} ]; then

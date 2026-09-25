@@ -40,6 +40,8 @@ Switch a personal session with:
 ```
 
 The adapter loads its account-available model catalog through the installed Devin CLI at startup.
+The service allows writes to the CLI's log directory, which even `devin models list`
+requires; the rest of the home directory remains read-only.
 Responses are
 buffered and model tool calls are serial. Inline image input is supported. Start a
 fresh session when moving between Codex and Devin: old native Codex reasoning

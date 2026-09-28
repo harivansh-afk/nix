@@ -365,10 +365,11 @@ static void spaces_push(void) {
       [args addObjectsFromArray:@[ @"--set", item, @"drawing=off", @"--set", divider, @"drawing=off" ]];
       continue;
     }
-    NSString *fg = isFocused ? color(@"PINK_COLOR") : color(@"MUTED_COLOR");
     [args addObjectsFromArray:@[
       @"--set", item, @"drawing=on",
-      [NSString stringWithFormat:@"icon.color=%@", fg],
+      [NSString stringWithFormat:@"background.color=%@", color(isFocused ? @"BORDER_COLOR" : @"BAR_COLOR")],
+      @"background.drawing=on",
+      [NSString stringWithFormat:@"icon.color=%@", color(@"TEXT_COLOR")],
       @"--set", divider, @"drawing=on",
     ]];
   }

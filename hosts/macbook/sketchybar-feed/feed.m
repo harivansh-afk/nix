@@ -375,7 +375,7 @@ static void spaces_push(void) {
     if (!first[ws] || [app compare:first[ws]] == NSOrderedAscending) first[ws] = app;
   }
 
-  // tab internals mirror the rc: 10/11/10pt compensates font side bearings
+  // Match the rc: 14pt outer insets, 9pt between workspace number and app.
   NSMutableArray *args = [NSMutableArray array];
   for (int sid = 1; sid <= 9; sid++) {
     NSString *id = [NSString stringWithFormat:@"%d", sid];
@@ -390,13 +390,12 @@ static void spaces_push(void) {
     NSString *fg = isFocused ? color(@"PINK_COLOR") : color(@"MUTED_COLOR");
     [args addObjectsFromArray:@[
       @"--set", item, @"drawing=on",
-      @"background.drawing=off",
       [NSString stringWithFormat:@"icon.color=%@", fg],
       isFocused ? @"icon.font.style=Bold" : @"icon.font.style=Regular",
-      icon.length ? @"icon.padding_right=11" : @"icon.padding_right=10",
+      icon.length ? @"icon.padding_right=9" : @"icon.padding_right=14",
       [NSString stringWithFormat:@"label=%@", icon],
       icon.length ? @"label.drawing=on" : @"label.drawing=off",
-      [NSString stringWithFormat:@"label.color=%@", isFocused ? color(@"TEXT_COLOR") : color(@"MUTED_COLOR")],
+      [NSString stringWithFormat:@"label.color=%@", fg],
     ]];
   }
   sb(args);

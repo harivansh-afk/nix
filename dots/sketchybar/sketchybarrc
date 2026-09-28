@@ -1,240 +1,76 @@
 #!/bin/bash
-# SketchyBar rc, linked at ~/.config/sketchybar/sketchybarrc. Cozybox
-# Full-width solid strip above the applications, with square edges.
-# Left: aerospace workspaces (number + app icon, focused in the accent).
-# Right: resource and status text.
-# The notch keeps the two sections apart; nothing is placed in the middle.
-# Colors come from themes/current, a symlink managed by the `theme` script
-# (rendered per-mode from lib/theme.nix).
-#
-# This file is layout only. Every value that changes at runtime (workspace
-# tabs, cpu/mem, volume, battery, clock) is pushed by `sketchybar-feed`, a
-# launchd sibling (hosts/macbook/sketchybar-feed/feed.m) that listens to the
-# system APIs directly and writes over sketchybar's mach port: no item here
-# has a script= or update_freq=. The rc signals it at the end so it re-reads
-# the theme and pushes everything after each (re)load.
-
+# Layout only; sketchybar-feed supplies values and workspace visibility.
 source "$CONFIG_DIR/themes/current"
+
 FONT="SF Pro"
-APP_FONT="sketchybar-app-font"
-
-# One text size across the whole bar - user preference (grew from 13pt via
-# 14pt to 18pt). The app glyph font keeps its historical +2pt over the text
-# size (sketchybar-app-font renders visually smaller at equal pt).
-FONT_SIZE=18.0
-APP_FONT_SIZE=20.0
-
-# The bar is shown only on the main display (the MacBook).
-# Notched displays override that base with NSScreen.safeAreaInsets.top, a POINT
-# value that changes with the scaled resolution (43 @ 2048x1330, 49 @
-# 2294x1490). Max across screens, via `notch-inset`: a tiny AppKit binary
-# compiled by nix (hosts/macbook/notch-inset, on the agent PATH through
-# services.sketchybar.extraPackages), ~10ms. This used to be `swift -e`, which
-# JIT-compiles through xcodebuild: at a cold login it blocked this rc for
-# minutes (2026-08-18: swift-frontend still running 5 min in) so nothing below
-# ever ran and the bar came up empty at default geometry. Never call swift
-# here. Falls back to 43 (the historical built-in value) if no screen reports
-# an inset or the helper is missing.
-BAR_HEIGHT=32
-NOTCH_BAR_HEIGHT="$(notch-inset 2>/dev/null)"
-case "$NOTCH_BAR_HEIGHT" in '' | *[!0-9]* | 0) NOTCH_BAR_HEIGHT=43 ;; esac
-
-# Item geometry derives from the external bar height, so the same blocks render
-# on every display. A notched display gets extra vertical room around them.
-# Text sizes and the PAD_* scale stay absolute: fonts are a user preference in
-# fixed points.
-scale() { echo $((($1 * BAR_HEIGHT + 21) / 43)); }
-
-# The vertical margin scales with the base bar height. Per-display horizontal
-# edge spacers below derive their widths from the actual rendered bar height.
-VERTICAL_MARGIN=$(scale 6)
-ITEM_HEIGHT=$((BAR_HEIGHT - 2 * VERTICAL_MARGIN))
-
-# --- spacing scale (pt): every gap in the bar derives from these ---
-# PAD_EDGE   inside a block at its outer edges (also glyphless-tab padding,
-#            mirrored in sketchybar-feed's spaces_push - keep them in sync)
-# PAD_ITEM   each side of a component boundary in the right block (gap = 2x)
-# PAD_TIGHT  between a muted prefix (vol/bat) and its value (gap = 2x)
-# TAB_GAP    between workspace tabs
-PAD_EDGE=14
-PAD_ITEM=9
-PAD_TIGHT=4
-TAB_GAP=6
+PAD=14
+SECTION_WIDTH=240
+NOTCH_HEIGHT="$(notch-inset 2>/dev/null)"
+case "$NOTCH_HEIGHT" in '' | *[!0-9]* | 0) NOTCH_HEIGHT=43 ;; esac
 
 sketchybar --bar \
-  position=top \
-  height=$BAR_HEIGHT \
-  notch_display_height=$NOTCH_BAR_HEIGHT \
-  color="$BAR_COLOR" \
-  border_width=0 \
-  shadow=off \
-  font_smoothing=on \
-  corner_radius=0 \
-  margin=0 \
-  y_offset=0 \
-  padding_left=0 \
-  padding_right=0 \
-  display=main \
-  sticky=on
+  position=top display=main sticky=on \
+  height=32 notch_display_height="$NOTCH_HEIGHT" \
+  color="$BAR_COLOR" border_width=0 corner_radius=0 \
+  margin=0 y_offset=0 padding_left=0 padding_right=0 \
+  shadow=off font_smoothing=on
 
-# All items share the solid bar background; workspace focus is shown in text.
 sketchybar --default \
-  background.drawing=off \
-  background.color="$BAR_COLOR" \
-  background.corner_radius=0 \
-  background.height=$ITEM_HEIGHT \
-  background.border_width=0 \
-  icon.drawing=off \
-  icon.font="$FONT:Regular:$FONT_SIZE" \
-  icon.color="$MUTED_COLOR" \
-  icon.padding_left=$PAD_ITEM \
-  icon.padding_right=$PAD_TIGHT \
-  label.font="$FONT:Regular:$FONT_SIZE" \
-  label.color="$TEXT_COLOR" \
-  label.padding_left=$PAD_TIGHT \
-  label.padding_right=$PAD_ITEM
+  padding_left=0 padding_right=0 \
+  background.drawing=off background.color="$BAR_COLOR" \
+  background.height=0 background.corner_radius=0 \
+  background.border_width=0 background.border_color="$BORDER_COLOR" \
+  icon.drawing=on icon.font="$FONT:Regular:18.0" \
+  icon.color="$TEXT_COLOR" icon.padding_left=$PAD icon.padding_right=4 \
+  label.font="$FONT:Regular:18.0" label.color="$TEXT_COLOR" \
+  label.padding_left=4 label.padding_right=$PAD
 
-# --- per-display edge spacing ---
-# Bar padding is global even when notch_display_height gives each display a
-# different height. One display-associated spacer on each edge lets every bar
-# use its own vertical margin as its horizontal margin too:
-#   edge = (actual display bar height - item height) / 2
-# sketchybar-feed reloads this rc after monitor or resolution changes, so the
-# spacers are rebuilt from the new bounding rectangles.
-display_ids="$(
-  sketchybar --query displays |
-    sed -n 's/.*"arrangement-id":\([0-9][0-9]*\).*/\1/p'
-)"
+# Height zero follows the actual bar height, including the notch area.
+block() {
+  sketchybar --set "$1" background.drawing=on \
+    background.height=0 background.corner_radius=0 \
+    background.border_width=1 background.border_color="$BORDER_COLOR"
+}
 
-for did in $display_ids; do
-  for side in left right; do
-    sketchybar --add item "edge.$side.$did" "$side" \
-      --set "edge.$side.$did" \
-      display="$did" \
-      width=1 \
-      background.drawing=off \
-      icon.drawing=off \
-      label.drawing=off
-  done
-
-  display_height="$(
-    sketchybar --query "edge.left.$did" |
-      awk -v display="\"display-$did\"" '
-        $0 ~ display { found = 1 }
-        found && /"size":/ {
-          split($0, parts, ",")
-          gsub(/[^0-9.]/, "", parts[2])
-          printf "%.0f\n", parts[2]
-          exit
-        }
-      '
-  )"
-  case "$display_height" in '' | *[!0-9]*) display_height=$BAR_HEIGHT ;; esac
-
-  edge_padding=$(((display_height - ITEM_HEIGHT) / 2))
-  [ "$edge_padding" -ge 0 ] || edge_padding=0
-  sketchybar --set "edge.left.$did" width="$edge_padding" \
-    --set "edge.right.$did" width="$edge_padding"
-done
-
-# --- left section: workspace indicators ---
-# Static shells only; sketchybar-feed renders all of them in one batch per
-# workspace or app event.
-
-# aerospace and sketchybar are sibling launchd agents started together at
-# login; without a server `list-workspaces` prints nothing and the loop would
-# build zero tabs. Wait (bounded, 30s) for readiness - bar geometry above is
-# already applied, so nothing visible is delayed.
+# AeroSpace and the feed start alongside SketchyBar at login.
 for _ in $(seq 1 60); do
   aerospace list-workspaces --all >/dev/null 2>&1 && break
   sleep 0.5
 done
 
 for sid in $(aerospace list-workspaces --all); do
-  # tab internals are visually compensated for font side bearings (digits
-  # render ~2pt inside their advance, the app glyphs ~1pt): 10/11/10 makes
-  # all three gaps measure ~12pt on screen (verified by pixel measurement);
-  # sketchybar-feed's spaces_push mirrors these numbers - keep them in sync
-  sketchybar --add item "space.$sid" left \
-    --set "space.$sid" \
-    drawing=off \
-    background.drawing=off \
-    padding_left=0 \
-    padding_right=$TAB_GAP \
-    icon.drawing=on \
-    icon="$sid" \
-    icon.padding_left=10 \
-    icon.padding_right=11 \
-    label.font="$APP_FONT:Regular:$APP_FONT_SIZE" \
-    label.drawing=off \
-    label.padding_left=0 \
-    label.padding_right=10 \
+  sketchybar --add item "space.$sid" left --set "space.$sid" \
+    drawing=off width=80 \
+    icon="$sid" icon.padding_right=9 \
+    label.font="sketchybar-app-font:Regular:20.0" \
+    label.drawing=off label.padding_left=0 \
     click_script="aerospace workspace $sid"
+  block "space.$sid"
 done
 
-# --- right section: volume | battery | clock ---
-# Items are added rightmost-first.
-# icon = date (normal text color), label = time (pink)
-# background.drawing=off is set explicitly on every right item: properties
-# persist in the daemon across --reload, so relying on the default would
-# leave a stale painted block behind after a config change.
-sketchybar --add item clock right \
-  --set clock \
-  background.drawing=off \
-  icon.drawing=on \
-  icon.font="$FONT:Regular:$FONT_SIZE" \
-  icon.color="$TEXT_COLOR" \
-  icon.padding_left=$PAD_ITEM \
-  icon.padding_right=$PAD_TIGHT \
-  label.font="$FONT:Regular:$FONT_SIZE" \
-  label.color="$PINK_COLOR" \
-  label.padding_left=$PAD_TIGHT \
-  label.padding_right=$PAD_EDGE \
+# Rightmost first: three equally wide sections with matching 14pt insets.
+sketchybar --add item clock right --set clock \
+  width=$SECTION_WIDTH \
   click_script="open -a Calendar"
 
-sketchybar --add item battery right \
-  --set battery \
-  background.drawing=off \
-  icon.drawing=on \
-  icon=bat \
-  icon.font="$FONT:Regular:$FONT_SIZE" \
-  icon.padding_left=$PAD_ITEM \
-  icon.padding_right=$PAD_TIGHT \
-  label.font="$FONT:Bold:$FONT_SIZE" \
-  label.padding_left=$PAD_TIGHT \
-  label.padding_right=$PAD_ITEM \
+sketchybar --add item battery right --set battery \
+  width=$((SECTION_WIDTH / 2)) icon=bat label.font="$FONT:Bold:18.0" \
   click_script='open "x-apple.systempreferences:com.apple.Battery-Settings.extension"'
 
-# click toggles mute, scroll adjusts: sketchybar-feed's CLI mode sets the
-# device through CoreAudio and its listener renders the new value
-sketchybar --add item volume right \
-  --subscribe volume mouse.clicked mouse.scrolled \
-  --set volume \
-  background.drawing=off \
-  icon.drawing=on \
-  icon=vol \
-  icon.font="$FONT:Regular:$FONT_SIZE" \
-  icon.padding_left=$PAD_EDGE \
-  icon.padding_right=$PAD_TIGHT \
-  label.font="$FONT:Regular:$FONT_SIZE" \
-  label.padding_left=$PAD_TIGHT \
-  label.padding_right=$PAD_ITEM \
-  script="sketchybar-feed volume-event"
+sketchybar --add item volume right --set volume \
+  width=$((SECTION_WIDTH / 2)) icon=vol \
+  script="sketchybar-feed volume-event" \
+  --subscribe volume mouse.clicked mouse.scrolled
 
-# --- resources: immediately left of the status items ---
-sketchybar --add item resources right \
-  --set resources \
-  background.drawing=off \
-  padding_right=$TAB_GAP \
-  icon.drawing=on \
-  icon.font="$FONT:Regular:$FONT_SIZE" \
-  icon.padding_left=$PAD_EDGE \
-  icon.padding_right=$PAD_ITEM \
-  label.font="$FONT:Regular:$FONT_SIZE" \
-  label.padding_left=$PAD_ITEM \
-  label.padding_right=$PAD_EDGE
+sketchybar --add item resources right --set resources \
+  width=$SECTION_WIDTH icon.padding_right=9 label.padding_left=9
 
-# --- init ---
-# Items exist now: have sketchybar-feed re-read the theme and push every value.
+sketchybar --add bracket section.resources resources \
+  --add bracket section.settings volume battery \
+  --add bracket section.date clock
+for section in resources settings date; do
+  block "section.$section"
+done
+
 sketchybar --update
 pkill -USR1 -x sketchybar-feed || true

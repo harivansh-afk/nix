@@ -11,18 +11,12 @@ let
     $CC -fobjc-arc -framework AppKit -o $out/bin/notch-inset ${./notch-inset/notch-inset.m}
   '';
 
-  # Every dynamic value in the bar, pushed over sketchybar's mach port from one
-  # daemon (no per-item shell plugins). The app-glyph table is generated from
-  # sketchybar-app-font's icon_map.sh at build time.
   sketchybarFeed = pkgs.runCommandCC "sketchybar-feed" { } ''
-    mkdir -p $out/bin build
-    awk -f ${./sketchybar-feed/gen-icon-map.awk} \
-      ${pkgs.sketchybar-app-font}/bin/icon_map.sh > build/icon_map.h
-    cp ${./sketchybar-feed/feed.m} build/feed.m
+    mkdir -p $out/bin
     $CC -fobjc-arc -O2 -Wall -Wno-unused-parameter \
       -framework Foundation -framework AppKit -framework CoreAudio \
       -framework AudioToolbox -framework IOKit -framework CoreGraphics \
-      -o $out/bin/sketchybar-feed build/feed.m
+      -o $out/bin/sketchybar-feed ${./sketchybar-feed/feed.m}
   '';
 in
 {
@@ -49,8 +43,6 @@ in
       sketchybarFeed # the volume item's mouse script
     ];
   };
-
-  fonts.packages = [ pkgs.sketchybar-app-font ];
 
   launchd.user.agents = {
     # Hand-declared, not services.aerospace: that module passes its own

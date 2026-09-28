@@ -71,10 +71,10 @@ let
     };
   wallpapers = {
     dir = "${homeDirectory}/Pictures/Screensavers";
-    dark = "${homeDirectory}/Pictures/Screensavers/wallpaper-dark.png";
+    dark = "${homeDirectory}/Pictures/Screensavers/solid-black.png";
     light = "${homeDirectory}/Pictures/Screensavers/wallpaper-light.png";
     current = "${homeDirectory}/Pictures/Screensavers/wallpaper.png";
-    staticDark = ../assets/wallpapers/topography-dark.png;
+    staticDark = ../assets/wallpapers/solid-black.png;
     staticLight = ../assets/wallpapers/topography-light.png;
     generation = wallpaperGeneration;
   };
@@ -782,17 +782,17 @@ let
       hex = color: builtins.replaceStrings [ "#" ] [ "0xff" ] color;
     in
     ''
-      export BAR_COLOR=${hex t.background}
+      export BAR_COLOR=0xff000000
       export SURFACE_COLOR=${hex t.surface}
       export SELECTED_COLOR=${hex t.selectionBackground}
-      export TEXT_COLOR=${hex t.text}
-      export BRIGHT_COLOR=${hex t.foreground}
-      export MUTED_COLOR=${hex t.mutedText}
+      export TEXT_COLOR=0xffffffff
+      export BRIGHT_COLOR=0xffffffff
+      export MUTED_COLOR=0xffffffff
       export ACCENT_COLOR=${hex accent}
       export PINK_COLOR=${hex t.purple}
       export RED_COLOR=${hex red}
       export GREEN_COLOR=${hex t.green}
-      export BORDER_COLOR=${hex t.border}
+      export BORDER_COLOR=0xff666666
     '';
 
   renderZshHighlights =

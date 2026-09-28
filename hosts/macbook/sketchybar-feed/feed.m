@@ -34,8 +34,6 @@
 #import <signal.h>
 #import <sys/sysctl.h>
 
-#include "icon_map.h"
-
 // ---------------------------------------------------------------- mach ---
 
 // Wire format is sketchybar's own CLI encoding: argv joined by NUL, double NUL
@@ -350,53 +348,29 @@ static NSString *run(NSArray<NSString *> *argv) {
   return [[NSString alloc] initWithData:d encoding:NSUTF8StringEncoding];
 }
 
-static NSString *icon_for(NSString *app) {
-  const char *a = app.UTF8String;
-  for (size_t i = 0; i < ICON_MAP_COUNT; i++) {
-    const struct icon_map_entry *e = &icon_map[i];
-    if (e->prefix ? strncmp(a, e->name, strlen(e->name)) == 0 : strcmp(a, e->name) == 0) return @(e->icon);
-  }
-  return @":default:";
-}
-
 static void spaces_push(void) {
   if (!g_aerospace) return;
   NSString *focused = [run(@[ g_aerospace, @"list-workspaces", @"--focused" ]) stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
-  NSString *windows = run(@[ g_aerospace, @"list-windows", @"--all", @"--format", @"%{workspace}|%{app-name}" ]);
+  NSString *windows = run(@[ g_aerospace, @"list-windows", @"--all", @"--format", @"%{workspace}" ]);
   if (!focused || !windows) return;
 
-  // first app per workspace, alphabetically (mirrors `sort -u | head -1`)
-  NSMutableDictionary<NSString *, NSString *> *first = [NSMutableDictionary dictionary];
-  for (NSString *line in [windows componentsSeparatedByString:@"\n"]) {
-    NSRange bar = [line rangeOfString:@"|"];
-    if (bar.location == NSNotFound) continue;
-    NSString *ws = [line substringToIndex:bar.location];
-    NSString *app = [line substringFromIndex:bar.location + 1];
-    if (!first[ws] || [app compare:first[ws]] == NSOrderedAscending) first[ws] = app;
-  }
-
-  // tab internals mirror the rc: 10/11/10pt compensates font side bearings
+  NSSet *occupied = [NSSet setWithArray:[windows componentsSeparatedByString:@"\n"]];
   NSMutableArray *args = [NSMutableArray array];
   for (int sid = 1; sid <= 9; sid++) {
     NSString *id = [NSString stringWithFormat:@"%d", sid];
     NSString *item = [@"space." stringByAppendingString:id];
-    NSString *app = first[id];
-    NSString *icon = app ? icon_for(app) : @"";
+    NSString *divider = [@"divider." stringByAppendingString:item];
     BOOL isFocused = [id isEqualToString:focused];
-    if (!isFocused && icon.length == 0) {
-      [args addObjectsFromArray:@[ @"--set", item, @"drawing=off" ]];
+    if (!isFocused && ![occupied containsObject:id]) {
+      [args addObjectsFromArray:@[ @"--set", item, @"drawing=off", @"--set", divider, @"drawing=off" ]];
       continue;
     }
-    NSString *fg = isFocused ? color(@"PINK_COLOR") : color(@"MUTED_COLOR");
     [args addObjectsFromArray:@[
       @"--set", item, @"drawing=on",
-      [NSString stringWithFormat:@"background.color=%@", color(@"BAR_COLOR")],
-      [NSString stringWithFormat:@"icon.color=%@", fg],
-      isFocused ? @"icon.font=Berkeley Mono:Bold:18.0" : @"icon.font=Berkeley Mono:Regular:18.0",
-      icon.length ? @"icon.padding_right=11" : @"icon.padding_right=10",
-      [NSString stringWithFormat:@"label=%@", icon],
-      icon.length ? @"label.drawing=on" : @"label.drawing=off",
-      [NSString stringWithFormat:@"label.color=%@", isFocused ? color(@"TEXT_COLOR") : color(@"MUTED_COLOR")],
+      @"background.drawing=off",
+      isFocused ? @"icon.font.style=Bold" : @"icon.font.style=Regular",
+      [NSString stringWithFormat:@"icon.color=%@", color(isFocused ? @"PINK_COLOR" : @"TEXT_COLOR")],
+      @"--set", divider, @"drawing=on",
     ]];
   }
   sb(args);

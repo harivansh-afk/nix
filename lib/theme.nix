@@ -792,7 +792,7 @@ let
       export PINK_COLOR=${hex t.purple}
       export RED_COLOR=${hex red}
       export GREEN_COLOR=${hex t.green}
-      export BORDER_COLOR=0xff383838
+      export BORDER_COLOR=0xff666666
     '';
 
   renderZshHighlights =

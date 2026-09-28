@@ -41,17 +41,23 @@ done
 for sid in $(aerospace list-workspaces --all); do
   sketchybar --add item "space.$sid" left --set "space.$sid" \
     drawing=off width=80 \
-    icon="$sid" icon.padding_right=9 \
-    label.font="sketchybar-app-font:Regular:20.0" \
-    label.drawing=off label.padding_left=0 \
+    icon="$sid" icon.width=80 icon.align=center \
+    icon.padding_left=0 icon.padding_right=0 label.drawing=off \
     click_script="aerospace workspace $sid"
   block "space.$sid"
 done
+
+separator() {
+  sketchybar --add item "divider.$1" right --set "divider.$1" \
+    width=1 icon.drawing=off label.drawing=off \
+    background.color="$BORDER_COLOR" background.height=0 background.drawing=on
+}
 
 # Rightmost first: three equally wide sections with matching 14pt insets.
 sketchybar --add item clock right --set clock \
   width=$SECTION_WIDTH \
   click_script="open -a Calendar"
+separator date
 
 sketchybar --add item battery right --set battery \
   width=$((SECTION_WIDTH / 2)) icon=bat label.font="$FONT:Bold:18.0" \
@@ -61,16 +67,12 @@ sketchybar --add item volume right --set volume \
   width=$((SECTION_WIDTH / 2)) icon=vol \
   script="sketchybar-feed volume-event" \
   --subscribe volume mouse.clicked mouse.scrolled
+separator settings
 
 sketchybar --add item resources right --set resources \
   width=$SECTION_WIDTH icon.padding_right=9 label.padding_left=9
 
-sketchybar --add bracket section.resources resources \
-  --add bracket section.settings volume battery \
-  --add bracket section.date clock
-for section in resources settings date; do
-  block "section.$section"
-done
+separator resources
 
 sketchybar --update
 pkill -USR1 -x sketchybar-feed || true

@@ -25,13 +25,6 @@ sketchybar --default \
   label.font="$FONT:Regular:18.0" label.color="$TEXT_COLOR" \
   label.padding_left=4 label.padding_right=$PAD
 
-# Height zero follows the actual bar height, including the notch area.
-block() {
-  sketchybar --set "$1" background.drawing=on \
-    background.height=0 background.corner_radius=0 \
-    background.border_width=1 background.border_color="$BORDER_COLOR"
-}
-
 # AeroSpace and the feed start alongside SketchyBar at login.
 for _ in $(seq 1 60); do
   aerospace list-workspaces --all >/dev/null 2>&1 && break
@@ -40,11 +33,10 @@ done
 
 for sid in $(aerospace list-workspaces --all); do
   sketchybar --add item "space.$sid" left --set "space.$sid" \
-    drawing=off width=80 \
+    drawing=off width=80 background.border_width=1 background.drawing=on \
     icon="$sid" icon.width=80 icon.align=center \
     icon.padding_left=0 icon.padding_right=0 label.drawing=off \
     click_script="aerospace workspace $sid"
-  block "space.$sid"
 done
 
 separator() {

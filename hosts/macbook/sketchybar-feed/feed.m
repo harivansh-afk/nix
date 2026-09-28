@@ -359,16 +359,17 @@ static void spaces_push(void) {
   for (int sid = 1; sid <= 9; sid++) {
     NSString *id = [NSString stringWithFormat:@"%d", sid];
     NSString *item = [@"space." stringByAppendingString:id];
+    NSString *divider = [@"divider." stringByAppendingString:item];
     BOOL isFocused = [id isEqualToString:focused];
     if (!isFocused && ![occupied containsObject:id]) {
-      [args addObjectsFromArray:@[ @"--set", item, @"drawing=off" ]];
+      [args addObjectsFromArray:@[ @"--set", item, @"drawing=off", @"--set", divider, @"drawing=off" ]];
       continue;
     }
     NSString *fg = isFocused ? color(@"PINK_COLOR") : color(@"MUTED_COLOR");
     [args addObjectsFromArray:@[
       @"--set", item, @"drawing=on",
       [NSString stringWithFormat:@"icon.color=%@", fg],
-      isFocused ? @"icon.font.style=Bold" : @"icon.font.style=Regular",
+      @"--set", divider, @"drawing=on",
     ]];
   }
   sb(args);

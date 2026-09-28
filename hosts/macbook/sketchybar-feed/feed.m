@@ -392,7 +392,7 @@ static void spaces_push(void) {
       @"--set", item, @"drawing=on",
       [NSString stringWithFormat:@"background.color=%@", color(@"BAR_COLOR")],
       [NSString stringWithFormat:@"icon.color=%@", fg],
-      isFocused ? @"icon.font=Berkeley Mono:Bold:18.0" : @"icon.font=Berkeley Mono:Regular:18.0",
+      isFocused ? @"icon.font.style=Bold" : @"icon.font.style=Regular",
       icon.length ? @"icon.padding_right=11" : @"icon.padding_right=10",
       [NSString stringWithFormat:@"label=%@", icon],
       icon.length ? @"label.drawing=on" : @"label.drawing=off",

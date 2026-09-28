@@ -71,10 +71,10 @@ let
     };
   wallpapers = {
     dir = "${homeDirectory}/Pictures/Screensavers";
-    dark = "${homeDirectory}/Pictures/Screensavers/wallpaper-dark.png";
+    dark = "${homeDirectory}/Pictures/Screensavers/solid-dark.png";
     light = "${homeDirectory}/Pictures/Screensavers/wallpaper-light.png";
     current = "${homeDirectory}/Pictures/Screensavers/wallpaper.png";
-    staticDark = ../assets/wallpapers/topography-dark.png;
+    staticDark = ../assets/wallpapers/solid-dark.png;
     staticLight = ../assets/wallpapers/topography-light.png;
     generation = wallpaperGeneration;
   };

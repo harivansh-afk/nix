@@ -49,6 +49,7 @@ done
 
 # Rightmost first: natural text widths, equal section insets.
 sketchybar --add item clock right --set clock \
+  label.color="$PINK_COLOR" \
   click_script="open -a Calendar"
 separator date
 

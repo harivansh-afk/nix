@@ -17,9 +17,9 @@ sketchybar --bar \
 
 sketchybar --default \
   padding_left=0 padding_right=0 \
-  background.drawing=off background.color="$BAR_COLOR" \
+  background.color="$BAR_COLOR" \
   background.height=0 background.corner_radius=0 \
-  background.border_width=0 background.border_color="$BORDER_COLOR" \
+  background.border_width=0 background.border_color="$BORDER_COLOR" background.drawing=off \
   icon.drawing=on icon.font="$FONT:Regular:18.0" \
   icon.color="$TEXT_COLOR" icon.padding_left=$PAD icon.padding_right=4 \
   label.font="$FONT:Regular:18.0" label.color="$TEXT_COLOR" \

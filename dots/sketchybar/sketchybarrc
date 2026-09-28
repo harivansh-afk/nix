@@ -22,7 +22,7 @@ sketchybar --default \
   background.border_width=0 background.border_color="$BORDER_COLOR" background.drawing=off \
   icon.drawing=on icon.font="$FONT:Regular:$SIZE" \
   icon.color="$TEXT_COLOR" icon.padding_left=$PAD icon.padding_right=4 \
-  label.font="$FONT:Bold:$SIZE" label.color="$TEXT_COLOR" \
+  label.font="$FONT:Regular:$SIZE" label.color="$TEXT_COLOR" \
   label.padding_left=4 label.padding_right=$PAD
 
 # AeroSpace and the feed start alongside SketchyBar at login.
@@ -49,7 +49,7 @@ done
 
 # Rightmost first: natural text widths, equal section insets.
 sketchybar --add item clock right --set clock \
-  label.color="$PINK_COLOR" \
+  label.color="$PINK_COLOR" label.font="$FONT:Bold:$SIZE" \
   click_script="open -a Calendar"
 separator date
 
@@ -63,8 +63,8 @@ sketchybar --add item volume right --set volume \
   --subscribe volume mouse.clicked mouse.scrolled
 separator settings
 
-sketchybar --add item cpu right --set cpu icon=cpu icon.padding_left=9
-sketchybar --add item memory right --set memory icon=mem label.padding_right=9
+sketchybar --add item resources right --set resources \
+  icon.padding_right=9 label.padding_left=9
 
 separator resources
 

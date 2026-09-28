@@ -215,9 +215,9 @@ static void volume_push(void) {
   if (dev == kAudioObjectUnknown) return;
   int pct = volume_percent(dev);
   if (volume_muted(dev)) {
-    sb(@[ @"--set", @"volume", @"label=mute", @"label.font.style=Regular", [NSString stringWithFormat:@"label.color=%@", color(@"MUTED_COLOR")] ]);
+    sb(@[ @"--set", @"volume", @"label=mute", [NSString stringWithFormat:@"label.color=%@", color(@"MUTED_COLOR")] ]);
   } else if (pct >= 0) {
-    sb(@[ @"--set", @"volume", [NSString stringWithFormat:@"label=%d%%", pct], @"label.font.style=Bold", [NSString stringWithFormat:@"label.color=%@", color(@"TEXT_COLOR")] ]);
+    sb(@[ @"--set", @"volume", [NSString stringWithFormat:@"label=%d%%", pct], [NSString stringWithFormat:@"label.color=%@", color(@"TEXT_COLOR")] ]);
   }
 }
 
@@ -293,8 +293,7 @@ static void stats_push(void) {
   size_t sz = sizeof level;
   if (sysctlbyname("kern.memorystatus_level", &level, &sz, NULL, 0) != 0) return;
   int mem = 100 - level;
-  sb(@[ @"--set", @"memory", [NSString stringWithFormat:@"label=%d%%", mem],
-        @"--set", @"cpu", [NSString stringWithFormat:@"label=%d%%", cpu] ]);
+  sb(@[ @"--set", @"resources", [NSString stringWithFormat:@"icon=mem %d%%", mem], [NSString stringWithFormat:@"label=cpu %d%%", cpu] ]);
 }
 
 static void stats_start(void) {

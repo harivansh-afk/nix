@@ -390,7 +390,7 @@ static void spaces_push(void) {
     NSString *fg = isFocused ? color(@"PINK_COLOR") : color(@"MUTED_COLOR");
     [args addObjectsFromArray:@[
       @"--set", item, @"drawing=on",
-      [NSString stringWithFormat:@"background.color=%@", color(@"BAR_COLOR")],
+      @"background.drawing=off",
       [NSString stringWithFormat:@"icon.color=%@", fg],
       isFocused ? @"icon.font.style=Bold" : @"icon.font.style=Regular",
       icon.length ? @"icon.padding_right=11" : @"icon.padding_right=10",

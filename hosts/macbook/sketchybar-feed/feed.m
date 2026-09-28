@@ -2,20 +2,21 @@
 // the bar (workspace tabs, cpu/mem, volume, battery, clock, display watchdog)
 // straight into sketchybar over its mach port. It replaces the per-item
 // `script=` / `update_freq=` plugins: nothing here forks a shell, and the
-// only child processes are `aerospace list-*` on a workspace/app event.
+// child processes are one aerospace event subscription and background
+// window-list queries on workspace/app events.
 //
 // Sources, all push-based system APIs:
 //   volume    CoreAudio property listeners on the default output device
 //   battery   IOKit power-source notification
 //   displays  CoreGraphics reconfiguration callback (reloads the rc, which
 //             re-measures the notch height, when the display set changes)
-//   spaces    aerospace's exec-on-workspace-change hook (SIGUSR2) plus
+//   spaces    aerospace's event subscription plus
 //             NSWorkspace app activate/launch/terminate notifications
 //   clock     one timer aligned to the minute
 //   cpu/mem   host_processor_info deltas and kern.memorystatus_level, 5s
 //
 // Signals: SIGUSR1 = the rc finished (re)loading, re-read the theme and push
-// everything; SIGUSR2 = aerospace workspace change.
+// everything; SIGUSR2 = refresh occupancy (for older AeroSpace configs).
 //
 // CLI mode (`sketchybar-feed volume-event`) is the volume item's mouse
 // script: it sets the device volume/mute via CoreAudio and exits; the daemon's
@@ -28,11 +29,14 @@
 #import <IOKit/ps/IOPSKeys.h>
 #import <IOKit/ps/IOPowerSources.h>
 #import <bootstrap.h>
+#import <errno.h>
+#import <fcntl.h>
 #import <mach/mach.h>
 #import <mach/mach_host.h>
 #import <mach/processor_info.h>
 #import <signal.h>
 #import <sys/sysctl.h>
+#import <unistd.h>
 
 // ---------------------------------------------------------------- mach ---
 
@@ -334,6 +338,10 @@ static void displays_start(void) {
 // -------------------------------------------------------------- spaces ---
 
 static NSString *g_aerospace; // resolved once from PATH
+static NSString *g_focused_workspace;
+static NSSet<NSString *> *g_occupied_workspaces;
+static NSTask *g_spaces_subscription;
+static dispatch_source_t g_spaces_stream;
 
 static NSString *run(NSArray<NSString *> *argv) {
   NSTask *t = [NSTask new];
@@ -345,23 +353,19 @@ static NSString *run(NSArray<NSString *> *argv) {
   if (![t launchAndReturnError:nil]) return nil;
   NSData *d = [p.fileHandleForReading readDataToEndOfFile];
   [t waitUntilExit];
+  if (t.terminationStatus != 0) return nil;
   return [[NSString alloc] initWithData:d encoding:NSUTF8StringEncoding];
 }
 
 static void spaces_push(void) {
-  if (!g_aerospace) return;
-  NSString *focused = [run(@[ g_aerospace, @"list-workspaces", @"--focused" ]) stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
-  NSString *windows = run(@[ g_aerospace, @"list-windows", @"--all", @"--format", @"%{workspace}" ]);
-  if (!focused || !windows) return;
-
-  NSSet *occupied = [NSSet setWithArray:[windows componentsSeparatedByString:@"\n"]];
+  if (!g_focused_workspace) return;
   NSMutableArray *args = [NSMutableArray array];
   for (int sid = 1; sid <= 9; sid++) {
     NSString *id = [NSString stringWithFormat:@"%d", sid];
     NSString *item = [@"space." stringByAppendingString:id];
     NSString *divider = [@"divider." stringByAppendingString:item];
-    BOOL isFocused = [id isEqualToString:focused];
-    if (!isFocused && ![occupied containsObject:id]) {
+    BOOL isFocused = [id isEqualToString:g_focused_workspace];
+    if (!isFocused && ![g_occupied_workspaces containsObject:id]) {
       [args addObjectsFromArray:@[ @"--set", item, @"drawing=off", @"--set", divider, @"drawing=off" ]];
       continue;
     }
@@ -377,13 +381,97 @@ static void spaces_push(void) {
 }
 
 static BOOL g_spaces_pending;
+static BOOL g_spaces_refreshing;
+static BOOL g_spaces_dirty;
+
 static void spaces_schedule(void) {
-  if (g_spaces_pending) return;
+  if (!g_aerospace) return;
+  g_spaces_dirty = YES;
+  if (g_spaces_pending || g_spaces_refreshing) return;
   g_spaces_pending = YES;
   dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_MSEC * 100), dispatch_get_main_queue(), ^{
     g_spaces_pending = NO;
-    spaces_push();
+    g_spaces_dirty = NO;
+    g_spaces_refreshing = YES;
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+      @autoreleasepool {
+        NSString *windows = run(@[ g_aerospace, @"list-windows", @"--all", @"--format", @"%{workspace}" ]);
+        dispatch_async(dispatch_get_main_queue(), ^{
+          g_spaces_refreshing = NO;
+          if (windows) {
+            g_occupied_workspaces = [NSSet setWithArray:[windows componentsSeparatedByString:@"\n"]];
+            spaces_push();
+          }
+          if (g_spaces_dirty) spaces_schedule();
+        });
+      }
+    });
   });
+}
+
+static void spaces_event(NSData *line) {
+  id event = [NSJSONSerialization JSONObjectWithData:line options:0 error:nil];
+  if (![event isKindOfClass:NSDictionary.class]) return;
+  NSString *kind = event[@"_event"];
+  if ([kind isEqual:@"focused-workspace-changed"] || [kind isEqual:@"focus-changed"]) {
+    id workspace = event[@"workspace"];
+    if ([workspace isKindOfClass:NSString.class] && [workspace length] > 0 &&
+        ![workspace isEqual:g_focused_workspace]) {
+      g_focused_workspace = [workspace copy];
+      spaces_push();
+    }
+  }
+  spaces_schedule();
+}
+
+static void spaces_subscribe(void);
+
+static void spaces_retry(void) {
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC), dispatch_get_main_queue(), ^{ spaces_subscribe(); });
+}
+
+static void spaces_subscribe(void) {
+  if (!g_aerospace || g_spaces_subscription) return;
+  NSTask *task = [NSTask new];
+  task.executableURL = [NSURL fileURLWithPath:g_aerospace];
+  task.arguments = @[ @"subscribe", @"focused-workspace-changed", @"focus-changed", @"window-detected" ];
+  NSPipe *pipe = [NSPipe pipe];
+  task.standardOutput = pipe;
+  task.standardError = [NSFileHandle fileHandleWithNullDevice];
+  if (![task launchAndReturnError:nil]) {
+    spaces_retry();
+    return;
+  }
+  g_spaces_subscription = task;
+  NSFileHandle *output = pipe.fileHandleForReading;
+  int fd = output.fileDescriptor;
+  fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+  NSMutableData *pending = [NSMutableData data];
+  NSData *newline = [@"\n" dataUsingEncoding:NSUTF8StringEncoding];
+  g_spaces_stream = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, fd, 0, dispatch_get_main_queue());
+  dispatch_source_set_event_handler(g_spaces_stream, ^{
+    char bytes[4096];
+    ssize_t count = read(fd, bytes, sizeof bytes);
+    if (count < 0 && (errno == EAGAIN || errno == EINTR)) return;
+    if (count <= 0) {
+      dispatch_source_cancel(g_spaces_stream);
+      g_spaces_stream = nil;
+      g_spaces_subscription = nil;
+      spaces_retry();
+      return;
+    }
+    [pending appendBytes:bytes length:(NSUInteger)count];
+    NSRange boundary;
+    while ((boundary = [pending rangeOfData:newline options:0 range:NSMakeRange(0, pending.length)]).location != NSNotFound) {
+      spaces_event([pending subdataWithRange:NSMakeRange(0, boundary.location)]);
+      [pending replaceBytesInRange:NSMakeRange(0, boundary.location + 1) withBytes:NULL length:0];
+    }
+  });
+  dispatch_source_set_cancel_handler(g_spaces_stream, ^{
+    [output closeFile];
+    if (task.running) [task terminate];
+  });
+  dispatch_resume(g_spaces_stream);
 }
 
 static void spaces_start(void) {
@@ -396,7 +484,8 @@ static void spaces_start(void) {
   for (NSNotificationName n in @[ NSWorkspaceDidActivateApplicationNotification, NSWorkspaceDidLaunchApplicationNotification, NSWorkspaceDidTerminateApplicationNotification ]) {
     [nc addObserverForName:n object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification *_) { spaces_schedule(); }];
   }
-  spaces_push();
+  spaces_subscribe();
+  spaces_schedule();
 }
 
 // ---------------------------------------------------------------- main ---
@@ -408,6 +497,7 @@ static void push_all(void) {
   volume_push();
   stats_push();
   spaces_push();
+  spaces_schedule();
 }
 
 static void on_signal(int sig, dispatch_block_t handler) {
@@ -431,6 +521,12 @@ int main(int argc, char **argv) {
     theme_load();
     on_signal(SIGUSR1, ^{ push_all(); });
     on_signal(SIGUSR2, ^{ spaces_schedule(); });
+    dispatch_block_t stop = ^{
+      if (g_spaces_subscription.running) [g_spaces_subscription terminate];
+      exit(0);
+    };
+    on_signal(SIGTERM, stop);
+    on_signal(SIGINT, stop);
     [NSWorkspace.sharedWorkspace.notificationCenter addObserverForName:NSWorkspaceDidWakeNotification object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification *_) { push_all(); }];
 
     clock_start();

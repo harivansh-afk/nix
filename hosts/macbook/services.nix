@@ -66,9 +66,6 @@ in
       StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar.log";
     };
 
-    # Waits for sketchybar's mach port, then pushes every item value. The rc
-    # signals it with SIGUSR1 after each load, aerospace with SIGUSR2 on
-    # workspace change.
     sketchybar-feed.serviceConfig = {
       ProgramArguments = [
         "/bin/sh"

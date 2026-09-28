@@ -223,8 +223,14 @@ Custom servers live in `lsp/`. Overrides for nvim-lspconfig servers live in
 `after/lsp/`. `after/plugin/lsp.lua` enables listed servers only when their
 executables are available on PATH.
 
-Configured servers: bashls, clangd, cssls, elixirls, gopls, html, jsonls,
+Configured servers: baml, bashls, clangd, cssls, elixirls, gopls, html, jsonls,
 lua_ls, pyright, rust_analyzer, ts_ls.
+
+BAML uses the Nix-pinned `baml-cli lsp` and Tree-sitter grammar with matching
+highlight queries. Roots are detected from baml.toml, baml_src, or .git;
+standalone .baml files also attach. The CLI defaults to telemetry disabled.
+The CLI release is pinned in pkgs/baml-cli/default.nix and the grammar in
+pkgs/tree-sitter-baml/default.nix. Rebuild after changing either pin.
 
 clangd is restricted to C and Objective-C. Completion is LSP-only and never
 falls back to words from other loaded buffers.

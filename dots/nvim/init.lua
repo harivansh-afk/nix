@@ -3,6 +3,7 @@ vim.g.maplocalleader = ","
 
 vim.filetype.add {
   extension = {
+    baml = "baml",
     h = "c",
   },
 }

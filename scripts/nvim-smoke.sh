@@ -20,6 +20,8 @@ for run in 1 2; do
   test ! -e "$XDG_DATA_HOME/$NVIM_APPNAME/site/pack/core/opt"
 done
 
+nvim --headless -i NONE -c "luafile $root/dots/nvim/tests/baml.lua" </dev/null
+
 ln -s "$(command -v nvim)" "$work/view"
 ln -s "$(command -v nvim)" "$work/vimdiff"
 "$work/view" --headless -u NONE '+lua if not vim.o.readonly then vim.cmd.cquit() end' +qa

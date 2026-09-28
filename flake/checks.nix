@@ -9,6 +9,7 @@
         inherit (pkgs) lib;
         configDir = ../dots/nvim;
         curated = true;
+        extraPackages = [ (pkgs.callPackage ../pkgs/baml-cli { }) ];
       };
       pluginSources = builtins.fromJSON (builtins.readFile ../dots/nvim/pack-sources.json);
       prSource = pkgs.fetchgit { inherit (pluginSources."pr.nvim") url rev hash; };

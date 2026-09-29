@@ -103,6 +103,7 @@
     in
     {
       packages = portableScripts // {
+        baml-cli = pkgs.callPackage ../pkgs/baml-cli { };
         sharefs = inputs'.sharefs.packages.default;
         devin-codex = inputs'.devin-codex.packages.default;
         inherit

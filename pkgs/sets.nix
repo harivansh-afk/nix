@@ -28,6 +28,7 @@ in
       jujutsu
       jq
       just
+      mise
       nodejs_24
       pnpm
       pkg-config

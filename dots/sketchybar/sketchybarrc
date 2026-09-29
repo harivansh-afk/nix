@@ -43,8 +43,6 @@ for sid in $(aerospace list-workspaces --all); do
     icon="$sid" icon.width=$NOTCH_HEIGHT icon.align=center \
     icon.padding_left=0 icon.padding_right=0 label.drawing=off \
     click_script="aerospace workspace $sid"
-  separator "space.$sid" left
-  sketchybar --set "divider.space.$sid" drawing=off
 done
 
 # Rightmost first: natural text widths, equal section insets.

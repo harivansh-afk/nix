@@ -363,10 +363,9 @@ static void spaces_push(void) {
   for (int sid = 1; sid <= 9; sid++) {
     NSString *id = [NSString stringWithFormat:@"%d", sid];
     NSString *item = [@"space." stringByAppendingString:id];
-    NSString *divider = [@"divider." stringByAppendingString:item];
     BOOL isFocused = [id isEqualToString:g_focused_workspace];
     if (!isFocused && ![g_occupied_workspaces containsObject:id]) {
-      [args addObjectsFromArray:@[ @"--set", item, @"drawing=off", @"--set", divider, @"drawing=off" ]];
+      [args addObjectsFromArray:@[ @"--set", item, @"drawing=off" ]];
       continue;
     }
     [args addObjectsFromArray:@[
@@ -374,7 +373,6 @@ static void spaces_push(void) {
       @"background.drawing=off",
       isFocused ? @"icon.font.style=Bold" : @"icon.font.style=Regular",
       [NSString stringWithFormat:@"icon.color=%@", color(isFocused ? @"PINK_COLOR" : @"TEXT_COLOR")],
-      @"--set", divider, @"drawing=on",
     ]];
   }
   sb(args);

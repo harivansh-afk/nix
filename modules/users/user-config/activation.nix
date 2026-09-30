@@ -12,6 +12,7 @@
   stateHome,
   coreutilsBin,
   dotsRoot,
+  hostname,
   isDarwin,
   theme,
   customScripts,
@@ -166,6 +167,10 @@ pkgs.writeShellScript "user-config-${name}" ''
 
   # --- agents: instructions rendered from dots/agents/ (lib/agent-instructions.nix),
   # skills from one link farm shared by every harness ---
+  ${lib.optionalString (hostname == "spark") ''
+    mkdir -p "${homeDirectory}/.agent-browser"
+    mkSymlink "${dotsRoot}/agent-browser/config.json" "${homeDirectory}/.agent-browser/config.json"
+  ''}
   rm -rf "${homeDirectory}/.claude/hooks"
   mkSymlink "${claudeMd}" "${homeDirectory}/.claude/CLAUDE.md"
   mkSymlink "${agentSkills}" "${homeDirectory}/.agents/skills"

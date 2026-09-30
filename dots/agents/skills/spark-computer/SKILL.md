@@ -51,14 +51,21 @@ Start Chromium only for a requested browser task:
 systemctl --user start chromium
 curl --retry 20 --retry-connrefused --retry-delay 1 --max-time 2 --fail --silent http://127.0.0.1:19222/json/version
 /run/current-system/sw/bin/agent-browser --session <unique-task> --cdp 19222 --pin-tab open <url>
-/run/current-system/sw/bin/agent-browser --session <unique-task> --cdp 19222 --pin-tab snapshot -i
+/run/current-system/sw/bin/agent-browser --session <unique-task> --cdp 19222 --pin-tab snapshot -i --delta
 ```
 
 Use a unique session and `--pin-tab` on shared CDP. These create a task-owned
 page instead of navigating an existing user tab. Use observed refs to click/fill;
-refresh snapshots after page changes. Batch known actions with `&&` or upstream
-`batch --bail`, then verify the result. Use screenshots for visual checks; load
-local image paths with `vision_analyze` in Hermes.
+refresh snapshots after page changes. Prefer `snapshot -i --delta` for repeated
+checks; use `--delta --full` after compaction or whenever the prior baseline is
+unavailable. Surviving DOM elements retain refs across same-document updates;
+replaced elements and navigated documents invalidate them.
+
+Batch known actions with `&&` or upstream `batch --bail`, then verify the result.
+Use `screenshot --if-changed` for repeated visual checks and load returned local
+image paths with `vision_analyze` in Hermes. An unchanged capture returns no path;
+reuse the previous image only if it is still in context, otherwise take an
+unconditional screenshot. Keep the default zero threshold for correctness checks.
 
 Close only the task's pinned tab with `tab close`, then `close` its CLI session.
 Never use `close --all`. A closed pinned tab must produce an error, not silently

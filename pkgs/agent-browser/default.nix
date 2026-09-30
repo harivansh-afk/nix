@@ -6,10 +6,10 @@
 }:
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "agent-browser";
-  version = "0.36.0";
+  version = "0.38.1";
   src = fetchurl {
     url = "https://github.com/vercel-labs/agent-browser/releases/download/v${finalAttrs.version}/agent-browser-linux-musl-arm64";
-    hash = "sha256-HKfgA8nLGF8XT8geUaYJ2yfHfjv+AKDt/2Boj4zRT4g=";
+    hash = "sha256-YNwfSbNlaJiojjypg0FeH07NEDQzySTx/07BGDfM2gc=";
   };
   dontUnpack = true;
   installPhase = ''
@@ -28,7 +28,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     owner = "vercel-labs";
     repo = "agent-browser";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-HzX1M1Gdd9N0iYxiEGuWrV3fc7yNevGiOvc/0csttZA=";
+    hash = "sha256-C+XplCHOdFDQGPUnrCDuq7U4LkAX0QB3fC4uVA8o11w=";
   };
   meta = {
     description = "Upstream agent-browser CLI with strict shared-CDP tab pinning";

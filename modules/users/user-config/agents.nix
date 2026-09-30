@@ -83,6 +83,10 @@ in
     ]
     ++ [
       {
+        name = "freestyle-docs";
+        path = ../../../dots/agents/skills/freestyle-docs;
+      }
+      {
         name = "paper-deck";
         path = ../../../dots/agents/skills/paper-deck;
       }

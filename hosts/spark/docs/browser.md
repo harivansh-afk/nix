@@ -30,6 +30,14 @@ that resurrects the browser during tool discovery.
 Use the absolute system binary: background/login shells can resolve an older
 user-installed agent-browser without `--pin-tab`.
 
+Spark's managed `~/.agent-browser/config.json` defaults to the shared CDP port,
+strict tab pinning, and an explicit 15-minute idle timeout. Upstream's implicit
+one-hour timeout exempts attached browsers; an explicit timeout also expires
+their session daemons. Expiry disconnects from shared Chromium without closing
+it. Task tabs still need explicit cleanup. Each named session has its own
+daemon and element references; sharing a session across concurrent agents would
+mix their tab and reference state.
+
 ## Window controls
 
 Waybar shows the focused window's title and a top-right **Close ×** button.

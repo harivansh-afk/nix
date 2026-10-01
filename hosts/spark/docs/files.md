@@ -58,11 +58,51 @@ requires private file permissions. It is 32 random bytes, outside the Nix store
 and served tree.
 The service is sandboxed and the rest of the home directory is hidden.
 
-File responses are not cached; versioned static assets retain immutable caching.
-Scripts in served files are blocked. Both application and proxy logs redact
-share tokens.
+Plain HTTP redirects to HTTPS before reaching the authentication challenge.
+HTTPS responses set HSTS. File responses are not cached; versioned static
+assets retain immutable caching. Both application and proxy logs redact share
+tokens.
+
+When sharing is enabled, raw file responses use a browser sandbox: scripts,
+forms, external resources and same-origin access are blocked. Inline styles
+and embedded data images are allowed. Download files that need active content
+and open them separately. The application UI retains its own script policy;
+Caddy supplies that policy only when the backend has not supplied a stricter one.
+
+The service has a 1 GiB memory limit, 256-task limit and 4096-descriptor limit.
+These contain resource exhaustion; they are not an edge rate limiter.
 
 `RestrictSUIDSGID` must remain disabled for this service: systemd blocks
 `openat2` when it is enabled. sharefs uses that syscall to open shared files
 beneath its root safely and checks support at startup. `NoNewPrivileges` and
 an empty capability set remain enabled.
+
+## Security review, 2026-10-01
+
+The 0.5.2 update rejects malformed Digest headers without panicking, binds
+Digest proofs to the exact request path and query, rejects Digest authentication
+against stored password hashes, bounds buffered multipart ranges, rejects
+zero-length suffix ranges, and checks dangling symlinks and COPY destinations
+before creating files or directories. The dependency lock updates the packages
+flagged by RustSec, including the HTTP/2 and TLS implementations.
+
+The audit checked the source, production service unit and listener, runtime
+secret permissions, public authentication and invalid-token responses, share
+expiry/revocation tests, secret scanning of Git history, and isolated proxy
+behavior. The secret scanner reported only test TLS fixture keys. Destructive
+and crash reproductions used isolated servers, not the production endpoint.
+
+Remaining trust boundaries: an authenticated owner can overwrite files in all
+three mounted directories. Hidden names are a listing preference, not an access
+policy. The service runs as the same Unix user as the files; it does not isolate
+against another process running as that user. Public token reads use openat2
+containment; legacy authenticated filesystem operations still use pathname
+checks and are not guaranteed race-free against concurrent local symlink
+replacement. HTTPS terminates at Cloudflare, which can see credentials and link
+tokens. Application login throttling was not established by this review. The edge
+accepted TLS 1.0 and 1.1 during the audit; the Cloudflare dashboard confirmed
+that the zone minimum was TLS 1.0 and Always Use HTTPS was off. Raising the
+minimum to TLS 1.2 affects every proxied hostname in the zone and needs a
+separate approved edge change. The DNS API token cannot read or change these
+zone settings. A clean scan is not a guarantee against unknown
+vulnerabilities.

@@ -80,6 +80,16 @@ in
       Restart = "on-failure";
       RestartSec = 5;
       UMask = "0077";
+      MemoryHigh = "768M";
+      MemoryMax = "1G";
+      TasksMax = 256;
+      LimitNOFILE = 4096;
+      ProtectProc = "invisible";
+      ProcSubset = "pid";
+      ProtectClock = true;
+      ProtectKernelLogs = true;
+      ProtectHostname = true;
+      RestrictNamespaces = true;
       ProtectSystem = "strict";
       ProtectHome = true;
       BindPaths = lib.mapAttrsToList (name: path: "${path}:${root}/${name}") sources;
@@ -114,11 +124,17 @@ in
       }
     '';
     extraConfig = ''
+      @insecure header X-Forwarded-Proto http
+      redir @insecure https://files.harivan.sh{uri} 308
+      header Strict-Transport-Security "max-age=31536000"
+      header X-Content-Type-Options "nosniff"
+      header X-Frame-Options "SAMEORIGIN"
+      header Permissions-Policy "camera=(), microphone=(), geolocation=()"
       header X-Robots-Tag "noindex, nofollow"
       header Referrer-Policy "no-referrer"
       @private not path /__sharefs_v*__/*
       header @private >Cache-Control "private, no-store"
-      header Content-Security-Policy "script-src https://files.harivan.sh/__sharefs_v${package.version}__/; base-uri 'none'"
+      header ?Content-Security-Policy "script-src https://files.harivan.sh/__sharefs_v${package.version}__/; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'"
       reverse_proxy 127.0.0.1:${toString port} {
         header_up X-Forwarded-Proto https
         header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}

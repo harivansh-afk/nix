@@ -45,6 +45,11 @@ The share form contains an expiry selector and copy button. Rename stays in
 the same directory and cannot replace an existing file. Deletion is disabled
 on the server. Search and ZIP downloads remain disabled.
 
+In directory listings, `j`/`k` selects the next/previous row, `Enter` opens the
+selected item, and `-` goes to the parent folder. Press `?` or click the help
+icon beside Upload for the shortcuts popover; `Escape` closes it. Shortcuts do
+not intercept typing in fields or the editor.
+
 ## Deployment
 
 `hosts/spark/services/sharefs.nix` owns the service and Caddy route. The server

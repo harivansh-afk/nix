@@ -1,5 +1,10 @@
 # Lint gates as flake checks: one entrypoint for local and CI.
-{ self, inputs, ... }:
+{
+  self,
+  inputs,
+  hosts,
+  ...
+}:
 {
   perSystem =
     { pkgs, ... }:
@@ -50,6 +55,12 @@
         mixbridge = inputs.mixbridge-web.checks.${pkgs.stdenv.hostPlatform.system}.streaming-api;
       }
       // pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "aarch64-linux") {
+        roomcast-egress = import ../tests/roomcast-egress.nix {
+          inherit pkgs;
+          rules = self.nixosConfigurations.spark.config.system.build.roomcast-egress-rules;
+          ownerUid = self.nixosConfigurations.spark.config.users.users.${hosts.spark.username}.uid;
+          mcpPort = 18796;
+        };
         hermes-runtime =
           pkgs.runCommand "hermes-runtime"
             {

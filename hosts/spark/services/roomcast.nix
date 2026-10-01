@@ -21,7 +21,9 @@ let
         ip daddr 127.0.0.1 tcp dport ${toString mcpPort} meta skuid != { 0, ${
           toString config.users.users.${username}.uid
         } } reject
-        meta skuid != "roomcast" return
+        meta skuid "roomcast" jump roomcast_egress
+      }
+      chain roomcast_egress {
         tcp sport ${toString cfg.port} return
         ip daddr 127.0.0.53 udp dport 53 return
         ip daddr 127.0.0.53 tcp dport 53 return
@@ -39,6 +41,8 @@ let
 in
 {
   imports = [ inputs.roomcast.nixosModules.default ];
+
+  system.build.roomcast-egress-rules = egressRules;
 
   networking.firewall.extraCommands = ''
     ${pkgs.nftables}/bin/nft -f ${egressRules}

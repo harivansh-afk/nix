@@ -47,6 +47,10 @@
         neovim = lint "neovim" [ pkgs.bash pkgs.coreutils pkgs.git neovim ] "bash scripts/nvim-smoke.sh";
         stylua = lint "stylua" [ pkgs.stylua ] "stylua --check dots/nvim";
         logitech = lint "logitech" [ pkgs.python3 ] "python3 hosts/macbook/logitech/test_apply.py";
+        com-computer = lint "com-computer" [
+          pkgs.python3
+          pkgs.git
+        ] "python3 pkgs/com-computer/test_computer.py";
         mixbridge = inputs.mixbridge-web.checks.${pkgs.stdenv.hostPlatform.system}.streaming-api;
       }
       // pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "aarch64-linux") {

@@ -8,6 +8,10 @@ server. Nix installs the upstream binaries and version-matched skills; no runtim
 npm/uvx installs are needed. The [shared skill](../../../dots/agents/skills/spark-computer/SKILL.md)
 contains the agent workflow.
 
+For a separate desktop per Codex CLI session, use
+[`com-computer`](com-computer.md). It leaves this personal desktop and browser
+profile in place.
+
 ## Browser lifecycle
 
 Sway starts Cua, WayVNC and Beeper, not Chromium. Chromium retains its existing

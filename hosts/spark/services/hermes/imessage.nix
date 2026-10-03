@@ -10,7 +10,19 @@ let
   profileHome = "${root}/profiles/imessage";
   backup = "${hermes.stateDir}/imessage-migration-backup";
   settings = pkgs.writeText "hermes-imessage-config.yaml" (
-    builtins.toJSON (lib.recursiveUpdate { terminal.cwd = hermes.workingDirectory; } hermes.settings)
+    builtins.toJSON (
+      lib.recursiveUpdate hermes.settings {
+        terminal.cwd = hermes.workingDirectory;
+        model = {
+          provider = "anthropic";
+          default = "claude-opus-5-5";
+          api_mode = "anthropic_messages";
+          base_url = "";
+        };
+        delegation.model = "claude-opus-5-5";
+        secrets.command.enabled = false;
+      }
+    )
   );
 in
 {
@@ -44,6 +56,7 @@ in
     );
     hermesHomeFiles = {
       "profiles/imessage/config.yaml" = settings;
+      "profiles/imessage/.env" = "";
       "profiles/imessage/SOUL.md" = ../../../../dots/hermes/SOUL.md;
       "profiles/imessage/.managed" = "nixos\n";
       "profiles/imessage/.no-bundled-skills" = "Skills are selected by Nix.\n";
@@ -52,7 +65,6 @@ in
 
   systemd.tmpfiles.rules = [
     "d ${profileHome} 0700 ${hermes.user} ${hermes.group} - -"
-    "L+ ${profileHome}/.env - - - - ../../.env"
     "L+ ${profileHome}/plugins - - - - ../../plugins"
   ];
 

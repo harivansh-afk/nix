@@ -1,10 +1,10 @@
 # Hermes on Spark
 
 `hosts/spark/services/hermes/default.nix` owns the messaging gateway, desktop backend, model, tool selection
-and pinned runtimes. The Hermes flake input tracks an exact upstream revision;
-Astra uses Devin inference with medium reasoning through the authenticated
-loopback adapter declared in `hermes/devin.nix`. Codex OAuth and the separate
-Spark provider remain available.
+and pinned runtimes. The Hermes flake input tracks an exact upstream revision.
+iMessage uses Opus 5.5 through Hermes's native Anthropic transport and the existing
+Claude Code subscription login. Desktop uses Astra through the authenticated
+Devin loopback adapter declared in `hermes/devin.nix`.
 
 The two processes serve different clients: `hermes gateway` handles Photon and Telegram;
 `hermes serve` exposes the authenticated tailnet API used by the Mac
@@ -23,16 +23,20 @@ Each profile requires its own Robinhood OAuth login after deployment.
 `~/.local/share/devin/credentials.toml`; sign in with Devin before starting it.
 The service creates a private token under `/var/lib/hermes-devin` on first start
 and retains it across restarts. Hermes's per-profile command secret source loads
-the token for the default, Desktop, iMessage and roommates profiles. Credentials never enter
+the token for the default, Desktop and roommates profiles. Credentials never enter
 the Nix store. Both Hermes services wait for the adapter's authenticated health check.
 After renewing the Devin login, restart `hermes-devin`, `hermes-agent` and
 `hermes-backend` together to reload credentials and restore both clients.
 
-Personal profiles default to `devin` / `gpt-6-astra` with medium reasoning. Delegated workers inherit
-the parent's provider and use Astra low. The roommates profile uses Devin
-`gpt-6-sol` with low reasoning.
+Desktop defaults to `devin` / `gpt-6-astra` with medium reasoning; its delegated workers
+use Astra low. The roommates profile uses Devin `gpt-6-sol` with low reasoning.
+iMessage and its workers use `anthropic` / `claude-opus-5-5`, with medium reasoning
+for conversation and low for workers. Its separate, empty `.env` prevents the shared
+Anthropic API key from taking precedence over the Claude Code subscription credentials.
+The Devin command secret source is disabled in this profile. OAuth credentials and
+refresh state remain in Claude Code's private runtime store, outside Nix and Git.
 
-Switch a personal session with:
+Switch a Desktop session with:
 
 ```text
 /model gpt-6-astra --provider devin
@@ -96,8 +100,8 @@ Automatic busy acknowledgements stay disabled; messaging updates should be
 agent-written responses. The foreground handles quick requests; repo-owned
 agent guidance sends long investigations to background delegation. The Nix-owned
 `conversation` plugin limits Photon tool visibility and requests a final reply
-after confirmed dispatch, retaining the allowed tool schemas. Astra medium handles
-conversation; Astra low handles native delegated work. Each Photon worker receives
+after confirmed dispatch, retaining the allowed tool schemas. Opus 5.5 medium handles
+conversation; Opus 5.5 low handles native delegated work. Each Photon worker receives
 a bounded snapshot of parent conversation text through its native context argument;
 Nix controls the character budget. Native concurrency defaults
 remain in place. The roommates profile uses Sol low and no plugins.

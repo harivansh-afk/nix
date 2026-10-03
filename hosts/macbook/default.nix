@@ -14,7 +14,6 @@
     ../../modules/security/sops.nix
     ../../modules/users/darwin.nix
     ./apps.nix
-    ./cua-spaces.nix
     ./defaults.nix
     ./hermes-desktop.nix
     ./homebrew.nix

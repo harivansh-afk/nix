@@ -102,24 +102,16 @@
       };
     in
     {
-      packages =
-        portableScripts
-        // {
-          baml-cli = pkgs.callPackage ../pkgs/baml-cli { };
-          sharefs = inputs'.sharefs.packages.default;
-          devin-codex = inputs'.devin-codex.packages.default;
-          inherit
-            btop
-            lazygit
-            nvim
-            tools
-            ;
-        }
-        //
-          lib.optionalAttrs
-            (pkgs.stdenv.hostPlatform.system == "aarch64-linux" || pkgs.stdenv.hostPlatform.isDarwin)
-            {
-              com-computer = pkgs.callPackage ../pkgs/com-computer { };
-            };
+      packages = portableScripts // {
+        baml-cli = pkgs.callPackage ../pkgs/baml-cli { };
+        sharefs = inputs'.sharefs.packages.default;
+        devin-codex = inputs'.devin-codex.packages.default;
+        inherit
+          btop
+          lazygit
+          nvim
+          tools
+          ;
+      };
     };
 }

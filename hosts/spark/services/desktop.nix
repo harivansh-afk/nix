@@ -51,7 +51,6 @@ in
     computer.cuaMcp
     computer.agentBrowser
     cuaDriver
-    (pkgs.callPackage ../../../pkgs/com-computer { })
     pkgs.ghostty
     pkgs.sway
     pkgs.grim

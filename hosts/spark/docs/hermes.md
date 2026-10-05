@@ -13,8 +13,8 @@ desktop app. Desktop starts in its own `desktop` profile; Photon stays in the
 web dashboard. See [Desktop setup and features](hermes-desktop.md) for the state
 boundary and recommended workflow.
 
-Personal Desktop and iMessage profiles also expose the [Robinhood MCP](robinhood.md).
-Each profile requires its own Robinhood OAuth login after deployment.
+The Desktop profile also exposes the [Robinhood MCP](robinhood.md).
+iMessage has no Robinhood integration.
 
 ## Devin inference
 
@@ -24,9 +24,11 @@ Each profile requires its own Robinhood OAuth login after deployment.
 The service creates a private token under `/var/lib/hermes-devin` on first start
 and retains it across restarts. Hermes's per-profile command secret source loads
 the token for the default, Desktop and roommates profiles. Credentials never enter
-the Nix store. Both Hermes services wait for the adapter's authenticated health check.
-After renewing the Devin login, restart `hermes-devin`, `hermes-agent` and
-`hermes-backend` together to reload credentials and restore both clients.
+the Nix store. The Desktop backend waits for the adapter's authenticated health
+check. The messaging gateway starts independently of Devin; its Telegram roommate
+profile still uses Devin for inference, while iMessage uses Claude.
+After renewing the Devin login, restart `hermes-devin` and the affected clients
+to reload credentials. iMessage does not need a restart for a Devin login change.
 
 Desktop defaults to `devin` / `gpt-6-astra` with medium reasoning; its delegated workers
 use Astra low. The roommates profile uses Devin `gpt-6-sol` with low reasoning.
@@ -96,20 +98,13 @@ migrated between running processes. Shared OAuth grants are not copied.
 Desktop's empty SOUL is intentional; the UI may report that it is empty. Select
 `desktop` for work, `imessage` for the personal assistant and `roommates` for TV.
 
-Automatic busy acknowledgements stay disabled; messaging updates should be
-agent-written responses. The foreground handles quick requests; repo-owned
-agent guidance sends long investigations to background delegation. The Nix-owned
-`conversation` plugin limits Photon tool visibility and requests a final reply
-after confirmed dispatch, retaining the allowed tool schemas. Opus 5.5 medium handles
-conversation; Opus 5.5 low handles native delegated work. Each Photon worker receives
-a bounded snapshot of parent conversation text through its native context argument;
-Nix controls the character budget. Native concurrency defaults
-remain in place. The roommates profile uses Sol low and no plugins.
-See the [plugin contract](../../../pkgs/hermes-conversation/README.md).
-This is an agent workflow, not a separate chat scheduler or a
-hard response-time guarantee. Profiles can run concurrently but share gateway
-restarts. Roomcast's shared HTTP MCP service is independent of those restarts;
-see [roomcast.md](roomcast.md).
+Automatic busy acknowledgements stay disabled; messaging updates are agent-written
+responses. iMessage uses stock Hermes tools, automatic tool discovery and native
+delegation. There is no custom request middleware, foreground tool allowlist or
+worker conversation-copying layer. Opus 5.5 medium handles conversation and Opus
+5.5 low handles delegated work. The roommates profile uses Sol low and no plugins.
+Profiles can run concurrently but share gateway restarts. Roomcast's shared HTTP
+MCP service is independent of those restarts; see [roomcast.md](roomcast.md).
 
 CLI and Photon sessions have terminal/files, delegation, skills, memory and
 conversation recall, plus agent-browser CLI for browser pages and direct

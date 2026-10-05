@@ -68,9 +68,8 @@ are not configured to reach Spark's loopback API.
 
 After deployment and authorization, start a fresh session in each client and ask
 it to list connected messaging accounts, find a specific chat, and read recent
-messages. Tool discovery
-alone is not acceptance. Check the conversation plugin's foreground allowlist
-when iMessage can delegate Beeper work but cannot perform short reads itself.
+messages. Tool discovery alone is not acceptance. iMessage uses Hermes's native
+tool discovery for Beeper reads and actions.
 
 Beeper must stay running for its API and on-device connections. Reading messages
 does not verify sending, attachments, audio, or every network's synchronization.

@@ -29,7 +29,6 @@ let
     "hermes-cli"
     "computer"
     "beeper"
-    "robinhood"
   ];
   skillsDir = ../../../../dots/hermes/skills;
   skillNames = lib.filter (name: builtins.pathExists (skillsDir + "/${name}/SKILL.md")) (
@@ -85,11 +84,6 @@ in
       pkgs.tea
       pkgs.jq
       pkgs.xdg-utils
-    ];
-    extraPlugins = [
-      (import ../../../../pkgs/hermes-conversation {
-        inherit pkgs;
-      })
     ];
     environmentFiles = [
       config.sops.secrets."anthropic.env".path
@@ -156,54 +150,14 @@ in
             timeout = 30;
             connect_timeout = 15;
           };
-          robinhood = {
-            url = "https://agent.robinhood.com/mcp/trading";
-            auth = "oauth";
-            oauth = {
-              scope = "internal";
-              cimd = false;
-            };
-            timeout = 30;
-            connect_timeout = 15;
-          };
         };
       approvals.mode = "off";
       security.protected_instruction_files = false;
       plugins = {
-        enabled = [ "conversation" ];
+        enabled = [ ];
         disabled = [ "knowledge-base" ];
-        entries.conversation.settings = {
-          platforms = [ "photon" ];
-          worker_context_chars = 64000;
-          foreground_tools = [
-            "delegate_task"
-            "session_search"
-            "memory"
-            "skills_list"
-            "skill_view"
-            "clarify"
-            "vision_analyze"
-            "mcp__beeper__get_accounts"
-            "mcp__beeper__search_chats"
-            "mcp__beeper__get_chat"
-            "mcp__beeper__list_messages"
-            "mcp__beeper__search_messages"
-            "mcp__beeper__send_message"
-            "mcp__robinhood__get_accounts"
-            "mcp__robinhood__get_portfolio"
-            "mcp__robinhood__get_equity_positions"
-            "mcp__robinhood__get_crypto_positions"
-            "mcp__robinhood__get_option_positions"
-            "mcp__robinhood__get_equity_quotes"
-            "mcp__robinhood__get_crypto_quotes"
-            "mcp__roomcast__status"
-            "mcp__roomcast__control"
-            "mcp__roomcast__seek"
-            "mcp__roomcast__subtitles"
-          ];
-        };
       };
-      tools.tool_search.enabled = "off";
+      tools.tool_search.enabled = "auto";
       skills = {
         creation_nudge_interval = 0;
         external_dirs = [ "${skills}" ];

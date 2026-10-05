@@ -51,14 +51,21 @@ in
           "robinhood"
         ];
         mcp_servers = {
-          inherit (hermes.settings.mcp_servers) computer beeper robinhood;
+          inherit (hermes.settings.mcp_servers) computer beeper;
+          robinhood = {
+            url = "https://agent.robinhood.com/mcp/trading";
+            auth = "oauth";
+            oauth = {
+              scope = "internal";
+              cimd = false;
+            };
+            timeout = 30;
+            connect_timeout = 15;
+          };
         };
         plugins = {
           enabled = [ ];
-          disabled = [
-            "conversation"
-            "knowledge-base"
-          ];
+          disabled = [ "knowledge-base" ];
         };
         tools.tool_search.enabled = "auto";
         skills = {

@@ -38,10 +38,7 @@ in
         platform_toolsets.cli = [ ];
         plugins = {
           enabled = [ ];
-          disabled = [
-            "conversation"
-            "knowledge-base"
-          ];
+          disabled = [ "knowledge-base" ];
         };
         skills = {
           external_dirs = [ ];

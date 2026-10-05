@@ -1,7 +1,6 @@
 {
   config,
   inputs,
-  lib,
   pkgs,
   ...
 }:
@@ -64,9 +63,9 @@ in
             --header @- --output /dev/null http://127.0.0.1:19476/healthz
       '';
     };
-  }
-  // lib.genAttrs [ "hermes-agent" "hermes-backend" ] (_: {
-    requires = [ "hermes-devin.service" ];
-    after = [ "hermes-devin.service" ];
-  });
+    hermes-backend = {
+      requires = [ "hermes-devin.service" ];
+      after = [ "hermes-devin.service" ];
+    };
+  };
 }

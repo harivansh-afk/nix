@@ -5,7 +5,9 @@ read it on Spark with `cat /run/secrets/sharefs-password`. To change it, edit
 `secrets/hosts/spark/sharefs-password` with SOPS and deploy the Nix configuration.
 
 Documents, Downloads, Uploads and todo map to `~/Documents`, `~/Downloads`,
-`~/Uploads` and `~/todo`. These are the original files. Editing changes them on disk.
+`~/Uploads` and `~/todo`. These are the original files. Documents and Downloads
+are read-only in both the application and service mount namespace. Uploads and
+todo allow editing, which changes the files on disk.
 The activation moves the previous upload directory to `~/Uploads`; it refuses
 to overwrite an existing destination. The old SQLite database is retained but
 unused.
@@ -22,7 +24,8 @@ The Rust client prints one URL and defaults to seven days. Durations accept
 `s`, `m`, `h`, `d` and `w`. Files must be inside a served directory. The browser's
 Share control uses the same signer and lets you select an expiry.
 
-Recipients need no login. Links grant read-only access to one live file path;
+New links use `https://share.harivan.sh`. Recipients need no login. Links grant
+read-only access to one live file path;
 renaming it breaks the link, and edits at the same path change what recipients
 read. Links survive restarts. Rotating `sharefs-signing-key` invalidates all
 links. The red trash button in Shares deactivates one link without deleting the
@@ -53,7 +56,11 @@ not intercept typing in fields or the editor.
 ## Deployment
 
 `hosts/spark/services/sharefs.nix` owns the service and Caddy route. The server
-listens on `127.0.0.1:39473`. The local CLI uses `/run/sharefs/control.sock`,
+listens on `127.0.0.1:39473` for private management. Its separate listener on
+`127.0.0.1:39474` serves signed GET/HEAD requests only, even if an owner password
+is supplied. Caddy routes `share.harivan.sh` exclusively to that listener and
+strips cookies and Authorization. Both listeners share the revocation state.
+The local CLI uses `/run/sharefs/control.sock`,
 accessible only to the service owner. Mount mappings come from the same Nix
 attribute set as the service's bind mounts.
 
@@ -97,8 +104,8 @@ expiry/revocation tests, secret scanning of Git history, and isolated proxy
 behavior. The secret scanner reported only test TLS fixture keys. Destructive
 and crash reproductions used isolated servers, not the production endpoint.
 
-Remaining trust boundaries: an authenticated owner can overwrite files in all
-four mounted directories. Hidden names are a listing preference, not an access
+Remaining trust boundaries: an authenticated owner can overwrite files in
+Uploads and todo. Hidden names are a listing preference, not an access
 policy. The service runs as the same Unix user as the files; it does not isolate
 against another process running as that user. Public token reads use openat2
 containment; legacy authenticated filesystem operations still use pathname
@@ -108,6 +115,46 @@ tokens. Application login throttling was not established by this review. The edg
 accepted TLS 1.0 and 1.1 during the audit; the Cloudflare dashboard confirmed
 that the zone minimum was TLS 1.0 and Always Use HTTPS was off. Raising the
 minimum to TLS 1.2 affects every proxied hostname in the zone and needs a
-separate approved edge change. The DNS API token cannot read or change these
+separate edge change. The DNS API token cannot read or change these
 zone settings. A clean scan is not a guarantee against unknown
 vulnerabilities.
+
+## Hardening rollout, 2026-10-06
+
+The Cloudflare zone minimum was raised to TLS 1.2 through the dashboard. Fresh
+handshakes to files.harivan.sh reject TLS 1.0 and 1.1 and accept TLS 1.2.
+This setting applies to all proxied harivan.sh hostnames; it is not managed by
+the DNS-only OpenTofu configuration or its API token.
+
+The share.harivan.sh DNS record was applied through OpenTofu; its targeted
+plan reports no changes. An unrelated missing mixbridge record in the full
+plan was left alone. The new public listener still requires deployment.
+
+Security-key enrollment is enabled in the existing Cloudflare Access team,
+hari-dev.cloudflareaccess.com. Other MFA methods and IdP MFA substitution are
+off. The App Launcher has an Allow policy for rathiharivansh@gmail.com only
+(policy cec41c80-33f6-4e53-9a15-8e212534a7fc). This bootstrap policy enables
+enrollment; it does not protect files.harivan.sh or prove a key is enrolled.
+
+The proposed Access policy uses the exact owner email plus Independent MFA
+with security keys only. Identity-provider MFA must not substitute for that
+check. Require MFA every login, use a one-hour application session, and enable
+HttpOnly and binding cookies with SameSite=Lax. Register primary and spare
+keys before treating enrollment as complete. See [the authentication research](files-auth-research.md).
+
+Access is not enabled by this Nix change. Once the application exists, add an
+exact files.harivan.sh cloudflared ingress rule with originRequest.access:
+required=true, the actual teamName, and its application audTag. Test missing,
+invalid and wrong-audience JWTs before calling the origin protected. The public
+share hostname must not inherit that login requirement.
+
+Deploy the new share listener and DNS before enabling whole-host Access.
+Existing links use files.harivan.sh; their tokens remain valid if recipients
+replace that hostname with share.harivan.sh. The old hostname will require
+login after Access is enabled. Do not add a query-token-based Access bypass.
+
+Outstanding: hardware-key enrollment and live Access enforcement, login rate
+limits, sensitive-path access denial, a dedicated service account, and stronger
+containment for authenticated filesystem operations. Hidden dotfiles remain
+accessible to an authenticated owner. This rollout does not claim to fix those
+separate boundaries.

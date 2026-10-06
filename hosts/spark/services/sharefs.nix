@@ -1,7 +1,6 @@
 {
   config,
   inputs,
-  lib,
   pkgs,
   username,
   ...
@@ -9,6 +8,7 @@
 let
   package = inputs.sharefs.packages.${pkgs.stdenv.hostPlatform.system}.default;
   port = 39473;
+  sharePort = 39474;
   home = config.users.users.${username}.home;
   root = "/run/sharefs/files";
   sources = {
@@ -21,7 +21,8 @@ let
     serve-path = root;
     bind = "127.0.0.1";
     inherit port;
-    public-url = "https://files.harivan.sh";
+    public-url = "https://share.harivan.sh";
+    share-listen = "127.0.0.1:${toString sharePort}";
     share-key-file = config.sops.secrets.sharefs-signing-key.path;
     share-state-dir = "/var/lib/sharefs/shares";
     control-socket = "/run/sharefs/control.sock";
@@ -66,7 +67,7 @@ in
         echo "sharefs: invalid account credential" >&2
         exit 1
       fi
-      export SHAREFS_AUTH="${username}:$password@/:rw"
+      export SHAREFS_AUTH="${username}:$password@/:rw,/Documents:ro,/Downloads:ro"
       exec ${package}/bin/sharefs --config ${settings}
     '';
     serviceConfig = {
@@ -93,7 +94,14 @@ in
       RestrictNamespaces = true;
       ProtectSystem = "strict";
       ProtectHome = true;
-      BindPaths = lib.mapAttrsToList (name: path: "${path}:${root}/${name}") sources;
+      BindReadOnlyPaths = map (name: "${sources.${name}}:${root}/${name}") [
+        "Documents"
+        "Downloads"
+      ];
+      BindPaths = map (name: "${sources.${name}}:${root}/${name}") [
+        "Uploads"
+        "todo"
+      ];
       PrivateTmp = true;
       PrivateDevices = true;
       NoNewPrivileges = true;
@@ -137,6 +145,36 @@ in
       header @private >Cache-Control "private, no-store"
       header ?Content-Security-Policy "script-src https://files.harivan.sh/__sharefs_v${package.version}__/; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'"
       reverse_proxy 127.0.0.1:${toString port} {
+        header_up X-Forwarded-Proto https
+        header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+      }
+    '';
+  };
+
+  services.caddy.virtualHosts."http://share.harivan.sh" = {
+    listenAddresses = [ "127.0.0.1" ];
+    logFormat = ''
+      output file /var/log/caddy/access-http:__share.harivan.sh.log
+      format filter {
+        wrap json
+        fields {
+          request>uri query {
+            replace token REDACTED
+          }
+        }
+      }
+    '';
+    extraConfig = ''
+      @insecure header X-Forwarded-Proto http
+      redir @insecure https://share.harivan.sh{uri} 308
+      header Strict-Transport-Security "max-age=31536000"
+      header X-Content-Type-Options "nosniff"
+      header X-Robots-Tag "noindex, nofollow"
+      header Referrer-Policy "no-referrer"
+      header >Cache-Control "private, no-store"
+      reverse_proxy 127.0.0.1:${toString sharePort} {
+        header_up -Authorization
+        header_up -Cookie
         header_up X-Forwarded-Proto https
         header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
       }

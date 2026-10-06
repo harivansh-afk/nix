@@ -287,8 +287,9 @@ created only on request; the old scanners, graph and automatic loops remain abse
 ## Beeper self-hosted bridges
 
 `hosts/spark/services/beeper-bridges.nix` runs mautrix bridges on spark through
-`bbctl` (nixpkgs `beeper-bridge-manager`), registered against the owner's Beeper
-account. Self-hosted bridges are free and do not count toward Beeper's account
+`bbctl` (nixpkgs `beeper-bridge-manager`, source-overridden to the latest upstream
+tag because Beeper's server refuses older clients at login with "Your client is
+out of date"), registered against the owner's Beeper account. Self-hosted bridges are free and do not count toward Beeper's account
 limits, which is the point: unlimited networks and unlimited accounts per network.
 The `bridges` attrset maps a short name to the bridge package; `mkBridge` stamps
 out one user unit per entry (`beeper-<name>`, bbctl bridge name `sh-<name>`,

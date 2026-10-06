@@ -1414,11 +1414,11 @@
         "nixpkgs": "nixpkgs_8"
       },
       "locked": {
-        "lastModified": 1791308825,
-        "narHash": "sha256-WJnzfDbicCjIpnfuMr/GV2XoynitNzfcoiB2KAgYGb4=",
+        "lastModified": 1791328638,
+        "narHash": "sha256-TeyVQrOSA5VHKb3+b9OX8bdDrJLvt5D5YKaztBNE6lQ=",
         "ref": "main",
-        "rev": "56cee771460e766fde7b71b87fb60ae1f2a64707",
-        "revCount": 488,
+        "rev": "c1718b8b0a15e6b42521db160159163df373f09c",
+        "revCount": 489,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/sharefs.git"
       },

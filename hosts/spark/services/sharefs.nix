@@ -15,6 +15,7 @@ let
     Documents = "${home}/Documents";
     Downloads = "${home}/Downloads";
     Uploads = "${home}/Uploads";
+    todo = "${home}/todo";
   };
   settings = (pkgs.formats.yaml { }).generate "sharefs.yaml" {
     serve-path = root;

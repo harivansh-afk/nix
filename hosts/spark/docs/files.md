@@ -4,8 +4,8 @@ Open `https://files.harivan.sh/` and log in as `rathi`. The password is unchange
 read it on Spark with `cat /run/secrets/sharefs-password`. To change it, edit
 `secrets/hosts/spark/sharefs-password` with SOPS and deploy the Nix configuration.
 
-Documents, Downloads and Uploads map to `~/Documents`, `~/Downloads` and
-`~/Uploads`. These are the original files. Editing changes them on disk.
+Documents, Downloads, Uploads and todo map to `~/Documents`, `~/Downloads`,
+`~/Uploads` and `~/todo`. These are the original files. Editing changes them on disk.
 The activation moves the previous upload directory to `~/Uploads`; it refuses
 to overwrite an existing destination. The old SQLite database is retained but
 unused.
@@ -98,7 +98,7 @@ behavior. The secret scanner reported only test TLS fixture keys. Destructive
 and crash reproductions used isolated servers, not the production endpoint.
 
 Remaining trust boundaries: an authenticated owner can overwrite files in all
-three mounted directories. Hidden names are a listing preference, not an access
+four mounted directories. Hidden names are a listing preference, not an access
 policy. The service runs as the same Unix user as the files; it does not isolate
 against another process running as that user. Public token reads use openat2
 containment; legacy authenticated filesystem operations still use pathname

@@ -126,6 +126,16 @@ handshakes to files.harivan.sh reject TLS 1.0 and 1.1 and accept TLS 1.2.
 This setting applies to all proxied harivan.sh hostnames; it is not managed by
 the DNS-only OpenTofu configuration or its API token.
 
+The share.harivan.sh DNS record was applied through OpenTofu; its targeted
+plan reports no changes. An unrelated missing mixbridge record in the full
+plan was left alone. The new public listener still requires deployment.
+
+Security-key enrollment is enabled in the existing Cloudflare Access team,
+hari-dev.cloudflareaccess.com. Other MFA methods and IdP MFA substitution are
+off. The App Launcher has an Allow policy for rathiharivansh@gmail.com only
+(policy cec41c80-33f6-4e53-9a15-8e212534a7fc). This bootstrap policy enables
+enrollment; it does not protect files.harivan.sh or prove a key is enrolled.
+
 The proposed Access policy uses the exact owner email plus Independent MFA
 with security keys only. Identity-provider MFA must not substitute for that
 check. Require MFA every login, use a one-hour application session, and enable

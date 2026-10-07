@@ -26,7 +26,7 @@
 
     # Xcode app, built from source in hosts/macbook/voiceink.
     voiceink-src = {
-      url = "github:Beingpax/VoiceInk/v2.13";
+      url = "github:Beingpax/VoiceInk/v2.21";
       flake = false;
     };
 

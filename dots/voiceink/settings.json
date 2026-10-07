@@ -20,7 +20,7 @@
     "activeConfigurationId": "03AFF9B3-CACC-4A5A-ACFB-BB5C7B421D86",
     "Shortcut_secondaryRecording_cleared": true,
     "Shortcut_pasteLastEnhancement_cleared": true,
-    "CurrentTranscriptionModel": "spark-whisper",
+    "CurrentTranscriptionModel": "parakeet-tdt-0.6b-v3",
     "ShowLiveTranscript": true,
     "hasPreparedOnboardingV2": true,
     "hasCompletedOnboardingV2": true,
@@ -56,7 +56,10 @@
     "Shortcut_LegacyCustomRecordingShortcutsMigrated": true,
     "Shortcut_LegacyKeyboardShortcutsMigrated": true,
     "streaming-keys-migrated": true,
-    "Shortcut_mode_03AFF9B3-CACC-4A5A-ACFB-BB5C7B421D86_cleared": true
+    "Shortcut_mode_03AFF9B3-CACC-4A5A-ACFB-BB5C7B421D86_cleared": true,
+    "IsAutoLearnDictionaryEnabled": true,
+    "AutoLearnDictionaryProvider": "Ollama",
+    "AutoLearnDictionaryReviewSchedule": "manually"
   },
   "jsonData": {
     "customCloudModels": [
@@ -81,7 +84,7 @@
         "useSelectedTextContext": false,
         "isDefault": true,
         "name": "default",
-        "selectedTranscriptionModelName": "spark-whisper",
+        "selectedTranscriptionModelName": "parakeet-tdt-0.6b-v3",
         "selectedLanguage": "en",
         "isTextFormattingEnabled": true,
         "useClipboardContext": false,

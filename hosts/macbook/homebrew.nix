@@ -55,6 +55,7 @@ in
       "signal"
       "slack"
       "superhuman"
+      "superwhisper"
       "tailscale-app"
       "thebrowsercompany-dia"
     ];

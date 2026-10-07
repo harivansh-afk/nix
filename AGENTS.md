@@ -294,9 +294,11 @@ limits, which is the point: unlimited networks and unlimited accounts per networ
 The `bridges` attrset maps a short name to the bridge package; `mkBridge` stamps
 out one user unit per entry (`beeper-<name>`, bbctl bridge name `sh-<name>`,
 bot `@sh-<name>bot:beeper.local`). `--custom-startup-command` points bbctl at
-the nixpkgs binary so it never downloads or updates bridges outside Nix.
-Prefer the `withGoolm = true` override: nixpkgs marks libolm insecure, and the
-pure-Go backend needs no insecure-package allowlist.
+the Nix-packaged binary so it never downloads or updates bridges outside Nix.
+Slack uses the hash-pinned upstream ARM64 release: nixpkgs' 26.05 aborts login
+when Slack omits version metadata, while 26.09.1 continues successfully.
+For source-built bridges, prefer `withGoolm = true` to avoid libolm's
+insecure-package allowlist.
 
 First-time setup is interactive: `bbctl login`, then `systemctl --user start
 beeper-slack`, then DM `@sh-slackbot:beeper.local` in Beeper and `login` once per

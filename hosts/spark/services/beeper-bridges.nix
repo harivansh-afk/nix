@@ -22,7 +22,38 @@ let
     }
   );
   bridges = {
-    slack = pkgs.mautrix-slack.override { withGoolm = true; };
+    slack = pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
+      pname = "mautrix-slack";
+      version = "0.2609.1";
+      src = pkgs.fetchurl {
+        url = "https://github.com/mautrix/slack/releases/download/v${finalAttrs.version}/mautrix-slack-arm64";
+        hash = "sha256-cA4Aua0acHjufDKTRExXlRUunA8+gX3S9SqCaz08YE8=";
+      };
+      dontUnpack = true;
+      dontStrip = true;
+      dontPatchELF = true;
+      installPhase = ''
+        runHook preInstall
+        install -Dm755 "$src" "$out/bin/mautrix-slack"
+        runHook postInstall
+      '';
+      doInstallCheck = true;
+      installCheckPhase = ''
+        runHook preInstallCheck
+        "$out/bin/mautrix-slack" --version
+        "$out/bin/mautrix-slack" --help
+        runHook postInstallCheck
+      '';
+      meta = {
+        inherit (pkgs.mautrix-slack.meta)
+          description
+          homepage
+          license
+          mainProgram
+          ;
+        platforms = [ "aarch64-linux" ];
+      };
+    });
   };
   mkBridge = name: bridge: {
     name = "beeper-${name}";

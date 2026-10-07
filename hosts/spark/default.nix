@@ -26,6 +26,7 @@
     ./services/roomcast.nix
     ./services/airplay-beacon.nix
     ./services/inference.nix
+    ./services/dictation-ai.nix
     ./services/mixbridge.nix
     ./services/draw.nix
     ./services/mosh.nix

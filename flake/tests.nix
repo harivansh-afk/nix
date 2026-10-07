@@ -11,6 +11,7 @@
     { pkgs, ... }:
     let
       spark = self.nixosConfigurations.spark.config;
+      voiceink = builtins.fromJSON (builtins.readFile ../dots/voiceink/settings.json);
 
       # Ports the repo policy bans for self-hosted backends
       # (well-known/high-value; see CLAUDE.md project preferences).
@@ -92,12 +93,23 @@
         ) "spark: mosh must rely on the tailscale trust boundary")
         (lib.assertMsg (
           !spark.services.llama-cpp.enable
-          && !spark.services.ollama.enable
           && spark.virtualisation.oci-containers.backend == "podman"
           && !spark.virtualisation.docker.enable
           && lib.hasInfix "@sha256:" vllm.image
           && vllm.devices == [ "nvidia.com/gpu=all" ]
         ) "spark: inference must use a pinned vLLM image through Podman and NVIDIA CDI")
+        (lib.assertMsg (
+          spark.services.ollama.enable
+          && spark.services.ollama.host == "127.0.0.1"
+          && spark.services.ollama.port == 18434
+          && !spark.services.ollama.openFirewall
+          && spark.services.ollama.loadModels == [ voiceink.preferences.AutoLearnDictionaryModel ]
+          && voiceink.preferences.ollamaSelectedModel == voiceink.preferences.AutoLearnDictionaryModel
+          && spark.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == "1"
+          && spark.services.ollama.environmentVariables.OLLAMA_MAX_LOADED_MODELS == "1"
+          && spark.services.ollama.environmentVariables.OLLAMA_NUM_PARALLEL == "1"
+          && spark.systemd.services.ollama.serviceConfig.MemoryMax == "16G"
+        ) "spark: dictation AI must use one bounded local model behind Tailscale")
         (lib.assertMsg (
           vllmSettings.host == "127.0.0.1"
           && vllmSettings.port == 18080

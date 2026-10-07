@@ -37,6 +37,9 @@ without contention and only the isolated result is shown below.
 Seconds from the end of paced audio input until final text is available.
 Model setup and the recording itself are excluded. This is not full GUI
 stop-to-paste timing. These are individual representative runs, not percentiles.
+The one saved real-app Parakeet entry in the selected history recorded 2.23
+seconds of transcription time; its warm/cold state is unknown. The controlled
+warm replay below is not evidence that all real-app latency is already that low.
 
 | Recording duration | Mac Parakeet | Parakeet + Spark cleanup | Spark Whisper | Whisper + Spark cleanup |
 |---|---:|---:|---:|---:|

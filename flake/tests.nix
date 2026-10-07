@@ -107,7 +107,11 @@
           && voiceink.preferences.ollamaSelectedModel == voiceink.preferences.AutoLearnDictionaryModel
           && spark.services.ollama.environmentVariables.OLLAMA_NO_CLOUD == "1"
           && spark.services.ollama.environmentVariables.OLLAMA_MAX_LOADED_MODELS == "1"
-          && spark.services.ollama.environmentVariables.OLLAMA_NUM_PARALLEL == "1"
+          && spark.services.ollama.environmentVariables.OLLAMA_NUM_PARALLEL == "2"
+          && spark.services.caddy.virtualHosts."http://:18435".listenAddresses == [ "127.0.0.1" ]
+          &&
+            lib.hasInfix "header_up Host 127.0.0.1:18434"
+              spark.services.caddy.virtualHosts."http://:18435".extraConfig
           && spark.systemd.services.ollama.serviceConfig.MemoryMax == "16G"
         ) "spark: dictation AI must use one bounded local model behind Tailscale")
         (lib.assertMsg (

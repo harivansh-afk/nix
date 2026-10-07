@@ -93,7 +93,7 @@
         "useClipboardContext": false,
         "isRealtimeTranscriptionEnabled": true,
         "isEnabled": true,
-        "isAIEnhancementEnabled": true,
+        "isAIEnhancementEnabled": false,
         "autoSendKey": "none",
         "useScreenCapture": false,
         "id": "03AFF9B3-CACC-4A5A-ACFB-BB5C7B421D86",

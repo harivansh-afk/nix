@@ -11,23 +11,31 @@ mode requires that download. The old Spark Whisper provider remains available
 but is no longer the default: its streaming endpoint produced repeated
 "Thank you" from digital silence during diagnosis.
 
-AI Enhancement and Dictionary Auto Learn use **Ollama on Spark**, with
-`qwen3:8b` selected for both. The Mac does not run the language model. The
-dictation mode uses a conservative cleanup prompt; Auto Learn reviews edits
-immediately and stores reusable vocabulary/replacements in VoiceInk's local
-dictionary. This does not retrain Parakeet or guarantee recognition accuracy.
+Dictionary Auto Learn uses **Ollama on Spark**, with `qwen3:8b` selected.
+The Mac does not run the language model. Auto Learn reviews edits immediately
+and stores reusable vocabulary/replacements in VoiceInk's local dictionary.
+Replacement rules apply locally without waiting for AI on each dictation.
+This does not retrain Parakeet or guarantee recognition accuracy.
+
+Per-dictation **AI Enhancement is off by default** after measuring its latency.
+The default mode has the same Spark provider and a conservative cleanup prompt
+ready to select when desired. See [the benchmark](benchmark.md) for timings.
 
 Deploy Spark first with `just switch-spark`. Its `ollama-model-loader` service
 downloads the model in the background; wait for it to finish before switching
 the Mac. Ollama binds to `127.0.0.1:18434` and Tailscale Serve exposes
-`https://spark-ix.tail368802.ts.net:18443` within the tailnet. It uses CUDA,
-disables Ollama cloud, permits one loaded model/request at a time, and unloads
-the model after five idle minutes. The separate large vLLM experiment remains
+`https://spark-ix.tail368802.ts.net:18443` within the tailnet. A Caddy listener
+on `127.0.0.1:18435` sets the upstream Host header that Ollama requires;
+direct Tailscale proxying returns HTTP 403. The service uses CUDA, disables
+Ollama cloud, permits one loaded model with two simultaneous requests, and
+unloads the model after five idle minutes. Two slots prevent background review
+from monopolizing optional cleanup. The separate large vLLM experiment remains
 manual-start.
 
 After the Mac switch, quit and reopen VoiceInk. In **AI Models → Ollama**, verify
-the Spark URL above and `qwen3:8b`. In **Modes → default → AI Enhancement**, the
-provider should be Ollama and the prompt **Dictation cleanup**. In **Dictionary
+the Spark URL above and `qwen3:8b`. To try optional cleanup, enable **Modes →
+default → AI Enhancement**; the provider is Ollama and the prompt is
+**Dictation cleanup**. In **Dictionary
 → settings → Auto Learn**, verify the same provider/model and **Immediately**.
 The old Spark Whisper chat-completions URL is an echo endpoint and must not be
 used for enhancement or correction review.

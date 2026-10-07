@@ -1,7 +1,7 @@
-diff --git a/VoiceInk/Views/Recorder/MiniRecorderView.swift b/VoiceInk/Views/Recorder/MiniRecorderView.swift
+diff --git a/VoiceInk/Features/Recording/Views/MiniRecorderView.swift b/VoiceInk/Features/Recording/Views/MiniRecorderView.swift
 index 26adb67..dacc41e 100644
---- a/VoiceInk/Views/Recorder/MiniRecorderView.swift
-+++ b/VoiceInk/Views/Recorder/MiniRecorderView.swift
+--- a/VoiceInk/Features/Recording/Views/MiniRecorderView.swift
++++ b/VoiceInk/Features/Recording/Views/MiniRecorderView.swift
 @@ -14,3 +14,3 @@ struct MiniRecorderView<S: RecorderStateProvider & ObservableObject>: View {
      private let controlBarHeight: CGFloat = 40
 -    private let compactWidth: CGFloat = 184
@@ -50,10 +50,10 @@ index 26adb67..dacc41e 100644
 +            .padding(.horizontal, 12)
 +            .frame(height: controlBarHeight, alignment: .center)
          }
-diff --git a/VoiceInk/Views/Recorder/RecorderComponents.swift b/VoiceInk/Views/Recorder/RecorderComponents.swift
+diff --git a/VoiceInk/Features/Recording/Components/RecorderComponents.swift b/VoiceInk/Features/Recording/Components/RecorderComponents.swift
 index 635e6dc..0ef3db4 100644
---- a/VoiceInk/Views/Recorder/RecorderComponents.swift
-+++ b/VoiceInk/Views/Recorder/RecorderComponents.swift
+--- a/VoiceInk/Features/Recording/Components/RecorderComponents.swift
++++ b/VoiceInk/Features/Recording/Components/RecorderComponents.swift
 @@ -208,3 +208,4 @@ struct ProgressAnimation: View {
 
 -    private let dotCount = 5

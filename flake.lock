@@ -1564,16 +1564,16 @@
     "voiceink-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1787850625,
-        "narHash": "sha256-ATIdLTexIEzPg2+tExoqIQ8+Y3xzymO86FFi82BUQJY=",
+        "lastModified": 1790593005,
+        "narHash": "sha256-cGUIGyThzcXtHhFND7uZI4RfbRAMQty6+fR3ZY+lkLY=",
         "owner": "Beingpax",
         "repo": "VoiceInk",
-        "rev": "68b871e79e2b1ec4c3b4914cccd2e0907d94237a",
+        "rev": "640b0c8c36ee74d9e76d930f40e2c04bb739b4b3",
         "type": "github"
       },
       "original": {
         "owner": "Beingpax",
-        "ref": "v2.13",
+        "ref": "v2.21",
         "repo": "VoiceInk",
         "type": "github"
       }

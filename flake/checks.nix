@@ -48,6 +48,15 @@
         stylua = lint "stylua" [ pkgs.stylua ] "stylua --check dots/nvim";
         logitech = lint "logitech" [ pkgs.python3 ] "python3 hosts/macbook/logitech/test_apply.py";
         mixbridge = inputs.mixbridge-web.checks.${pkgs.stdenv.hostPlatform.system}.streaming-api;
+        voiceink-patches = pkgs.runCommand "voiceink-patches" { nativeBuildInputs = [ pkgs.patch ]; } ''
+          cp -R ${inputs.voiceink-src} source
+          chmod -R u+w source
+          cd source
+          patch --batch --fuzz=0 -p1 < ${../hosts/macbook/voiceink/streaming-provider.patch}
+          patch --batch --fuzz=0 -p1 < ${../hosts/macbook/voiceink/mini-recorder.patch}
+          bash -n ${../hosts/macbook/voiceink/build.sh}
+          touch $out
+        '';
       }
       // pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "aarch64-linux") {
         hermes-runtime =

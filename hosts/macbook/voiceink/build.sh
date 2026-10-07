@@ -106,7 +106,7 @@ make -C "$build/src" local LOCAL_CODESIGN_IDENTITY="$identity"
 rm -rf "$HOME/Downloads/VoiceInk.app" # `make local` dittos a second copy there
 
 rm -rf "$app"
-ditto "$build/src/.local-build/Build/Products/Debug/VoiceInk.app" "$app"
+ditto "$build/src/.local-build/Build/Products/Release/VoiceInk.app" "$app"
 plutil -remove SUFeedURL "$app/Contents/Info.plist" >/dev/null 2>&1 || true
 plutil -replace SUEnableAutomaticChecks -bool false "$app/Contents/Info.plist"
 sign_app
@@ -114,7 +114,7 @@ sign_app
 # The intermediate bundle is a second LaunchServices registration of the same
 # name; `open -a VoiceInk` can pick it over /Applications, and its signature
 # misses the TCC grants. Unregister it, then delete it.
-"$lsregister" -u "$build/src/.local-build/Build/Products/Debug/VoiceInk.app" >/dev/null 2>&1 || true
+"$lsregister" -u "$build/src/.local-build/Build/Products/Release/VoiceInk.app" >/dev/null 2>&1 || true
 rm -rf "$build/src"
 "$lsregister" -f "$app" >/dev/null 2>&1 || true
 

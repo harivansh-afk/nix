@@ -283,3 +283,28 @@ post-deployment acceptance, read `hosts/spark/docs/hermes.md`.
 Nix owns runtimes, settings and the assistant guidance in `dots/hermes/`. Memory,
 learned skills and conversation state persist across rebuilds. Scheduled work is
 created only on request; the old scanners, graph and automatic loops remain absent.
+
+## Beeper self-hosted bridges
+
+`hosts/spark/services/beeper-bridges.nix` runs mautrix bridges on spark through
+`bbctl` (nixpkgs `beeper-bridge-manager`, source-overridden to the latest upstream
+tag because Beeper's server refuses older clients at login with "Your client is
+out of date"), registered against the owner's Beeper account. Self-hosted bridges are free and do not count toward Beeper's account
+limits, which is the point: unlimited networks and unlimited accounts per network.
+The `bridges` attrset maps a short name to the bridge package; `mkBridge` stamps
+out one user unit per entry (`beeper-<name>`, bbctl bridge name `sh-<name>`,
+bot `@sh-<name>bot:beeper.local`). `--custom-startup-command` points bbctl at
+the Nix-packaged binary so it never downloads or updates bridges outside Nix.
+Slack uses the hash-pinned upstream ARM64 release: nixpkgs' 26.05 aborts login
+when Slack omits version metadata, while 26.09.1 continues successfully.
+For source-built bridges, prefer `withGoolm = true` to avoid libolm's
+insecure-package allowlist.
+
+First-time setup is interactive: `bbctl login`, then `systemctl --user start
+beeper-slack`, then DM `@sh-slackbot:beeper.local` in Beeper and `login` once per
+Slack workspace (one bridge process holds every workspace). Units skip startup
+until `~/.config/bbctl/config.json` exists. Credentials and bridge databases live
+in private mutable `~/.config/bbctl` and `~/.local/share/bbctl/prod/<bridge>`;
+preserve both across rebuilds and keep them out of Git and the Nix store.
+Verify a real chat in Beeper before removing the equivalent cloud or on-device
+connection. Signal stays on-device; iMessage needs the macbook, not spark.

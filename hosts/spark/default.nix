@@ -16,6 +16,7 @@
     ../../modules/security/sops.nix
     ../../modules/users/nixos.nix
     ./kernel-hardening.nix
+    ./services/beeper-bridges.nix
     ./services/caddy.nix
     ./services/desktop.nix
     ./services/cloudflared.nix

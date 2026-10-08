@@ -1,0 +1,25 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "routes": [
+    {
+      "src": "/(.*)",
+      "has": [{ "type": "host", "value": "hari.cafe" }],
+      "dest": "https://harivan.sh/$1"
+    },
+    {
+      "src": "/(.*)",
+      "has": [{ "type": "host", "value": "www.hari.cafe" }],
+      "dest": "https://harivan.sh/$1"
+    },
+    {
+      "src": "/",
+      "status": 308,
+      "headers": { "Location": "https://harivan.sh" }
+    },
+    {
+      "src": "/(.*)",
+      "status": 308,
+      "headers": { "Location": "https://harivan.sh/" }
+    }
+  ]
+}

@@ -117,6 +117,8 @@ let
         sketchybarThemes
         heliumExtJson
         heliumExtensions
+        rexFont
+        rexThemes
         ;
       inherit (tea) teaLoginYaml;
     }

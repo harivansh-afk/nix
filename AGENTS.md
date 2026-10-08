@@ -166,6 +166,17 @@ The portable scripts (`ga`, `iosrun`, the remote connectors) build without a hom
 
 `lib/remotes.nix` maps a command name to the remote hostname. `pkgs/scripts/portable.nix` renders each entry into a connector command (via `pkgs/scripts/bin/remote.sh`) that lands in every user's profile: `spark`, `macbook`, or `dev6` opens a shell over `mosh <host>`; `--ssh` forces `ssh -t` for UDP-hostile networks. Transport config (hostnames, keys, ControlMaster) stays in the live-edited `dots/ssh/config`; ssh, scp, and git are never wrapped. To add a server: one entry in `lib/remotes.nix` plus its `Host` block in `dots/ssh/config`.
 
+## Rex
+
+Rex (Superlogical's multiplexer, `/Applications/Rex Beta.app`) is installed by hand: the beta download sits behind a Discord login and Sparkle updates it in place. Everything else is declared here and applied by the darwin activation script.
+
+- `dots/rex/init.lua` is linked to `~/.config/rex/init.lua` and read by the Rex server: ⌘K clears like Ghostty, ⌘⌥+arrows and ⌘[ / ⌘] move between panes, and `ctrl+b` sequences follow Mux's prefix keys. Apply edits with `rex config reload`; `rex keymap` shows the merged keymap. Shortcuts recorded in Rex's Settings override this file, so record none.
+- Rex keeps its theme, font and terminal options in `com.superlogical.rex` defaults, not in a file. Activation rewrites them on every switch: the Cozybox themes from `theme.renderRex`, plus the font, option-as-alt, padding colour and copy-on-select from Ghostty's config. Changing one of them in Settings lasts until the next switch. Quit and reopen Rex to pick up a change.
+- Rex has one terminal font and no `font-codepoint-map`. Activation patches the out-of-band Berkeley Mono with the nonicons glyphs (nerd-font-patcher) into `~/Library/Fonts/BerkeleyMonoNonicons-*.otf`, family `Berkeley Mono Nonicons`, and rebuilds it only when an input changes. Nothing is built when Berkeley Mono is missing.
+- Rex starts panes as `xterm-256color` without shell integration. `dots/zsh/zshrc` sets `TERM=xterm-ghostty` (as Mux's panes do) and sources Ghostty's zsh integration under `TERM_PROGRAM=rex`, for the OSC 133 prompt marks and OSC 7 working directory that Rex's program status and pane directory read.
+- `rex` on PATH is `~/.local/bin/rex`, a link to the app's bundled CLI.
+- No remote hosts are declared: Rex ships only its macOS server so far, so spark cannot serve Rex sessions yet.
+
 ## Key dependencies
 
 - `nixpkgs-nushell`: Separate nixpkgs pin for nushell on darwin (avoids EPERM test failures in the darwin sandbox without invalidating the spark NVIDIA kernel hash).

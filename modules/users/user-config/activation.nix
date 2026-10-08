@@ -48,6 +48,8 @@
   forgeLogins,
   heliumExtJson,
   heliumExtensions,
+  rexFont,
+  rexThemes,
   installMutableTools,
   ...
 }:
@@ -389,6 +391,28 @@ pkgs.writeShellScript "user-config-${name}" ''
     mkSymlink "${sketchybarThemes.dark}" "${theme.paths.sketchybarDir}/cozybox-dark.sh"
     mkSymlink "${sketchybarThemes.light}" "${theme.paths.sketchybarDir}/cozybox-light.sh"
     ln -sfn "$THEME_SKETCHYBAR_TARGET" "${theme.paths.sketchybarCurrentFile}"
+
+    # rex
+    mkdir -p "${configHome}/rex"
+    mkSymlink "${dotsRoot}/rex/init.lua" "${configHome}/rex/init.lua"
+    rex_bin="/Applications/Rex Beta.app/Contents/Helpers/rex"
+    if [ -x "$rex_bin" ]; then
+      mkSymlink "$rex_bin" "${homeDirectory}/.local/bin/rex"
+    fi
+    ${rexFont} || echo "warning: rex font build failed" >&2
+    rex_set() { /usr/bin/defaults write com.superlogical.rex "$@"; }
+    rex_set Workspace.customThemes -data "$(od -An -v -tx1 ${rexThemes} | tr -d ' \n')"
+    rex_set Workspace.darkThemeID -string "${(theme.renderRex "dark").id}"
+    rex_set Workspace.lightThemeID -string "${(theme.renderRex "light").id}"
+    rex_set Workspace.appearance -string system
+    rex_set Workspace.terminalFontName -string "Berkeley Mono Nonicons"
+    rex_set Workspace.terminalFontPointSize -float 15
+    rex_set Workspace.terminalOptionKeyBehavior -string actsAsAlt
+    rex_set Workspace.terminalPaddingColor -string extend
+    rex_set Workspace.terminalCopyOnSelect -bool true
+    if [ -x "$rex_bin" ]; then
+      "$rex_bin" config reload --autostart=false >/dev/null 2>&1 || true
+    fi
 
     # helium managed extensions
     helium_ext="${homeDirectory}/Library/Application Support/net.imput.helium/External Extensions"

@@ -795,6 +795,63 @@ let
       export BORDER_COLOR=0xff666666
     '';
 
+  renderRex =
+    mode:
+    let
+      t = themes.${mode};
+      digits = {
+        "0" = 0;
+        "1" = 1;
+        "2" = 2;
+        "3" = 3;
+        "4" = 4;
+        "5" = 5;
+        "6" = 6;
+        "7" = 7;
+        "8" = 8;
+        "9" = 9;
+        "a" = 10;
+        "b" = 11;
+        "c" = 12;
+        "d" = 13;
+        "e" = 14;
+        "f" = 15;
+      };
+      channel =
+        color: offset:
+        let
+          digit = index: digits.${builtins.substring index 1 color};
+        in
+        (digit offset * 16 + digit (offset + 1)) / 255.0;
+      rgb = color: {
+        colorSpace = "srgb";
+        red = channel color 1;
+        green = channel color 3;
+        blue = channel color 5;
+        alpha = 1;
+      };
+    in
+    {
+      id =
+        if mode == "light" then
+          "custom-E45EE8DD-F604-43CA-BEAF-AB0DD91BAF31"
+        else
+          "custom-AB1A406F-BC80-453C-BABD-D205D8B06585";
+      name = if mode == "light" then "Cozybox-Light" else "Cozybox-Dark";
+      appearance = mode;
+      createdAt = 813167987.5234;
+      source.ghosttyFile.fileName = "cozybox-${mode}";
+      palette = {
+        background = rgb t.background;
+        foreground = rgb t.foreground;
+        cursor = rgb t.cursorColor;
+        cursorText = rgb t.cursorText;
+        selectionBackground = rgb t.selectionBackground;
+        selectionForeground = rgb t.selectionForeground;
+        ansi = map rgb t.palette;
+      };
+    };
+
   renderZshHighlights =
     mode:
     let
@@ -866,6 +923,7 @@ in
     renderGhostty
     renderLazygit
     renderPurePrompt
+    renderRex
     renderSketchybar
     renderZshHighlights
     themes

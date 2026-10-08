@@ -2,6 +2,18 @@
 # that sources nix-store plugin paths and then this file, so changes here
 # apply on the next shell without a rebuild.
 
+# --- rex ---
+# Rex renders with libghostty but starts panes as xterm-256color with no
+# shell integration. Claim the Ghostty terminfo, as Mux's panes do, and load
+# Ghostty's zsh integration for the OSC 133 prompt marks and OSC 7 working
+# directory that Rex's program status and pane directory read.
+if [[ "$TERM_PROGRAM" == rex ]]; then
+  export TERM=xterm-ghostty
+  if [[ -r "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration" ]]; then
+    source "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration"
+  fi
+fi
+
 # --- history ---
 HISTSIZE=50000
 SAVEHIST=50000

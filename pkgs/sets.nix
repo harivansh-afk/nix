@@ -7,6 +7,7 @@
 let
   inherit (pkgs.stdenv.hostPlatform) system;
   gwsPackage = inputs.googleworkspace-cli.packages.${system}.default or null;
+  nonicons = pkgs.callPackage ./nonicons.nix { };
   # jj-ix: the patched jj that speaks the ix forge's store backend
   # (pkgs/jj-ix). Toolchain comes from rust-overlay via mkRustBin so the
   # main package set needs no overlay.
@@ -98,8 +99,10 @@ in
     yt-dlp
   ];
 
-  fonts = with pkgs; [
-    (callPackage ./nonicons.nix { })
-    nerd-fonts.symbols-only
+  fonts = [
+    nonicons
+    pkgs.nerd-fonts.symbols-only
   ];
+
+  darwinFonts = [ (pkgs.callPackage ./berkeley-mono-nonicons { inherit nonicons; }) ];
 }

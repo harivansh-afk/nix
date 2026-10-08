@@ -40,7 +40,7 @@ in
       ]
     );
 
-  fonts.packages = packageSets.fonts;
+  fonts.packages = packageSets.fonts ++ lib.optionals hostConfig.isDarwin packageSets.darwinFonts;
 
   environment.variables = {
     EDITOR = "nvim";

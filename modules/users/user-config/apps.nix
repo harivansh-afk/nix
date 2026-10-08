@@ -49,26 +49,30 @@ in
   };
 
   rexDefaults = {
-    darkThemeID = (theme.renderRex "dark").id;
-    lightThemeID = (theme.renderRex "light").id;
-    appearance = "system";
-    interfaceStyle = "system";
-    paneDensity = "comfortable";
-    fadesInactivePanes = false;
-    usesPaneGlass = false;
-    showsPaneHeaders = false;
-    balancesSplitsOnCreation = true;
-    sidebarPosition = "left";
-    tabStyle = "horizontal";
-    tabsFillAvailableSpace = true;
-    tabIconTintMode = "off";
-    showsProgramStatusInTabs = true;
-    terminalFontName = "Berkeley Mono Nonicons";
-    terminalFontPointSize = 15.0;
-    terminalFontSmoothing = false;
-    terminalOptionKeyBehavior = "actsAsAlt";
-    terminalPaddingColor = "extend";
-    terminalCopyOnSelect = true;
+    enforced = {
+      darkThemeID = (theme.renderRex "dark").id;
+      lightThemeID = (theme.renderRex "light").id;
+      appearance = "system";
+      terminalFontName = "Berkeley Mono Nonicons";
+      terminalFontPointSize = 15.0;
+      terminalOptionKeyBehavior = "actsAsAlt";
+      terminalPaddingColor = "extend";
+      terminalCopyOnSelect = true;
+    };
+    seeded = {
+      interfaceStyle = "system";
+      paneDensity = "comfortable";
+      fadesInactivePanes = false;
+      usesPaneGlass = false;
+      showsPaneHeaders = false;
+      balancesSplitsOnCreation = true;
+      sidebarPosition = "left";
+      tabStyle = "horizontal";
+      tabsFillAvailableSpace = true;
+      tabIconTintMode = "off";
+      showsProgramStatusInTabs = true;
+      terminalFontSmoothing = false;
+    };
   };
 
   rexThemes = pkgs.writeText "rex-themes.json" (
@@ -77,33 +81,6 @@ in
       (theme.renderRex "light")
     ]
   );
-
-  rexFont =
-    let
-      nonicons = "${pkgs.callPackage ../../../pkgs/nonicons.nix { }}/share/fonts/truetype/nonicons.ttf";
-      python = pkgs.python3.withPackages (ps: [ ps.fonttools ]);
-      merge = ../../../pkgs/scripts/lib/rex-font.py;
-    in
-    pkgs.writeShellScript "rex-font" ''
-      set -eu
-      fonts="$HOME/Library/Fonts"
-      stamp="$HOME/.local/state/rex/font.stamp"
-      sources=""
-      for style in Regular Bold; do
-        [ -f "$fonts/BerkeleyMono-$style.otf" ] && sources="$sources $fonts/BerkeleyMono-$style.otf"
-      done
-      [ -n "$sources" ] || exit 0
-      want="$(cat $sources ${nonicons} ${merge} | sha256sum | cut -d' ' -f1)"
-      [ "$(cat "$stamp" 2>/dev/null)" = "$want" ] && exit 0
-      for src in $sources; do
-        style="''${src##*-}"
-        style="''${style%.otf}"
-        ${python}/bin/python3 -I ${merge} "$src" ${nonicons} \
-          "$fonts/BerkeleyMonoNonicons-$style.otf" "Berkeley Mono Nonicons" "BerkeleyMonoNonicons-$style"
-      done
-      mkdir -p "''${stamp%/*}"
-      printf '%s\n' "$want" > "$stamp"
-    '';
 
   sketchybarThemes = {
     dark = pkgs.writeText "sketchybar-cozybox-dark.sh" (theme.renderSketchybar "dark");

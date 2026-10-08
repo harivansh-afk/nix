@@ -49,7 +49,6 @@
   heliumExtJson,
   heliumExtensions,
   rexDefaults,
-  rexFont,
   rexThemes,
   installMutableTools,
   ...
@@ -400,20 +399,27 @@ pkgs.writeShellScript "user-config-${name}" ''
     if [ -x "$rex_bin" ]; then
       mkSymlink "$rex_bin" "${homeDirectory}/.local/bin/rex"
     fi
-    ${rexFont} || echo "warning: rex font build failed" >&2
     rex_set() { /usr/bin/defaults write com.superlogical.rex "$@"; }
+    rex_seed() {
+      /usr/bin/defaults read com.superlogical.rex "$1" >/dev/null 2>&1 || rex_set "$@"
+    }
     rex_set Workspace.customThemes -data "$(od -An -v -tx1 ${rexThemes} | tr -d ' \n')"
     ${lib.concatStrings (
-      lib.mapAttrsToList (key: value: ''
-        rex_set Workspace.${key} ${
-          if builtins.isBool value then
-            "-bool ${lib.boolToString value}"
-          else if builtins.isFloat value then
-            "-float ${toString value}"
-          else
-            "-string ${lib.escapeShellArg value}"
-        }
-      '') rexDefaults
+      lib.mapAttrsToList (
+        mode: settings:
+        lib.concatStrings (
+          lib.mapAttrsToList (key: value: ''
+            ${if mode == "enforced" then "rex_set" else "rex_seed"} Workspace.${key} ${
+              if builtins.isBool value then
+                "-bool ${lib.boolToString value}"
+              else if builtins.isFloat value then
+                "-float ${toString value}"
+              else
+                "-string ${lib.escapeShellArg value}"
+            }
+          '') settings
+        )
+      ) rexDefaults
     )}
     if [ -x "$rex_bin" ]; then
       "$rex_bin" config reload --autostart=false >/dev/null 2>&1 || true

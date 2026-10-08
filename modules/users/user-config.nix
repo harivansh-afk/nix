@@ -118,7 +118,6 @@ let
         heliumExtJson
         heliumExtensions
         rexDefaults
-        rexFont
         rexThemes
         ;
       inherit (tea) teaLoginYaml;

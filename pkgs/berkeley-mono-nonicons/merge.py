@@ -15,7 +15,7 @@ from fontTools.pens.boundsPen import BoundsPen
 logging.getLogger("fontTools").setLevel(logging.ERROR)
 
 base_path, icons_path, out_path, family, postscript = sys.argv[1:]
-font = TTFont(base_path)
+font = TTFont(base_path, recalcTimestamp=False)
 icons = TTFont(icons_path)
 
 cff = font["CFF "].cff

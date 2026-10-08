@@ -48,6 +48,29 @@ in
     light = pkgs.writeText "ghostty-cozybox-light" (theme.renderGhostty "light");
   };
 
+  rexDefaults = {
+    darkThemeID = (theme.renderRex "dark").id;
+    lightThemeID = (theme.renderRex "light").id;
+    appearance = "system";
+    interfaceStyle = "system";
+    paneDensity = "comfortable";
+    fadesInactivePanes = false;
+    usesPaneGlass = false;
+    showsPaneHeaders = false;
+    balancesSplitsOnCreation = true;
+    sidebarPosition = "left";
+    tabStyle = "horizontal";
+    tabsFillAvailableSpace = true;
+    tabIconTintMode = "off";
+    showsProgramStatusInTabs = true;
+    terminalFontName = "Berkeley Mono Nonicons";
+    terminalFontPointSize = 15.0;
+    terminalFontSmoothing = false;
+    terminalOptionKeyBehavior = "actsAsAlt";
+    terminalPaddingColor = "extend";
+    terminalCopyOnSelect = true;
+  };
+
   rexThemes = pkgs.writeText "rex-themes.json" (
     builtins.toJSON [
       (theme.renderRex "dark")
@@ -59,29 +82,7 @@ in
     let
       nonicons = "${pkgs.callPackage ../../../pkgs/nonicons.nix { }}/share/fonts/truetype/nonicons.ttf";
       python = pkgs.python3.withPackages (ps: [ ps.fonttools ]);
-      rename = pkgs.writeText "rex-font-rename.py" ''
-        import sys
-        from fontTools.ttLib import TTFont
-
-        path, family, postscript = sys.argv[1:]
-        font = TTFont(path)
-        style = font["name"].getDebugName(2)
-        full = family if style == "Regular" else f"{family} {style}"
-        names = font["name"]
-        for record in list(names.names):
-            if record.nameID in (1, 3, 4, 6, 16, 17):
-                names.removeNames(nameID=record.nameID)
-        for name_id, value in ((1, family), (2, style), (3, postscript), (4, full), (6, postscript), (16, family), (17, style)):
-            names.setName(value, name_id, 3, 1, 0x409)
-            names.setName(value, name_id, 1, 0, 0)
-        if "CFF " in font:
-            cff = font["CFF "].cff
-            top = cff[cff.fontNames[0]]
-            top.FullName = full
-            top.FamilyName = family
-            cff.fontNames[0] = postscript
-        font.save(path)
-      '';
+      merge = ../../../pkgs/scripts/lib/rex-font.py;
     in
     pkgs.writeShellScript "rex-font" ''
       set -eu
@@ -92,19 +93,13 @@ in
         [ -f "$fonts/BerkeleyMono-$style.otf" ] && sources="$sources $fonts/BerkeleyMono-$style.otf"
       done
       [ -n "$sources" ] || exit 0
-      want="$(cat $sources ${nonicons} ${rename} | sha256sum | cut -d' ' -f1)"
+      want="$(cat $sources ${nonicons} ${merge} | sha256sum | cut -d' ' -f1)"
       [ "$(cat "$stamp" 2>/dev/null)" = "$want" ] && exit 0
-      work="$(mktemp -d)"
-      trap 'rm -rf "$work"' EXIT
       for src in $sources; do
         style="''${src##*-}"
         style="''${style%.otf}"
-        ${pkgs.nerd-font-patcher}/bin/nerd-font-patcher --quiet --mono --makegroups -1 \
-          --custom ${nonicons} \
-          --outputdir "$work" "$src" >"$work/log" 2>&1 || { cat "$work/log" >&2; exit 1; }
-        ${python}/bin/python3 -I ${rename} "$work/BerkeleyMono-$style.otf" \
-          "Berkeley Mono Nonicons" "BerkeleyMonoNonicons-$style"
-        install -m 644 "$work/BerkeleyMono-$style.otf" "$fonts/BerkeleyMonoNonicons-$style.otf"
+        ${python}/bin/python3 -I ${merge} "$src" ${nonicons} \
+          "$fonts/BerkeleyMonoNonicons-$style.otf" "Berkeley Mono Nonicons" "BerkeleyMonoNonicons-$style"
       done
       mkdir -p "''${stamp%/*}"
       printf '%s\n' "$want" > "$stamp"

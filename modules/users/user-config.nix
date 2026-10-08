@@ -117,6 +117,7 @@ let
         sketchybarThemes
         heliumExtJson
         heliumExtensions
+        rexDefaults
         rexFont
         rexThemes
         ;

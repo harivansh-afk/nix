@@ -48,6 +48,7 @@
   forgeLogins,
   heliumExtJson,
   heliumExtensions,
+  rexDefaults,
   rexFont,
   rexThemes,
   installMutableTools,
@@ -402,14 +403,18 @@ pkgs.writeShellScript "user-config-${name}" ''
     ${rexFont} || echo "warning: rex font build failed" >&2
     rex_set() { /usr/bin/defaults write com.superlogical.rex "$@"; }
     rex_set Workspace.customThemes -data "$(od -An -v -tx1 ${rexThemes} | tr -d ' \n')"
-    rex_set Workspace.darkThemeID -string "${(theme.renderRex "dark").id}"
-    rex_set Workspace.lightThemeID -string "${(theme.renderRex "light").id}"
-    rex_set Workspace.appearance -string system
-    rex_set Workspace.terminalFontName -string "Berkeley Mono Nonicons"
-    rex_set Workspace.terminalFontPointSize -float 15
-    rex_set Workspace.terminalOptionKeyBehavior -string actsAsAlt
-    rex_set Workspace.terminalPaddingColor -string extend
-    rex_set Workspace.terminalCopyOnSelect -bool true
+    ${lib.concatStrings (
+      lib.mapAttrsToList (key: value: ''
+        rex_set Workspace.${key} ${
+          if builtins.isBool value then
+            "-bool ${lib.boolToString value}"
+          else if builtins.isFloat value then
+            "-float ${toString value}"
+          else
+            "-string ${lib.escapeShellArg value}"
+        }
+      '') rexDefaults
+    )}
     if [ -x "$rex_bin" ]; then
       "$rex_bin" config reload --autostart=false >/dev/null 2>&1 || true
     fi

@@ -9,6 +9,10 @@ let
 in
 {
   services.caddy.virtualHosts."http://${domain}" = {
+    serverAliases = [
+      "http://hari.cafe"
+      "http://www.hari.cafe"
+    ];
     listenAddresses = [ "127.0.0.1" ];
     extraConfig = ''
       root * ${mountDir}/dist

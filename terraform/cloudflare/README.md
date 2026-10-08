@@ -1,6 +1,8 @@
-# Cloudflare DNS for harivan.sh
+# Cloudflare DNS for harivan.sh and hari.cafe
 
-Declarative DNS for the `harivan.sh` zone. Records are defined in Nix
+Declarative DNS for the `harivan.sh` and `hari.cafe` zones. A record is in
+`harivan.sh` unless it names another zone with `zone` (see `zones` in
+`records.nix`). Records are defined in Nix
 (`records.nix`), rendered to `config.tf.json` by terranix, and applied with
 OpenTofu through the `cloudflare-dns` flake app.
 

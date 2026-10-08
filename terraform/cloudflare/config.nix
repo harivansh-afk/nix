@@ -1,12 +1,12 @@
 { lib, ... }:
 let
   inventory = import ./records.nix;
-  inherit (inventory) zoneId records;
+  inherit (inventory) zoneId zones records;
 
   mkRecord =
     _: r:
     {
-      zone_id = zoneId;
+      zone_id = if r ? zone then zones.${r.zone} else zoneId;
       inherit (r) name type;
       ttl = r.ttl or 1;
     }

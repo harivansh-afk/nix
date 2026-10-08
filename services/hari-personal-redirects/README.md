@@ -2,7 +2,7 @@
 
 Vercel project `hari-personal-redirects`, in `rathiharivansh-gmailcoms-projects`.
 
-`hari.cafe` and `www.hari.cafe` proxy the live site at `https://harivan.sh`, including paths and assets. Visitors keep the cafe hostname. DNS and TLS stay at Vercel; Spark remains the site origin. Other domains retain their existing redirects to `harivan.sh`.
+These domains 308 to `harivan.sh`. `hari.cafe` is registered here but no longer served here: its nameservers are Cloudflare's, and Spark serves it directly (see `hosts/spark/services/website.nix` and `terraform/cloudflare`).
 
 Deploy from this directory with the owner's Vercel CLI login:
 
@@ -11,4 +11,4 @@ vercel link --project hari-personal-redirects --scope rathiharivansh-gmailcoms-p
 vercel deploy --prod --yes
 ```
 
-Verify both cafe hostnames return 200 without a Location header, and check an article and a hashed asset. Check `hari.ink` still returns its original 308 redirect.
+Check `hari.ink` still returns its 308 redirect.

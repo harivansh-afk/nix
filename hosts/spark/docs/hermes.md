@@ -169,8 +169,8 @@ see [Spark browser and desktop](browser.md).
 The pinned Relay-Hermes plugin connects over an outbound WebSocket. Its token and
 owner allowlist come from `hermes-relay.env`, installed only in the `imessage`
 profile's `.env`. The inbox stays in `profiles/imessage/relay`; preserve it across
-restarts and token changes. Relay chats have their own sessions; old Photon
-conversations remain available for recall.
+restarts. Follow upstream's state-binding migration when rotating the token.
+Relay chats have their own sessions; old Photon conversations remain available for recall.
 
 Group TV requests use the separate [roommate agent](roomcast.md#roommate-agent)
 on Telegram.

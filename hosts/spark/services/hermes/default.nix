@@ -60,6 +60,10 @@ in
 
   services.hermes-agent = {
     enable = true;
+    package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+      version = "0.21.5";
+      distance = 5832;
+    };
     user = username;
     group = "users";
     createUser = false;

@@ -64,21 +64,25 @@
             {
               nativeBuildInputs = [
                 hermes.package
-                pkgs.nodejs
               ]
               ++ hermes.extraPackages;
-              inherit (hermes.environment) PHOTON_SIDECAR_DIR;
+              relaySource = builtins.head hermes.extraPlugins;
+              profileConfigs = pkgs.writeText "hermes-profile-check.json" (
+                builtins.toJSON {
+                  default = hermes.configFile;
+                  imessage = hermes.hermesHomeFiles."profiles/imessage/config.yaml";
+                  desktop = pkgs.writeText "desktop.json" hermes.hermesHomeFiles."profiles/desktop/config.yaml";
+                  roommates = pkgs.writeText "roommates.json" hermes.hermesHomeFiles."profiles/roommates/config.yaml";
+                }
+              );
             }
             ''
               export HOME=$TMPDIR/home HERMES_HOME=$TMPDIR/home/.hermes
               mkdir -p "$HERMES_HOME"
               hermes --version
-              cd "$PHOTON_SIDECAR_DIR"
-              node --input-type=module -e '
-                await import("spectrum-ts");
-                await import("./send-format.mjs");
-                await import("./stream-staleness.mjs");
-              '
+              export PYTHONPATH=${hermes.package}/share/hermes-agent
+              uv run --offline --no-project --python ${hermes.package.hermesVenv}/bin/python3 \
+                ${../scripts/test-hermes-relay.py}
               touch $out
             '';
       };

@@ -34,12 +34,9 @@ in
           providers
           secrets
           gateway
+          plugins
           ;
         platform_toolsets.cli = [ ];
-        plugins = {
-          enabled = [ ];
-          disabled = [ "knowledge-base" ];
-        };
         skills = {
           external_dirs = [ ];
           project_discovery = false;
@@ -53,7 +50,6 @@ in
     );
     hermesHomeFiles = {
       "profiles/imessage/config.yaml" = settings;
-      "profiles/imessage/.env" = "";
       "profiles/imessage/SOUL.md" = ../../../../dots/hermes/SOUL.md;
       "profiles/imessage/.managed" = "nixos\n";
       "profiles/imessage/.no-bundled-skills" = "Skills are selected by Nix.\n";

@@ -12,19 +12,6 @@ let
   runtimeDir = "/run/user/${toString config.users.users.${username}.uid}";
   cuaDriver = pkgs.callPackage ../../../../pkgs/cua-driver { };
   computer = import ../../../../pkgs/computer-tools { inherit pkgs; };
-  photonSrc = "${inputs.hermes-agent}/plugins/platforms/photon/sidecar";
-  photonDeps = pkgs.importNpmLock.buildNodeModules {
-    npmRoot = photonSrc;
-    inherit (pkgs) nodejs;
-    derivationArgs.postPatch = ''
-      cp ${photonSrc}/patch-spectrum-mixed-attachments.mjs .
-    '';
-  };
-  photonSidecar = pkgs.runCommand "hermes-photon-sidecar" { } ''
-    mkdir -p $out
-    cp ${photonSrc}/* $out/
-    ln -s ${photonDeps}/node_modules $out/node_modules
-  '';
   toolsets = [
     "hermes-cli"
     "computer"
@@ -52,7 +39,8 @@ in
     inputs.hermes-agent.nixosModules.default
     ./desktop.nix
     ./devin.nix
-    ./imessage.nix
+    ./personal.nix
+    ./relay.nix
     ./roommates.nix
   ];
 
@@ -88,12 +76,8 @@ in
     environmentFiles = [
       config.sops.secrets."anthropic.env".path
       config.sops.secrets."hermes-dashboard.env".path
-      config.sops.secrets."hermes-photon.env".path
     ];
     environment = {
-      PHOTON_SIDECAR_DIR = "${photonSidecar}";
-      PHOTON_NODE_BIN = "${pkgs.nodejs}/bin/node";
-      PHOTON_SIDECAR_PORT = "18789";
       HERMES_GATEWAY_BUSY_ACK_ENABLED = "false";
     };
     hermesHomeFiles."SOUL.md" = "";
@@ -154,7 +138,7 @@ in
       approvals.mode = "off";
       security.protected_instruction_files = false;
       plugins = {
-        enabled = [ ];
+        enabled = [ "relay-hermes" ];
         disabled = [ "knowledge-base" ];
       };
       tools.tool_search.enabled = "auto";
@@ -165,7 +149,7 @@ in
       };
       platform_toolsets = {
         cli = toolsets;
-        photon = toolsets;
+        relayapp = toolsets;
       };
       memory = {
         memory_enabled = true;
@@ -174,9 +158,13 @@ in
       display = {
         busy_input_mode = "interrupt";
         memory_notifications = "off";
-        platforms.photon = {
+        platforms.relayapp = {
           tool_progress = false;
+          interim_assistant_messages = false;
+          long_running_notifications = false;
           streaming = false;
+          busy_ack_detail = false;
+          tool_preview_length = 0;
         };
       };
       session_reset = {
@@ -191,7 +179,6 @@ in
       (pkgs.writeText "hermes-settings.json" (builtins.toJSON config.services.hermes-agent.settings))
       ../../../../dots/hermes/SOUL.md
       ../../../../dots/hermes/AGENTS.md
-      config.sops.secrets."hermes-photon.env".sopsFile
     ];
     after = [ "user@${toString config.users.users.${username}.uid}.service" ];
     wants = [ "user@${toString config.users.users.${username}.uid}.service" ];

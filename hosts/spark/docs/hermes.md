@@ -2,19 +2,19 @@
 
 `hosts/spark/services/hermes/default.nix` owns the messaging gateway, desktop backend, model, tool selection
 and pinned runtimes. The Hermes flake input tracks an exact upstream revision.
-The Relay personal assistant uses Opus 5.5 through Hermes's native Anthropic transport and the existing
+Relay uses Opus 5.5 through Hermes's native Anthropic transport and the existing
 Claude Code subscription login. Desktop uses Astra through the authenticated
 Devin loopback adapter declared in `hermes/devin.nix`.
 
 The two processes serve different clients: `hermes gateway` handles Relay and Telegram;
 `hermes serve` exposes the authenticated tailnet API used by the Mac
-desktop app. Desktop starts in its own `desktop` profile; Relay uses the existing
+desktop app. Desktop starts in its own `desktop` profile; Relay stays in the
 `imessage` profile and Telegram uses `roommates`. The backend does not serve the
 web dashboard. See [Desktop setup and features](hermes-desktop.md) for the state
 boundary and recommended workflow.
 
 The Desktop profile also exposes the [Robinhood MCP](robinhood.md).
-The personal assistant has no Robinhood integration.
+Relay has no Robinhood integration.
 
 ## Devin inference
 
@@ -32,8 +32,8 @@ to reload credentials. Relay does not need a restart for a Devin login change.
 
 Desktop defaults to `devin` / `gpt-6-astra` with medium reasoning; its delegated workers
 use Astra low. The roommates profile uses Devin `gpt-6-sol` with low reasoning.
-The personal assistant and its workers use `anthropic` / `claude-opus-5-5`, with medium reasoning
-for conversation and low for workers. Its separate `.env`, containing only Relay credentials, prevents the shared
+Relay and its workers use `anthropic` / `claude-opus-5-5`, with medium reasoning
+for conversation and low for workers. Its separate `.env` contains only Relay credentials, preventing the shared
 Anthropic API key from taking precedence over the Claude Code subscription credentials.
 The Devin command secret source is disabled in this profile. OAuth credentials and
 refresh state remain in Claude Code's private runtime store, outside Nix and Git.
@@ -74,17 +74,14 @@ saved connection or grant control over another process's active workers.
 
 ## Messaging behavior
 
-`hosts/spark/services/hermes/personal.nix` owns the personal assistant profile;
-`relay.nix` pins the upstream Relay-Hermes plugin and installs its encrypted
-credentials. The profile keeps its historical `imessage` directory so memories,
-conversation history, skills and OAuth grants stay in place. This directory name
-does not enable iMessage. The gateway routes `relayapp` to `imessage` and Telegram
-to `roommates`; Photon is removed.
+`hosts/spark/services/hermes/imessage.nix` owns the personal Relay profile. The
+upstream module's `settings` remain the source for its generated config. The
+shared gateway starts from the root/default profile and routes Relay to `imessage`
+and Telegram to `roommates`. Its explicit `configFile` leaves the root/default profile with no configured CLI
+tools, MCP connections, custom persona or enabled memory. Root credentials and
+the Nix-installed plugin directory remain shared infrastructure. The `imessage`
+profile name is retained to preserve existing state.
 
-The root/default profile loads the platform plugin but has no Relay credentials,
-CLI tools, MCP connections, persona or memory. Only the personal profile's `.env`
-contains the Relay token and owner allowlist. Desktop and roommates have separate
-credential scopes.
 On the first gateway start, with the old gateway stopped, its pre-start migration
 backs up the root SQLite database, preserves session IDs and messages, and
 changes default routing to `imessage`. It moves memories, session files, cron
@@ -95,10 +92,8 @@ Backups live in `~/.local/state/hermes/imessage-migration-backup`. Subsequent
 starts skip the completed migration.
 
 Deploy while agents are idle and no CLI/Desktop session is using `default`.
-After deployment, verify Relay can recall the existing profile memories and
-conversation history, and check Telegram independently. A Relay chat has its own
-transport session; the previous Photon thread is retained for recall, not rewritten
-into a Relay conversation. Existing active workers are not
+After deployment, verify Relay replies and can recall existing history and memory,
+and check Telegram independently. Existing active workers are not
 migrated between running processes. Shared OAuth grants are not copied.
 
 Desktop's empty SOUL is intentional; the UI may report that it is empty. Select
@@ -146,12 +141,8 @@ Broader changes require scoped authorization or explicit yes/no identifying the
 PR. Changes after approval must be rechecked and material changes reapproved.
 Merge, deployment and runtime proof are reported separately.
 
-Relay supports native buttons and multi-select cards through the upstream plugin.
-When a PR needs approval, share its link and identify the exact PR and head in the
-choices. Recheck the head and CI before merging; an unanswered request leaves the
-PR open. The plugin does not override Hermes's `send_clarify`, so native `clarify`
-uses Hermes's text-choice fallback. Card rendering and response delivery need a
-real Relay acceptance check.
+Hermes's `clarify` uses text choices on Relay. Share the PR link and identify its
+head when requesting approval. Recheck the head and CI before merging.
 
 This adds no service, hook, schedule, model provider or account integration. It
 does not install Nous' separate DSPy/GEPA Self-Evolution research optimizer. Skill
@@ -175,37 +166,14 @@ see [Spark browser and desktop](browser.md).
 
 ## Relay
 
-Relay is a separate messaging app, not an iMessage bridge or a replacement model.
-Hermes still runs Opus 5.5 on Spark. Compared with Photon, the upstream Relay
-plugin provides swipe-reply context, reactions, typing indicators, rich cards,
-attachments, and a durable SQLite inbox with acknowledged WebSocket events and
-idempotent sends. This improves transport recovery and presentation; model/tool
-latency is unchanged. Edits and unsend are not supported.
+The pinned Relay-Hermes plugin connects over an outbound WebSocket. Its token and
+owner allowlist come from `hermes-relay.env`, installed only in the `imessage`
+profile's `.env`. The inbox stays in `profiles/imessage/relay`; preserve it across
+restarts and token changes. Relay chats have their own sessions; old Photon
+conversations remain available for recall.
 
-The existing account's Agent Token and single-contact allowlist are restored from
-Git history as `secrets/hosts/spark/hermes-relay.env`. The token successfully read
-the Relay chats API on 2026-10-08. At activation, only this secret is installed to
-`profiles/imessage/.env`; it is excluded from the root and Desktop environment.
-Unknown contacts must not be able to start work. Keep the allowlist populated when
-rotating the token. Credentials and contact IDs remain encrypted in Git.
-
-The plugin uses an outbound WebSocket to `https://api.relayapp.im` and HTTPS sends;
-there is no public listener, Mac relay, Node sidecar or Photon control port.
-Its state remains in `profiles/imessage/relay`. The existing inbox is bound to the
-same account token; preserve it across restarts. Changing the token requires
-following upstream's state-binding procedure rather than deleting the inbox.
-The 2026-10-08 inspection found one unfinished event from September in that inbox.
-The PR preserves it; the adapter may replay it on first startup. This is the
-remaining state from the earlier deployment's busy-follow-up bug, not a new message.
-Quiet display settings suppress streaming previews, tool progress and automatic
-busy acknowledgements.
-
-The former Photon secret, adapter environment, route and sidecar build are removed.
-Existing Photon history remains private on disk. Existing scheduled jobs addressed
-to Photon require an explicit delivery-target update before reuse.
-
-Group TV requests still use the separate [roommate agent](roomcast.md#roommate-agent)
-on Telegram, with separate tools and state.
+Group TV requests use the separate [roommate agent](roomcast.md#roommate-agent)
+on Telegram.
 
 ## Updating and acceptance
 
@@ -213,13 +181,10 @@ Update `hermes-agent` with `nix flake update hermes-agent`. The shared computer
 package pins agent-browser's binary and skills. Cua's binary and skill archive share a release
 version and fixed hashes. Rebuild through the normal PR/deployment flow.
 
-`nix build .#checks.aarch64-linux.hermes-runtime` tests packaged startup, Relay
-plugin discovery, profile routing and credential isolation with fixture credentials
-and no network access. Before calling a
-new deployment operational:
+Before calling a new deployment operational:
 
 1. Check both Hermes services and their journals; confirm Relay received its
-   WebSocket ready frame and retained the owner allowlist. Check that Photon is absent.
+   WebSocket ready frame and retained the owner allowlist.
 2. Use Cua's `list_windows` and inspect a scratch application's state.
    Verify a harmless action and an actual screenshot in Astra's context.
 3. In a distinct named session, ask for a harmless authenticated browser read;
@@ -227,10 +192,5 @@ new deployment operational:
    Test steering and cancellation during a task, then close both sessions and
    verify the task's browser tab closed while pre-existing tabs remain.
 4. Message the existing agent in Relay from Hari's phone, have it perform a harmless
-   task, and check its reply, attachment, swipe-reply context and rapid follow-up.
-   No outbound test is automatic.
+   task, and check its reply and attachment. No outbound test is automatic.
 5. Restart the services and repeat a request to verify persistence.
-
-Opening the PR does not activate Relay or send messages. Merge and deployment are
-separate from the phone acceptance checks above. The encrypted secret uses Spark's
-host age identity at activation; the Mac's admin identity can also decrypt it.

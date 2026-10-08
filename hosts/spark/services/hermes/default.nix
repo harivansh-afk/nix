@@ -39,8 +39,7 @@ in
     inputs.hermes-agent.nixosModules.default
     ./desktop.nix
     ./devin.nix
-    ./personal.nix
-    ./relay.nix
+    ./imessage.nix
     ./roommates.nix
   ];
 

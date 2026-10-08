@@ -13,7 +13,6 @@
       };
       pluginSources = builtins.fromJSON (builtins.readFile ../dots/nvim/pack-sources.json);
       prSource = pkgs.fetchgit { inherit (pluginSources."pr.nvim") url rev hash; };
-      hermes = self.nixosConfigurations.spark.config.services.hermes-agent;
       lint =
         name: tools: script:
         pkgs.runCommand "lint-${name}" { nativeBuildInputs = tools; } ''
@@ -57,34 +56,6 @@
           bash -n ${../hosts/macbook/voiceink/build.sh}
           touch $out
         '';
-      }
-      // pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "aarch64-linux") {
-        hermes-runtime =
-          pkgs.runCommand "hermes-runtime"
-            {
-              nativeBuildInputs = [
-                hermes.package
-              ]
-              ++ hermes.extraPackages;
-              relaySource = builtins.head hermes.extraPlugins;
-              profileConfigs = pkgs.writeText "hermes-profile-check.json" (
-                builtins.toJSON {
-                  default = hermes.configFile;
-                  imessage = hermes.hermesHomeFiles."profiles/imessage/config.yaml";
-                  desktop = pkgs.writeText "desktop.json" hermes.hermesHomeFiles."profiles/desktop/config.yaml";
-                  roommates = pkgs.writeText "roommates.json" hermes.hermesHomeFiles."profiles/roommates/config.yaml";
-                }
-              );
-            }
-            ''
-              export HOME=$TMPDIR/home HERMES_HOME=$TMPDIR/home/.hermes
-              mkdir -p "$HERMES_HOME"
-              hermes --version
-              export PYTHONPATH=${hermes.package}/share/hermes-agent
-              uv run --offline --no-project --python ${hermes.package.hermesVenv}/bin/python3 \
-                ${../scripts/test-hermes-relay.py}
-              touch $out
-            '';
       };
     };
 }

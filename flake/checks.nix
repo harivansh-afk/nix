@@ -13,7 +13,6 @@
       };
       pluginSources = builtins.fromJSON (builtins.readFile ../dots/nvim/pack-sources.json);
       prSource = pkgs.fetchgit { inherit (pluginSources."pr.nvim") url rev hash; };
-      hermes = self.nixosConfigurations.spark.config.services.hermes-agent;
       lint =
         name: tools: script:
         pkgs.runCommand "lint-${name}" { nativeBuildInputs = tools; } ''
@@ -57,30 +56,6 @@
           bash -n ${../hosts/macbook/voiceink/build.sh}
           touch $out
         '';
-      }
-      // pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "aarch64-linux") {
-        hermes-runtime =
-          pkgs.runCommand "hermes-runtime"
-            {
-              nativeBuildInputs = [
-                hermes.package
-                pkgs.nodejs
-              ]
-              ++ hermes.extraPackages;
-              inherit (hermes.environment) PHOTON_SIDECAR_DIR;
-            }
-            ''
-              export HOME=$TMPDIR/home HERMES_HOME=$TMPDIR/home/.hermes
-              mkdir -p "$HERMES_HOME"
-              hermes --version
-              cd "$PHOTON_SIDECAR_DIR"
-              node --input-type=module -e '
-                await import("spectrum-ts");
-                await import("./send-format.mjs");
-                await import("./stream-staleness.mjs");
-              '
-              touch $out
-            '';
       };
     };
 }

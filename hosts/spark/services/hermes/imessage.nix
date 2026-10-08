@@ -6,6 +6,7 @@
 }:
 let
   hermes = config.services.hermes-agent;
+  relaySecret = config.sops.secrets."hermes-relay.env";
   root = "${hermes.stateDir}/.hermes";
   profileHome = "${root}/profiles/imessage";
   backup = "${hermes.stateDir}/imessage-migration-backup";
@@ -27,6 +28,15 @@ let
 in
 {
   services.hermes-agent = {
+    extraPlugins = [
+      (pkgs.fetchFromGitHub {
+        name = "relay-hermes";
+        owner = "RelayMessenger";
+        repo = "Relay-Hermes";
+        rev = "48c01a4ddabfcef7f23226bcad3c11f56504feaa";
+        hash = "sha256-70UB5mKTdm0+hwnrzdTucsA6wV6/qsoIqnv5GVPPQ0U=";
+      })
+    ];
     configFile = pkgs.writeText "hermes-default-config.yaml" (
       builtins.toJSON {
         inherit (hermes.settings)
@@ -34,12 +44,9 @@ in
           providers
           secrets
           gateway
+          plugins
           ;
         platform_toolsets.cli = [ ];
-        plugins = {
-          enabled = [ ];
-          disabled = [ "knowledge-base" ];
-        };
         skills = {
           external_dirs = [ ];
           project_discovery = false;
@@ -53,7 +60,6 @@ in
     );
     hermesHomeFiles = {
       "profiles/imessage/config.yaml" = settings;
-      "profiles/imessage/.env" = "";
       "profiles/imessage/SOUL.md" = ../../../../dots/hermes/SOUL.md;
       "profiles/imessage/.managed" = "nixos\n";
       "profiles/imessage/.no-bundled-skills" = "Skills are selected by Nix.\n";
@@ -65,8 +71,15 @@ in
     "L+ ${profileHome}/plugins - - - - ../../plugins"
   ];
 
+  system.activationScripts.hermes-relay-profile = lib.stringAfter [ "hermes-agent-setup" ] ''
+    install -o ${hermes.user} -g ${hermes.group} -m 0600 ${relaySecret.path} ${profileHome}/.env
+  '';
+
   systemd.services.hermes-agent = {
-    restartTriggers = [ settings ];
+    restartTriggers = [
+      settings
+      relaySecret.sopsFile
+    ];
     preStart = ''
       if [ ! -e ${profileHome}/.migrated-from-default ]; then
         if ${pkgs.lsof}/bin/lsof -t ${root}/state.db >/dev/null 2>&1; then

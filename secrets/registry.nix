@@ -55,7 +55,8 @@
       restartUnits = [ "hermes-backend.service" ];
     };
 
-    "hermes-photon.env" = {
+    "hermes-relay.env" = {
+      format = "dotenv";
       owner = username;
       restartUnits = [ "hermes-agent.service" ];
     };

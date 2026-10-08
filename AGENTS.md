@@ -268,16 +268,16 @@ Source of truth is the jj-native ix forge (RPC `https://forge.ix.dev:8447/rpc`, 
 
 Hermes runs through upstream's NixOS module in `hosts/spark/services/hermes/default.nix`.
 The gateway and dashboard share `~/.local/state/hermes/.hermes`; the `~/.hermes`
-symlink keeps existing CLI state reachable. Personal profiles use Devin Astra;
+symlink keeps existing CLI state reachable. Desktop uses Devin Astra; Relay uses Claude Opus 5.5;
 provider setup and limitations are in `hosts/spark/docs/hermes.md`.
 Browser and desktop actions use agent-browser CLI and upstream Cua MCP
 through the `spark-computer` skill, also installed for coding agents. Delegation,
-memory and skills are enabled for CLI and Photon iMessage. The personal KB,
+memory and skills are enabled for CLI and Relay. The personal KB,
 its ingestion and embedding services, and its Hermes plugin are disabled.
 
 Chromium's existing Default profile is private mutable state; agents attach to
 the running browser and create task-owned tabs. Never commit profiles or put credentials
-in the store. For browser identity, Sway/CUA diagnostics, Photon recovery or
+in the store. For browser identity, Sway/CUA diagnostics, Relay recovery or
 post-deployment acceptance, read `hosts/spark/docs/hermes.md`.
 
 Nix owns runtimes, settings and the assistant guidance in `dots/hermes/`. Memory,

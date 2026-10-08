@@ -1,26 +1,69 @@
-# harivan.sh: caddy serves the live website checkout's dist/. view counts need
-# no service: caddy answers the page beacon itself and writes each hit, without
-# ip or headers, to its own log, and the website's tools/views.mjs sums that
-# log into dist/views.json on every build and on a timer between builds.
+# the website: one build (the live checkout's dist/), two domains. hari.cafe
+# is the personal site; harivan.sh is the developer screen, which is its
+# root and nothing else: every other harivan.sh path redirects to the same
+# path on hari.cafe, and hari.cafe/developer/ redirects to harivan.sh. both
+# share the hashed assets, fonts and views.json.
+#
+# view counts need no service: caddy answers the page beacon itself and
+# writes each hit, without ip or headers, to its own log, and the website's
+# tools/views.mjs sums that log into dist/views.json on every build and on a
+# timer between builds.
 { pkgs, username, ... }:
 let
-  domain = "harivan.sh";
+  cafe = "hari.cafe";
+  dev = "harivan.sh";
   repoDir = "/home/${username}/Documents/Git/website";
   mountDir = "/srv/harivan.sh";
   # never rolled: the counts are rebuilt from the whole log every run
-  hitsLog = "/var/log/caddy/${domain}-hits.log";
+  hitsLog = "/var/log/caddy/${dev}-hits.log";
+
+  # what both domains serve the same way
+  common = ''
+    root * ${mountDir}/dist
+
+    # HTML always revalidates; assets are content-hashed and cache forever.
+    @html path / */ *.html
+    header @html Cache-Control "no-cache"
+    @assets path *.css *.js *.woff *.woff2 *.ttf *.otf *.png *.jpg *.jpeg *.gif *.svg *.ico *.webp
+    header @assets Cache-Control "public, max-age=31536000, immutable"
+    # rewritten every few minutes by website-views
+    header /views.json Cache-Control "no-cache"
+
+    # the view beacon: POST /counter/hit?p=<path>[&e=1] from either domain
+    @hit {
+      method POST
+      path /counter/hit
+      header Origin https://${cafe}
+      header Origin https://${dev}
+    }
+    handle @hit {
+      log_name hits
+      respond 204
+    }
+    handle /counter/hit {
+      respond 403
+    }
+    handle /status-badge {
+      rewrite * /badge
+      reverse_proxy https://status.${dev} {
+        header_up Host status.${dev}
+      }
+    }
+    handle_errors {
+      header Cache-Control "no-cache"
+      @notFound expression {err.status_code} == 404
+      rewrite @notFound /404.html
+      file_server
+    }
+  '';
 in
 {
-  services.caddy.virtualHosts."http://${domain}" = {
-    serverAliases = [
-      "http://hari.cafe"
-      "http://www.hari.cafe"
-    ];
+  services.caddy.virtualHosts."http://${cafe}" = {
+    serverAliases = [ "http://www.${cafe}" ];
     listenAddresses = [ "127.0.0.1" ];
     extraConfig = ''
-      root * ${mountDir}/dist
-
-      # only requests routed here by log_name (the beacon) reach this log
+      # only requests routed here by log_name (the beacon) reach this log.
+      # defined once, here; the harivan.sh block routes to it by name
       log hits {
         no_hostname
         output file ${hitsLog} {
@@ -39,43 +82,39 @@ in
         }
       }
 
-      # HTML always revalidates; assets are content-hashed and cache forever.
-      @html path / */ *.html
-      header @html Cache-Control "no-cache"
-      @assets path *.css *.js *.woff *.woff2 *.ttf *.otf *.png *.jpg *.jpeg *.gif *.svg *.ico *.webp
-      header @assets Cache-Control "public, max-age=31536000, immutable"
-      # rewritten every few minutes by website-views
-      header /views.json Cache-Control "no-cache"
+      ${common}
 
-      # the view beacon: POST /counter/hit?p=<path>[&e=1] from the site itself,
-      # under either of its domains (hari.cafe is fronted by cloudflare)
-      @hit {
-        method POST
-        path /counter/hit
-        header Origin https://${domain}
-        header Origin https://hari.cafe
-      }
-      handle @hit {
-        log_name hits
-        respond 204
-      }
-      handle /counter/hit {
-        respond 403
-      }
-      handle /status-badge {
-        rewrite * /badge
-        reverse_proxy https://status.${domain} {
-          header_up Host status.${domain}
-        }
+      # the developer screen lives on harivan.sh
+      handle /developer* {
+        redir https://${dev}/ 301
       }
       handle {
         file_server
       }
-      handle_errors {
-        header Cache-Control "no-cache"
-        @notFound expression {err.status_code} == 404
-        rewrite @notFound /404.html
+    '';
+  };
+
+  services.caddy.virtualHosts."http://${dev}" = {
+    serverAliases = [ "http://www.${dev}" ];
+    listenAddresses = [ "127.0.0.1" ];
+    extraConfig = ''
+      ${common}
+
+      # the root is the developer screen (the website's reroute hook hydrates
+      # it as that route); the rest of the site is on hari.cafe
+      handle / {
+        rewrite * /developer/index.html
         file_server
+      }
+      handle /developer* {
+        redir https://${dev}/ 301
+      }
+      @shared path /_app/* /fonts/* /views.json /icon.svg /og.png /favicon.ico /robots.txt
+      handle @shared {
+        file_server
+      }
+      handle {
+        redir https://${cafe}{uri} 301
       }
     '';
   };
@@ -87,7 +126,7 @@ in
 
   # refresh the counts between builds
   systemd.services.website-views = {
-    description = "harivan.sh view counts";
+    description = "website view counts";
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
     environment.WEBSITE_HITS_LOG = hitsLog;

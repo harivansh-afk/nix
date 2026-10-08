@@ -1,5 +1,10 @@
 {
+  # harivan.sh, the zone every record is in unless it names another
   zoneId = "c2fef6f61afd37613d77dc08ad6890b7";
+
+  # other zones, by the name a record gives as `zone`. hari.cafe is
+  # registered at vercel and uses these cloudflare nameservers
+  zones.cafe = "a0568bab1826ac1c0102ba9fe6e4c362";
 
   tunnel = "64bce32c-6613-459c-bb68-262d73e1b78f.cfargotunnel.com";
 
@@ -55,6 +60,22 @@
     };
     draw = {
       name = "draw.harivan.sh";
+      type = "CNAME";
+      content = "64bce32c-6613-459c-bb68-262d73e1b78f.cfargotunnel.com";
+      proxied = true;
+      comment = "spark cloudflared tunnel";
+    };
+    cafe_apex = {
+      zone = "cafe";
+      name = "hari.cafe";
+      type = "CNAME";
+      content = "64bce32c-6613-459c-bb68-262d73e1b78f.cfargotunnel.com";
+      proxied = true;
+      comment = "spark cloudflared tunnel";
+    };
+    cafe_www = {
+      zone = "cafe";
+      name = "www.hari.cafe";
       type = "CNAME";
       content = "64bce32c-6613-459c-bb68-262d73e1b78f.cfargotunnel.com";
       proxied = true;

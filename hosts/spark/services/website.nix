@@ -1,11 +1,14 @@
-# harivan.sh: caddy serves the live website checkout's dist/ and proxies the
-# page-load counter, a small python service that lives in the website repo.
+# harivan.sh: caddy serves the live website checkout's dist/. view counts need
+# no service: caddy answers the page beacon itself and writes each hit, without
+# ip or headers, to its own log, and the website's tools/views.mjs sums that
+# log into dist/views.json on every build and on a timer between builds.
 { pkgs, username, ... }:
 let
   domain = "harivan.sh";
   repoDir = "/home/${username}/Documents/Git/website";
   mountDir = "/srv/harivan.sh";
-  counterPort = 8230;
+  # never rolled: the counts are rebuilt from the whole log every run
+  hitsLog = "/var/log/caddy/${domain}-hits.log";
 in
 {
   services.caddy.virtualHosts."http://${domain}" = {
@@ -13,17 +16,47 @@ in
     extraConfig = ''
       root * ${mountDir}/dist
 
+      # only requests routed here by log_name (the beacon) reach this log
+      log hits {
+        no_hostname
+        output file ${hitsLog} {
+          mode 0640
+          roll_disabled
+        }
+        format filter {
+          request>remote_ip delete
+          request>remote_port delete
+          request>client_ip delete
+          request>headers delete
+          request>tls delete
+          resp_headers delete
+          user_id delete
+          wrap json
+        }
+      }
+
       # HTML always revalidates; assets are content-hashed and cache forever.
       @html path / */ *.html
       header @html Cache-Control "no-cache"
       @assets path *.css *.js *.woff *.woff2 *.ttf *.otf *.png *.jpg *.jpeg *.gif *.svg *.ico *.webp
       header @assets Cache-Control "public, max-age=31536000, immutable"
+      # rewritten every few minutes by website-views
+      header /views.json Cache-Control "no-cache"
 
-      handle /counter {
-        reverse_proxy 127.0.0.1:${toString counterPort}
+      # the view beacon: POST /counter/hit?p=<path>[&e=1] from the site itself,
+      # under either of its domains (hari.cafe is fronted by cloudflare)
+      @hit {
+        method POST
+        path /counter/hit
+        header Origin https://${domain}
+        header Origin https://hari.cafe
+      }
+      handle @hit {
+        log_name hits
+        respond 204
       }
       handle /counter/hit {
-        reverse_proxy 127.0.0.1:${toString counterPort}
+        respond 403
       }
       handle /status-badge {
         rewrite * /badge
@@ -43,42 +76,34 @@ in
     '';
   };
 
-  systemd.services.caddy = {
-    after = [ "website-counter.service" ];
-    wants = [ "website-counter.service" ];
-    serviceConfig.BindReadOnlyPaths = [ "${repoDir}:${mountDir}" ];
-  };
+  systemd.services.caddy.serviceConfig.BindReadOnlyPaths = [ "${repoDir}:${mountDir}" ];
 
-  systemd.services.website-counter = {
-    description = "harivan.sh page load counter";
-    wantedBy = [ "multi-user.target" ];
-    environment = {
-      WEBSITE_COUNTER_DATABASE = "/var/lib/website-counter/counter.sqlite3";
-      WEBSITE_COUNTER_PORT = toString counterPort;
-      WEBSITE_COUNTER_SEED = "1478";
-      WEBSITE_COUNTER_SEED_CUTOFF = "2026-08-02T00:01:53Z";
-    };
+  # the hit log is caddy:caddy 0640; ./build.sh reads it as this user
+  users.users.${username}.extraGroups = [ "caddy" ];
+
+  # refresh the counts between builds
+  systemd.services.website-views = {
+    description = "harivan.sh view counts";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    environment.WEBSITE_HITS_LOG = hitsLog;
     serviceConfig = {
-      DynamicUser = true;
-      StateDirectory = "website-counter";
-      WorkingDirectory = "/var/lib/website-counter";
-      BindReadOnlyPaths = [ "${repoDir}:${mountDir}" ];
-      ExecStart = "${pkgs.python3}/bin/python3 ${mountDir}/counter/counter.py";
-      Restart = "on-failure";
-      RestartSec = 2;
-      UMask = "0077";
+      Type = "oneshot";
+      User = username;
+      WorkingDirectory = repoDir;
+      ExecStart = "${pkgs.nodejs_24}/bin/node tools/views.mjs";
       NoNewPrivileges = true;
-      PrivateDevices = true;
       PrivateTmp = true;
-      ProtectControlGroups = true;
-      ProtectHome = true;
-      ProtectKernelModules = true;
-      ProtectKernelTunables = true;
+      PrivateDevices = true;
       ProtectSystem = "strict";
-      RestrictAddressFamilies = [
-        "AF_INET"
-        "AF_UNIX"
-      ];
+      ReadWritePaths = [ "${repoDir}/dist" ];
+    };
+  };
+  systemd.timers.website-views = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "*:0/10";
+      Persistent = true;
     };
   };
 }

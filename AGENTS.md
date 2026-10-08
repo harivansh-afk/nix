@@ -123,7 +123,7 @@ hosts/
       inference.nix    Local vLLM inference container (GPU)
       mosh.nix         Mosh UDP server config
       vaultwarden.nix  Vaultwarden password manager
-      website.nix      harivan.sh static site + page counter (counter code lives in the website repo, counter/counter.py)
+      website.nix      harivan.sh static site; caddy logs the view beacon, website-views timer bakes the counts (tools/views.mjs in the website repo)
       whisper/         GPU speech-to-text server (default.nix + setup.sh + server.py)
       forgejo/         Forgejo server, cozybox css in assets/, mirror manifest, Actions runner, run-by-hand scripts/
   ix/

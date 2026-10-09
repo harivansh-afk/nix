@@ -42,6 +42,9 @@ in
     ${loadUserSecrets}
 
     export DOTS_ZSH_DIR="${dotsRoot}/zsh"
+    ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
+      export GHOSTTY_SHELL_INTEGRATION_DIR="${pkgs.ghostty.shell_integration}"
+    ''}
     source "${dotsRoot}/zsh/zshrc"
 
     # syntax highlighting wants to be sourced last

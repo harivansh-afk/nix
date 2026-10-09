@@ -26,6 +26,7 @@ Everything is a single flake, declared with [flake-parts](https://github.com/her
 **`lib/theme.nix`**
 
 - [cozybox.nvim](https://git.harivan.sh/harivansh-afk/cozybox.nvim) is my custom palette for all my software
+- `theme dark` / `theme light` switch app colors and set a plain black / white desktop background
 
 **`pkgs/sets.nix`**
 
@@ -37,7 +38,7 @@ Everything is a single flake, declared with [flake-parts](https://github.com/her
 
 My NixOS workstation ( NVIDIA DGX Spark [GB10, aarch64-linux])
 
-- friends who want access get a user definition in `users/`
+- friends who want access get a definition in `modules/users/accounts/` and an entry in its `default.nix`
 - NVIDIA kernel, drivers, and container support come from the upstream [nixos-dgx-spark](https://github.com/graham33/nixos-dgx-spark) module
 - disks declared with [disko](https://github.com/nix-community/disko); from-scratch provisioning via [nixos-anywhere](https://github.com/nix-community/nixos-anywhere)
 

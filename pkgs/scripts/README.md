@@ -17,7 +17,6 @@ land on `PATH` on every host. `portable.nix` is the home-independent subset
 | `theme`        | `bin/theme.sh`        | Switch cozybox dark/light, relink theme assets |
 | `ga`           | `bin/ga.sh`           | Git add helper                               |
 | `iosrun`       | `bin/iosrun.sh`       | iOS simulator run helper                     |
-| `wallpaper-gen`| `bin/wallpaper-gen.sh`| Generate themed wallpapers (uses `lib/wallpaper-gen.py`) |
 | `gh-wiive-2fa` | `bin/gh-wiive-2fa.sh` | TOTP code for the shared eng-wiive GitHub account (reads sops secret `gh-wiive-totp`) |
 
 Each entry in `lib/remotes.nix` additionally renders `bin/remote.sh` into a
@@ -32,7 +31,9 @@ block in `modules/users/user-config/`.
 
 Not standalone commands. Referenced by other config:
 
-- `wallpaper-gen.py` - Python backing the `wallpaper-gen` command.
+- `rex-font.py` - merges the nonicons glyphs into the Rex font at activation.
+
+The theme command uses the fixed black and white images in `assets/wallpapers/`.
 
 ## Adding a packaged script
 

@@ -11,12 +11,6 @@ let
     light = pkgs.writeText "git-theme-light.inc" (theme.renderGitThemeInclude "light");
   };
 
-  wallpaperGenConfig = pkgs.writeText "wallpaper-gen-config.json" (
-    builtins.toJSON theme.wallpapers.generation.resolved
-  );
-
-  wallpaperPython = pkgs.python3.withPackages (ps: [ ps.pillow ]);
-
   lazygitDarwinDir = "${homeDirectory}/Library/Application Support/lazygit";
 
   modeAssets = {
@@ -99,16 +93,6 @@ let
       ];
     };
 
-    wallpaper-gen = mkScript {
-      name = "wallpaper-gen";
-      file = ./bin/wallpaper-gen.sh;
-      runtimeInputs = [ wallpaperPython ];
-      replacements = {
-        "@WALLPAPER_GEN_PY@" = "${./lib/wallpaper-gen.py}";
-        "@WALLPAPER_GEN_CONFIG@" = "${wallpaperGenConfig}";
-      };
-    };
-
     theme = mkScript {
       name = "theme";
       file = ./bin/theme.sh;
@@ -142,8 +126,6 @@ let
         "@SKETCHYBAR_CURRENT_FILE@" = theme.paths.sketchybarCurrentFile;
         "@WALLPAPER_DIR@" = theme.wallpapers.dir;
         "@WALLPAPER_CURRENT_FILE@" = theme.wallpapers.current;
-        "@WALLPAPER_STATIC_DARK@" = "${theme.wallpapers.staticDark}";
-        "@WALLPAPER_STATIC_LIGHT@" = "${theme.wallpapers.staticLight}";
         "@THEME_ASSETS_TEXT@" = themeAssetsText;
       };
     };

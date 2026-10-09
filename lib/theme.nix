@@ -20,63 +20,11 @@ let
     aquaNeutral = "#689d6a";
     gray = "#928374";
   };
-  wallpaperGeneration =
-    let
-      viewPresets = {
-        close = 12;
-        balanced = 11;
-        wide = 10;
-        ultrawide = 9;
-      };
-      densityPresets = {
-        sparse = 14;
-        balanced = 20;
-        dense = 28;
-        packed = 40;
-      };
-      view = "wide";
-      density = "dense";
-      candidatePool = {
-        maxCached = 24;
-        randomAttempts = 20;
-        historySize = 10;
-      };
-      label = {
-        enabled = true;
-        fontSize = 14;
-      };
-    in
-    {
-      inherit
-        candidatePool
-        density
-        label
-        view
-        ;
-      presetValues = {
-        density = densityPresets;
-        view = viewPresets;
-      };
-      resolved = {
-        inherit candidatePool;
-        contours = {
-          levels = densityPresets.${density};
-        };
-        inherit label;
-        view = {
-          tileConcurrency = 3;
-          zoom = viewPresets.${view};
-        };
-      };
-    };
   wallpapers = {
     dir = "${homeDirectory}/Pictures/Screensavers";
-    dark = "${homeDirectory}/Pictures/Screensavers/solid-black.png";
-    light = "${homeDirectory}/Pictures/Screensavers/wallpaper-light.png";
+    dark = ../assets/wallpapers/solid-black.png;
+    light = ../assets/wallpapers/solid-white.png;
     current = "${homeDirectory}/Pictures/Screensavers/wallpaper.png";
-    staticDark = ../assets/wallpapers/solid-black.png;
-    staticLight = ../assets/wallpapers/topography-light.png;
-    generation = wallpaperGeneration;
   };
   paths = {
     stateDir = "${stateHome}/theme";

@@ -1,2 +1,0 @@
-export WALLPAPER_GEN_CONFIG="@WALLPAPER_GEN_CONFIG@"
-exec python3 "@WALLPAPER_GEN_PY@" "$@"

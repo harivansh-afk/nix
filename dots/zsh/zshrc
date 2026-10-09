@@ -7,8 +7,13 @@
 # shell integration. Claim the Ghostty terminfo, as Mux's panes do, and load
 # Ghostty's zsh integration for the OSC 133 prompt marks and OSC 7 working
 # directory that Rex's program status and pane directory read.
+# A pane with no REX_LOCAL hands itself to rex-spark, which attaches it to
+# the pane's own muxd pty on spark (pkgs/scripts/bin/rex-spark.sh).
 if [[ "$TERM_PROGRAM" == rex ]]; then
   export TERM=xterm-ghostty
+  if [[ -z "$REX_LOCAL" ]] && (( $+commands[rex-spark] )); then
+    exec rex-spark
+  fi
   if [[ -r "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration" ]]; then
     source "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration"
   fi

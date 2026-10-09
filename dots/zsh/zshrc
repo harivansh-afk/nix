@@ -2,21 +2,31 @@
 # that sources nix-store plugin paths and then this file, so changes here
 # apply on the next shell without a rebuild.
 
-# --- rex ---
+# --- rex / muxd panes ---
 # Rex renders with libghostty but starts panes as xterm-256color with no
-# shell integration. Claim the Ghostty terminfo, as Mux's panes do, and load
-# Ghostty's zsh integration for the OSC 133 prompt marks and OSC 7 working
-# directory that Rex's program status and pane directory read.
-# A pane with no REX_LOCAL hands itself to rex-spark, which attaches it to
-# the pane's own muxd pty on spark (pkgs/scripts/bin/rex-spark.sh).
+# shell integration, and a muxd pane (a Rex pane attached to spark, a Mux
+# pane) starts as xterm-ghostty with none either. Load Ghostty's zsh
+# integration for the OSC 133 prompt marks and OSC 7 working directory that
+# Rex's program status and pane directory read: Ghostty.app's copy on the
+# Mac, the store copy the zshrc shim names on spark. A Rex pane with no
+# REX_LOCAL hands itself to rex-spark first, which attaches it to the pane's
+# own muxd pty on spark (pkgs/scripts/bin/rex-spark.sh).
 if [[ "$TERM_PROGRAM" == rex ]]; then
   export TERM=xterm-ghostty
   if [[ -z "$REX_LOCAL" ]] && (( $+commands[rex-spark] )); then
     exec rex-spark
   fi
-  if [[ -r "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration" ]]; then
-    source "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration"
-  fi
+fi
+if [[ "$TERM" == xterm-ghostty && "$TERM_PROGRAM" != ghostty ]]; then
+  for _ghostty_zsh in \
+    "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration" \
+    "$GHOSTTY_SHELL_INTEGRATION_DIR/zsh/ghostty-integration"; do
+    if [[ -r "$_ghostty_zsh" ]]; then
+      source "$_ghostty_zsh"
+      break
+    fi
+  done
+  unset _ghostty_zsh
 fi
 
 # --- history ---

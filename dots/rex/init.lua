@@ -5,15 +5,23 @@ local terminal = "com.superlogical.terminal"
 local shells = { zsh = true, bash = true, fish = true, sh = true }
 
 -- Ghostty's clear_screen: drop the screen and scrollback, then let an idle
--- shell redraw its prompt. A full-screen program is left alone.
+-- shell redraw its prompt. A full-screen program is left alone. A pane whose
+-- foreground is a relay (mux-attach to spark, mosh) gets the form feed too:
+-- the shell behind it redraws, a full-screen program there just repaints.
+local relays = { ["mux-attach"] = true, ["mosh-client"] = true }
+local function basename(path)
+  return path and path:match("([^/]+)$")
+end
 rex.action{
   name = "clear_screen",
   title = "Clear Screen",
   category = "Terminal",
   run = function(ctx)
     local process = rex.block.call(terminal, "process", { block_id = ctx.block_id })
-    local foreground = process and process.foreground and process.foreground.name
-    if foreground and not shells[foreground] then
+    local foreground = process and process.foreground
+    local name = foreground and foreground.name
+    local via = foreground and (basename(foreground.argv0) or basename(foreground.invoked_path))
+    if name and not shells[name] and not relays[via] then
       return
     end
     rex.block.call(terminal, "clear", { block_id = ctx.block_id })
@@ -22,23 +30,89 @@ rex.action{
 }
 rex.bind("cmd+k", "clear_screen")
 
--- Every pane attaches to spark through rex-spark (dots/zsh/zshrc). This
--- opens one plain Mac shell instead: a marker file rex-spark consumes
--- within ten seconds, then a new tab.
-rex.action{
-  name = "local_shell",
-  title = "New Local Shell",
-  category = "Terminal",
-  run = function()
-    local dir = (os.getenv("XDG_STATE_HOME") or (os.getenv("HOME") .. "/.local/state")) .. "/rex"
-    os.execute("mkdir -p '" .. dir .. "'")
-    local marker = assert(io.open(dir .. "/local-next", "w"))
-    marker:write("local\n")
-    marker:close()
-    rex.client.queue("client.tab.new")
-  end,
-}
-rex.bind("ctrl+b>shift+l", "local_shell")
+-- Every pane attaches to spark through rex-spark (dots/zsh/zshrc). These
+-- split a plain Mac shell off the focused pane instead, through the CLI:
+-- `rex run` starts the command from a non-interactive login shell, so zshrc
+-- never routes it to spark, and REX_LOCAL marks it for the prompt.
+local rex_cli = os.getenv("HOME") .. "/.local/bin/rex"
+local directions = { h = "left", j = "below", k = "above", l = "right" }
+
+for key, direction in pairs(directions) do
+  rex.action{
+    name = "local_split_" .. direction,
+    title = "Local Shell " .. direction:sub(1, 1):upper() .. direction:sub(2),
+    category = "Terminal",
+    run = function(ctx)
+      os.execute(rex_cli .. " run --split=" .. direction .. " -b " .. ctx.block_id .. " -- env REX_LOCAL=1 zsh -l")
+    end,
+  }
+  rex.bind("ctrl+b>shift+" .. key, "local_split_" .. direction)
+end
+
+-- Move the focused pane: to that side of its neighbour in that direction,
+-- or, with none there, of the nearest pane (so a stacked pair goes side by
+-- side). Rects come from the session view; the CLI does the move.
+local function neighbour(ctx, direction)
+  local view = rex.call("session.view", { session_id = ctx.session_id or rex.session_id })
+  local function blocks_with_me(window)
+    for _, layer in ipairs(window and window.layers or {}) do
+      for _, block in ipairs(layer.blocks or {}) do
+        if block.block_id == ctx.block_id then
+          return layer.blocks
+        end
+      end
+    end
+  end
+  local blocks = blocks_with_me(view.focused_window)
+  for _, window in ipairs(view.windows or {}) do
+    if blocks then break end
+    blocks = blocks_with_me(window)
+  end
+  if not blocks then return nil end
+  local me
+  for _, block in ipairs(blocks) do
+    if block.block_id == ctx.block_id then me = block.rect end
+  end
+  local eps = 1e-6
+  local best, best_distance
+  for _, block in ipairs(blocks) do
+    if block.block_id ~= ctx.block_id then
+      local r = block.rect
+      local distance
+      if direction == "left" and r.x + r.w <= me.x + eps then
+        distance = me.x - (r.x + r.w)
+      elseif direction == "right" and r.x >= me.x + me.w - eps then
+        distance = r.x - (me.x + me.w)
+      elseif direction == "above" and r.y + r.h <= me.y + eps then
+        distance = me.y - (r.y + r.h)
+      elseif direction == "below" and r.y >= me.y + me.h - eps then
+        distance = r.y - (me.y + me.h)
+      end
+      if distance == nil then
+        local dx = (r.x + r.w / 2) - (me.x + me.w / 2)
+        local dy = (r.y + r.h / 2) - (me.y + me.h / 2)
+        distance = 10 + dx * dx + dy * dy
+      end
+      if best == nil or distance < best_distance then
+        best, best_distance = block.block_id, distance
+      end
+    end
+  end
+  return best
+end
+
+for key, direction in pairs(directions) do
+  rex.action{
+    name = "move_pane_" .. direction,
+    title = "Move Pane " .. direction:sub(1, 1):upper() .. direction:sub(2),
+    category = "Layout",
+    run = function(ctx)
+      local anchor = neighbour(ctx, direction)
+      if not anchor then return end
+      os.execute(rex_cli .. " move " .. ctx.block_id .. " " .. direction .. " " .. anchor)
+    end,
+  }
+end
 
 -- Direct pane focus. alt+h/j/k/l belongs to AeroSpace.
 rex.bind("cmd+alt+left", "pane.focus.left")
@@ -75,6 +149,10 @@ rex.bind("resize/h", "pane.resize", { direction = "left" })
 rex.bind("resize/j", "pane.resize", { direction = "down" })
 rex.bind("resize/k", "pane.resize", { direction = "up" })
 rex.bind("resize/l", "pane.resize", { direction = "right" })
+rex.bind("resize/shift+h", "move_pane_left")
+rex.bind("resize/shift+j", "move_pane_below")
+rex.bind("resize/shift+k", "move_pane_above")
+rex.bind("resize/shift+l", "move_pane_right")
 rex.bind("resize/escape", "client.mode.exit")
 rex.bind("resize/enter", "client.mode.exit")
 rex.bind("resize/q", "client.mode.exit")

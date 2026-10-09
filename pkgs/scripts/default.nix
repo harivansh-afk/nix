@@ -137,7 +137,6 @@ let
       file = ./bin/rex-spark.sh;
       runtimeInputs = with pkgs; [
         coreutils
-        findutils
         jq
       ];
       replacements = {

@@ -33,7 +33,7 @@ zmodload zsh/complist
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-za-z}'
 
 # --- aliases ---
-alias cc="claude --model 'claude-fable-5-1'"
+alias cc="cbridge"
 alias co="_devin_codex_trusted low"
 alias com="_devin_codex_trusted medium"
 alias coh="_devin_codex_trusted xhigh"

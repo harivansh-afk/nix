@@ -6,6 +6,7 @@
   python3,
   replaceVars,
   writeShellApplication,
+  cacert,
 }:
 let
   upstream = callPackage ./upstream.nix { };
@@ -61,12 +62,18 @@ let
     upstream = lib.getExe upstream;
   };
 in
-writeShellApplication {
-  name = "claude-proxy";
+(writeShellApplication {
+  name = "cbridge";
   runtimeInputs = [ openssh ];
   text = ''
+    export SSL_CERT_FILE="''${SSL_CERT_FILE:-${cacert}/etc/ssl/certs/ca-bundle.crt}"
     exec ${lib.getExe python3} ${script} "$@"
   '';
   passthru = { inherit upstream settings; };
   meta.description = "Private Claude account proxy and client launcher";
-}
+}).overrideAttrs
+  (old: {
+    postInstall = (old.postInstall or "") + ''
+      ln -s cbridge "$out/bin/claude-proxy"
+    '';
+  })

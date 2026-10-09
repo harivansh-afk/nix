@@ -18,6 +18,7 @@
     ./kernel-hardening.nix
     ./services/beeper-bridges.nix
     ./services/caddy.nix
+    ./services/claude-proxy.nix
     ./services/desktop.nix
     ./services/cloudflared.nix
     ./services/sharefs.nix

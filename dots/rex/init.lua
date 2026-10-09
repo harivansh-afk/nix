@@ -22,6 +22,24 @@ rex.action{
 }
 rex.bind("cmd+k", "clear_screen")
 
+-- Every pane attaches to spark through rex-spark (dots/zsh/zshrc). This
+-- opens one plain Mac shell instead: a marker file rex-spark consumes
+-- within ten seconds, then a new tab.
+rex.action{
+  name = "local_shell",
+  title = "New Local Shell",
+  category = "Terminal",
+  run = function()
+    local dir = (os.getenv("XDG_STATE_HOME") or (os.getenv("HOME") .. "/.local/state")) .. "/rex"
+    os.execute("mkdir -p '" .. dir .. "'")
+    local marker = assert(io.open(dir .. "/local-next", "w"))
+    marker:write("local\n")
+    marker:close()
+    rex.client.queue("client.tab.new")
+  end,
+}
+rex.bind("ctrl+b>L", "local_shell")
+
 -- Direct pane focus. alt+h/j/k/l belongs to AeroSpace.
 rex.bind("cmd+alt+left", "pane.focus.left")
 rex.bind("cmd+alt+down", "pane.focus.down")

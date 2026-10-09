@@ -60,6 +60,11 @@
 
     hermes-agent.url = "github:NousResearch/hermes-agent";
 
+    cc-proxy = {
+      url = "git+https://git.harivan.sh/harivansh-afk/cc-proxy.git?ref=main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     devin-codex.url = "git+https://git.harivan.sh/harivansh-afk/devin-codex.git";
 
     # Darwin only: no aarch64-linux cache, spark keeps nixpkgs neovim.

@@ -44,7 +44,7 @@ in
     ])
     ++ [
       inputs.devin-codex.packages.${system}.default
-      (pkgs.callPackage ./claude-proxy { })
+      inputs.cc-proxy.packages.${system}.default
     ]
     ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
       pkgs.file

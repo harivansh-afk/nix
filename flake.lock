@@ -38,6 +38,27 @@
         "type": "github"
       }
     },
+    "cc-proxy": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791524059,
+        "narHash": "sha256-/qxO6ljVONPyizmMKwvNfG1z2vuo+oSBv7y/8Lx1x0A=",
+        "ref": "main",
+        "rev": "adf34b92d152399f236a2919d055bf20cd77d7e6",
+        "revCount": 2,
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/cc-proxy.git"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/cc-proxy.git"
+      }
+    },
     "codex-nixpkgs": {
       "locked": {
         "lastModified": 1789264731,
@@ -1340,6 +1361,7 @@
     "root": {
       "inputs": {
         "airplay-at-the-crib": "airplay-at-the-crib",
+        "cc-proxy": "cc-proxy",
         "determinate": "determinate",
         "devin-codex": "devin-codex",
         "dgx-spark": "dgx-spark",

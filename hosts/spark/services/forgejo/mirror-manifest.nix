@@ -7,6 +7,7 @@ let
 
   actionsEnabledRepos = [
     "${ownedOwner}/nix"
+    "${ownedOwner}/cc-proxy"
     "${ownedOwner}/pr.nvim"
     "${ownedOwner}/roomcast"
     "${ownedOwner}/airplay-at-the-crib"

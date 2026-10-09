@@ -42,7 +42,10 @@ in
       wget
       zoxide
     ])
-    ++ [ inputs.devin-codex.packages.${system}.default ]
+    ++ [
+      inputs.devin-codex.packages.${system}.default
+      (pkgs.callPackage ./claude-proxy { })
+    ]
     ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
       pkgs.file
       pkgs.gcc

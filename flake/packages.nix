@@ -103,6 +103,8 @@
     in
     {
       packages = portableScripts // {
+        cli-proxy-api = pkgs.callPackage ../pkgs/claude-proxy/upstream.nix { };
+        claude-proxy = pkgs.callPackage ../pkgs/claude-proxy { };
         baml-cli = pkgs.callPackage ../pkgs/baml-cli { };
         sharefs = inputs'.sharefs.packages.default;
         devin-codex = inputs'.devin-codex.packages.default;

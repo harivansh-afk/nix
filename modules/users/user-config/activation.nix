@@ -389,7 +389,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     # rex
     mkdir -p "${configHome}/rex"
     mkSymlink "${dotsRoot}/rex/init.lua" "${configHome}/rex/init.lua"
-    rex_bin="/Applications/Rex Beta.app/Contents/Helpers/rex"
+    rex_bin="/Applications/Rex Beta.app/Contents/Helpers/Rex Server.app/Contents/MacOS/rex"
     if [ -x "$rex_bin" ]; then
       mkSymlink "$rex_bin" "${homeDirectory}/.local/bin/rex"
     fi

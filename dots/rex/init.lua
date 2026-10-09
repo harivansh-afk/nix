@@ -38,7 +38,7 @@ rex.action{
     rex.client.queue("client.tab.new")
   end,
 }
-rex.bind("ctrl+b>L", "local_shell")
+rex.bind("ctrl+b>shift+l", "local_shell")
 
 -- Direct pane focus. alt+h/j/k/l belongs to AeroSpace.
 rex.bind("cmd+alt+left", "pane.focus.left")

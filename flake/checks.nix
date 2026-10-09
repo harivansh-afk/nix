@@ -23,14 +23,8 @@
     in
     {
       checks = {
-        claude-proxy =
-          let
-            package = pkgs.callPackage ../pkgs/claude-proxy { };
-          in
-          pkgs.runCommand "claude-proxy-check" { nativeBuildInputs = [ pkgs.python3 ]; } ''
-            python3 ${../pkgs/claude-proxy}/test_proxy.py ${package.upstream}/bin/cli-proxy-api ${package.settings}
-            touch $out
-          '';
+        claude-proxy = inputs.cc-proxy.checks.${pkgs.stdenv.hostPlatform.system}.gateway;
+        cc-proxy = inputs.cc-proxy.checks.${pkgs.stdenv.hostPlatform.system}.cli;
         # House nix rules (ast-grep/nix/rules); the test check keeps each
         # rule matching its fixtures.
         ast-grep = lint "ast-grep" [ pkgs.ast-grep ] "ast-grep scan --error .";

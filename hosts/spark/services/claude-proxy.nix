@@ -1,15 +1,19 @@
-{ pkgs, username, ... }:
+{
+  inputs,
+  pkgs,
+  username,
+  ...
+}:
 let
-  package = pkgs.callPackage ../../../pkgs/claude-proxy { };
+  package = inputs.cc-proxy.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in
 {
   systemd.user.services.claude-proxy = {
     description = "Private Claude account gateway";
     wantedBy = [ "default.target" ];
     unitConfig.ConditionUser = username;
-    environment.PYTHONUNBUFFERED = "1";
     serviceConfig = {
-      ExecStart = "${package}/bin/claude-proxy serve";
+      ExecStart = "${package}/bin/cc-proxy serve";
       Restart = "on-failure";
       RestartSec = 5;
       TimeoutStopSec = 30;

@@ -1,95 +1,40 @@
-# Cloudflare DNS for harivan.sh and hari.cafe
+# Cloudflare DNS
 
-Declarative DNS for the `harivan.sh` and `hari.cafe` zones. A record is in
-`harivan.sh` unless it names another zone with `zone` (see `zones` in
-`records.nix`). Records are defined in Nix
-(`records.nix`), rendered to `config.tf.json` by terranix, and applied with
-OpenTofu through the `cloudflare-dns` flake app.
+`records.nix` declares DNS for `harivan.sh` and `hari.cafe`. Records default to
+`harivan.sh`; set `zone` for another zone. `config.nix` renders these records
+through terranix, and the `cloudflare-dns` wrapper runs OpenTofu.
 
-```
-records.nix  ->  terranix  ->  config.tf.json  ->  tofu plan/apply
-```
+State is tracked in `state/terraform.tfstate`; commit state changes after an
+apply or import so the next checkout uses the same resource IDs. The provider
+lock is tracked too. Generated configuration and provider downloads are ignored.
 
-State is checked in under `state/terraform.tfstate` so a fresh checkout is in
-sync without re-importing. The API token never touches the Nix store or the
-repo; it is read from `CLOUDFLARE_API_TOKEN` at runtime.
+## Credentials
 
-## Files
+The wrapper reads `CLOUDFLARE_API_TOKEN` from the environment, falling back to
+`/run/secrets/cloudflare-api-token`. The encrypted source is
+`secrets/user/cloudflare-api-token`; the token never enters the Nix store.
 
-- `records.nix` - the single source of truth: `zoneId`, the tunnel target,
-  and the record set.
-- `config.nix` - terranix module: provider, local backend, and the
-  `cloudflare_dns_record` resources generated from `records.nix`.
-- `state/terraform.tfstate` - committed state.
+Scope the token to both managed zones. Planning needs `Zone:Read` and
+`DNS:Read`; applying also needs `DNS:Edit`. To replace it:
 
-## Token (SOP)
-
-The Cloudflare provider reads `CLOUDFLARE_API_TOKEN`. The `cloudflare-dns`
-runner resolves it automatically, in this order:
-
-1. `CLOUDFLARE_API_TOKEN` from the environment (one-off / CI override).
-2. The sops secret at `/run/secrets/cloudflare-api-token` (the normal path).
-
-So `just dns-plan` works with no manual `export` once the secret is in sops
-and the host has been switched. If neither source is present the runner exits
-with an explicit message instead of a confusing provider error.
-
-### Token scopes
-
-- `dns-plan` (and the one-time backfill) only need a **read-only** token:
-  `Zone:Read` + `DNS:Read`, scoped to `harivan.sh`. It cannot modify the zone.
-- `dns-apply` needs an **edit** token: `DNS:Edit` + `Zone:Read`. Use one edit
-  token for both and you never think about it again.
-
-### Set or rotate the token (the SOP)
-
-The token lives in sops (`secrets/user/cloudflare-api-token`, user bucket, so
-it decrypts on both macbook and spark). To set or rotate it:
-
-```
-# 1. Mint a token in the Cloudflare dashboard (My Profile -> API Tokens).
-#    For full plan+apply: DNS:Edit + Zone:Read, scoped to harivan.sh.
-# 2. Store it (replaces the existing value):
+```sh
 just sops-edit secrets/user/cloudflare-api-token
-# 3. Apply so it lands at /run/secrets/cloudflare-api-token:
-just switch          # on the host you run dns from
-# 4. Verify:
-just dns-plan        # no manual export needed
+just switch
 ```
 
-The token never touches the Nix store or git in plaintext; sops keeps it
-encrypted at rest and the runner reads the decrypted copy from `/run/secrets`
-at runtime.
+## Changes
 
-> The value currently committed is a read-only backfill token that was once
-> pasted in chat. Rotate it (steps above) to an edit-capable token before the
-> first `dns-apply`, and revoke the old one in the Cloudflare dashboard.
+From the repository root:
 
-## Backfill (one-time, aligning Nix with the live zone)
-
-The goal: make `records.nix` reproduce the live zone exactly, import the
-existing records into state, and confirm `tofu plan` reports **no changes**.
-Nothing is written to Cloudflare during this phase.
-
-1. Dump the live zone (read-only token) to discover `zoneId` and every record
-   with its id, name, type, content, proxied flag, ttl, and any priority.
-2. Edit `records.nix` to match the dump exactly; set `zoneId`.
-3. `nix run .#cloudflare-dns -- init`
-4. Generate `import {}` blocks (one per record, address -> Cloudflare record
-   id) and run `nix run .#cloudflare-dns -- plan -generate-config-out=tmp.tf`
-   to confirm the generated config matches, or `tofu import` each record.
-5. `nix run .#cloudflare-dns -- plan` MUST print `No changes`. If it does not,
-   `records.nix` does not yet match the live zone; fix and repeat. Do not
-   apply until the plan is a no-op.
-6. Commit `state/terraform.tfstate`.
-
-## Day-to-day
-
-Add or change a subdomain by editing `records.nix`, then:
-
-```
-nix run .#cloudflare-dns -- plan    # review
-nix run .#cloudflare-dns -- apply   # needs an edit-capable token
+```sh
+just dns-init
+just dns-plan
+just dns-apply
 ```
 
-Use `-auto-approve` when running non-interactively.
+Edit `records.nix`, review the plan, then apply and commit the updated state.
+For an existing record, import its Cloudflare ID into the matching resource
+address before applying; the plan should then contain only intended changes.
+
+DNS is separate from Cloudflare Access, TLS settings and domain registration.
+Changing NixOS configuration does not apply this DNS configuration.

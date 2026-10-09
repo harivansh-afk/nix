@@ -1,5 +1,5 @@
 usage() {
-  echo "usage: theme <dark|light|toggle|current|gen>"
+  echo "usage: theme <dark|light|toggle|current>"
 }
 
 read_mode() {
@@ -20,13 +20,7 @@ set_wallpaper() {
   if [[ "$(uname -s)" == "Darwin" ]] && command -v osascript >/dev/null 2>&1; then
     if [[ -f "@WALLPAPER_CURRENT_FILE@" ]]; then
       wp_resolved=$(readlink -f "@WALLPAPER_CURRENT_FILE@" 2>/dev/null || echo "@WALLPAPER_CURRENT_FILE@")
-      # macOS caches wallpaper data by file path - copy to a unique temp path
-      # so macOS is forced to read the new image data
-      wp_dir=$(dirname "$wp_resolved")
-      wp_tmp="${wp_dir}/.wallpaper-active-$$.png"
-      rm -f "${wp_dir}"/.wallpaper-active-*.png 2>/dev/null || true
-      cp "$wp_resolved" "$wp_tmp"
-      osascript -e "tell application \"System Events\" to tell every desktop to set picture to \"${wp_tmp}\"" >/dev/null 2>&1 || true
+      osascript -e "tell application \"System Events\" to tell every desktop to set picture to \"${wp_resolved}\"" >/dev/null 2>&1 || true
     fi
   fi
 }
@@ -106,12 +100,6 @@ toggle)
   ;;
 current)
   read_mode
-  exit 0
-  ;;
-gen)
-  wallpaper-gen
-  set_wallpaper
-  printf 'generated new wallpaper\n'
   exit 0
   ;;
 *)

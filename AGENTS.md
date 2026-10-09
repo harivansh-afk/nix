@@ -40,7 +40,6 @@ sops-nix with age encryption derived from each host's ed25519 SSH key. Secret fi
 - `just fmt` runs `nix fmt` (nixfmt-tree).
 - Pull requests for this repo go to Forgejo (`origin`, git.harivan.sh), never GitHub. The `github` remote is a push-mirror target only; its redirect-pr workflow auto-closes PRs opened there. Create PRs with `tea pr create --login harivan --repo harivansh-afk/nix --base main --head <branch>`.
 - For multiline PR bodies, pass a real file's contents to `tea pr create --description` (or `gh --body-file -` when working on actual GitHub repos). Do not pass escaped `\\n` text; it renders as literal backslash-n. After creating or editing a PR, verify the rendered body before calling it done.
-- Install spark from scratch with `just spark-install user@host`.
 - Prefer common package definitions across macbook and spark; keep only truly macOS-specific Homebrew and GUI integrations Darwin-only.
 - Cursor CLI and `cursor-agent` come from the official installer: `curl https://cursor.com/install -fsS | bash`.
 - Bugfix PRs keep the diff minimal and exclude unrelated changes.
@@ -67,10 +66,10 @@ Instructions for every agent harness are layered in `dots/agents/` and rendered 
 | Part | Read by | Holds |
 |------|---------|-------|
 | `core.md` | every agent | who Hari is, machines, forge, knowledge base, how to work with him |
-| `coding.md` | Claude Code, Codex, omp | tooling, git conventions, the `unslop` skill, spark CLI tools |
+| `coding.md` | Claude Code, Codex, omp | tooling, git conventions, Spark CLI tools |
 | `claude.md` | Claude Code | Claude-only steering (prose questions, outcome-first replies, delegation) |
 
-Rendered outputs: `~/.claude/CLAUDE.md` (core + coding + claude), `~/.codex/AGENTS.md` (core + coding). A fact that is true for two parts moves up to `core.md`; a repo-specific fact belongs in that repo's `AGENTS.md` (this file), which `CLAUDE.md` imports with `@AGENTS.md`.
+Rendered outputs: `~/.claude/CLAUDE.md` (core + coding + claude), `~/.codex/AGENTS.md` (core + coding). A fact that is true for two parts moves up to `core.md`; a repo-specific fact belongs in that repo's `AGENTS.md` (this file), which the tracked `CLAUDE.md` imports with `@AGENTS.md`. Keep that file as the single import so local copies cannot accumulate conflicting instructions.
 
 Skills come from the `mattpocock-skills` flake input. `modules/users/user-config/agents.nix` builds the selected skills into one link farm and the activation script links it to `~/.agents/skills` (Codex, and anything agentskills.io-compatible) and `~/.claude/skills` (Claude Code). Upgrade them with `nix flake update mattpocock-skills`.
 
@@ -132,12 +131,12 @@ pkgs/
   sets.nix             Shared package sets (core, extras, darwinExtras, fonts) for modules/common.nix
   jj-ix/               Patched jj with the ix store backend
   scripts/
-    default.nix        Full script set for user profiles (portable + theme, wallpaper-gen)
+    default.nix        Full script set for user profiles (portable + theme, account helpers)
     portable.nix       Home-independent scripts (ga, iosrun, remote connectors)
     bin/               Script sources wired by default.nix
-    lib/               Helpers (wallpaper-gen.py)
+    lib/               Rex font helper (rex-font.py)
 terraform/
-  cloudflare/          Declarative Cloudflare DNS for harivan.sh via terranix
+  cloudflare/          Declarative Cloudflare DNS for harivan.sh and hari.cafe via terranix
 scripts/               Repo tooling: nvim-smoke.sh, nvim-update.sh
 assets/                Readme artwork + the static wallpapers
 dots/                  Dotfile sources (nvim, karabiner, lazygit, agents/ instructions + skills, etc.)
@@ -145,7 +144,7 @@ dots/                  Dotfile sources (nvim, karabiner, lazygit, agents/ instru
 
 ## Theme system
 
-The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `pkgs/scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, lazygit, and the wallpaper, then pokes live nvim servers. Shell hooks in `dots/zsh/zshrc` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
+The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `pkgs/scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, lazygit, and the wallpaper, then pokes live nvim servers. Wallpapers are fixed store assets: black for dark mode and white for light mode. Shell hooks in `dots/zsh/zshrc` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
 
 Accent constraint for agent-facing TUI roles (omp markdown headings/inline code/links): no yellow, green, or pink hues. Stay in the neutral-bright / Claude-coral (`#d97757` dark, `#af3a03` light) / muted-blue (`#5b84de` dark, `#4261a5` light) lane. Status colors (success/error/warning, diffs) keep their conventional hues.
 
@@ -179,7 +178,6 @@ Rex (Superlogical's multiplexer, `/Applications/Rex Beta.app`) is installed by h
 
 ## Key dependencies
 
-- `nixpkgs-nushell`: Separate nixpkgs pin for nushell on darwin (avoids EPERM test failures in the darwin sandbox without invalidating the spark NVIDIA kernel hash).
 - `dgx-spark`: Upstream NixOS module for DGX Spark hardware. Do not set `inputs.nixpkgs.follows` - the upstream pins nixpkgs to a known-good revision for the NVIDIA kernel build. It also makes podman the machine's only container runtime and serves the Docker-compatible API at `/run/podman/podman.sock` (`dockerCompat`, `dockerSocket.enable`, socket group `podman`); anything speaking the Docker API (dockerode, docker CLI) uses that socket. Never set `virtualisation.docker.enable` - it conflicts with the podman socket, and enabling it rewired the CI runner's unit and aborted the #479 deploy mid-switch.
 - `determinate`: Manages the Nix installation, daemon, and `/etc/nix/nix.conf`. On darwin, use `determinateNix.customSettings` instead of `nix.settings`.
 - `neovim-nightly`: Overlay applied only on darwin (no aarch64-linux binary cache).
@@ -194,8 +192,8 @@ Rex (Superlogical's multiplexer, `/Applications/Rex Beta.app`) is installed by h
 
 ## Adding a new user on spark
 
-1. Create `users/<name>.nix` with `sshKeys`, `shell`, and `extraGroups`.
-2. The user is automatically picked up by `hosts/spark/users.nix` (account) and `modules/users/nixos.nix` (dotfiles, packages; symlinks point at the nix-store copy of `dots/`).
+1. Create `modules/users/accounts/<name>.nix` with `sshKeys`, `shell`, and `extraGroups`.
+2. Add its import to `modules/users/accounts/default.nix`. `hosts/spark/users.nix` creates the account and `modules/users/nixos.nix` installs dotfiles and packages; non-owner dotfiles point at the Nix store.
 3. For user-specific system config (services, slices), add a module under `hosts/spark/<name>/` and import it from `hosts/spark/default.nix`.
 
 ## ix dev VM template
@@ -209,7 +207,7 @@ nix eval .#nixosConfigurations.ix.config.system.build.toplevel.drvPath
 nix build --dry-run <drv>^* --substituters https://cache.nixos.org
 ```
 
-What was deliberately left out, and why, so it does not get re-added by reflex: `elixir_1_19` + `elixir-ls` (erlang twice, 248 MiB, and erlang's wx support drags in wxwidgets then webkitgtk), `clang` + `clang-tools` (1.4 GiB of clang and llvm libs), `pyright` + `python3` (389 MiB), `go_1_26` + `gopls` (248 MiB), `k9s` (168 MiB, no cluster to point it at), `tea` (its logins come from sops, which the VM has none of), and every `customScripts` entry (the remote connectors dial hosts a throwaway VM cannot reach, and `wallpaper-gen` pulls python + pillow for a machine with no display). `zoxide` is in the list because `dots/zsh/zshrc` runs `zoxide init zsh` unconditionally.
+What was deliberately left out, and why, so it does not get re-added by reflex: `elixir_1_19` + `elixir-ls` (erlang twice, 248 MiB, and erlang's wx support drags in wxwidgets then webkitgtk), `clang` + `clang-tools` (1.4 GiB of clang and llvm libs), `pyright` + `python3` (389 MiB), `go_1_26` + `gopls` (248 MiB), `k9s` (168 MiB, no cluster to point it at), `tea` (its logins come from sops, which the VM has none of), and every `customScripts` entry (the remote connectors dial hosts a throwaway VM cannot reach; the theme command manages desktop assets). `zoxide` is in the list because `dots/zsh/zshrc` runs `zoxide init zsh` unconditionally.
 
 `environment.systemPackages` holds one entry, `pkgs.ghostty.terminfo`, and it has to be there rather than in the root package list: NixOS builds `TERMINFO_DIRS` from `environment.pathsToLink`, which only covers the system profile. Ghostty exports `TERM=xterm-ghostty`, `ix shell` carries that value into the guest, and a guest with no matching terminfo entry gives you `can't find terminal definition for xterm-ghostty`, a zsh line editor that cannot position the cursor (keystrokes echo doubled) and a `clear` that refuses to run. The cost is 2.2 KiB: `terminfo` is a separate output of the ghostty derivation and cache.nixos.org has it, so nothing builds ghostty itself. Any other terminal that sets an exotic `TERM` needs its own entry here, or `environment.enableAllTerminfo = true` if the list ever grows past a couple.
 

@@ -99,6 +99,10 @@ migrated between running processes. Shared OAuth grants are not copied.
 Desktop's empty SOUL is intentional; the UI may report that it is empty. Select
 `desktop` for work, `imessage` for the personal assistant and `roommates` for TV.
 
+The personal assistant reads `dots/hermes/SOUL.md`. Shared settings in
+`services/hermes/default.nix` set `approvals.mode = "off"` and
+`security.protected_instruction_files = false`; change those settings in Nix.
+
 Automatic busy acknowledgements stay disabled; messaging updates are agent-written
 responses. Relay uses stock Hermes tools, automatic tool discovery and native
 delegation. There is no custom request middleware, foreground tool allowlist or

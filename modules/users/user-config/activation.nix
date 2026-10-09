@@ -356,13 +356,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   ln -sfn "$THEME_GIT_THEME_TARGET" "${theme.paths.gitThemeCurrentFile}"
   ln -sfn "$THEME_BTOP_TARGET" "${theme.paths.btopCurrentFile}"
 
-  if [ ! -f "${theme.wallpapers.dark}" ]; then
-    cp "${theme.wallpapers.staticDark}" "${theme.wallpapers.dark}"
-  fi
-  if [ ! -f "${theme.wallpapers.light}" ]; then
-    cp "${theme.wallpapers.staticLight}" "${theme.wallpapers.light}"
-  fi
-
   ln -sfn "$THEME_WALLPAPER" "${theme.wallpapers.current}"
 
   ${lib.optionalString isDarwin ''

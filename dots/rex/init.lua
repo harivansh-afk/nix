@@ -5,9 +5,12 @@ local terminal = "com.superlogical.terminal"
 local shells = { zsh = true, bash = true, fish = true, sh = true }
 
 -- Ghostty's clear_screen: drop the screen and scrollback, then let an idle
--- shell redraw its prompt. A full-screen program is left alone. A pane whose
--- foreground is a relay (mux-attach to spark, mosh) gets the form feed too:
--- the shell behind it redraws, a full-screen program there just repaints.
+-- shell redraw its prompt. A full-screen program is left alone. The program
+-- is what the foreground was invoked as: a spark pane's relay presents
+-- itself as the program in its pty's foreground (`zsh` at the prompt, so it
+-- clears; `claude` while claude runs, so it is left alone). A mosh relay
+-- gets the form feed too: the shell behind it redraws, a full-screen
+-- program there just repaints.
 local relays = { ["mux-attach"] = true, ["mosh-client"] = true }
 local function basename(path)
   return path and path:match("([^/]+)$")
@@ -19,9 +22,9 @@ rex.action{
   run = function(ctx)
     local process = rex.block.call(terminal, "process", { block_id = ctx.block_id })
     local foreground = process and process.foreground
-    local name = foreground and foreground.name
-    local via = foreground and (basename(foreground.argv0) or basename(foreground.invoked_path))
-    if name and not shells[name] and not relays[via] then
+    local program = foreground
+      and (basename(foreground.argv0) or basename(foreground.invoked_path) or foreground.name)
+    if program and not shells[program] and not relays[program] then
       return
     end
     rex.block.call(terminal, "clear", { block_id = ctx.block_id })

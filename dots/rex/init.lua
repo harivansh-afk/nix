@@ -37,8 +37,20 @@ rex.bind("cmd+k", "clear_screen")
 -- split a plain Mac shell off the focused pane instead, through the CLI:
 -- `rex run` starts the command from a non-interactive login shell, so zshrc
 -- never routes it to spark, and REX_LOCAL marks it for the prompt.
+-- The new shell starts in the anchor pane's directory, from its OSC 7
+-- report (`kitty-shell-cwd://host/path`; a spark pane's home maps to the
+-- Mac's). Rex falls back to the home directory when that path is missing.
 local rex_cli = os.getenv("HOME") .. "/.local/bin/rex"
+local home = os.getenv("HOME")
 local directions = { h = "left", j = "below", k = "above", l = "right" }
+
+local function pane_dir(ctx)
+  local result = rex.block.call(terminal, "pwd", { block_id = ctx.block_id })
+  local path = result and result.pwd and result.pwd:match("^[%w+.-]+://[^/]*(/.*)$")
+  if not path then return home end
+  path = path:gsub("%%(%x%x)", function(hex) return string.char(tonumber(hex, 16)) end)
+  return (path:gsub("^/home/[^/]+", home))
+end
 
 for key, direction in pairs(directions) do
   rex.action{
@@ -46,7 +58,8 @@ for key, direction in pairs(directions) do
     title = "Local Shell " .. direction:sub(1, 1):upper() .. direction:sub(2),
     category = "Terminal",
     run = function(ctx)
-      os.execute(rex_cli .. " run --split=" .. direction .. " -b " .. ctx.block_id .. " -- env REX_LOCAL=1 zsh -l")
+      local cwd = "'" .. pane_dir(ctx):gsub("'", "'\\''") .. "'"
+      os.execute(rex_cli .. " run --split=" .. direction .. " -b " .. ctx.block_id .. " --cwd " .. cwd .. " -- env REX_LOCAL=1 zsh -l")
     end,
   }
   rex.bind("ctrl+b>shift+" .. key, "local_split_" .. direction)

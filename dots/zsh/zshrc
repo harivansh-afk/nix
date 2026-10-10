@@ -10,11 +10,15 @@
 # Rex's program status and pane directory read: Ghostty.app's copy on the
 # Mac, the store copy the zshrc shim names on spark. A Rex pane with no
 # REX_LOCAL hands itself to rex-spark first, which attaches it to the pane's
-# own muxd pty on spark (pkgs/scripts/bin/rex-spark.sh).
+# own muxd pty on spark (pkgs/scripts/bin/rex-spark.sh). It runs as a job,
+# not an exec: a job gets its own process group, so the pty's foreground
+# is the relay and Rex inspects that, where an exec would leave the group
+# login's and Rex looking at login. The shell exits when the relay does.
 if [[ "$TERM_PROGRAM" == rex ]]; then
   export TERM=xterm-ghostty
   if [[ -z "$REX_LOCAL" ]] && (( $+commands[rex-spark] )); then
-    exec rex-spark
+    rex-spark
+    exit
   fi
 fi
 if [[ "$TERM" == xterm-ghostty && "$TERM_PROGRAM" != ghostty ]]; then

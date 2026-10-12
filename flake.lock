@@ -45,11 +45,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791524059,
-        "narHash": "sha256-/qxO6ljVONPyizmMKwvNfG1z2vuo+oSBv7y/8Lx1x0A=",
+        "lastModified": 1791834813,
+        "narHash": "sha256-C2jBKxOCAUyBXLPX5hGyAR3ZFdaOnb2KkwxsZCKoHaM=",
         "ref": "main",
-        "rev": "adf34b92d152399f236a2919d055bf20cd77d7e6",
-        "revCount": 2,
+        "rev": "4703d4672dab4873c6b6b328655820adb234ce9a",
+        "revCount": 4,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/cc-proxy.git"
       },

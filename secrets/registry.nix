@@ -40,6 +40,7 @@
     };
 
     "wayvnc.conf".owner = username;
+    "claude-proxy-api-keys".owner = username;
     "user-password-hash".neededForUsers = true;
 
     "hermes-dashboard.env" = {

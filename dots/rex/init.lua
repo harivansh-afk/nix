@@ -65,6 +65,19 @@ for key, direction in pairs(directions) do
   rex.bind("ctrl+b>shift+" .. key, "local_split_" .. direction)
 end
 
+-- A plain split goes to spark like any pane; REX_PARENT tells rex-spark to
+-- start the new pty in the focused pane's spark directory.
+for _, direction in ipairs({ "right", "below" }) do
+  rex.action{
+    name = "spark_split_" .. direction,
+    title = "Spark Shell " .. direction:sub(1, 1):upper() .. direction:sub(2),
+    category = "Terminal",
+    run = function(ctx)
+      os.execute(rex_cli .. " run --split=" .. direction .. " -b " .. ctx.block_id .. " -- env REX_PARENT=" .. ctx.block_id .. " zsh -l")
+    end,
+  }
+end
+
 -- Move the focused pane: to that side of its neighbour in that direction,
 -- or, with none there, of the nearest pane (so a stacked pair goes side by
 -- side). Rects come from the session view; the CLI does the move.
@@ -148,8 +161,8 @@ rex.bind("ctrl+b>left", "pane.focus.left")
 rex.bind("ctrl+b>down", "pane.focus.down")
 rex.bind("ctrl+b>up", "pane.focus.up")
 rex.bind("ctrl+b>right", "pane.focus.right")
-rex.bind("ctrl+b>'", "pane.split.right")
-rex.bind("ctrl+b>-", "pane.split.down")
+rex.bind("ctrl+b>'", "spark_split_right")
+rex.bind("ctrl+b>-", "spark_split_below")
 rex.bind("ctrl+b>z", "pane.zoom")
 rex.bind("ctrl+b>x", "pane.close")
 rex.bind("ctrl+b>c", "client.tab.new")

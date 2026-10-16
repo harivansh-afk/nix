@@ -389,10 +389,12 @@ pkgs.writeShellScript "user-config-${name}" ''
     # rex
     mkdir -p "${configHome}/rex"
     mkSymlink "${dotsRoot}/rex/init.lua" "${configHome}/rex/init.lua"
-    rex_bin="/Applications/Rex Beta.app/Contents/Helpers/Rex Server.app/Contents/MacOS/rex"
-    if [ -x "$rex_bin" ]; then
-      mkSymlink "$rex_bin" "${homeDirectory}/.local/bin/rex"
-    fi
+    for rex_bin in "/Applications/Rex Beta.app/Contents/Helpers/Rex Server."{rex,app}"/Contents/MacOS/rex"; do
+      if [ -x "$rex_bin" ]; then
+        mkSymlink "$rex_bin" "${homeDirectory}/.local/bin/rex"
+        break
+      fi
+    done
     ${rexFont} || echo "warning: rex font build failed" >&2
     rex_set() { /usr/bin/defaults write com.superlogical.rex "$@"; }
     rex_set Workspace.customThemes -data "$(od -An -v -tx1 ${rexThemes} | tr -d ' \n')"

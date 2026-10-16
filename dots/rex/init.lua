@@ -34,15 +34,32 @@ rex.action{
 rex.bind("cmd+k", "clear_screen")
 
 -- Every pane attaches to spark through rex-spark (dots/zsh/zshrc). These
--- split a plain Mac shell off the focused pane instead, through the CLI:
--- `rex run` starts the command from a non-interactive login shell, so zshrc
--- never routes it to spark, and REX_LOCAL marks it for the prompt.
+-- split a plain Mac shell off the focused pane instead: a block with a
+-- command starts it from a non-interactive login shell, so zshrc never
+-- routes it to spark, and REX_LOCAL marks it for the prompt.
 -- The new shell starts in the anchor pane's directory, from its OSC 7
 -- report (`kitty-shell-cwd://host/path`; a spark pane's home maps to the
 -- Mac's). Rex falls back to the home directory when that path is missing.
-local rex_cli = os.getenv("HOME") .. "/.local/bin/rex"
 local home = os.getenv("HOME")
 local directions = { h = "left", j = "below", k = "above", l = "right" }
+local placements = {
+  left = { direction = "horizontal", side = "before" },
+  right = { direction = "horizontal", side = "after" },
+  above = { direction = "vertical", side = "before" },
+  below = { direction = "vertical", side = "after" },
+}
+
+local function split(ctx, direction, options)
+  local placement = placements[direction]
+  local _, err = rex.session.new_split{
+    anchor_block_id = ctx.block_id,
+    direction = placement.direction,
+    side = placement.side,
+    focus = true,
+    layout = rex.layout.block{ flavor = terminal .. ".shell", options = options },
+  }
+  if err ~= nil then error(err, 0) end
+end
 
 local function pane_dir(ctx)
   local result = rex.block.call(terminal, "pwd", { block_id = ctx.block_id })
@@ -58,8 +75,7 @@ for key, direction in pairs(directions) do
     title = "Local Shell " .. direction:sub(1, 1):upper() .. direction:sub(2),
     category = "Terminal",
     run = function(ctx)
-      local cwd = "'" .. pane_dir(ctx):gsub("'", "'\\''") .. "'"
-      os.execute(rex_cli .. " run --split=" .. direction .. " -b " .. ctx.block_id .. " --cwd " .. cwd .. " -- env REX_LOCAL=1 zsh -l")
+      split(ctx, direction, { cwd = pane_dir(ctx), command = { "env", "REX_LOCAL=1", "zsh", "-l" } })
     end,
   }
   rex.bind("ctrl+b>shift+" .. key, "local_split_" .. direction)
@@ -73,35 +89,39 @@ for _, direction in ipairs({ "right", "below" }) do
     title = "Spark Shell " .. direction:sub(1, 1):upper() .. direction:sub(2),
     category = "Terminal",
     run = function(ctx)
-      os.execute(rex_cli .. " run --split=" .. direction .. " -b " .. ctx.block_id .. " -- env REX_PARENT=" .. ctx.block_id .. " zsh -l")
+      split(ctx, direction, { command = { "env", "REX_PARENT=" .. ctx.block_id, "zsh", "-l" } })
     end,
   }
 end
 
 -- Move the focused pane: to that side of its neighbour in that direction,
 -- or, with none there, of the nearest pane (so a stacked pair goes side by
--- side). Rects come from the session view; the CLI does the move.
+-- side). Rects come from the session view.
 local function neighbour(ctx, direction)
-  local view = rex.call("session.view", { session_id = ctx.session_id or rex.session_id })
-  local function blocks_with_me(window)
-    for _, layer in ipairs(window and window.layers or {}) do
-      for _, block in ipairs(layer.blocks or {}) do
+  local view = rex.session.view{}
+  if not view then return nil end
+  local function leaves(node, out)
+    if node.block_id then
+      local r = node.rect
+      out[#out + 1] = { block_id = node.block_id, rect = { x = r[1], y = r[2], w = r[3], h = r[4] } }
+    elseif node.split then
+      leaves(node.split.before, out)
+      leaves(node.split.after, out)
+    end
+    return out
+  end
+  local blocks, me
+  for _, window in ipairs(view.windows or {}) do
+    for _, layer in ipairs(window.layers or {}) do
+      local found = layer.layout and leaves(layer.layout, {}) or {}
+      for _, block in ipairs(found) do
         if block.block_id == ctx.block_id then
-          return layer.blocks
+          blocks, me = found, block.rect
         end
       end
     end
   end
-  local blocks = blocks_with_me(view.focused_window)
-  for _, window in ipairs(view.windows or {}) do
-    if blocks then break end
-    blocks = blocks_with_me(window)
-  end
   if not blocks then return nil end
-  local me
-  for _, block in ipairs(blocks) do
-    if block.block_id == ctx.block_id then me = block.rect end
-  end
   local eps = 1e-6
   local best, best_distance
   for _, block in ipairs(blocks) do
@@ -138,7 +158,14 @@ for key, direction in pairs(directions) do
     run = function(ctx)
       local anchor = neighbour(ctx, direction)
       if not anchor then return end
-      os.execute(rex_cli .. " move " .. ctx.block_id .. " " .. direction .. " " .. anchor)
+      local placement = placements[direction]
+      local _, err = rex.session.move_block{
+        block_id = ctx.block_id,
+        anchor_block_id = anchor,
+        direction = placement.direction,
+        side = placement.side,
+      }
+      if err ~= nil then error(err, 0) end
     end,
   }
 end

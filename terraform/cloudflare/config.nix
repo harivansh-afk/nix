@@ -18,6 +18,8 @@ let
     // lib.optionalAttrs (r ? tags) { inherit (r) tags; };
 in
 {
+  imports = [ ./protection.nix ];
+
   terraform = {
     required_providers.cloudflare = {
       source = "cloudflare/cloudflare";

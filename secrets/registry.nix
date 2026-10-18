@@ -13,7 +13,6 @@
     "anthropic.env" = { };
     "antithesis.env" = { };
     "linear.env" = { };
-    "graphite.env" = { };
     "gws.env" = { };
     "forgejo-token".exposeToShell = false;
     "cloudflare-api-token".exposeToShell = false;

@@ -5,14 +5,10 @@
 (with pkgs; [
   bat
   clang-tools
-  elixir_1_19
-  elixir-ls
   fd
   fzf
   gh
   git
-  go_1_26
-  gopls
   lua-language-server
   pyright
   python3

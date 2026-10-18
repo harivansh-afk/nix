@@ -32,11 +32,6 @@ o.updatetime = 250
 o.clipboard = "unnamedplus"
 vim.opt.completeopt = { "menuone", "noselect", "noinsert", "fuzzy", "popup" }
 
--- Clipboard on hosts without a clipboard tool (nvim in a pane on spark):
--- write the yank to the terminal's clipboard with OSC 52 through
--- nvim_ui_send, always with the `c` selector. Paste returns the local yank
--- cache instead of querying the terminal, because the terminal asks before
--- serving clipboard reads; paste the OS clipboard with cmd-v.
 local has_clip_tool = vim.fn.has "mac" == 1
   or (vim.env.WAYLAND_DISPLAY and vim.fn.executable "wl-copy" == 1)
   or (vim.env.DISPLAY and (vim.fn.executable "xclip" == 1 or vim.fn.executable "xsel" == 1))

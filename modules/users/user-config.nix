@@ -1,16 +1,3 @@
-# Per-user config builder (no home-manager). Returns { script, packages }:
-# `packages` go into the user's profile, `script` is run as the user by the
-# darwin/nixos activation adapters to materialise dotfiles and symlinks.
-#
-# The concerns are split across user-config/:
-#   env.nix         session environment (XDG dirs, tool homes)
-#   shell.nix       zsh shims + prompt/highlight themes
-#   git.nix         credential helpers
-#   agents.nix      claude/codex settings, rendered instructions, skills
-#   apps.nix        btop/fzf/ghostty/lazygit/nvim aliases/helium
-#   tea.nix         tea login fragment
-#   packages.nix    the package set
-#   activation.nix  the bash activation script that wires it all together
 {
   lib,
   pkgs,

@@ -1,10 +1,3 @@
-# Eval tests over the host configurations, in the spirit of index's
-# tests/default.nix: cheap assertions that force-evaluate the rendered
-# config so policy violations and darwin module errors fail
-# `nix flake check` (and therefore CI) instead of the next rebuild.
-#
-# Every invariant is a lib.assertMsg, so a violation names itself; the
-# check derivations are writeText shells whose content forces the eval.
 { self, lib, ... }:
 {
   perSystem =
@@ -12,16 +5,12 @@
     let
       spark = self.nixosConfigurations.spark.config;
 
-      # Ports the repo policy bans for self-hosted backends
-      # (well-known/high-value; see CLAUDE.md project preferences).
       bannedPorts = [
         3000
         8000
         8080
       ];
 
-      # Every port Caddy reverse-proxies to, recovered from the rendered
-      # vhost extraConfig (loopbackVhost emits "reverse_proxy 127.0.0.1:N").
       proxiedPorts = lib.concatMap (
         vh:
         let
@@ -122,8 +111,7 @@
           && lib.elem "knowledge-base" spark.services.hermes-agent.settings.plugins.disabled
           && !(lib.elem "knowledge-base" spark.services.hermes-agent.settings.plugins.enabled)
         ) "spark: personal KB services, timers and the Hermes KB plugin must stay disabled")
-        # The git user must be in AllowUsers (ssh pushes) and must be
-        # source-qualified (never reachable from the open internet).
+
         (
           let
             allow = spark.services.openssh.settings.AllowUsers;
@@ -185,9 +173,7 @@
     {
       checks = {
         spark-invariants = pkgs.writeText "spark-invariants" (builtins.toJSON (lib.all lib.id invariants));
-        # `nix flake check` skips darwinConfigurations, so force the darwin
-        # toplevel eval here. The string context is dropped on purpose: the
-        # closure must not become a build input on the linux runner.
+
         eval-macbook = pkgs.writeText "eval-macbook" (
           builtins.unsafeDiscardStringContext self.darwinConfigurations.macbook.system.drvPath
         );

@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Inputs from the nix wrapper: LOGIN_ITEMS and PLISTS, pipe-delimited
-# allowlists with a leading and trailing pipe.
+
 set -u
 PATH=/usr/bin:/bin
 log_file="$HOME/Library/Logs/startup-guard.log"

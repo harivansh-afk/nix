@@ -1,8 +1,3 @@
-# zsh shims and prompt/highlight themes.
-#
-# The shims live in the store and defer to the live dotfiles, so editing
-# dots/zsh applies without a rebuild. Store paths are sourced first, then
-# the live dots file.
 {
   lib,
   pkgs,
@@ -47,7 +42,6 @@ in
     ''}
     source "${dotsRoot}/zsh/zshrc"
 
-    # syntax highlighting wants to be sourced last
     source ${pkgs.zsh-syntax-highlighting}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
   '';
 

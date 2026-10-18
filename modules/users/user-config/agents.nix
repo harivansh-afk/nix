@@ -11,8 +11,6 @@ let
   agentInstructions = import ../../../lib/agent-instructions.nix { inherit pkgs; };
   computer = import ../../../pkgs/computer-tools { inherit pkgs; };
 
-  # Opt-in allowlist: each upstream skill costs context on every turn (its
-  # description is always loaded), so add one here only after reading it.
   pocockPick = [
     "productivity/writing-for-agents"
     "engineering/research"
@@ -46,8 +44,6 @@ in
 {
   claudeMd = agentInstructions.claude;
 
-  # pi against spark's vLLM (hosts/spark/services/inference.nix), started on
-  # demand with `systemctl start vllm`.
   piModels =
     if hostname == "spark" then
       jsonFormat.generate "pi-models.json" {

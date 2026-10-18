@@ -1,16 +1,7 @@
--- Rex reads this on the Mac's Rex server: ~/.config/rex/init.lua links here.
--- Apply edits with `rex config reload`; `rex keymap` shows the merged result.
 
 local terminal = "com.superlogical.terminal"
 local shells = { zsh = true, bash = true, fish = true, sh = true }
 
--- Ghostty's clear_screen: drop the screen and scrollback, then let an idle
--- shell redraw its prompt. A full-screen program is left alone. The program
--- is what the foreground was invoked as: a spark pane's relay presents
--- itself as the program in its pty's foreground (`zsh` at the prompt, so it
--- clears; `claude` while claude runs, so it is left alone). A mosh relay
--- gets the form feed too: the shell behind it redraws, a full-screen
--- program there just repaints.
 local relays = { ["mux-attach"] = true, ["mosh-client"] = true }
 local function basename(path)
   return path and path:match("([^/]+)$")
@@ -33,13 +24,6 @@ rex.action{
 }
 rex.bind("cmd+k", "clear_screen")
 
--- Every pane attaches to spark through rex-spark (dots/zsh/zshrc). These
--- split a plain Mac shell off the focused pane instead: a block with a
--- command starts it from a non-interactive login shell, so zshrc never
--- routes it to spark, and REX_LOCAL marks it for the prompt.
--- The new shell starts in the anchor pane's directory, from its OSC 7
--- report (`kitty-shell-cwd://host/path`; a spark pane's home maps to the
--- Mac's). Rex falls back to the home directory when that path is missing.
 local home = os.getenv("HOME")
 local directions = { h = "left", j = "below", k = "above", l = "right" }
 local placements = {
@@ -81,8 +65,6 @@ for key, direction in pairs(directions) do
   rex.bind("ctrl+b>shift+" .. key, "local_split_" .. direction)
 end
 
--- A plain split goes to spark like any pane; REX_PARENT tells rex-spark to
--- start the new pty in the focused pane's spark directory.
 for _, direction in ipairs({ "right", "below" }) do
   rex.action{
     name = "spark_split_" .. direction,
@@ -94,9 +76,6 @@ for _, direction in ipairs({ "right", "below" }) do
   }
 end
 
--- Move the focused pane: to that side of its neighbour in that direction,
--- or, with none there, of the nearest pane (so a stacked pair goes side by
--- side). Rects come from the session view.
 local function neighbour(ctx, direction)
   local view = rex.session.view{}
   if not view then return nil end
@@ -170,7 +149,6 @@ for key, direction in pairs(directions) do
   }
 end
 
--- Direct pane focus. alt+h/j/k/l belongs to AeroSpace.
 rex.bind("cmd+alt+left", "pane.focus.left")
 rex.bind("cmd+alt+down", "pane.focus.down")
 rex.bind("cmd+alt+up", "pane.focus.up")
@@ -178,7 +156,6 @@ rex.bind("cmd+alt+right", "pane.focus.right")
 rex.bind("cmd+[", "pane.focus_previous")
 rex.bind("cmd+]", "pane.focus_next")
 
--- Mux's prefix grammar, so both multiplexers share muscle memory.
 rex.bind("ctrl+b>ctrl+b", "pane.send_key", { key = "ctrl+b" })
 rex.bind("ctrl+b>h", "pane.focus.left")
 rex.bind("ctrl+b>j", "pane.focus.down")

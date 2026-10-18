@@ -1,6 +1,3 @@
-# GUI apps nix launches at login. Apps with their own launch-at-login
-# (Raycast, Tailscale) are not duplicated here; launch by absolute
-# path so LaunchServices cannot resolve a stray bundle of the same name.
 { lib, ... }:
 let
   loginApps = [

@@ -4,8 +4,7 @@
   ...
 }:
 let
-  # Notch strip height for the sketchybar rc. Compiled, because `swift -e`
-  # JIT-compiles through xcodebuild and blocked the rc for minutes at login.
+
   notchInset = pkgs.runCommandCC "notch-inset" { } ''
     mkdir -p $out/bin
     $CC -fobjc-arc -framework AppKit -o $out/bin/notch-inset ${./notch-inset/notch-inset.m}
@@ -34,20 +33,17 @@ in
     };
   };
 
-  # The rc is the live-edited dots/sketchybar symlink, so no config here.
   services.sketchybar = {
     enable = true;
     extraPackages = [
       pkgs.aerospace
       notchInset
-      sketchybarFeed # the volume item's mouse script
+      sketchybarFeed
     ];
   };
 
   launchd.user.agents = {
-    # Hand-declared, not services.aerospace: that module passes its own
-    # --config-path and silently overrides the dots toml. No config flag
-    # here, so AeroSpace reads the live ~/.config/aerospace/aerospace.toml.
+
     aerospace.serviceConfig = {
       ProgramArguments = [
         "/bin/sh"
@@ -60,7 +56,6 @@ in
       StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/aerospace.log";
     };
 
-    # services.sketchybar sets no log path.
     sketchybar.serviceConfig = {
       StandardOutPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar.log";
       StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar.log";

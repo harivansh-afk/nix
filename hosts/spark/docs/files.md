@@ -140,7 +140,7 @@ The proposed Access policy uses the exact owner email plus Independent MFA
 with security keys only. Identity-provider MFA must not substitute for that
 check. Require MFA every login, use a one-hour application session, and enable
 HttpOnly and binding cookies with SameSite=Lax. Register primary and spare
-keys before treating enrollment as complete. See [the authentication research](files-auth-research.md).
+keys before treating enrollment as complete.
 
 Access is not enabled by this Nix change. Once the application exists, add an
 exact files.harivan.sh cloudflared ingress rule with originRequest.access:

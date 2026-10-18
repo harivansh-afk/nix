@@ -1,10 +1,3 @@
-# Flake packages: the portable scripts (ga, the per-remote
-# connectors) plus portable, config-carrying tool wrappers. `nix run
-# .#<name>` (or, from any machine,
-# `nix run git+https://git.harivan.sh/harivansh-afk/nix.git#<name>`)
-# launches the tool with this repo's config, no host activation layer
-# required. `nix shell <flake>#tools` (or `nix profile install`) drops the
-# whole everyday CLI set into a fresh VM in one command.
 { lib, ... }:
 {
   perSystem =
@@ -32,8 +25,6 @@
         '';
       };
 
-      # Same template as btopConf in apps.nix, with the hostname substituted
-      # at launch instead of at activation.
       btopConf = pkgs.writeText "btop-portable.conf" ''
         custom_cpu_name = "@HOSTNAME@"
         rounded_corners = False
@@ -41,9 +32,6 @@
         vim_keys = True
       '';
 
-      # btop has no config-path flag and rewrites its config on exit, so it
-      # gets a private writable XDG_CONFIG_HOME, seeded once and left alone
-      # afterwards so in-app setting changes survive relaunches.
       btop = pkgs.writeShellApplication {
         name = "btop";
         runtimeInputs = [
@@ -61,10 +49,6 @@
         '';
       };
 
-      # The everyday CLI set from the pkgs/sets.nix base list, with the
-      # wrapped tools above in place of the bare packages, plus the portable
-      # scripts (ga, per-remote shortcuts) that are already flake
-      # packages individually.
       tools = pkgs.buildEnv {
         name = "portable-tools";
         paths = [

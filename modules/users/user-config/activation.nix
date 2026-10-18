@@ -1,7 +1,3 @@
-# The per-user activation script. This is the one place bash lives: it
-# materialises every symlink, seeds the writable configs, renders secrets
-# into place, and initialises theme state. Everything it references is a
-# store path or string computed by the sibling modules.
 {
   lib,
   pkgs,
@@ -59,7 +55,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     ln -sfnT "$target" "$link"
   }
 
-  # --- directories ---
   mkdir -p \
     "${configHome}/zsh/themes" \
     "${configHome}/environment.d" \
@@ -84,26 +79,21 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${theme.paths.stateDir}" \
     "${theme.wallpapers.dir}"
 
-  # --- zsh ---
   mkSymlink "${zshrcShim}" "${homeDirectory}/.zshrc"
   mkSymlink "${zshenvShim}" "${homeDirectory}/.zshenv"
   mkSymlink "${zshThemes.dark}" "${configHome}/zsh/themes/dark.zsh"
   mkSymlink "${zshThemes.light}" "${configHome}/zsh/themes/light.zsh"
   mkSymlink "${environmentD}" "${configHome}/environment.d/10-user-config.conf"
 
-  # --- git ---
   mkSymlink "${dotsRoot}/git/config" "${configHome}/git/config"
   mkSymlink "${dotsRoot}/git/ignore" "${configHome}/git/ignore"
   mkSymlink "${dotsRoot}/git/allowed_signers" "${configHome}/git/allowed_signers"
   mkSymlink "${gitCredentialsInc}" "${configHome}/git/credentials.inc"
 
-  # --- jj ---
   mkSymlink "${dotsRoot}/jj/config.toml" "${configHome}/jj/config.toml"
 
-  # --- ssh ---
   mkSymlink "${dotsRoot}/ssh/config" "${homeDirectory}/.ssh/config"
 
-  # --- bin: standalone helper scripts ---
   ${lib.optionalString (!isDarwin) ''
     mkSymlink "${dotsRoot}/bin/open" "${homeDirectory}/.local/bin/open"
     mkdir -p "${homeDirectory}/.local/share/applications"
@@ -119,9 +109,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   fi
   mkSymlink "${dotsRoot}/nvim" "${configHome}/nvim"
 
-  # --- assorted app configs ---
-  # btop: rendered (not symlinked) so custom_cpu_name shows the node's own
-  # hostname even when the closure was built for a different host
   rm -f "${configHome}/btop/btop.conf"
   ${pkgs.gnused}/bin/sed "s/@HOSTNAME@/$(uname -n)/" "${btopConf}" \
     > "${configHome}/btop/btop.conf"
@@ -134,21 +121,15 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${ghosttyThemes.dark}" "${configHome}/ghostty/themes/cozybox-dark"
   mkSymlink "${ghosttyThemes.light}" "${configHome}/ghostty/themes/cozybox-light"
 
-  # ~/.terminfo is on ncurses' default search path, so xterm-ghostty resolves
-  # in env-scrubbed spawns (login, muxd panes) that never see TERMINFO_DIRS.
   mkSymlink "${ghosttyTerminfo}/share/terminfo" "${homeDirectory}/.terminfo"
   mkSymlink "${fzfThemes.dark}" "${configHome}/fzf/themes/cozybox-dark"
   mkSymlink "${fzfThemes.light}" "${configHome}/fzf/themes/cozybox-light"
   mkSymlink "${dotsRoot}/lazygit/config.yml" "${configHome}/lazygit/config.yml"
 
-  # gh rewrites its config at runtime; keep a managed copy instead of a
-  # read-only store symlink
   rm -f "${configHome}/gh/config.yml"
   cp -f "${dotsRoot}/gh/config.yml" "${configHome}/gh/config.yml"
   chmod u+w "${configHome}/gh/config.yml"
 
-  # --- agents: instructions rendered from dots/agents/ (lib/agent-instructions.nix),
-  # skills from one link farm shared by every harness ---
   ${lib.optionalString (hostname == "spark") ''
     mkdir -p "${homeDirectory}/.agent-browser"
     mkSymlink "${dotsRoot}/agent-browser/config.json" "${homeDirectory}/.agent-browser/config.json"
@@ -176,8 +157,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   ''}
   mkSymlink "${dotsRoot}/claude/statusline.sh" "${homeDirectory}/.claude/statusline.sh"
 
-  # --- codex: config.toml is a writable copy (codex rewrites it at runtime),
-  # reseeded only when the managed source changes (tracked in an xattr) ---
   mkSymlink "${codexAgentsMd}" "${homeDirectory}/.codex/AGENTS.md"
 
   target="${homeDirectory}/.codex/config.toml"
@@ -199,7 +178,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     ${writeXattr}
   fi
 
-  # --- devin config: managed copy with backup of local divergence ---
   if [ -f "${configHome}/devin/config.json" ] \
     && ! ${pkgs.diffutils}/bin/cmp -s "${dotsRoot}/devin/config.json" "${configHome}/devin/config.json"; then
     timestamp="$(date +%Y%m%d%H%M%S)"
@@ -207,7 +185,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   fi
   install -m 600 "${dotsRoot}/devin/config.json" "${configHome}/devin/config.json"
 
-  # --- tea logins from sops secrets (skipped when unreadable) ---
   harivanTokenFile=/run/secrets/forgejo-token
 
   harivanToken=
@@ -235,7 +212,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     umask 022
   fi
 
-  # --- theme state init ---
   ${customScripts.themeAssetsText}
 
   mkdir -p "${theme.paths.stateDir}" \
@@ -259,7 +235,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   ln -sfn "$THEME_WALLPAPER" "${theme.wallpapers.current}"
 
   ${lib.optionalString isDarwin ''
-    # --- darwin: Application Support twins and GUI app configs ---
     ghostty_appsupport="${homeDirectory}/Library/Application Support/com.mitchellh.ghostty"
     mkdir -p "$ghostty_appsupport"
     mkSymlink "${dotsRoot}/ghostty/config" "$ghostty_appsupport/config"
@@ -268,22 +243,17 @@ pkgs.writeShellScript "user-config-${name}" ''
     mkdir -p "$lg_darwin"
     mkSymlink "${dotsRoot}/lazygit/config.yml" "$lg_darwin/config.yml"
 
-    # karabiner wants a writable directory; point it at the live checkout
     mkSymlink "${dotsRoot}/karabiner" "${configHome}/karabiner"
 
-    # aerospace reads ~/.config/aerospace/aerospace.toml
     mkdir -p "${configHome}/aerospace"
     mkSymlink "${dotsRoot}/aerospace/aerospace.toml" "${configHome}/aerospace/aerospace.toml"
 
-    # sketchybar: rc + plugins from dots, palette fragments from the store,
-    # themes/current follows the active theme mode (see also theme.sh)
     mkdir -p "${theme.paths.sketchybarDir}"
     mkSymlink "${dotsRoot}/sketchybar/sketchybarrc" "${configHome}/sketchybar/sketchybarrc"
     mkSymlink "${sketchybarThemes.dark}" "${theme.paths.sketchybarDir}/cozybox-dark.sh"
     mkSymlink "${sketchybarThemes.light}" "${theme.paths.sketchybarDir}/cozybox-light.sh"
     ln -sfn "$THEME_SKETCHYBAR_TARGET" "${theme.paths.sketchybarCurrentFile}"
 
-    # rex
     mkdir -p "${configHome}/rex"
     mkSymlink "${dotsRoot}/rex/init.lua" "${configHome}/rex/init.lua"
     for rex_bin in "/Applications/Rex Beta.app/Contents/Helpers/Rex Server."{rex,app}"/Contents/MacOS/rex"; do
@@ -311,7 +281,6 @@ pkgs.writeShellScript "user-config-${name}" ''
       "$rex_bin" config reload --autostart=false >/dev/null 2>&1 || true
     fi
 
-    # helium managed extensions
     helium_ext="${homeDirectory}/Library/Application Support/net.imput.helium/External Extensions"
     mkdir -p "$helium_ext"
     ${lib.concatMapStringsSep "\n" (id: ''
@@ -319,7 +288,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     '') heliumExtensions}
   ''}
 
-  # --- secret permissions ---
   if [ -d "${homeDirectory}/.ssh" ]; then
     chmod 700 "${homeDirectory}/.ssh"
     for f in "${homeDirectory}/.ssh/"*; do
@@ -338,8 +306,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     ${pkgs.findutils}/bin/find "${homeDirectory}/.gnupg" -type f -exec chmod 600 {} +
   fi
 
-  # --- rust-src for rust-analyzer (it reads std's source; rustup components
-  # are not nix-declarable). Guarded on the directory, so a switch is one stat.
   rustup_bin="/run/current-system/sw/bin/rustup"
   rustc_bin="/run/current-system/sw/bin/rustc"
   if [ -x "$rustup_bin" ] && [ -x "$rustc_bin" ]; then

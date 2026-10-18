@@ -1,17 +1,5 @@
 #!/usr/bin/env bash
-# Build, neuter and sign VoiceInk. Inputs from the nix wrapper: SRC (source
-# tree), PATCH (streaming-provider patch), REV (rebuild key).
-#
-# Upstream local builds keep Sparkle's SUFeedURL, so an untouched build
-# auto-updates itself into the paid Developer ID release: the feed is
-# stripped and checks disabled before signing, and a bundle with the feed
-# still present is treated as not ours.
-#
-# TCC grants (Accessibility for the hotkey, Microphone) are keyed on the
-# designated requirement. Ad-hoc signing pins the exact cdhash and orphans
-# them on every rebuild, so the bundle is signed with a self-signed identity
-# in its own keychain: identifier + certificate leaf, stable across rebuilds.
-# The first grant is manual (TCC.db is SIP-protected).
+
 set -euo pipefail
 
 build="$HOME/Library/Caches/voiceink-build"
@@ -21,15 +9,13 @@ keychain="$HOME/Library/Keychains/voiceink-signing.keychain-db"
 keychain_pass="$HOME/Library/Keychains/voiceink-signing.pass"
 lsregister="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
 
-# No `cmd | grep -q` here: grep exits on the first match, the writer dies of
-# SIGPIPE and pipefail fails the pipeline. Capture, then pattern-match.
 ensure_identity() {
   if [ ! -f "$keychain_pass" ] || [ ! -f "$keychain" ]; then
     security delete-keychain "$keychain" 2>/dev/null || true
     rm -f "$keychain" "$keychain_pass"
     (umask 077 && openssl rand -hex 32 >"$keychain_pass")
     security create-keychain -p "$(cat "$keychain_pass")" "$keychain"
-    security set-keychain-settings "$keychain" # never auto-lock
+    security set-keychain-settings "$keychain"
   fi
   security unlock-keychain -p "$(cat "$keychain_pass")" "$keychain"
 
@@ -49,7 +35,6 @@ ensure_identity() {
     rm -rf "$tmp"
   fi
 
-  # codesign only searches keychains on the user search list.
   if [[ "$(security list-keychains -d user)" != *"voiceink-signing.keychain-db"* ]]; then
     local kcs=()
     while IFS= read -r line; do
@@ -59,7 +44,6 @@ ensure_identity() {
     security list-keychains -d user -s "${kcs[@]}" "$keychain"
   fi
 
-  # find-identity -v lists only trusted identities; re-add trust if lost.
   if [[ "$(security find-identity -v -p codesigning "$keychain")" != *"$identity"* ]]; then
     tmp="$(mktemp -d)"
     security find-certificate -c "$identity" -p "$keychain" >"$tmp/cert.pem"
@@ -103,7 +87,7 @@ patch -p1 -d "$build/src" <"$PATCH"
 export GIT_CONFIG_GLOBAL=/dev/null
 export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.excludesFile GIT_CONFIG_VALUE_0=/dev/null
 make -C "$build/src" local LOCAL_CODESIGN_IDENTITY="$identity"
-rm -rf "$HOME/Downloads/VoiceInk.app" # `make local` dittos a second copy there
+rm -rf "$HOME/Downloads/VoiceInk.app"
 
 rm -rf "$app"
 ditto "$build/src/.local-build/Build/Products/Release/VoiceInk.app" "$app"
@@ -111,9 +95,6 @@ plutil -remove SUFeedURL "$app/Contents/Info.plist" >/dev/null 2>&1 || true
 plutil -replace SUEnableAutomaticChecks -bool false "$app/Contents/Info.plist"
 sign_app
 
-# The intermediate bundle is a second LaunchServices registration of the same
-# name; `open -a VoiceInk` can pick it over /Applications, and its signature
-# misses the TCC grants. Unregister it, then delete it.
 "$lsregister" -u "$build/src/.local-build/Build/Products/Release/VoiceInk.app" >/dev/null 2>&1 || true
 rm -rf "$build/src"
 "$lsregister" -f "$app" >/dev/null 2>&1 || true

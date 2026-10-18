@@ -7,7 +7,6 @@
 
     flake-parts.url = "github:hercules-ci/flake-parts";
 
-    # Owns the nix install and nix.conf; darwin settings go through determinateNix.customSettings.
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
 
     nix-darwin = {
@@ -24,13 +23,11 @@
       url = "github:zhaofengli-wip/nix-homebrew";
     };
 
-    # Xcode app, built from source in hosts/macbook/voiceink.
     voiceink-src = {
       url = "github:Beingpax/VoiceInk/v2.21";
       flake = false;
     };
 
-    # Agent skills, linked into ~/.agents/skills by the user activation.
     mattpocock-skills = {
       url = "github:mattpocock/skills";
       flake = false;
@@ -67,23 +64,19 @@
 
     devin-codex.url = "git+https://git.harivan.sh/harivansh-afk/devin-codex.git";
 
-    # Darwin only: no aarch64-linux cache, spark keeps nixpkgs neovim.
     neovim-nightly = {
       url = "github:nix-community/neovim-nightly-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # No nixpkgs follows: mux pins the zig 0.16 nixpkgs ghostty-vt needs.
     mux = {
       url = "git+https://git.harivan.sh/harivansh-afk/mux.git?ref=main";
     };
 
-    # No nixpkgs follows: upstream pins the revision its NVIDIA kernel build was tested on.
     dgx-spark = {
       url = "github:graham33/nixos-dgx-spark";
     };
 
-    # Forgejo frontend theme, hosted on that same Forgejo (flake updates need read access).
     pierrejo = {
       url = "git+https://git.harivan.sh/harivansh-afk/pierrejo.git?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -109,7 +102,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Cloudflare DNS as nix (terraform/cloudflare, flake/cloudflare.nix); just dns-plan / dns-apply.
     terranix = {
       url = "github:terranix/terranix";
       inputs.nixpkgs.follows = "nixpkgs";

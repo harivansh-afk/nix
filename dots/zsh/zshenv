@@ -1,6 +1,3 @@
-# Environment for all zsh invocations (interactive and not). The nix-store
-# ~/.zshenv shim sources the generated session-vars file first, then this.
-
 if [[ -f "$HOME/.cargo/env" ]]; then
   . "$HOME/.cargo/env"
 fi

@@ -27,8 +27,6 @@ switch:
         ;;
     esac
 
-# nh >= 4.4 shells out to nom for remote builds (nh-remote), so it rides along.
-# On spark itself it switches locally instead of ssh-ing to its own name.
 switch-spark:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -39,8 +37,6 @@ switch-spark:
         --target-host rathi@spark \
         --build-host rathi@spark
     fi
-
-# --- dns (cloudflare) ---
 
 dns-init:
     nix run .#cloudflare-dns -- init
@@ -53,8 +49,6 @@ dns-apply:
 
 nvim-update plugin rev="":
     nix shell nixpkgs#nix-prefetch-git nixpkgs#jq -c bash scripts/nvim-update.sh {{quote(plugin)}} {{quote(rev)}}
-
-# --- secrets ---
 
 sops-edit FILE:
     SOPS_AGE_KEY_FILE=${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt} \

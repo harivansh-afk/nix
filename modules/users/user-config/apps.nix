@@ -1,5 +1,3 @@
-# Assorted app configs rendered from the palette, plus the nvim command
-# aliases and the darwin-only helium managed-extension manifest.
 {
   pkgs,
   neovim,
@@ -16,10 +14,6 @@
     ln -s ${neovim}/bin/nvim "$out/bin/vimdiff"
   '';
 
-  # @HOSTNAME@ is substituted at activation time with the node's runtime
-  # hostname: the same closure gets deployed to nodes this flake did not
-  # build for, so baking the eval-time hostname in labels every node with
-  # the build host's name.
   btopConf = pkgs.writeText "btop.conf" ''
     custom_cpu_name = "@HOSTNAME@"
     rounded_corners = False
@@ -101,11 +95,10 @@
     light = pkgs.writeText "sketchybar-cozybox-light.sh" (theme.renderSketchybar "light");
   };
 
-  # darwin: helium managed extensions
   heliumExtensions = [
-    "ddkjiahejlhfcafbddmgiahcphecmpfh" # uBlock Origin Lite
-    "fcoeoabgfenejglbffodgkkbkcdhcgfn" # Claude for Chrome
-    "nngceckbapebfimnlniiiahkandclblb" # Bitwarden
+    "ddkjiahejlhfcafbddmgiahcphecmpfh"
+    "fcoeoabgfenejglbffodgkkbkcdhcgfn"
+    "nngceckbapebfimnlniiiahkandclblb"
   ];
 
   heliumExtJson = pkgs.writeText "helium-ext.json" (

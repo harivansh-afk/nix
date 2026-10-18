@@ -1,6 +1,3 @@
-# macOS system defaults for the macbook: dock, finder, global keyboard/text
-# behavior, screenshots, smb identity. Behavior-free facts only - launchd
-# services live in ./services.nix, login apps in ./apps.nix.
 {
   config,
   lib,
@@ -49,10 +46,6 @@
     NSNavPanelExpandedStateForSaveMode2 = true;
   };
 
-  # Session restore ("Reopen windows when logging back in") is a THIRD app
-  # launcher besides launchd agents and the apps' own login items; off so
-  # startup has exactly one owner per app (see ./apps.nix). Was previously
-  # set imperatively; declared here so a fresh machine gets it.
   system.defaults.CustomUserPreferences."com.apple.loginwindow".TALLogoutSavesState = false;
   system.defaults.CustomUserPreferences.NSGlobalDomain.AppleMenuBarVisibleInFullscreen = false;
   system.defaults.CustomUserPreferences."com.apple.controlcenter".AutoHideMenuBarOption = 0;

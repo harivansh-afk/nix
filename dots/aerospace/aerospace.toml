@@ -1,9 +1,3 @@
-# AeroSpace config, linked at ~/.config/aerospace/aerospace.toml. Live-edited;
-# reload with alt-shift-semicolon r (service mode).
-# Started by the nix-darwin launchd agent (services.aerospace in
-# hosts/macbook/macos.nix), NOT by AeroSpace's own SMAppService login item:
-# with both enabled two instances raced at every login. `false` also makes
-# AeroSpace unregister its login item on next start (Sources/.../startAtLogin.swift).
 start-at-login = false
 
 enable-normalization-flatten-containers = true
@@ -31,8 +25,6 @@ run = 'layout floating'
 if.app-id = 'com.apple.systempreferences'
 run = 'layout floating'
 
-# Mux's borderless terminal has no fullscreen button, so AeroSpace's dialog
-# heuristic floats it unless explicitly tiled.
 [[on-window-detected]]
 if.app-id = 'sh.harivan.mux'
 run = 'layout tiling'
@@ -42,7 +34,6 @@ inner.horizontal = 0
 inner.vertical = 0
 outer.left = 0
 outer.right = 0
-# The main display's notch accommodates SketchyBar; external windows use the full height.
 outer.top = 0
 outer.bottom = 0
 

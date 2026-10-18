@@ -1,7 +1,3 @@
-# Per-user package set: base CLI tools, the LSPs/tools nvim expects on PATH
-# (the old programs.neovim extraPackages, shared with the portable
-# `nix run .#nvim` wrapper via lib/nvim-packages.nix), the custom scripts,
-# and any host-specific extras.
 {
   lib,
   pkgs,

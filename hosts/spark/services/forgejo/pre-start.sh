@@ -1,13 +1,5 @@
 #!/usr/bin/env bash
-# Runs after the NixOS module's own preStart, as the git user.
-#
-# Forgejo 16 does not consult credential.helper for pull-mirror fetches, so
-# the GitHub token is embedded into every github.com mirror remote on each
-# start; rotating the secret propagates on the next restart.
-#
-# Environment: GITHUB_TOKEN_FILE, GIT_CREDENTIAL_FILE, FORGEJO (binary),
-# OAUTH_SOURCES (lines of name:provider:credential:id_var:secret_var),
-# CREDENTIALS_DIRECTORY (systemd).
+
 set -euo pipefail
 
 # shellcheck disable=SC1090

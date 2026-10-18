@@ -1,7 +1,3 @@
-# Session environment: the old home/xdg.nix + sessionVariables.
-#
-#   sessionVars   - sourced by the zsh shim into every shell.
-#   environmentD  - systemd ~/.config/environment.d drop-in (linux PAM).
 {
   pkgs,
   theme,

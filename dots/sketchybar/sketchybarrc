@@ -1,5 +1,4 @@
 #!/bin/bash
-# Layout only; sketchybar-feed supplies values and workspace visibility.
 source "$CONFIG_DIR/themes/current"
 
 FONT="SF Pro"
@@ -25,7 +24,6 @@ sketchybar --default \
   label.font="$FONT:Regular:$SIZE" label.color="$TEXT_COLOR" \
   label.padding_left=4 label.padding_right=$PAD
 
-# AeroSpace and the feed start alongside SketchyBar at login.
 for _ in $(seq 1 60); do
   aerospace list-workspaces --all >/dev/null 2>&1 && break
   sleep 0.5
@@ -47,7 +45,6 @@ for sid in $(aerospace list-workspaces --all); do
   sketchybar --set "divider.space.$sid" drawing=off width=0 background.drawing=off
 done
 
-# Rightmost first: natural text widths, equal section insets.
 sketchybar --add item clock right --set clock \
   label.color="$PINK_COLOR" label.font="$FONT:Bold:$SIZE" \
   click_script="open -a Calendar"

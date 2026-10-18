@@ -1,6 +1,3 @@
-# LSPs and tools the dots/nvim config expects on PATH. Shared between the
-# per-user package set (modules/users/user-config/packages.nix) and the
-# portable `nix run .#nvim` wrapper (flake/packages.nix).
 { lib, pkgs }:
 (with pkgs; [
   bat
@@ -21,8 +18,5 @@
   typescript-language-server
 ])
 ++ [ (pkgs.callPackage ../pkgs/baml-cli { }) ]
-# nix's clang wrapper puts cc/ld on PATH; on darwin that shadows Apple's
-# toolchain and its ld can't see the macOS SDK (cargo/Tauri fail with
-# "ld: library not found for -liconv"). clangd for nvim comes from
-# clang-tools above; darwin uses Apple's /usr/bin/cc for compiling.
+
 ++ lib.optionals (!pkgs.stdenv.isDarwin) [ pkgs.clang ]

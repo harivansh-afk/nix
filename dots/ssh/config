@@ -1,7 +1,7 @@
 # SSH client config, linked at ~/.ssh/config. Live-edited.
 
 Host spark
-  HostName spark-ix
+  HostName 100.98.32.95
   HostKeyAlias spark
   User rathi
   IdentityFile ~/.ssh/id_ed25519
@@ -30,7 +30,7 @@ Host spark-lan
 # shims (dots/bin/wl-paste, dots/bin/xclip) to serve the Mac clipboard.
 # Harmless on the Mac itself (never dialed there).
 Host macbook
-  HostName 100.96.2.106
+  HostName 100.92.19.35
   User rathi
   IdentityFile ~/.ssh/id_ed25519
   IdentitiesOnly yes

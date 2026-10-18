@@ -4,7 +4,7 @@
   ...
 }:
 let
-  personalSocket = "/run/tailscale-personal/tailscaled.sock";
+  ixSocket = "/run/tailscale-ix/tailscaled.sock";
 in
 {
   # Run a local stub resolver (127.0.0.53) so a resolver is always listening,
@@ -68,29 +68,28 @@ in
 
   services.tailscale = {
     enable = true;
-    authKeyFile = config.sops.secrets."tailscale-ix-authkey".path;
-    extraUpFlags = [
-      "--hostname=spark-ix"
+    extraSetFlags = [
+      "--hostname=spark"
       "--accept-dns=false"
       "--ssh=false"
     ];
   };
 
-  systemd.services.tailscaled-personal = {
+  systemd.services.tailscaled-ix = {
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
-      ExecStart = "${pkgs.tailscale}/bin/tailscaled --tun=userspace-networking --socket=${personalSocket} --state=/var/lib/tailscale-personal/tailscaled.state --port=41642 --socks5-server=127.0.0.1:1055 --outbound-http-proxy-listen=127.0.0.1:1056";
+      ExecStart = "${pkgs.tailscale}/bin/tailscaled --tun=userspace-networking --socket=${ixSocket} --state=/var/lib/tailscale-ix/tailscaled.state --port=41642";
       Restart = "on-failure";
-      RuntimeDirectory = "tailscale-personal";
-      StateDirectory = "tailscale-personal";
+      RuntimeDirectory = "tailscale-ix";
+      StateDirectory = "tailscale-ix";
     };
   };
 
   environment.systemPackages = [
-    (pkgs.writeShellScriptBin "tailscale-personal" ''
-      exec ${pkgs.tailscale}/bin/tailscale --socket=${personalSocket} "$@"
+    (pkgs.writeShellScriptBin "tailscale-ix" ''
+      exec ${pkgs.tailscale}/bin/tailscale --socket=${ixSocket} "$@"
     '')
   ];
 

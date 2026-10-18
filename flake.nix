@@ -14,11 +14,6 @@
       inputs.nixpkgs.follows = "nixpkgs-macbook";
     };
 
-    googleworkspace-cli = {
-      url = "github:googleworkspace/cli";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     nix-homebrew = {
       url = "github:zhaofengli-wip/nix-homebrew";
     };

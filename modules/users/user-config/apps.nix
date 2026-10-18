@@ -14,13 +14,6 @@
     ln -s ${neovim}/bin/nvim "$out/bin/vimdiff"
   '';
 
-  btopConf = pkgs.writeText "btop.conf" ''
-    custom_cpu_name = "@HOSTNAME@"
-    rounded_corners = False
-    theme_background = False
-    vim_keys = True
-  '';
-
   fzfThemes = {
     dark = pkgs.writeText "fzf-cozybox-dark" (theme.renderFzf "dark");
     light = pkgs.writeText "fzf-cozybox-light" (theme.renderFzf "light");

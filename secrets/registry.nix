@@ -4,7 +4,6 @@
     "anthropic.env" = { };
     "antithesis.env" = { };
     "linear.env" = { };
-    "gws.env" = { };
     "forgejo-token".exposeToShell = false;
     "cloudflare-api-token".exposeToShell = false;
     "heroku-uva.json".exposeToShell = false;

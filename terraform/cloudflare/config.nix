@@ -18,7 +18,10 @@ let
     // lib.optionalAttrs (r ? tags) { inherit (r) tags; };
 in
 {
-  imports = [ ./protection.nix ];
+  imports = [
+    ./protection.nix
+    ./email.nix
+  ];
 
   terraform = {
     required_providers.cloudflare = {

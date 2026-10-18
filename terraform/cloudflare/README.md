@@ -69,3 +69,17 @@ tofu import cloudflare_ruleset.sh_custom_firewall zones/<zone_id>/<ruleset_id>
 tofu import 'cloudflare_bot_management.sh' <zone_id>
 tofu import 'cloudflare_bot_management.cafe' <zone_id>
 ```
+
+## Email
+
+`email.nix` turns on Cloudflare Email Routing for both zones and forwards
+`hari@` and `me@` on `harivan.sh` and `hari.cafe` to the Gmail inbox. It is
+receive-only: Cloudflare adds and locks its own apex MX and SPF records, which
+are not in `records.nix`. Resend's sending records on `send.harivan.sh` are
+untouched. To add an address, add its local part to `locals`.
+
+The first apply registers the inbox as a destination address and Cloudflare
+mails it a verification link; rules forward nothing until that link is
+clicked. Applying needs the token to also hold `Account > Email Routing
+Addresses:Edit`, plus `Zone > Email Routing Rules:Edit` and
+`Zone > Zone Settings:Edit` on both zones.

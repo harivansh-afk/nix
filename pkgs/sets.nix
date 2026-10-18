@@ -12,12 +12,8 @@ in
   core =
     (with pkgs; [
       ast-grep
-      bitwarden-cli
-      elixir
       fd
       gnupg
-      go_1_26
-      jjui
       jujutsu
       jq
       just
@@ -46,30 +42,9 @@ in
 
   extras =
     (with pkgs; [
-      awscli2
-      bazel
       cloudflared
-      git-filter-repo
       git-lfs
-      go-tools
-      golangci-lint
-      google-cloud-sdk
-      graphite-cli
-      imagemagickBig
-      kind
-      kubectl
-      kubernetes-helm
       lazygit
-      libpq
-      librsvg
-      minikube
-      ngrok
-      phpPackages.composer
-      postgresql_17
-      terraform
-      texliveFull
-      typst
-      watchman
     ])
     ++ (builtins.filter (p: p != null) [
       gwsPackage
@@ -79,10 +54,7 @@ in
     coreutils-prefixed
     curl
     mosh
-    pandoc
     rsync
-    tailscale
-    yt-dlp
   ];
 
   fonts = with pkgs; [

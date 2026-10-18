@@ -69,14 +69,11 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${configHome}/ghostty/themes" \
     "${configHome}/lazygit" \
     "${configHome}/direnv/lib" \
-    "${configHome}/k9s" \
     "${configHome}/gh" \
-    "${configHome}/graphite" \
     "${configHome}/npm" \
     "${configHome}/python" \
     "${configHome}/btop" \
     "${configHome}/devin" \
-    "${configHome}/gcloud/configurations" \
     "${configHome}/tea" \
     "${homeDirectory}/.claude" \
     "${homeDirectory}/.agents" \
@@ -128,7 +125,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   rm -f "${configHome}/btop/btop.conf"
   ${pkgs.gnused}/bin/sed "s/@HOSTNAME@/$(uname -n)/" "${btopConf}" \
     > "${configHome}/btop/btop.conf"
-  mkSymlink "${dotsRoot}/k9s/views.yaml" "${configHome}/k9s/views.yaml"
   mkSymlink "${dotsRoot}/direnv/direnv.toml" "${configHome}/direnv/direnv.toml"
   mkSymlink "${pkgs.nix-direnv}/share/nix-direnv/direnvrc" "${configHome}/direnv/lib/nix-direnv.sh"
   mkSymlink "${dotsRoot}/wgetrc" "${configHome}/wgetrc"
@@ -206,33 +202,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     cp "${configHome}/devin/config.json" "${configHome}/devin/config.json.bak.$timestamp"
   fi
   install -m 600 "${dotsRoot}/devin/config.json" "${configHome}/devin/config.json"
-
-  # --- gcloud ---
-  install -Dm644 /dev/null "${configHome}/gcloud/active_config"
-  printf 'default' > "${configHome}/gcloud/active_config"
-  install -Dm644 /dev/null "${configHome}/gcloud/configurations/config_default"
-  printf '[core]\naccount=rathiharivansh@gmail.com\nproject=hari-gc\n' \
-    > "${configHome}/gcloud/configurations/config_default"
-
-  graphiteToken=
-  graphiteEnvFile=/run/secrets/graphite.env
-  if [ -r "$graphiteEnvFile" ]; then
-    graphiteToken=$(
-      set -a
-      . "$graphiteEnvFile"
-      printf '%s' "''${GRAPHITE_AUTH_TOKEN:-}"
-    )
-  fi
-
-  if [ -n "$graphiteToken" ]; then
-    umask 077
-    tmp="${configHome}/graphite/auth.tmp"
-    printf '%s' "$graphiteToken" | \
-      ${pkgs.python3}/bin/python3 -c 'import json, sys; print(json.dumps({"authToken": sys.stdin.read()}), end="")' \
-      > "$tmp"
-    mv "$tmp" "${configHome}/graphite/auth"
-    umask 022
-  fi
 
   # --- tea logins from sops secrets (skipped when unreadable) ---
   harivanTokenFile=/run/secrets/forgejo-token

@@ -151,7 +151,7 @@ in
     serviceConfig = {
       ExecStart = "${pkgs.wayvnc}/bin/wayvnc --config ${
         config.sops.secrets."wayvnc.conf".path
-      } 100.114.116.11 45931";
+      } 100.98.32.95 45931";
       Restart = "on-failure";
       RestartSec = 5;
       UMask = "0077";

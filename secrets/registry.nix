@@ -66,11 +66,6 @@
 
     "wifi.env".restartUnits = [ "NetworkManager-ensure-profiles.service" ];
 
-    "tailscale-ix-authkey" = {
-      owner = "root";
-      restartUnits = [ "tailscaled-autoconnect.service" ];
-    };
-
     "cloudflared.json" = {
       mode = "0444";
       restartUnits = [ "cloudflared-tunnel-64bce32c-6613-459c-bb68-262d73e1b78f.service" ];

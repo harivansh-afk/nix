@@ -43,7 +43,7 @@ in
     ./roommates.nix
   ];
 
-  networking.hosts."100.114.116.11" = [ "spark-ix.tail368802.ts.net" ];
+  networking.hosts."100.98.32.95" = [ "spark.taileb8b41.ts.net" ];
 
   systemd.tmpfiles.rules = [
     "r ${stateDir}/.hermes/plugins/knowledge-base - - - -"
@@ -90,7 +90,7 @@ in
 
     backend = {
       mode = "serve";
-      host = "spark-ix.tail368802.ts.net";
+      host = "spark.taileb8b41.ts.net";
       waitFor = "hostname";
     };
 

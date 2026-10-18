@@ -59,9 +59,6 @@ min_rollout_idle_hours = 24
 [history]
 max_bytes = 52428800
 
-[projects."/home/rathi/Documents/Git/indexable/ix"]
-trust_level = "trusted"
-
 [notice]
 hide_rate_limit_model_nudge = true
 

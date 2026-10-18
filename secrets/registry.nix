@@ -14,9 +14,7 @@
     "antithesis.env" = { };
     "linear.env" = { };
     "graphite.env" = { };
-    "mgrep.env" = { };
     "gws.env" = { };
-    "forgejo-ix.env".format = "dotenv";
     "forgejo-token".exposeToShell = false;
     "cloudflare-api-token".exposeToShell = false;
     "gh-wiive-totp".exposeToShell = false;

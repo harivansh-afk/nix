@@ -7,13 +7,6 @@
 let
   inherit (pkgs.stdenv.hostPlatform) system;
   gwsPackage = inputs.googleworkspace-cli.packages.${system}.default or null;
-  # jj-ix: the patched jj that speaks the ix forge's store backend
-  # (pkgs/jj-ix). Toolchain comes from rust-overlay via mkRustBin so the
-  # main package set needs no overlay.
-  jjIxPackage = pkgs.callPackage ./jj-ix {
-    rust-bin = inputs.rust-overlay.lib.mkRustBin { } pkgs;
-    inherit (inputs) ix-src;
-  };
 in
 {
   core =
@@ -33,7 +26,6 @@ in
       pnpm
       pkg-config
       python3
-      ranger
       ripgrep
       rust-analyzer
       rustup
@@ -57,13 +49,10 @@ in
       awscli2
       bazel
       cloudflared
-      delta
-      diff-so-fancy
       git-filter-repo
       git-lfs
       go-tools
       golangci-lint
-      goose
       google-cloud-sdk
       graphite-cli
       imagemagickBig
@@ -73,14 +62,10 @@ in
       lazygit
       libpq
       librsvg
-      llmfit
       minikube
-      mgrep
-      eternal-terminal
       ngrok
       phpPackages.composer
       postgresql_17
-      redis
       terraform
       texliveFull
       typst
@@ -88,8 +73,7 @@ in
     ])
     ++ (builtins.filter (p: p != null) [
       gwsPackage
-    ])
-    ++ [ jjIxPackage ];
+    ]);
 
   darwinExtras = with pkgs; [
     coreutils-prefixed

@@ -6,21 +6,10 @@
 let
   theme = import ../../lib/theme.nix { inherit homeDirectory; };
 
-  gitThemeIncludes = {
-    dark = pkgs.writeText "git-theme-dark.inc" (theme.renderGitThemeInclude "dark");
-    light = pkgs.writeText "git-theme-light.inc" (theme.renderGitThemeInclude "light");
-  };
-
-  lazygitDarwinDir = "${homeDirectory}/Library/Application Support/lazygit";
-
   modeAssets = {
     dark = {
       fzf = "${theme.paths.fzfDir}/cozybox-dark";
       ghostty = "${theme.paths.ghosttyDir}/cozybox-dark";
-      lazygit = "${theme.paths.lazygitDir}/config-dark.yml";
-      btop = "${theme.paths.btopThemesDir}/cozybox-dark.theme";
-      gitTheme = "${gitThemeIncludes.dark}";
-      darwinLazygit = "${lazygitDarwinDir}/config-dark.yml";
       sketchybar = "${theme.paths.sketchybarDir}/cozybox-dark.sh";
       wallpaper = theme.wallpapers.dark;
       appleDarkMode = "true";
@@ -28,10 +17,6 @@ let
     light = {
       fzf = "${theme.paths.fzfDir}/cozybox-light";
       ghostty = "${theme.paths.ghosttyDir}/cozybox-light";
-      lazygit = "${theme.paths.lazygitDir}/config-light.yml";
-      btop = "${theme.paths.btopThemesDir}/cozybox-light.theme";
-      gitTheme = "${gitThemeIncludes.light}";
-      darwinLazygit = "${lazygitDarwinDir}/config-light.yml";
       sketchybar = "${theme.paths.sketchybarDir}/cozybox-light.sh";
       wallpaper = theme.wallpapers.light;
       appleDarkMode = "false";
@@ -55,10 +40,6 @@ let
           THEME_MODE='light'
           THEME_FZF_TARGET='${modeAssets.light.fzf}'
           THEME_GHOSTTY_TARGET='${modeAssets.light.ghostty}'
-          THEME_LAZYGIT_TARGET='${modeAssets.light.lazygit}'
-          THEME_BTOP_TARGET='${modeAssets.light.btop}'
-          THEME_GIT_THEME_TARGET='${modeAssets.light.gitTheme}'
-          THEME_DARWIN_LAZYGIT_TARGET='${modeAssets.light.darwinLazygit}'
           THEME_SKETCHYBAR_TARGET='${modeAssets.light.sketchybar}'
           THEME_WALLPAPER='${modeAssets.light.wallpaper}'
           THEME_APPLE_DARK_MODE=${modeAssets.light.appleDarkMode}
@@ -67,10 +48,6 @@ let
           THEME_MODE='dark'
           THEME_FZF_TARGET='${modeAssets.dark.fzf}'
           THEME_GHOSTTY_TARGET='${modeAssets.dark.ghostty}'
-          THEME_LAZYGIT_TARGET='${modeAssets.dark.lazygit}'
-          THEME_BTOP_TARGET='${modeAssets.dark.btop}'
-          THEME_GIT_THEME_TARGET='${modeAssets.dark.gitTheme}'
-          THEME_DARWIN_LAZYGIT_TARGET='${modeAssets.dark.darwinLazygit}'
           THEME_SKETCHYBAR_TARGET='${modeAssets.dark.sketchybar}'
           THEME_WALLPAPER='${modeAssets.dark.wallpaper}'
           THEME_APPLE_DARK_MODE=${modeAssets.dark.appleDarkMode}
@@ -114,14 +91,6 @@ let
         "@FZF_CURRENT_FILE@" = theme.paths.fzfCurrentFile;
         "@GHOSTTY_DIR@" = theme.paths.ghosttyDir;
         "@GHOSTTY_CURRENT_FILE@" = theme.paths.ghosttyCurrentFile;
-        "@LAZYGIT_DIR@" = theme.paths.lazygitDir;
-        "@LAZYGIT_CURRENT_FILE@" = theme.paths.lazygitCurrentFile;
-        "@BTOP_THEMES_DIR@" = theme.paths.btopThemesDir;
-        "@BTOP_CURRENT_FILE@" = theme.paths.btopCurrentFile;
-        "@GIT_THEME_DIR@" = theme.paths.gitDir;
-        "@GIT_THEME_CURRENT_FILE@" = theme.paths.gitThemeCurrentFile;
-        "@LAZYGIT_DARWIN_DIR@" = lazygitDarwinDir;
-        "@LAZYGIT_DARWIN_FILE@" = "${lazygitDarwinDir}/config.yml";
         "@SKETCHYBAR_DIR@" = theme.paths.sketchybarDir;
         "@SKETCHYBAR_CURRENT_FILE@" = theme.paths.sketchybarCurrentFile;
         "@WALLPAPER_DIR@" = theme.wallpapers.dir;

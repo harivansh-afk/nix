@@ -14,39 +14,26 @@
 
       nvimPackages = import ../lib/nvim-packages.nix { inherit lib pkgs; };
 
-      # renderLazygit only emits colors; homeDirectory feeds the other
-      # renderers, so the placeholder is never dereferenced here.
-      theme = import ../lib/theme.nix { homeDirectory = "/homeless-shelter"; };
-
       nvim = import ../lib/neovim.nix {
         inherit lib pkgs;
         configDir = ../dots/nvim;
         extraPackages = nvimPackages;
       };
 
-      # Same base-plus-theme concatenation as lazygitConfigs in
-      # modules/users/user-config/apps.nix, pinned to dark mode: the portable
-      # target is a headless VM shell, not a mode-switching desktop.
-      lazygitConfig = pkgs.writeText "lazygit-portable.yml" (
-        builtins.readFile ../dots/lazygit/config.yml + theme.renderLazygit "dark"
-      );
-
       lazygit = pkgs.writeShellApplication {
         name = "lazygit";
         runtimeInputs = [
           pkgs.lazygit
           pkgs.git
-          pkgs.delta
         ];
         text = ''
-          exec lazygit --use-config-file ${lazygitConfig} "$@"
+          exec lazygit --use-config-file ${../dots/lazygit/config.yml} "$@"
         '';
       };
 
       # Same template as btopConf in apps.nix, with the hostname substituted
       # at launch instead of at activation.
       btopConf = pkgs.writeText "btop-portable.conf" ''
-        color_theme = "ayu"
         custom_cpu_name = "@HOSTNAME@"
         rounded_corners = False
         theme_background = False
@@ -86,7 +73,6 @@
         ]
         ++ (with pkgs; [
           bat
-          delta
           direnv
           eza
           fd

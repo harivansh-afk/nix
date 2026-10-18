@@ -46,7 +46,7 @@ sops-nix with age encryption derived from each host's ed25519 SSH key. Secret fi
 - Berkeley Mono is installed out-of-band. The flake only provides nerd-fonts symbol glyphs.
 - There is no home-manager. Per-user config is `modules/users/user-config.nix`: plain dotfiles in `dots/` symlinked into the home directory by an activation script that runs as the user. The repo owner's links point at the live checkout (`~/Documents/Git/nix/dots`), so dotfile edits apply without a rebuild; other users get the nix-store copy. Configs that need store paths (zsh plugins, git credential helpers, theme renders) are store-generated shims that defer to the live dots file.
 - Ghostty is installed via Homebrew cask, not nixpkgs. The flake owns its config files and its terminfo: `xterm-ghostty` is declarative in `modules/common.nix` (`pkgs.ghostty-bin.terminfo` on darwin, `pkgs.ghostty.terminfo` on linux) so env-scrubbed shells resolve it without `TERMINFO`. Never fix terminfo imperatively via `tic` into `~/.terminfo`.
-- Neovim uses one package definition, `lib/neovim.nix`, for workstations, ix, and the portable command. Nix owns plugins, grammars, and matched queries; `lz.n` owns lazy loading. Plugin pins live in `dots/nvim/pack-sources.json`; update one with `just nvim-update <plugin> [revision]` and rebuild. Never add runtime installs or seed writable plugin copies. Keep the query-inheritance build check: missing shared queries silently break highlighting.
+- Neovim uses one package definition, `lib/neovim.nix`, for workstations and the portable command. Nix owns plugins, grammars, and matched queries; `lz.n` owns lazy loading. Plugin pins live in `dots/nvim/pack-sources.json`; update one with `just nvim-update <plugin> [revision]` and rebuild. Never add runtime installs or seed writable plugin copies. Keep the query-inheritance build check: missing shared queries silently break highlighting.
 - Karabiner config is a directory symlink to `dots/karabiner/` so Karabiner can write freely.
 - Cursor-agent, Claude, and Codex are curl-installed binaries. On NixOS they need nix-ld.
 - Devin config is seeded as a mutable copy since Devin rewrites it.
@@ -66,12 +66,14 @@ Instructions for every agent harness are layered in `dots/agents/` and rendered 
 | Part | Read by | Holds |
 |------|---------|-------|
 | `core.md` | every agent | who Hari is, machines, forge, knowledge base, how to work with him |
-| `coding.md` | Claude Code, Codex, omp | tooling, git conventions, Spark CLI tools |
+| `coding.md` | Claude Code, Codex | tooling, git conventions, Spark CLI tools |
 | `claude.md` | Claude Code | Claude-only steering (prose questions, outcome-first replies, delegation) |
 
 Rendered outputs: `~/.claude/CLAUDE.md` (core + coding + claude), `~/.codex/AGENTS.md` (core + coding). A fact that is true for two parts moves up to `core.md`; a repo-specific fact belongs in that repo's `AGENTS.md` (this file), which the tracked `CLAUDE.md` imports with `@AGENTS.md`. Keep that file as the single import so local copies cannot accumulate conflicting instructions.
 
 Skills come from the `mattpocock-skills` flake input. `modules/users/user-config/agents.nix` builds the selected skills into one link farm and the activation script links it to `~/.agents/skills` (Codex, and anything agentskills.io-compatible) and `~/.claude/skills` (Claude Code). Upgrade them with `nix flake update mattpocock-skills`.
+
+No agent harness has hooks configured, and none should be created.
 
 ## Module layout
 
@@ -81,11 +83,11 @@ flake/
   args.nix             Host records (the two machines) + shared builders (mkPkgs, mkSpecialArgs)
   devshell.nix         Dev tools + formatter
   hosts.nix            macbook darwin configuration
-  nixos.nix            spark NixOS configuration + nixosConfigurations.ix (the dev VM template)
+  nixos.nix            spark NixOS configuration
   packages.nix         packages.<system> output: portable scripts (ga, connectors) + tool wrappers
 lib/
   remotes.nix          Remote server registry: hosts for the per-remote connector commands
-  theme.nix            Cozybox theme: colors, renderers for ghostty/fzf/lazygit/pure-prompt/bat/zsh-highlights
+  theme.nix            Cozybox theme: colors, renderers for ghostty/fzf/pure-prompt/rex/sketchybar/zsh-highlights
 modules/
   common.nix           Shared nix settings, overlays, the shared package set, fonts
   nix-settings.nix     nix.conf settings both hosts share (nix.settings on spark, determinateNix.customSettings on darwin)
@@ -125,11 +127,8 @@ hosts/
       website.nix      harivan.sh static site; caddy logs the view beacon, website-views timer bakes the counts (tools/views.mjs in the website repo)
       whisper/         GPU speech-to-text server (default.nix + setup.sh + server.py)
       forgejo/         Forgejo server, cozybox css in assets/, mirror manifest, Actions runner, run-by-hand scripts/
-  ix/
-    default.nix        The entire ix dev VM: root dotfiles, agents, nothing else
 pkgs/
   sets.nix             Shared package sets (core, extras, darwinExtras, fonts) for modules/common.nix
-  jj-ix/               Patched jj with the ix store backend
   scripts/
     default.nix        Full script set for user profiles (portable + theme, account helpers)
     portable.nix       Home-independent scripts (ga, iosrun, remote connectors)
@@ -144,18 +143,7 @@ dots/                  Dotfile sources (nvim, karabiner, lazygit, agents/ instru
 
 ## Theme system
 
-The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `pkgs/scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, lazygit, and the wallpaper, then pokes live nvim servers. Wallpapers are fixed store assets: black for dark mode and white for light mode. Shell hooks in `dots/zsh/zshrc` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
-
-Accent constraint for agent-facing TUI roles (omp markdown headings/inline code/links): no yellow, green, or pink hues. Stay in the neutral-bright / Claude-coral (`#d97757` dark, `#af3a03` light) / muted-blue (`#5b84de` dark, `#4261a5` light) lane. Status colors (success/error/warning, diffs) keep their conventional hues.
-
-
-## omp
-
-omp runs stock upstream: no extensions and no hooks, by policy. The extension monkey-patches (diffs.nvim-style edit rendering, purple tool dots, the /mode command, the Claude agent-def bridge) were removed in #535 after auditing 18.0.11 - do not re-add them by reflex; if upstream grows a native knob for one of these, use the knob. The activation script clears any symlink from `~/.omp/agent/extensions/` on every switch, so a stray extension link does not quietly resurrect the pattern. No agent harness has hooks configured, and none should be created.
-
-Nix seeds omp from `modules/users/user-config/agents.nix`: the cozybox theme JSONs, `models.yml` (the spark-local vLLM provider), `mcp.json` (the index MCP server, spark only), `config.yml` (xattr-tracked reseed - omp rewrites it at runtime, so it is a writable copy, not a symlink), and `local.yml`, a session overlay that puts both model roles on local Qwen: `omp --config ~/.omp/agent/local.yml`.
-
-`config.yml`'s `setupVersion` must track upstream's `CURRENT_SETUP_VERSION`: omp's cold-launch gate eagerly imports the whole setup-wizard barrel whenever the stored version is lower, before `startup.setupWizard` is consulted, so a stale pin taxes every launch. Check the constant in `src/modes/setup-version.ts` when bumping omp majors.
+The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `pkgs/scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, and the wallpaper, then pokes live nvim servers. Wallpapers are fixed store assets: black for dark mode and white for light mode. Shell hooks in `dots/zsh/zshrc` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
 
 ## Remote sessions
 
@@ -181,7 +169,7 @@ Rex (Superlogical's multiplexer, `/Applications/Rex Beta.app`) is installed by h
 
 - `dgx-spark`: Upstream NixOS module for DGX Spark hardware. Do not set `inputs.nixpkgs.follows` - the upstream pins nixpkgs to a known-good revision for the NVIDIA kernel build. It also makes podman the machine's only container runtime and serves the Docker-compatible API at `/run/podman/podman.sock` (`dockerCompat`, `dockerSocket.enable`, socket group `podman`); anything speaking the Docker API (dockerode, docker CLI) uses that socket. Never set `virtualisation.docker.enable` - it conflicts with the podman socket, and enabling it rewired the CI runner's unit and aborted the #479 deploy mid-switch.
 - `determinate`: Manages the Nix installation, daemon, and `/etc/nix/nix.conf`. On darwin, use `determinateNix.customSettings` instead of `nix.settings`.
-- `neovim-nightly`: Both hosts' `nvim` runs this input's `packages.<system>.default`, passed to `lib/neovim.nix` through the user-config adapters; the `neovim` flake check uses it too. Never apply its overlay: replacing `pkgs.neovim` rebuilds every vim plugin and treesitter grammar from source (~660 derivations on spark). The portable command and ix stay on stable nixpkgs neovim. nix-community's cache has no aarch64-linux build, so spark compiles nightly whenever the pin moves.
+- `neovim-nightly`: Both hosts' `nvim` runs this input's `packages.<system>.default`, passed to `lib/neovim.nix` through the user-config adapters; the `neovim` flake check uses it too. Never apply its overlay: replacing `pkgs.neovim` rebuilds every vim plugin and treesitter grammar from source (~660 derivations on spark). The portable command stays on stable nixpkgs neovim. nix-community's cache has no aarch64-linux build, so spark compiles nightly whenever the pin moves.
 
 ## Adding a new service on spark
 
@@ -196,36 +184,6 @@ Rex (Superlogical's multiplexer, `/Applications/Rex Beta.app`) is installed by h
 1. Create `modules/users/accounts/<name>.nix` with `sshKeys`, `shell`, and `extraGroups`.
 2. Add its import to `modules/users/accounts/default.nix`. `hosts/spark/users.nix` creates the account and `modules/users/nixos.nix` installs dotfiles and packages; non-owner dotfiles point at the Nix store.
 3. For user-specific system config (services, slices), add a module under `hosts/spark/<name>/` and import it from `hosts/spark/default.nix`.
-
-## ix dev VM template
-
-`ix new github:harivansh-afk/nix#ix` boots `nixosConfigurations.ix` as a throwaway x86_64-linux VM. `hosts/ix/default.nix` is the whole VM and imports nothing from `hosts/spark/`. It lists `users.users.root.packages` literally instead of taking `mkUserConfig`'s set, and uses `mkUserConfig` only for the dotfile activation script over `dots/` (plus `nvimAliases`). To add or remove something from the VM, edit that one list. `installMutableTools = false` suppresses the curl installs of omp and cursor-agent, which have no place in a cached image.
-
-The literal list exists because the VM builds inside itself on 2 vCPU / 1 GiB, so every uncached derivation is compiled on the smallest machine ix hands out and there is no build timeout to stop it. `mkUserConfig`'s workstation set costs 1253 source builds and 8.6 GiB unpacked; this list costs 58 and 1.7 GiB, and the 58 are all rendered config files plus omp, claude-code and NixOS plumbing. Anything added here is paid for on every cold template build, so weigh it against that. Measure a candidate before adding it:
-
-```
-nix eval .#nixosConfigurations.ix.config.system.build.toplevel.drvPath
-nix build --dry-run <drv>^* --substituters https://cache.nixos.org
-```
-
-What was deliberately left out, and why, so it does not get re-added by reflex: `elixir_1_19` + `elixir-ls` (erlang twice, 248 MiB, and erlang's wx support drags in wxwidgets then webkitgtk), `clang` + `clang-tools` (1.4 GiB of clang and llvm libs), `pyright` + `python3` (389 MiB), `go_1_26` + `gopls` (248 MiB), `k9s` (168 MiB, no cluster to point it at), `tea` (its logins come from sops, which the VM has none of), and every `customScripts` entry (the remote connectors dial hosts a throwaway VM cannot reach; the theme command manages desktop assets). `zoxide` is in the list because `dots/zsh/zshrc` runs `zoxide init zsh` unconditionally.
-
-`environment.systemPackages` holds one entry, `pkgs.ghostty.terminfo`, and it has to be there rather than in the root package list: NixOS builds `TERMINFO_DIRS` from `environment.pathsToLink`, which only covers the system profile. Ghostty exports `TERM=xterm-ghostty`, `ix shell` carries that value into the guest, and a guest with no matching terminfo entry gives you `can't find terminal definition for xterm-ghostty`, a zsh line editor that cannot position the cursor (keystrokes echo doubled) and a `clear` that refuses to run. The cost is 2.2 KiB: `terminfo` is a separate output of the ghostty derivation and cache.nixos.org has it, so nothing builds ghostty itself. Any other terminal that sets an exotic `TERM` needs its own entry here, or `environment.enableAllTerminfo = true` if the list ever grows past a couple.
-
-Neovim's package carries its plugins and curated parsers in the system closure. ix uses `nvimCurated = true` in the shared user-config builder; keep that reduced grammar set and the small CLI tool list above. Startup needs neither plugin downloads nor mutable copies under `/root`. Workstations use the full grammar set. The portable command uses the same package with the repository config supplied directly from the store.
-
-`IS_SANDBOX = "1"` is what lets Claude Code run as root. Without it `claude` refuses with `--dangerously-skip-permissions cannot be used with root/sudo privileges for security reasons`; with it the same invocation reaches `Not logged in`. `ix shell` has no `--user` flag and always lands you as root, so the alternative would be adding a non-root account purely to satisfy that check.
-
-Constraints that shaped it, all of them load-bearing:
-
-- **`nixosConfigurations.ix`, not `ix.default`.** `ix new` first probes `ix.<attr>` and, only if that misses, builds `nixosConfigurations.<attr>.extendModules` with ix's machine profile. The probe has a hard 300s cap and must evaluate the full toplevel, which this flake's ~20 inputs cannot do cold. Exposing no `ix` output at all makes the probe miss in seconds on a missing attribute and puts the build on the `extendModules` path, which has no such timer.
-- **No `index.lib.mkDev`.** It returns a fleet result whose nodes are `{ config = ...; }` with no `extendModules`, so `ix new` cannot wrap it. Dropping it also drops an import-from-derivation (`cargo-units.nix`) that made the config impossible to evaluate on aarch64. It now evaluates locally: `nix eval .#nixosConfigurations.ix.config.system.build.toplevel.drvPath`.
-- **`boot.isContainer = true`.** ix owns the kernel, root device and console; the machine profile force-sets this in-guest. Setting it here too (same value, no conflict) is what lets the config evaluate standalone without a bootloader or `fileSystems."/"`.
-- **`#spark` is not bootable.** Wrong architecture (aarch64 vs x86_64 guests), the dgx-spark NVIDIA module, and disko's `fileSystems` by UUID, which hangs boot in systemd device timeouts. Keep the two configs separate.
-
-`ix new` resolves `github:`, `gitlab:` and `sourcehut:` only, never `git+https://git.harivan.sh/...`, so it builds the GitHub push mirror and not `origin`. Push the mirror before booting, or pin the sha (`ix new github:harivansh-afk/nix/<sha>#ix`), or you will silently get an older tree.
-
-The VM has no secrets. sops-nix on spark derives its age key from the host ed25519 key, which a fresh VM cannot have, and a template image is cached per rev and shared, so nothing secret may enter the closure. Delivering sops here means minting a separate age identity, storing the private key with `ix secret set`, and attaching it at create time with `ix new --secret-file`. Not done yet.
 
 ## CI deploys
 
@@ -269,10 +227,6 @@ journalctl -u forgejo --since today | rg "Invalid username or token"
 ```
 
 Forgejo's own `[mirror] DEFAULT_INTERVAL` is `15m` and `[queue.mirror] MAX_WORKERS` is capped at `1`. The pre-start hook in `hosts/spark/services/forgejo/default.nix` uniformly jitters every pull-mirror's `next_update_unix` to `now + (repo_id % 900s)` on each forgejo start, so 100+ mirrors never bunch into a single hour the way they did under the old gitea-mirror scheduler.
-
-## indexable-inc/ix mirroring
-
-Source of truth is the jj-native ix forge (RPC `https://forge.ix.dev:8447/rpc`, UI `https://forge.ix.dev:8448/`, tailnet), not GitHub: github.com/indexable-inc/ix is archived and is never synced from. Clone with `jj-ix ix clone --server https://forge.ix.dev:8447/rpc --repo ix <dir>` and pass `--config 'signing.behavior=drop'` (the ix backend rejects commit signing). The forge has no whole-repo git egress, so `git.harivan.sh/indexable-inc/ix` is a regular repo kept current by pushing snapshot commits of forge `main` (tree from a jj-ix clone, parent = previous snapshot, message carries the forge commit id).
 
 ## Hermes
 

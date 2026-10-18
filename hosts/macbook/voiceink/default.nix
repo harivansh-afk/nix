@@ -11,7 +11,6 @@
 let
   src = inputs.voiceink-src;
   patchText = lib.concatMapStringsSep "\n" builtins.readFile [
-    ./streaming-provider.patch
     ./mini-recorder.patch
   ];
   patch = pkgs.writeText "voiceink.patch" patchText;

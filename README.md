@@ -20,7 +20,6 @@ Everything is a single flake, declared with [flake-parts](https://github.com/her
 
 - [Forgejo](https://git.harivan.sh) - my git
 - vLLM - local model inference
-- Whisper Large v3 - for speech-to-text using voice-ink
 - Vaultwarden - password manager
 
 **`lib/theme.nix`**
@@ -50,7 +49,7 @@ flake/               host assembly, packages, devshell, args (incl. the host rec
 lib/                 theme palette, remote registry, nvim plugin pinning
 hosts/               per-host config; everything single-host lives here
   macbook/           darwin defaults, homebrew, launchd services, voiceink
-  spark/             NixOS base + services/ (forgejo, inference, whisper, caddy, ...)
+  spark/             NixOS base + services/ (forgejo, inference, caddy, ...)
 dots/                app configs symlinked into XDG paths (live-editable)
   nvim/              the Neovim setup: pr, statusline
   ...                one directory per tool

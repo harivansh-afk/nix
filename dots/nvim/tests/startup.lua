@@ -66,7 +66,6 @@ local function check()
   end
   assert(require("nvim-treesitter").indentexpr, "Treesitter indentation missing")
   assert(MiniPick and MiniPairs, "picker or pairs missing")
-  assert(require "fzf-lua", "pr.nvim picker backend missing")
   for _, mode in ipairs { "dark", "light", "dark" } do
     require("theme").apply(mode)
     vim.wait(20)

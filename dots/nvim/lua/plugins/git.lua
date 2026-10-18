@@ -2,7 +2,6 @@ return {
   {
     "pr.nvim",
     priority = 0,
-    before = function() vim.cmd.packadd { "fzf-lua", bang = true } end,
     after = function() require("pr").setup { keymaps = true } end,
   },
   {

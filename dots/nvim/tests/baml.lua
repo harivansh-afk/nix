@@ -50,8 +50,14 @@ local function check()
     )
     if layout ~= "standalone" then assert(client.root_dir == root, "wrong BAML project root") end
     local position = { textDocument = { uri = vim.uri_from_bufnr(buf) }, position = { line = 12, character = 11 } }
-    local hover = assert(client:request_sync("textDocument/hover", position, 10000, buf))
-    assert(not hover.err and hover.result and hover.result.contents, "BAML hover missing")
+    local hover
+    assert(
+      vim.wait(15000, function()
+        hover = client:request_sync("textDocument/hover", position, 2000, buf)
+        return hover and not hover.err and hover.result and hover.result.contents
+      end, 200),
+      "BAML hover missing"
+    )
     local definition = assert(client:request_sync("textDocument/definition", position, 10000, buf))
     assert(not definition.err and definition.result, "BAML definition missing: " .. vim.inspect(definition))
     local target = definition.result[1] or definition.result

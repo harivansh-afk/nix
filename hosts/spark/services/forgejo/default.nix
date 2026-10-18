@@ -16,6 +16,20 @@ let
   mirrorGithubTokenFile = config.sops.secrets."forgejo-mirror-github-token.env".path;
   runnerTokenFile = config.sops.secrets."forgejo-runner-token".path;
   runnerCacheRoot = "/var/cache/forgejo-runner";
+  sparkDeploy = pkgs.writeShellApplication {
+    name = "spark-deploy";
+    runtimeInputs = [ pkgs.systemd ];
+    text = ''
+      flake="$1"
+      unit="spark-deploy-$(date +%s)"
+      status=0
+      systemd-run --unit="$unit" --wait --collect --quiet \
+        --property=TimeoutStartSec=40min \
+        /run/current-system/sw/bin/nixos-rebuild switch --flake "$flake#spark" || status=$?
+      journalctl --unit="$unit" --output=cat --no-pager
+      exit "$status"
+    '';
+  };
 
   forgejoOauthSources = {
     github = {
@@ -375,6 +389,8 @@ in
   };
   users.groups.gitea-runner = { };
 
+  environment.systemPackages = [ sparkDeploy ];
+
   security.sudo.extraRules = [
     {
       users = [ "gitea-runner" ];
@@ -385,6 +401,10 @@ in
             "NOPASSWD"
             "SETENV"
           ];
+        }
+        {
+          command = "/run/current-system/sw/bin/spark-deploy";
+          options = [ "NOPASSWD" ];
         }
       ];
     }

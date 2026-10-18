@@ -16,6 +16,7 @@
 
       nvim = import ../lib/neovim.nix {
         inherit lib pkgs;
+        neovim = inputs'.neovim-nightly.packages.default;
         configDir = ../dots/nvim;
         extraPackages = nvimPackages;
       };

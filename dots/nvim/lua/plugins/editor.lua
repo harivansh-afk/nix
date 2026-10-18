@@ -1,4 +1,5 @@
 return {
+  { "vim-eunuch" },
   {
     "mini.pairs",
     event = "InsertEnter",

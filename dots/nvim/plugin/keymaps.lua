@@ -4,6 +4,7 @@ map("n", "<leader>q", "<cmd>q<cr>")
 map("n", "<Tab>", "<cmd>bnext<cr>")
 map("n", "<S-Tab>", "<cmd>bprev<cr>")
 map("n", "<leader>x", "<cmd>bdelete<cr>")
+map("n", "<leader>e", "<cmd>edit .<cr>")
 
 map("n", "<C-h>", "<C-w>h")
 map("n", "<C-j>", "<C-w>j")

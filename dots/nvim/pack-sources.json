@@ -1,15 +1,4 @@
 {
-  "canola-collection": {
-    "hash": "sha256-j9Oy6CfDPZ2lxSvVGDslLL0/LvwVoNEatsBAlMTceEU=",
-    "rev": "8681de4443427dd30dbb7465b3f12367c9e4ee13",
-    "url": "https://github.com/barrettruth/canola-collection"
-  },
-  "canola.nvim": {
-    "branch": "canola",
-    "hash": "sha256-4ppFVi7Ufkp+UVvzljYl+qSOCxURMSPXV1ikRRJpz6U=",
-    "rev": "aa3a122b31aa869ba1ce4be07a64cff2ba24e7c4",
-    "url": "https://github.com/barrettruth/canola.nvim"
-  },
   "cozybox.nvim": {
     "hash": "sha256-QulyQlUptCB/uwO3u4d2BY0jAT/9ijVqTpH0KP3of6E=",
     "rev": "67815e6b9230dd24d2b3090398de833125b6afa1",
@@ -74,6 +63,11 @@
     "hash": "sha256-Dwa6fUUi/V5H9YZjmltfdMJD12LbMV+fvq7VLib5L5E=",
     "rev": "a4c49cdec95f52d703080f9513e8e3a739e26429",
     "url": "https://git.harivan.sh/harivansh-afk/pr.nvim"
+  },
+  "vim-eunuch": {
+    "hash": "sha256-Rs/ABLIT3ZvV8pJLZZtIrQEgtU9u3LSYgvBJOySYdRo=",
+    "rev": "929490937745cd96130d3e7948f762f0aa403314",
+    "url": "https://github.com/tpope/vim-eunuch"
   },
   "vim-fugitive": {
     "hash": "sha256-GK/bC8qc72Hw9kJP3pueYIPMNmwfNhiVRUbfI9AiRYg=",

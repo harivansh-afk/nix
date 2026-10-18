@@ -45,6 +45,36 @@ let
 in
 {
   claudeMd = agentInstructions.claude;
+
+  # pi against spark's vLLM (hosts/spark/services/inference.nix), started on
+  # demand with `systemctl start vllm`.
+  piModels =
+    if hostname == "spark" then
+      jsonFormat.generate "pi-models.json" {
+        providers.spark-local = {
+          baseUrl = "http://127.0.0.1:18080/v1";
+          api = "openai-completions";
+          apiKey = "none";
+          compat = {
+            supportsStore = false;
+            supportsDeveloperRole = false;
+            supportsReasoningEffort = false;
+            maxTokensField = "max_tokens";
+          };
+          models = [
+            {
+              id = "qwen3.8-flash-next";
+              name = "Qwen 3.8 Flash Next (spark vLLM)";
+              reasoning = true;
+              input = [ "text" ];
+              contextWindow = 65536;
+              maxTokens = 32768;
+            }
+          ];
+        };
+      }
+    else
+      null;
   codexAgentsMd = agentInstructions.codex;
   agentSkills = pkgs.linkFarm "agent-skills" (
     pocockSkills

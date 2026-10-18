@@ -28,6 +28,7 @@
   ghosttyThemes,
   claudeSettings,
   claudeMcpSource,
+  piModels,
   claudeMd,
   codexAgentsMd,
   agentSkills,
@@ -65,7 +66,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${configHome}/git" \
     "${configHome}/jj" \
     "${configHome}/fzf/themes" \
-    "${configHome}/ghostty/shaders" \
     "${configHome}/ghostty/themes" \
     "${configHome}/lazygit" \
     "${configHome}/direnv/lib" \
@@ -131,7 +131,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${dotsRoot}/npm/npmrc" "${configHome}/npm/npmrc"
   mkSymlink "${dotsRoot}/python/pythonrc" "${configHome}/python/pythonrc"
   mkSymlink "${dotsRoot}/ghostty/config" "${configHome}/ghostty/config"
-  mkSymlink "${dotsRoot}/ghostty/shaders" "${configHome}/ghostty/shaders"
   mkSymlink "${ghosttyThemes.dark}" "${configHome}/ghostty/themes/cozybox-dark"
   mkSymlink "${ghosttyThemes.light}" "${configHome}/ghostty/themes/cozybox-light"
 
@@ -159,6 +158,11 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${agentSkills}" "${homeDirectory}/.agents/skills"
   mkSymlink "${agentSkills}" "${homeDirectory}/.claude/skills"
   mkSymlink "${claudeSettings}" "${homeDirectory}/.claude/settings.json"
+  ${lib.optionalString (piModels != null) ''
+    mkdir -p "${homeDirectory}/.pi/agent"
+    mkSymlink "${piModels}" "${homeDirectory}/.pi/agent/models.json"
+  ''}
+
   ${lib.optionalString (claudeMcpSource != null) ''
     target="${homeDirectory}/.claude.json"
     tmp=$(mktemp "${homeDirectory}/.claude.json.XXXXXX")
@@ -259,7 +263,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     ghostty_appsupport="${homeDirectory}/Library/Application Support/com.mitchellh.ghostty"
     mkdir -p "$ghostty_appsupport"
     mkSymlink "${dotsRoot}/ghostty/config" "$ghostty_appsupport/config"
-    mkSymlink "${dotsRoot}/ghostty/shaders" "$ghostty_appsupport/shaders"
 
     lg_darwin="${homeDirectory}/Library/Application Support/lazygit"
     mkdir -p "$lg_darwin"
@@ -347,22 +350,6 @@ pkgs.writeShellScript "user-config-${name}" ''
       if ! "$rustup_bin" component add rust-src >/dev/null 2>&1; then
         echo "warning: rustup component add rust-src failed; rust-analyzer will not resolve std" >&2
       fi
-    fi
-  fi
-
-  # --- cursor-agent via the official installer ---
-  if [ ! -x "${homeDirectory}/.local/bin/cursor-agent" ]; then
-    export PATH="${
-      lib.makeBinPath [
-        pkgs.bash
-        pkgs.coreutils
-        pkgs.curl
-        pkgs.gnutar
-        pkgs.gzip
-      ]
-    }:$PATH"
-    if ! "${pkgs.curl}/bin/curl" -fsS https://cursor.com/install | "${pkgs.bash}/bin/bash"; then
-      echo "warning: cursor-agent install failed; will retry on next switch" >&2
     fi
   fi
 ''

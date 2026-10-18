@@ -18,7 +18,6 @@
     ./hermes-desktop.nix
     ./homebrew.nix
     ./logitech
-    ./mux
     ./muxd.nix
     ./services.nix
     ./startup

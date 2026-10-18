@@ -20,6 +20,7 @@ in
   direnv
   eza
   nvimAliases
+  pi-coding-agent
   tea
 ])
 ++ [ neovim ]

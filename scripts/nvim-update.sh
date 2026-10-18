@@ -5,7 +5,7 @@ root=$(git rev-parse --show-toplevel)
 sources="$root/dots/nvim/pack-sources.json"
 name=${1:?Usage: nvim-update.sh plugin [revision]}
 url=$(jq -er --arg name "$name" '.[$name].url' "$sources")
-rev=${2:-$(jq -r --arg name "$name" '.[$name].branch // "HEAD"' "$sources")}
+rev=${2:-$(jq -r --arg name "$name" 'if .[$name].branch then "refs/heads/" + .[$name].branch else "HEAD" end' "$sources")}
 
 source=$(nix-prefetch-git --url "$url" --rev "$rev" --quiet)
 tmp=$(mktemp "$sources.XXXXXX")

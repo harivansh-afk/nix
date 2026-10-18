@@ -41,14 +41,13 @@ sops-nix with age encryption derived from each host's ed25519 SSH key. Secret fi
 - Pull requests for this repo go to Forgejo (`origin`, git.harivan.sh), never GitHub. The `github` remote is a push-mirror target only; its redirect-pr workflow auto-closes PRs opened there. Create PRs with `tea pr create --login harivan --repo harivansh-afk/nix --base main --head <branch>`.
 - For multiline PR bodies, pass a real file's contents to `tea pr create --description` (or `gh --body-file -` when working on actual GitHub repos). Do not pass escaped `\\n` text; it renders as literal backslash-n. After creating or editing a PR, verify the rendered body before calling it done.
 - Prefer common package definitions across macbook and spark; keep only truly macOS-specific Homebrew and GUI integrations Darwin-only.
-- Cursor CLI and `cursor-agent` come from the official installer: `curl https://cursor.com/install -fsS | bash`.
 - Bugfix PRs keep the diff minimal and exclude unrelated changes.
 - Berkeley Mono is installed out-of-band. The flake only provides nerd-fonts symbol glyphs.
 - There is no home-manager. Per-user config is `modules/users/user-config.nix`: plain dotfiles in `dots/` symlinked into the home directory by an activation script that runs as the user. The repo owner's links point at the live checkout (`~/Documents/Git/nix/dots`), so dotfile edits apply without a rebuild; other users get the nix-store copy. Configs that need store paths (zsh plugins, git credential helpers, theme renders) are store-generated shims that defer to the live dots file.
 - Ghostty is installed via Homebrew cask, not nixpkgs. The flake owns its config files and its terminfo: `xterm-ghostty` is declarative in `modules/common.nix` (`pkgs.ghostty-bin.terminfo` on darwin, `pkgs.ghostty.terminfo` on linux) so env-scrubbed shells resolve it without `TERMINFO`. Never fix terminfo imperatively via `tic` into `~/.terminfo`.
 - Neovim uses one package definition, `lib/neovim.nix`, for workstations and the portable command. Nix owns plugins, grammars, and matched queries; `lz.n` owns lazy loading. Plugin pins live in `dots/nvim/pack-sources.json`; update one with `just nvim-update <plugin> [revision]` and rebuild. Never add runtime installs or seed writable plugin copies. Keep the query-inheritance build check: missing shared queries silently break highlighting.
 - Karabiner config is a directory symlink to `dots/karabiner/` so Karabiner can write freely.
-- Cursor-agent, Claude, and Codex are curl-installed binaries. On NixOS they need nix-ld.
+- Claude and Codex are curl-installed binaries. On NixOS they need nix-ld.
 - Devin config is seeded as a mutable copy since Devin rewrites it.
 - `devin-codex` packages only the adapter; it uses the installed Codex and existing Devin login. Its native `/model` selector writes `~/.codex/devin-codex.config.toml`; leave that profile mutable and keep credentials out of the Nix closure. Protocol fixes belong in `~/Documents/Git/devin-codex`, then update this flake's input.
 
@@ -105,7 +104,6 @@ hosts/
     defaults.nix       System defaults (dock, finder, keyboard, screenshots, loginwindow)
     homebrew.nix       Taps, formulae, casks (every cask on the machine is declared)
     services.nix       Every launchd unit (aerospace, sketchybar, limit.maxfiles); the only service manager
-    mux/               Mux.app built from source at activation (default.nix + build.sh + Info.plist)
     startup/           Login-item allowlist enforcement, undeclared launchd plist warnings (default.nix + guard.sh)
     voiceink/          VoiceInk built from source at activation (default.nix + build.sh)
     notch-inset/, sketchybar-feed/  ObjC sources compiled by services.nix
@@ -131,7 +129,7 @@ pkgs/
   sets.nix             Shared package sets (core, extras, darwinExtras, fonts) for modules/common.nix
   scripts/
     default.nix        Full script set for user profiles (portable + theme, account helpers)
-    portable.nix       Home-independent scripts (ga, iosrun, remote connectors)
+    portable.nix       Home-independent scripts (ga, remote connectors)
     bin/               Script sources wired by default.nix
     lib/               Rex font helper (rex-font.py)
 terraform/
@@ -147,9 +145,9 @@ The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A ru
 
 ## Remote sessions
 
-Terminal sessions, panes, and persistence are the job of Mux.app and muxd (`~/Documents/Git/mux`); spark runs the daemon via `hosts/spark/services/muxd.nix`. Nothing in this repo multiplexes terminals.
+Terminal sessions, panes, and persistence are the job of muxd (`~/Documents/Git/mux`): Rex panes on spark attach to spark's muxd through the Mac's (see Rex below), and a muxd restart takes every pane with it, so the `mux` input is bumped deliberately, never as part of a routine `nix flake update`. spark runs the daemon via `hosts/spark/services/muxd.nix`. Nothing in this repo multiplexes terminals.
 
-The portable scripts (`ga`, `iosrun`, the remote connectors) build without a home directory (`pkgs/scripts/portable.nix`) and are exposed as flake `packages`, so hosts not managed by this flake can install them with `nix profile add git+https://git.harivan.sh/harivansh-afk/nix#<name>`.
+The portable scripts (`ga`, the remote connectors) build without a home directory (`pkgs/scripts/portable.nix`) and are exposed as flake `packages`, so hosts not managed by this flake can install them with `nix profile add git+https://git.harivan.sh/harivansh-afk/nix#<name>`.
 
 `lib/remotes.nix` maps a command name to the remote hostname. `pkgs/scripts/portable.nix` renders each entry into a connector command (via `pkgs/scripts/bin/remote.sh`) that lands in every user's profile: `spark` or `macbook` opens a shell over `mosh <host>`; `--ssh` forces `ssh -t` for UDP-hostile networks. Transport config (hostnames, keys, ControlMaster) stays in the live-edited `dots/ssh/config`; ssh, scp, and git are never wrapped. To add a server: one entry in `lib/remotes.nix` plus its `Host` block in `dots/ssh/config`.
 

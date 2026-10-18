@@ -61,15 +61,6 @@ let
   inherit (portable) mkScript;
 
   commonPackages = portable.packages // {
-    gh-wiive-2fa = mkScript {
-      name = "gh-wiive-2fa";
-      file = ./bin/gh-wiive-2fa.sh;
-      runtimeInputs = with pkgs; [
-        coreutils
-        oath-toolkit
-      ];
-    };
-
     theme = mkScript {
       name = "theme";
       file = ./bin/theme.sh;

@@ -80,7 +80,6 @@
           gh
           git
           git-lfs
-          k9s
           ripgrep
           tea
         ])

@@ -19,7 +19,6 @@ in
   btop
   direnv
   eza
-  k9s
   nvimAliases
   tea
 ])

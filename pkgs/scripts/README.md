@@ -20,8 +20,7 @@ land on `PATH` on every host. `portable.nix` is the home-independent subset
 | `gh-wiive-2fa` | `bin/gh-wiive-2fa.sh` | TOTP code for the shared eng-wiive GitHub account (reads sops secret `gh-wiive-totp`) |
 
 Each entry in `lib/remotes.nix` additionally renders `bin/remote.sh` into a
-per-remote connector command (`spark`, `macbook`, `dev6`, `dev1`, `dev2`,
-`dev3`, `hil1`, `hil2`, `vin1`, `vin2`) that opens a shell on the remote over
+per-remote connector command (`spark`, `macbook`) that opens a shell on the remote over
 mosh (`--ssh` for ssh).
 
 `default.nix` also exports `themeAssetsText`, consumed by the theme-activation

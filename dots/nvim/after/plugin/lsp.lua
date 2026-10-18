@@ -23,8 +23,6 @@ local servers = {
   "bashls",
   "clangd",
   "cssls",
-  "elixirls",
-  "gopls",
   "html",
   "jsonls",
   "lua_ls",

@@ -33,7 +33,11 @@ return {
   {
     "mini.pick",
     cmd = "Pick",
-    after = function() require("mini.pick").setup() end,
+    after = function()
+      require("mini.pick").setup {
+        window = { config = function() return { width = vim.o.columns, height = vim.o.lines } end },
+      }
+    end,
     keys = {
       { "<C-f>", "<cmd>Pick files<cr>" },
       { "<C-s>", "<cmd>Pick grep_live<cr>" },

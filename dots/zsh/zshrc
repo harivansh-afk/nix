@@ -271,7 +271,7 @@ _open_files() {
     zle self-insert
     return
   fi
-  BUFFER="nvim +'FzfLua files'"
+  BUFFER="nvim +'Pick files'"
   zle accept-line
 }
 zle -N _open_files

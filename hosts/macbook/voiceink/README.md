@@ -1,15 +1,12 @@
 # VoiceInk
 
-The flake builds VoiceInk 2.21 from source, preserving the custom streaming
-provider and compact recorder patches. `make local` produces a Release app.
+The flake builds VoiceInk 2.21 from source with the compact recorder patch. `make local` produces a Release app.
 The existing stable signing identity and disabled Sparkle updates remain in use.
 
 After switching the Mac, quit and reopen VoiceInk. In **AI Models**, download
 **Parakeet V3** once. The default mode selects it for local dictation; the model
 files live in VoiceInk's mutable cache, outside the Nix store. Dictation with this
-mode requires that download. The old Spark Whisper provider remains available
-but is no longer the default: its streaming endpoint produced repeated
-"Thank you" from digital silence during diagnosis.
+mode requires that download.
 
 Dictionary Auto Learn is enabled, with **Ollama** selected separately from the
 dictation mode and review set to **manual**. Connect a local Ollama instance and

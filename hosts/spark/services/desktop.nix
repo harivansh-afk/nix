@@ -5,6 +5,7 @@
   ...
 }:
 let
+  tailnet = import ../../../lib/tailnet.nix;
   beeper = pkgs.callPackage ../../../pkgs/beeper { };
   cuaDriver = pkgs.callPackage ../../../pkgs/cua-driver { };
   computer = import ../../../pkgs/computer-tools { inherit pkgs; };
@@ -149,9 +150,10 @@ in
     after = [ "sway.service" ];
     unitConfig.ConditionUser = username;
     serviceConfig = {
+      ExecStartPre = "${pkgs.tailscale}/bin/tailscale wait --timeout=2m";
       ExecStart = "${pkgs.wayvnc}/bin/wayvnc --config ${
         config.sops.secrets."wayvnc.conf".path
-      } 100.98.32.95 45931";
+      } spark.${tailnet.domain} 45931";
       Restart = "on-failure";
       RestartSec = 5;
       UMask = "0077";

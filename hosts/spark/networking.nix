@@ -1,11 +1,8 @@
 {
   config,
-  pkgs,
+  username,
   ...
 }:
-let
-  ixSocket = "/run/tailscale-ix/tailscaled.sock";
-in
 {
   # Run a local stub resolver (127.0.0.53) so a resolver is always listening,
   # even before NetworkManager has finished writing upstream nameservers into
@@ -70,28 +67,11 @@ in
     enable = true;
     extraSetFlags = [
       "--hostname=spark"
-      "--accept-dns=false"
+      "--accept-dns"
+      "--operator=${username}"
       "--ssh=false"
     ];
   };
-
-  systemd.services.tailscaled-ix = {
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      ExecStart = "${pkgs.tailscale}/bin/tailscaled --tun=userspace-networking --socket=${ixSocket} --state=/var/lib/tailscale-ix/tailscaled.state --port=41642";
-      Restart = "on-failure";
-      RuntimeDirectory = "tailscale-ix";
-      StateDirectory = "tailscale-ix";
-    };
-  };
-
-  environment.systemPackages = [
-    (pkgs.writeShellScriptBin "tailscale-ix" ''
-      exec ${pkgs.tailscale}/bin/tailscale --socket=${ixSocket} "$@"
-    '')
-  ];
 
   zramSwap.enable = true;
 }

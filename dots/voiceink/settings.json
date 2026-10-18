@@ -62,22 +62,7 @@
     "AutoLearnDictionaryReviewSchedule": "manually"
   },
   "jsonData": {
-    "customCloudModels": [
-      {
-        "supportedLanguages": {
-          "auto": "Auto-detect",
-          "en": "English"
-        },
-        "apiEndpoint": "https://spark.taileb8b41.ts.net/v1/audio/transcriptions",
-        "id": "FBE7D583-0619-4FDC-A66B-C2633E9B2389",
-        "modelName": "openai/whisper-large-v3",
-        "name": "spark-whisper",
-        "displayName": "Spark Whisper Large v3",
-        "isMultilingualModel": true,
-        "description": "Whisper Large v3 on Spark",
-        "isStreamingModel": true
-      }
-    ],
+    "customCloudModels": [],
     "modeConfigurationsV2": [
       {
         "outputMode": "paste",

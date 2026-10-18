@@ -7,6 +7,7 @@
   ...
 }:
 let
+  tailnet = import ../../../../lib/tailnet.nix;
   home = config.users.users.${username}.home;
   stateDir = "${home}/.local/state/hermes";
   runtimeDir = "/run/user/${toString config.users.users.${username}.uid}";
@@ -42,8 +43,6 @@ in
     ./imessage.nix
     ./roommates.nix
   ];
-
-  networking.hosts."100.98.32.95" = [ "spark.taileb8b41.ts.net" ];
 
   systemd.tmpfiles.rules = [
     "r ${stateDir}/.hermes/plugins/knowledge-base - - - -"
@@ -90,7 +89,7 @@ in
 
     backend = {
       mode = "serve";
-      host = "spark.taileb8b41.ts.net";
+      host = "spark.${tailnet.domain}";
       waitFor = "hostname";
     };
 

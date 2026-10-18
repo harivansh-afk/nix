@@ -9,11 +9,6 @@
     "rev": "009849a5ca22846effb2d161c3aac34167e872f5",
     "url": "https://github.com/barrettruth/diffs.nvim"
   },
-  "fzf-lua": {
-    "hash": "sha256-49fKbUiA2cBgmte3KHxNqvldtK5IZkKsKEK002j3rXg=",
-    "rev": "c67fadd9a24230417267e4f9068227e093c0be2b",
-    "url": "https://github.com/ibhagwan/fzf-lua"
-  },
   "gitsigns.nvim": {
     "hash": "sha256-VB1XBtSWwR8+XJhxfXn5IzV4r7oC+wJ/eL/bg7sC44g=",
     "rev": "fd780920613e541cbdfac41bf711583ed49f9249",
@@ -60,8 +55,8 @@
     "url": "https://github.com/nvim-tree/nvim-web-devicons"
   },
   "pr.nvim": {
-    "hash": "sha256-Dwa6fUUi/V5H9YZjmltfdMJD12LbMV+fvq7VLib5L5E=",
-    "rev": "a4c49cdec95f52d703080f9513e8e3a739e26429",
+    "hash": "sha256-Ayjavu6Z4r+rl1+VLb1YJCVYxEhBPH9A03YIAzfC5u8=",
+    "rev": "5e331d9931237ec5556e34736d68bb69092393b9",
     "url": "https://git.harivan.sh/harivansh-afk/pr.nvim"
   },
   "vim-eunuch": {

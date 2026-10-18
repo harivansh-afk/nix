@@ -671,23 +671,6 @@
         "type": "github"
       }
     },
-    "ix-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1786513547,
-        "narHash": "sha256-MGX92rBQ+LZ2mrGFPs/HWQaG601jsighjMyiz64B4TI=",
-        "owner": "indexable-inc",
-        "repo": "ix",
-        "rev": "f72060016d74211e72793f295d3b8697d1994a3d",
-        "type": "github"
-      },
-      "original": {
-        "owner": "indexable-inc",
-        "repo": "ix",
-        "rev": "f72060016d74211e72793f295d3b8697d1994a3d",
-        "type": "github"
-      }
-    },
     "lanzaboote": {
       "inputs": {
         "crane": "crane",
@@ -1370,7 +1353,6 @@
         "flake-parts": "flake-parts_5",
         "googleworkspace-cli": "googleworkspace-cli",
         "hermes-agent": "hermes-agent",
-        "ix-src": "ix-src",
         "lanzaboote": "lanzaboote",
         "mattpocock-skills": "mattpocock-skills",
         "mixbridge-web": "mixbridge-web",
@@ -1383,7 +1365,6 @@
         "nixpkgs-macbook": "nixpkgs-macbook",
         "pierrejo": "pierrejo",
         "roomcast": "roomcast",
-        "rust-overlay": "rust-overlay_2",
         "sharefs": "sharefs",
         "sops-nix": "sops-nix",
         "terranix": "terranix",
@@ -1403,26 +1384,6 @@
         "owner": "oxalica",
         "repo": "rust-overlay",
         "rev": "8534567325bd8a8d2928e6afd81e0a87d19efd3c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "type": "github"
-      }
-    },
-    "rust-overlay_2": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1786594607,
-        "narHash": "sha256-5f9qi0HFGX07xuLG4X7MVsXb6imb1pEhEhlYB+ts4Xk=",
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "rev": "cb8f92ed710cb8402805a509d4083418b5435edb",
         "type": "github"
       },
       "original": {

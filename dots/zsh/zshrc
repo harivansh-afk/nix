@@ -105,7 +105,7 @@ export BUN_INSTALL="$HOME/.bun"
 # Guarded because an unguarded "$(npm prefix -g)/bin" degrades to "/bin" on any
 # box without npm on PATH at this point, which puts /bin ahead of the nix
 # profiles and shadows every nix-installed tool with whatever the base image
-# ships. That is how the ix dev VM ended up running its own nvim wrapper.
+# ships.
 npm_global_prefix="$(npm prefix -g 2>/dev/null)"
 typeset -U path PATH
 path=(

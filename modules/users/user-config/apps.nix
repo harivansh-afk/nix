@@ -7,9 +7,6 @@
   isDarwin,
   ...
 }:
-let
-  lazygitBase = builtins.readFile ../../../dots/lazygit/config.yml;
-in
 {
   nvimAliases = pkgs.runCommand "nvim-command-aliases" { } ''
     mkdir -p "$out/bin"
@@ -24,17 +21,11 @@ in
   # build for, so baking the eval-time hostname in labels every node with
   # the build host's name.
   btopConf = pkgs.writeText "btop.conf" ''
-    color_theme = "cozybox-current"
     custom_cpu_name = "@HOSTNAME@"
     rounded_corners = False
     theme_background = False
     vim_keys = True
   '';
-
-  btopThemes = {
-    dark = pkgs.writeText "btop-cozybox-dark.theme" (theme.renderBtop "dark");
-    light = pkgs.writeText "btop-cozybox-light.theme" (theme.renderBtop "light");
-  };
 
   fzfThemes = {
     dark = pkgs.writeText "fzf-cozybox-dark" (theme.renderFzf "dark");
@@ -108,11 +99,6 @@ in
   sketchybarThemes = {
     dark = pkgs.writeText "sketchybar-cozybox-dark.sh" (theme.renderSketchybar "dark");
     light = pkgs.writeText "sketchybar-cozybox-light.sh" (theme.renderSketchybar "light");
-  };
-
-  lazygitConfigs = {
-    dark = pkgs.writeText "lazygit-config-dark.yml" (lazygitBase + theme.renderLazygit "dark");
-    light = pkgs.writeText "lazygit-config-light.yml" (lazygitBase + theme.renderLazygit "light");
   };
 
   # darwin: helium managed extensions

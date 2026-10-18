@@ -89,18 +89,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Dated rust toolchains for pkgs/jj-ix, consumed via lib.mkRustBin, not as an overlay.
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # ix monorepo for pkgs/jj-ix, pinned to the archived mirror's final commit; fetching needs a github access-token in nix.conf.
-    ix-src = {
-      url = "github:indexable-inc/ix/f72060016d74211e72793f295d3b8697d1994a3d";
-      flake = false;
-    };
-
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -138,7 +126,6 @@
         ./flake/devshell.nix
         ./flake/hosts.nix
         ./flake/nixos.nix
-        ./flake/omp.nix
         ./flake/packages.nix
         ./flake/tests.nix
         ./flake/user-config.nix

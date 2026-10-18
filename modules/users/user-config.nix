@@ -5,8 +5,8 @@
 # The concerns are split across user-config/:
 #   env.nix         session environment (XDG dirs, tool homes)
 #   shell.nix       zsh shims + prompt/highlight themes
-#   git.nix         credential helpers + delta themes
-#   agents.nix      claude/codex/omp settings, rendered instructions, skills
+#   git.nix         credential helpers
+#   agents.nix      claude/codex settings, rendered instructions, skills
 #   apps.nix        btop/fzf/ghostty/lazygit/nvim aliases/helium
 #   tea.nix         tea login fragment
 #   packages.nix    the package set
@@ -20,9 +20,7 @@
   isDarwin,
   extraPackages ? [ ],
   forgeUsers ? { },
-  installMutableTools ? true,
   skillSources ? { },
-  nvimCurated ? false,
   neovimPackage ? pkgs.neovim,
 }:
 let
@@ -30,11 +28,9 @@ let
   neovim = import ../../lib/neovim.nix {
     inherit lib pkgs;
     neovim = neovimPackage;
-    curated = nvimCurated;
   };
   forgeLogins = {
     harivan = "harivansh-afk";
-    ix = "harivansh-afk";
   }
   // forgeUsers;
   configHome = "${homeDirectory}/.config";
@@ -65,7 +61,6 @@ let
       customScripts
       coreutilsBin
       forgeLogins
-      installMutableTools
       skillSources
       neovim
       ;
@@ -91,7 +86,7 @@ let
     // {
       inherit (env) environmentD;
       inherit (shell) zshenvShim zshrcShim zshThemes;
-      inherit (git) gitCredentialsInc gitDeltaThemesInc;
+      inherit (git) gitCredentialsInc;
       inherit (agents)
         claudeSettings
         claudeMcpSource
@@ -101,21 +96,12 @@ let
         codexConfigSource
         readXattr
         writeXattr
-        ompThemes
-        ompConfigSource
-        ompLocalSource
-        ompMcpSource
-        ompModelsSource
-        ompReadXattr
-        ompWriteXattr
         ;
       inherit (apps)
         btopConf
-        btopThemes
         fzfThemes
         ghosttyTerminfo
         ghosttyThemes
-        lazygitConfigs
         sketchybarThemes
         heliumExtJson
         heliumExtensions

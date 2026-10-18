@@ -4,7 +4,6 @@
   homeDirectory,
   hostname,
   isDarwin,
-  theme,
   skillSources,
   ...
 }:
@@ -26,7 +25,6 @@ let
   );
 
   jsonFormat = pkgs.formats.json { };
-  yamlFormat = pkgs.formats.yaml { };
 
   mkReadXattr =
     xattrName:
@@ -43,28 +41,7 @@ let
       ''${pkgs.attr}/bin/setfattr -n "${xattrName}" -v "$source" "$target"'';
 
   codexXattr = "user.hari.codex-seed-source";
-  ompXattr = "user.hari.omp-seed-source";
 
-  # MCP servers for omp (~/.omp/agent/mcp.json). `index` is ix-mcp, the
-  # indexable Python-kernel MCP server; the `ix-mcp` on PATH is the spark-only
-  # wrapper around the live checkout (hosts/spark/omp.nix), so the entry is
-  # emitted only off-darwin.
-  ompMcpServers =
-    (lib.optionalAttrs (!isDarwin) {
-      index = {
-        command = "ix-mcp";
-        args = [ "serve" ];
-      };
-    })
-    // lib.optionalAttrs (hostname == "spark") (
-      lib.mapAttrs (
-        _: server:
-        server
-        // {
-          timeout = 60000;
-        }
-      ) computer.servers
-    );
 in
 {
   claudeMd = agentInstructions.claude;
@@ -144,101 +121,4 @@ in
   readXattr = mkReadXattr codexXattr;
   writeXattr = mkWriteXattr codexXattr;
 
-  ompThemes = {
-    dark = jsonFormat.generate "omp-cozybox-dark.json" (theme.ompTheme "dark");
-    light = jsonFormat.generate "omp-cozybox-light.json" (theme.ompTheme "light");
-  };
-
-  ompMcpSource = jsonFormat.generate "omp-mcp.json" { mcpServers = ompMcpServers; };
-
-  # Session overlay for local inference: `omp --config ~/.omp/agent/local.yml`.
-  # Role syntax: provider/model[:thinking]; `default` drives the main session
-  # model, `task` is what subagents resolve at spawn time.
-  ompLocalSource = yamlFormat.generate "omp-local-mode.yml" {
-    modelRoles = {
-      default = "spark-local/qwen3.8-flash-next:medium";
-      task = "spark-local/qwen3.8-flash-next:medium";
-    };
-  };
-
-  ompModelsSource = yamlFormat.generate "omp-models.yml" {
-    providers.spark-local = {
-      baseUrl = "http://127.0.0.1:18080/v1";
-      api = "openai-completions";
-      auth = "none";
-      compat = {
-        supportsStore = false;
-        supportsDeveloperRole = false;
-        supportsReasoningEffort = false;
-        supportsStrictMode = false;
-        maxTokensField = "max_tokens";
-      };
-      models = [
-        {
-          id = "qwen3.8-flash-next";
-          name = "Qwen 3.8 Flash Next NVFP4";
-          reasoning = true;
-          input = [ "text" ];
-          contextWindow = 65536;
-          maxTokens = 32768;
-        }
-      ];
-    };
-  };
-
-  ompConfigSource = yamlFormat.generate "omp-config.yml" {
-    theme = {
-      dark = "cozybox-dark";
-      light = "cozybox-light";
-    };
-    # The activation script reseeds config.yml whenever this generated file
-    # changes; without a pinned setupVersion each reseed resets it to 0 and the
-    # onboarding wizard re-fires on next launch. Pin it to upstream's
-    # CURRENT_SETUP_VERSION (src/modes/setup-version.ts): the cold-launch gate
-    # in main.ts eagerly imports the whole setup-wizard barrel whenever the
-    # stored version is lower, before startup.setupWizard is even consulted,
-    # so a stale pin taxes every launch just to decide to skip the wizard.
-    setupVersion = 2;
-    startup = {
-      quiet = true;
-      setupWizard = false;
-    };
-    symbolPreset = "unicode";
-    display.shimmer = "disabled";
-    disabledProviders = [ "llama.cpp" ];
-    todo.enabled = false;
-    modelRoles = {
-      default = "anthropic/claude-fable-5-1:high";
-      task = "openai-codex/gpt-5.6-sol:low";
-    };
-    statusLine = {
-      preset = "custom";
-      sessionAccent = false;
-      leftSegments = [
-        "model"
-        "path"
-        "git"
-      ];
-      rightSegments = [ "context_pct" ];
-      segmentOptions = {
-        model.showThinkingLevel = true;
-        path = {
-          abbreviate = true;
-          maxLength = 40;
-          stripWorkPrefix = true;
-        };
-        git = {
-          showBranch = true;
-          showStaged = true;
-          showUnstaged = true;
-          showUntracked = false;
-        };
-      };
-      separator = "pipe";
-      transparent = true;
-    };
-  };
-
-  ompReadXattr = mkReadXattr ompXattr;
-  ompWriteXattr = mkWriteXattr ompXattr;
 }

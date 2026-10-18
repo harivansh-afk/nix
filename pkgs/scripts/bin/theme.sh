@@ -30,22 +30,16 @@ link_mode_assets() {
   theme_load_mode_assets "$mode"
   mode="$THEME_MODE"
 
-  mkdir -p "@STATE_DIR@" "@FZF_DIR@" "@GHOSTTY_DIR@" "@LAZYGIT_DIR@" "@BTOP_THEMES_DIR@" "@GIT_THEME_DIR@" "@WALLPAPER_DIR@"
+  mkdir -p "@STATE_DIR@" "@FZF_DIR@" "@GHOSTTY_DIR@" "@WALLPAPER_DIR@"
   printf '%s\n' "$mode" >"@STATE_FILE@"
   ln -sfn "$THEME_FZF_TARGET" "@FZF_CURRENT_FILE@"
   ln -sfn "$THEME_GHOSTTY_TARGET" "@GHOSTTY_CURRENT_FILE@"
-  ln -sfn "$THEME_LAZYGIT_TARGET" "@LAZYGIT_CURRENT_FILE@"
-  ln -sfn "$THEME_BTOP_TARGET" "@BTOP_CURRENT_FILE@"
-  ln -sfn "$THEME_GIT_THEME_TARGET" "@GIT_THEME_CURRENT_FILE@"
 
   if [[ -f "$THEME_WALLPAPER" ]]; then
     ln -sfn "$THEME_WALLPAPER" "@WALLPAPER_CURRENT_FILE@"
   fi
 
   if [[ "$(uname -s)" == "Darwin" ]] && command -v osascript >/dev/null 2>&1; then
-    mkdir -p "@LAZYGIT_DARWIN_DIR@"
-    ln -sfn "$THEME_DARWIN_LAZYGIT_TARGET" "@LAZYGIT_DARWIN_FILE@"
-
     mkdir -p "@SKETCHYBAR_DIR@"
     ln -sfn "$THEME_SKETCHYBAR_TARGET" "@SKETCHYBAR_CURRENT_FILE@"
     sketchybar_bin=$(command -v sketchybar || echo /run/current-system/sw/bin/sketchybar)

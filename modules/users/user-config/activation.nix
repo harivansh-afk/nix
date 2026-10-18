@@ -21,14 +21,11 @@
   zshrcShim,
   zshThemes,
   gitCredentialsInc,
-  gitDeltaThemesInc,
   btopConf,
-  btopThemes,
   fzfThemes,
   sketchybarThemes,
   ghosttyTerminfo,
   ghosttyThemes,
-  lazygitConfigs,
   claudeSettings,
   claudeMcpSource,
   claudeMd,
@@ -37,13 +34,6 @@
   codexConfigSource,
   readXattr,
   writeXattr,
-  ompThemes,
-  ompConfigSource,
-  ompLocalSource,
-  ompMcpSource,
-  ompModelsSource,
-  ompReadXattr,
-  ompWriteXattr,
   teaLoginYaml,
   forgeLogins,
   heliumExtJson,
@@ -51,7 +41,6 @@
   rexDefaults,
   rexFont,
   rexThemes,
-  installMutableTools,
   ...
 }:
 pkgs.writeShellScript "user-config-${name}" ''
@@ -85,14 +74,13 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${configHome}/graphite" \
     "${configHome}/npm" \
     "${configHome}/python" \
-    "${theme.paths.btopThemesDir}" \
+    "${configHome}/btop" \
     "${configHome}/devin" \
     "${configHome}/gcloud/configurations" \
     "${configHome}/tea" \
     "${homeDirectory}/.claude" \
     "${homeDirectory}/.agents" \
     "${homeDirectory}/.codex" \
-    "${homeDirectory}/.omp/agent/themes" \
     "${homeDirectory}/.local/bin" \
     "${homeDirectory}/.ssh/sockets" \
     "${stateHome}" \
@@ -111,7 +99,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${dotsRoot}/git/ignore" "${configHome}/git/ignore"
   mkSymlink "${dotsRoot}/git/allowed_signers" "${configHome}/git/allowed_signers"
   mkSymlink "${gitCredentialsInc}" "${configHome}/git/credentials.inc"
-  mkSymlink "${gitDeltaThemesInc}" "${configHome}/git/delta-themes.inc"
 
   # --- jj ---
   mkSymlink "${dotsRoot}/jj/config.toml" "${configHome}/jj/config.toml"
@@ -141,8 +128,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   rm -f "${configHome}/btop/btop.conf"
   ${pkgs.gnused}/bin/sed "s/@HOSTNAME@/$(uname -n)/" "${btopConf}" \
     > "${configHome}/btop/btop.conf"
-  mkSymlink "${btopThemes.dark}" "${theme.paths.btopThemesDir}/cozybox-dark.theme"
-  mkSymlink "${btopThemes.light}" "${theme.paths.btopThemesDir}/cozybox-light.theme"
   mkSymlink "${dotsRoot}/k9s/views.yaml" "${configHome}/k9s/views.yaml"
   mkSymlink "${dotsRoot}/direnv/direnv.toml" "${configHome}/direnv/direnv.toml"
   mkSymlink "${pkgs.nix-direnv}/share/nix-direnv/direnvrc" "${configHome}/direnv/lib/nix-direnv.sh"
@@ -159,8 +144,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${ghosttyTerminfo}/share/terminfo" "${homeDirectory}/.terminfo"
   mkSymlink "${fzfThemes.dark}" "${configHome}/fzf/themes/cozybox-dark"
   mkSymlink "${fzfThemes.light}" "${configHome}/fzf/themes/cozybox-light"
-  mkSymlink "${lazygitConfigs.dark}" "${configHome}/lazygit/config-dark.yml"
-  mkSymlink "${lazygitConfigs.light}" "${configHome}/lazygit/config-light.yml"
+  mkSymlink "${dotsRoot}/lazygit/config.yml" "${configHome}/lazygit/config.yml"
 
   # gh rewrites its config at runtime; keep a managed copy instead of a
   # read-only store symlink
@@ -215,37 +199,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     ${writeXattr}
   fi
 
-  mkSymlink "${ompThemes.dark}" "${homeDirectory}/.omp/agent/themes/cozybox-dark.json"
-  mkSymlink "${ompThemes.light}" "${homeDirectory}/.omp/agent/themes/cozybox-light.json"
-  mkSymlink "${ompLocalSource}" "${homeDirectory}/.omp/agent/local.yml"
-  mkSymlink "${ompMcpSource}" "${homeDirectory}/.omp/agent/mcp.json"
-  mkSymlink "${ompModelsSource}" "${homeDirectory}/.omp/agent/models.yml"
-  rm -f "${homeDirectory}/.omp/agent/modes.json"
-  for link in "${homeDirectory}/.omp/agent/extensions"/*; do
-    if [ -L "$link" ]; then
-      rm -f "$link"
-    fi
-  done
-
-  target="${homeDirectory}/.omp/agent/config.yml"
-  source="${ompConfigSource}"
-  current=""
-
-  if [ -e "$target" ] && [ ! -L "$target" ]; then
-    if xattr_value="$(${ompReadXattr})"; then
-      current="$xattr_value"
-    fi
-  fi
-
-  if [ ! -e "$target" ] || [ -L "$target" ] || [ "$current" != "$source" ]; then
-    tmp="$target.seed-tmp"
-    rm -f "$target" "$tmp"
-    cp "$source" "$tmp"
-    chmod u+w "$tmp"
-    mv "$tmp" "$target"
-    ${ompWriteXattr}
-  fi
-
   # --- devin config: managed copy with backup of local divergence ---
   if [ -f "${configHome}/devin/config.json" ] \
     && ! ${pkgs.diffutils}/bin/cmp -s "${dotsRoot}/devin/config.json" "${configHome}/devin/config.json"; then
@@ -283,40 +236,20 @@ pkgs.writeShellScript "user-config-${name}" ''
 
   # --- tea logins from sops secrets (skipped when unreadable) ---
   harivanTokenFile=/run/secrets/forgejo-token
-  ixTokenEnvFile=/run/secrets/forgejo-ix.env
 
   harivanToken=
   if [ -r "$harivanTokenFile" ]; then
     harivanToken=$(cat "$harivanTokenFile")
   fi
 
-  ixToken=
-  if [ -r "$ixTokenEnvFile" ]; then
-    ixToken=$(
-      set -a
-      . "$ixTokenEnvFile"
-      printf '%s' "$FORGEJO_IX_TOKEN"
-    )
-  fi
-
-  if [ -n "$harivanToken" ] || [ -n "$ixToken" ]; then
+  if [ -n "$harivanToken" ]; then
     install -d -m 0700 "${configHome}/tea"
     umask 077
     tmp="${configHome}/tea/config.yml.tmp"
 
     {
       printf '%s\n' "logins:"
-      if [ -n "$harivanToken" ]; then
-        ${teaLoginYaml} harivan https://git.harivan.sh git.harivan.sh "$harivanToken" true ${lib.escapeShellArg forgeLogins.harivan}
-      fi
-      if [ -n "$ixToken" ]; then
-        if [ -n "$harivanToken" ]; then
-          ixDefault=false
-        else
-          ixDefault=true
-        fi
-        ${teaLoginYaml} ix-harivansh https://git.ix.dev git.ix.dev "$ixToken" "$ixDefault" ${lib.escapeShellArg forgeLogins.ix}
-      fi
+      ${teaLoginYaml} harivan https://git.harivan.sh git.harivan.sh "$harivanToken" true ${lib.escapeShellArg forgeLogins.harivan}
       cat <<'YAML'
   preferences:
       editor: false
@@ -335,9 +268,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkdir -p "${theme.paths.stateDir}" \
            "${theme.paths.fzfDir}" \
            "${theme.paths.ghosttyDir}" \
-           "${theme.paths.lazygitDir}" \
-           "${theme.paths.btopThemesDir}" \
-           "${theme.paths.gitDir}" \
            "${theme.wallpapers.dir}"
 
   if [ -f "${theme.paths.stateFile}" ]; then
@@ -352,9 +282,6 @@ pkgs.writeShellScript "user-config-${name}" ''
 
   ln -sfn "$THEME_FZF_TARGET" "${theme.paths.fzfCurrentFile}"
   ln -sfn "$THEME_GHOSTTY_TARGET" "${theme.paths.ghosttyCurrentFile}"
-  ln -sfn "$THEME_LAZYGIT_TARGET" "${theme.paths.lazygitCurrentFile}"
-  ln -sfn "$THEME_GIT_THEME_TARGET" "${theme.paths.gitThemeCurrentFile}"
-  ln -sfn "$THEME_BTOP_TARGET" "${theme.paths.btopCurrentFile}"
 
   ln -sfn "$THEME_WALLPAPER" "${theme.wallpapers.current}"
 
@@ -367,9 +294,7 @@ pkgs.writeShellScript "user-config-${name}" ''
 
     lg_darwin="${homeDirectory}/Library/Application Support/lazygit"
     mkdir -p "$lg_darwin"
-    mkSymlink "${lazygitConfigs.dark}" "$lg_darwin/config-dark.yml"
-    mkSymlink "${lazygitConfigs.light}" "$lg_darwin/config-light.yml"
-    ln -sfn "$THEME_DARWIN_LAZYGIT_TARGET" "$lg_darwin/config.yml"
+    mkSymlink "${dotsRoot}/lazygit/config.yml" "$lg_darwin/config.yml"
 
     # karabiner wants a writable directory; point it at the live checkout
     mkSymlink "${dotsRoot}/karabiner" "${configHome}/karabiner"
@@ -441,24 +366,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     ${pkgs.findutils}/bin/find "${homeDirectory}/.gnupg" -type f -exec chmod 600 {} +
   fi
 
-  ${lib.optionalString installMutableTools ''
-    export PATH="${
-      lib.makeBinPath [
-        pkgs.bash
-        pkgs.coreutils
-        pkgs.curl
-        pkgs.gnugrep
-        pkgs.gnused
-      ]
-    }:$PATH"
-    if [ ! -x "${homeDirectory}/.local/bin/omp" ]; then
-      if ! "${pkgs.curl}/bin/curl" -fsSL https://omp.sh/install \
-        | PI_INSTALL_DIR="${homeDirectory}/.local/bin" "${pkgs.bash}/bin/bash"; then
-        echo "warning: omp install failed; will retry on next switch" >&2
-      fi
-    fi
-  ''}
-
   # --- rust-src for rust-analyzer (it reads std's source; rustup components
   # are not nix-declarable). Guarded on the directory, so a switch is one stat.
   rustup_bin="/run/current-system/sw/bin/rustup"
@@ -475,20 +382,18 @@ pkgs.writeShellScript "user-config-${name}" ''
   fi
 
   # --- cursor-agent via the official installer ---
-  ${lib.optionalString installMutableTools ''
-    if [ ! -x "${homeDirectory}/.local/bin/cursor-agent" ]; then
-      export PATH="${
-        lib.makeBinPath [
-          pkgs.bash
-          pkgs.coreutils
-          pkgs.curl
-          pkgs.gnutar
-          pkgs.gzip
-        ]
-      }:$PATH"
-      if ! "${pkgs.curl}/bin/curl" -fsS https://cursor.com/install | "${pkgs.bash}/bin/bash"; then
-        echo "warning: cursor-agent install failed; will retry on next switch" >&2
-      fi
+  if [ ! -x "${homeDirectory}/.local/bin/cursor-agent" ]; then
+    export PATH="${
+      lib.makeBinPath [
+        pkgs.bash
+        pkgs.coreutils
+        pkgs.curl
+        pkgs.gnutar
+        pkgs.gzip
+      ]
+    }:$PATH"
+    if ! "${pkgs.curl}/bin/curl" -fsS https://cursor.com/install | "${pkgs.bash}/bin/bash"; then
+      echo "warning: cursor-agent install failed; will retry on next switch" >&2
     fi
-  ''}
+  fi
 ''

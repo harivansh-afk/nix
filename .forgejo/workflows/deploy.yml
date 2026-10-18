@@ -18,5 +18,13 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      # spark-deploy runs nixos-rebuild as its own root unit, so a switch that
+      # replaces or stops this runner cannot kill it; the first deploy that
+      # introduces spark-deploy still takes the direct path.
       - name: nixos-rebuild switch
-        run: /run/wrappers/bin/sudo /run/current-system/sw/bin/nixos-rebuild switch --flake .#spark
+        run: |
+          if [ -x /run/current-system/sw/bin/spark-deploy ]; then
+            /run/wrappers/bin/sudo /run/current-system/sw/bin/spark-deploy "$PWD"
+          else
+            /run/wrappers/bin/sudo /run/current-system/sw/bin/nixos-rebuild switch --flake .#spark
+          fi

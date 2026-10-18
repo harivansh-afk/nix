@@ -26,7 +26,6 @@ local function check()
   end
   for _, name in ipairs {
     "pr.nvim",
-    "canola.nvim",
     "gitsigns.nvim",
     "mini.pairs",
     "mini.pick",
@@ -34,7 +33,7 @@ local function check()
   } do
     require("lz.n").trigger_load(name)
   end
-  for _, command in ipairs { "PR", "Git", "Canola", "Pick", "ThemeSync" } do
+  for _, command in ipairs { "PR", "Git", "Pick", "ThemeSync", "Rename", "Delete", "Chmod" } do
     assert(vim.fn.exists(":" .. command) == 2, command .. " missing")
   end
   local pr_source = debug.getinfo(require("pr").setup, "S").source

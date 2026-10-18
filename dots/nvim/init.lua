@@ -17,7 +17,6 @@ end
 
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
-vim.g.loaded_nvim_dir_plugin = 1
 
 vim.cmd.packadd "nvim-treesitter"
 vim.cmd.packadd "vim-fugitive"

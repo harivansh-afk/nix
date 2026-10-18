@@ -54,7 +54,6 @@
           cp -R ${inputs.voiceink-src} source
           chmod -R u+w source
           cd source
-          patch --batch --fuzz=0 -p1 < ${../hosts/macbook/voiceink/streaming-provider.patch}
           patch --batch --fuzz=0 -p1 < ${../hosts/macbook/voiceink/mini-recorder.patch}
           bash -n ${../hosts/macbook/voiceink/build.sh}
           touch $out

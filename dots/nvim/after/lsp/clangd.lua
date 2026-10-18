@@ -9,11 +9,4 @@ return {
     "--header-insertion=never",
     "--header-insertion-decorators=false",
   },
-  capabilities = {
-    textDocument = {
-      completion = {
-        editsNearCursor = true,
-      },
-    },
-  },
 }

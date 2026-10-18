@@ -9,11 +9,6 @@ local function maybe_load_canola(bufnr)
   pcall(vim.cmd, "silent keepalt Canola " .. vim.fn.fnameescape(name))
 end
 
-api.nvim_create_autocmd("TextYankPost", {
-  group = augroup,
-  callback = function() vim.hl.on_yank { higroup = "Visual", timeout = 200 } end,
-})
-
 api.nvim_create_autocmd("BufReadPost", {
   group = augroup,
   callback = function()
@@ -35,15 +30,6 @@ api.nvim_create_autocmd("VimEnter", {
   group = augroup,
   nested = true,
   callback = function() maybe_load_canola(0) end,
-})
-
-api.nvim_create_autocmd("VimResized", {
-  group = augroup,
-  callback = function()
-    local tab = vim.fn.tabpagenr()
-    vim.cmd "tabdo wincmd ="
-    vim.cmd("tabnext " .. tab)
-  end,
 })
 
 api.nvim_create_autocmd("TermOpen", {

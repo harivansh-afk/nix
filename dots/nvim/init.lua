@@ -1,12 +1,7 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = ","
 
-vim.filetype.add {
-  extension = {
-    baml = "baml",
-    h = "c",
-  },
-}
+vim.filetype.add { extension = { baml = "baml" } }
 
 do
   local orig_notify = vim.notify
@@ -22,6 +17,7 @@ end
 
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
+vim.g.loaded_nvim_dir_plugin = 1
 
 vim.cmd.packadd "nvim-treesitter"
 vim.cmd.packadd "vim-fugitive"

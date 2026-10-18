@@ -1,52 +1,11 @@
 local M = {}
 
-local ns = vim.api.nvim_create_namespace "canola_git_trailing"
-local symbols = {
-  M = { "M", "DiagnosticWarn" },
-  A = { "A", "DiagnosticOk" },
-  D = { "D", "DiagnosticError" },
-  R = { "R", "DiagnosticWarn" },
-  ["?"] = { "?", "DiagnosticInfo" },
-  ["!"] = { "!", "Comment" },
-}
-
-local function apply_git_status(buf)
-  if not vim.api.nvim_buf_is_valid(buf) then return end
-  vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
-
-  local canola = require "canola"
-
-  local dir = canola.get_current_dir(buf)
-  if not dir then return end
-
-  local git = require "canola-git"
-
-  local lines = vim.api.nvim_buf_line_count(buf)
-  for lnum = 0, lines - 1 do
-    local entry = canola.get_entry_on_line(buf, lnum + 1)
-    if entry then
-      local status = git.get_status(dir, entry.name)
-      if status then
-        local ch = status.char
-        local sym = symbols[ch]
-        if sym then
-          vim.api.nvim_buf_set_extmark(buf, ns, lnum, 0, {
-            virt_text = { { " " .. sym[1], sym[2] } },
-            virt_text_pos = "eol",
-            invalidate = true,
-          })
-        end
-      end
-    end
-  end
-end
-
 function M.setup_globals()
-  vim.g.canola_git = vim.g.canola_git or {}
+  vim.g.canola_git = {}
 
   vim.g.canola = {
     buf = { buflisted = false, bufhidden = "wipe" },
-    columns = { "icon" },
+    columns = { "git_status", "icon" },
     hidden = { enabled = false },
     highlights = { filename = {}, columns = true },
     save = "auto",
@@ -71,9 +30,6 @@ function M.setup_integrations()
   vim.cmd.packadd "canola-collection"
 
   local augroup = vim.api.nvim_create_augroup("UserCanolaConfig", { clear = true })
-  local detail_columns = { "git_status", "permissions", "owner", "size", "mtime" }
-  local base_columns = vim.deepcopy((vim.g.canola or {}).columns or {})
-  local show_all = false
 
   vim.api.nvim_create_autocmd("FileType", {
     group = augroup,
@@ -111,26 +67,6 @@ function M.setup_integrations()
 
       vim.keymap.set("n", "<C-f>", function() pick "files" end, { buffer = bufnr, desc = "files in canola dir" })
       vim.keymap.set("n", "<C-s>", function() pick "grep_live" end, { buffer = bufnr, desc = "grep in canola dir" })
-
-      vim.keymap.set("n", "gC", function()
-        show_all = not show_all
-        require("canola").set_columns(show_all and detail_columns or base_columns)
-      end, {
-        buffer = bufnr,
-        desc = "toggle canola columns",
-      })
-    end,
-  })
-
-  vim.api.nvim_create_autocmd("User", {
-    group = augroup,
-    pattern = "CanolaReadPost",
-    callback = function(args)
-      local buf = args.data and args.data.buf or args.buf
-      if not buf then return end
-
-      apply_git_status(buf)
-      vim.defer_fn(function() apply_git_status(buf) end, 500)
     end,
   })
 end

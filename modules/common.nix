@@ -15,9 +15,6 @@ in
   nix.settings = import ./nix-settings.nix username;
 
   nixpkgs.config.allowUnfree = true;
-  nixpkgs.overlays = lib.optionals (hostConfig.system != "aarch64-linux") [
-    inputs.neovim-nightly.overlays.default
-  ];
 
   programs.zsh.enable = true;
   environment.shells = lib.optionals hostConfig.isDarwin [ pkgs.zsh ];

@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  neovim ? pkgs.neovim,
   curated ? false,
   configDir ? null,
   extraPackages ? [ ],
@@ -110,11 +111,11 @@ pkgs.writeShellApplication {
       vimdiff) set -- -d "$@" ;;
     esac
     ${lib.optionalString (configDir != null) "export NVIM_APPNAME=nvim-portable"}
-    exec ${pkgs.neovim}/bin/nvim ${
+    exec ${neovim}/bin/nvim ${
       lib.escapeShellArgs (
         [
           "--cmd"
-          "set packpath=${runtime} | set runtimepath^=${runtime}"
+          "set packpath=${runtime},${neovim}/share/nvim/runtime | set runtimepath^=${runtime}"
         ]
         ++ lib.optionals (configDir != null) [
           "--cmd"

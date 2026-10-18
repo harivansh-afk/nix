@@ -181,7 +181,7 @@ Rex (Superlogical's multiplexer, `/Applications/Rex Beta.app`) is installed by h
 
 - `dgx-spark`: Upstream NixOS module for DGX Spark hardware. Do not set `inputs.nixpkgs.follows` - the upstream pins nixpkgs to a known-good revision for the NVIDIA kernel build. It also makes podman the machine's only container runtime and serves the Docker-compatible API at `/run/podman/podman.sock` (`dockerCompat`, `dockerSocket.enable`, socket group `podman`); anything speaking the Docker API (dockerode, docker CLI) uses that socket. Never set `virtualisation.docker.enable` - it conflicts with the podman socket, and enabling it rewired the CI runner's unit and aborted the #479 deploy mid-switch.
 - `determinate`: Manages the Nix installation, daemon, and `/etc/nix/nix.conf`. On darwin, use `determinateNix.customSettings` instead of `nix.settings`.
-- `neovim-nightly`: Overlay applied only on darwin (no aarch64-linux binary cache).
+- `neovim-nightly`: Both hosts' `nvim` runs this input's `packages.<system>.default`, passed to `lib/neovim.nix` through the user-config adapters; the `neovim` flake check uses it too. Never apply its overlay: replacing `pkgs.neovim` rebuilds every vim plugin and treesitter grammar from source (~660 derivations on spark). The portable command and ix stay on stable nixpkgs neovim. nix-community's cache has no aarch64-linux build, so spark compiles nightly whenever the pin moves.
 
 ## Adding a new service on spark
 

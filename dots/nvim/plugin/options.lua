@@ -1,4 +1,4 @@
-local o, opt = vim.o, vim.opt
+local o = vim.o
 
 o.number = true
 o.relativenumber = true
@@ -14,12 +14,8 @@ o.smartcase = true
 o.scrolloff = 8
 o.signcolumn = "yes"
 o.wrap = false
-o.showmode = false
 o.laststatus = 3
 o.cmdheight = 0
-
-opt.fillchars = { vert = "|", fold = "-", foldsep = "|", diff = "-" }
-opt.shortmess:append "S"
 
 o.splitbelow = true
 o.splitright = true
@@ -34,7 +30,7 @@ o.foldtext = ""
 
 o.updatetime = 250
 o.clipboard = "unnamedplus"
-opt.completeopt = { "menuone", "noselect", "noinsert", "fuzzy", "popup" }
+vim.opt.completeopt = { "menuone", "noselect", "noinsert", "fuzzy", "popup" }
 
 -- Clipboard on hosts without a clipboard tool (nvim in a pane on spark):
 -- write the yank to the terminal's clipboard with OSC 52 through
@@ -63,4 +59,5 @@ if not has_clip_tool then
   }
 end
 
-require("statusline").setup()
+vim.cmd.packadd "nohlsearch"
+require("vim._core.ui2").enable()

@@ -10,6 +10,7 @@ let
   userConfig = import ./user-config.nix {
     inherit lib pkgs hostname;
     skillSources.mattpocock = inputs.mattpocock-skills;
+    neovimPackage = inputs.neovim-nightly.packages.${pkgs.stdenv.hostPlatform.system}.default;
     isDarwin = true;
     user = {
       name = username;

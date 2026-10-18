@@ -104,19 +104,13 @@ function M.setup_integrations()
         end,
       })
 
-      local function find(method)
-        require("lz.n").trigger_load "fzf-lua"
-        require("fzf-lua")[method] { cwd = require("canola").get_current_dir(bufnr) }
+      local function pick(name)
+        require("lz.n").trigger_load "mini.pick"
+        MiniPick.builtin[name](nil, { source = { cwd = require("canola").get_current_dir(bufnr) } })
       end
 
-      vim.keymap.set("n", "<C-f>", function() find "files" end, {
-        buffer = bufnr,
-        desc = "fzf files in canola dir",
-      })
-      vim.keymap.set("n", "<C-s>", function() find "live_grep" end, {
-        buffer = bufnr,
-        desc = "live grep in canola dir",
-      })
+      vim.keymap.set("n", "<C-f>", function() pick "files" end, { buffer = bufnr, desc = "files in canola dir" })
+      vim.keymap.set("n", "<C-s>", function() pick "grep_live" end, { buffer = bufnr, desc = "grep in canola dir" })
 
       vim.keymap.set("n", "gC", function()
         show_all = not show_all
@@ -124,29 +118,6 @@ function M.setup_integrations()
       end, {
         buffer = bufnr,
         desc = "toggle canola columns",
-      })
-
-      vim.keymap.set("n", "gX", function()
-        local canola = require "canola"
-        local entry = canola.get_cursor_entry()
-        local dir = canola.get_current_dir()
-        if not entry or not dir then return end
-
-        vim.ui.input({ prompt = "chmod: ", default = "755" }, function(mode)
-          if not mode then return end
-
-          vim.uv.fs_chmod(dir .. entry.name, tonumber(mode, 8), function(err)
-            if err then
-              vim.schedule(function() vim.notify(err, vim.log.levels.ERROR) end)
-              return
-            end
-
-            vim.schedule(function() require("canola.actions").refresh.callback() end)
-          end)
-        end)
-      end, {
-        buffer = bufnr,
-        desc = "chmod entry",
       })
     end,
   })

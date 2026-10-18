@@ -6,15 +6,11 @@ o.relativenumber = true
 o.tabstop = 2
 o.shiftwidth = 2
 o.expandtab = true
-o.smartindent = true
 o.breakindent = true
 
 o.ignorecase = true
 o.smartcase = true
-o.hlsearch = true
-o.incsearch = true
 
-o.termguicolors = true
 o.scrolloff = 8
 o.signcolumn = "yes"
 o.wrap = false
@@ -29,16 +25,14 @@ o.splitbelow = true
 o.splitright = true
 
 o.swapfile = false
-o.backup = false
 o.undofile = true
-o.undodir = vim.fn.stdpath "data" .. "/undo"
 
 o.foldlevel = 99
-o.foldlevelstart = 99
-o.foldenable = true
+o.foldmethod = "expr"
+o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+o.foldtext = ""
 
 o.updatetime = 250
-o.mouse = "a"
 o.clipboard = "unnamedplus"
 opt.completeopt = { "menuone", "noselect", "noinsert", "fuzzy", "popup" }
 

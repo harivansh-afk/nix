@@ -95,6 +95,7 @@ in
   };
 
   systemd.services.podman-vllm = {
+    aliases = [ "vllm.service" ];
     requires = [ "vllm-model-download.service" ];
     after = [ "vllm-model-download.service" ];
     serviceConfig = {

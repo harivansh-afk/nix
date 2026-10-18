@@ -16,8 +16,6 @@ land on `PATH` on every host. `portable.nix` is the home-independent subset
 |----------------|-----------------------|----------------------------------------------|
 | `theme`        | `bin/theme.sh`        | Switch cozybox dark/light, relink theme assets |
 | `ga`           | `bin/ga.sh`           | Git add helper                               |
-| `iosrun`       | `bin/iosrun.sh`       | iOS simulator run helper                     |
-| `gh-wiive-2fa` | `bin/gh-wiive-2fa.sh` | TOTP code for the shared eng-wiive GitHub account (reads sops secret `gh-wiive-totp`) |
 
 Each entry in `lib/remotes.nix` additionally renders `bin/remote.sh` into a
 per-remote connector command (`spark`, `macbook`) that opens a shell on the remote over

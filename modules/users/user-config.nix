@@ -90,6 +90,7 @@ let
       inherit (agents)
         claudeSettings
         claudeMcpSource
+        piModels
         claudeMd
         codexAgentsMd
         agentSkills

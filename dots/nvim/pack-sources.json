@@ -1,13 +1,13 @@
 {
   "canola-collection": {
-    "hash": "sha256-iQh/QeKeELxNsWsWPO/GsNiYdXhZM7vv7Q0uQjO4sJE=",
-    "rev": "8566c09080c3084db1ffba21dec53e2b4235daed",
+    "hash": "sha256-j9Oy6CfDPZ2lxSvVGDslLL0/LvwVoNEatsBAlMTceEU=",
+    "rev": "8681de4443427dd30dbb7465b3f12367c9e4ee13",
     "url": "https://github.com/barrettruth/canola-collection"
   },
   "canola.nvim": {
     "branch": "canola",
-    "hash": "sha256-D2RAZiGasqVc4tMj9XU+M9o9oCoGF5zjV+w1eLvzeKQ=",
-    "rev": "d7c349fd0ffc3d6e8eceefdf66af66cb1ab42826",
+    "hash": "sha256-4ppFVi7Ufkp+UVvzljYl+qSOCxURMSPXV1ikRRJpz6U=",
+    "rev": "aa3a122b31aa869ba1ce4be07a64cff2ba24e7c4",
     "url": "https://github.com/barrettruth/canola.nvim"
   },
   "cozybox.nvim": {
@@ -16,28 +16,28 @@
     "url": "https://git.harivan.sh/harivansh-afk/cozybox.nvim"
   },
   "diffs.nvim": {
-    "hash": "sha256-gCMg7oyoa+k0p0YDWElXCdY8bGZ/TEp0V4JXnQd27og=",
-    "rev": "f6567df7aee5ff3ec7e53a59e7f892ae3f9dcd02",
+    "hash": "sha256-FeEWX5vuImzgollIfRomD54ZdPcHQWNyxOviLWjdoes=",
+    "rev": "009849a5ca22846effb2d161c3aac34167e872f5",
     "url": "https://github.com/barrettruth/diffs.nvim"
   },
   "fzf-lua": {
-    "hash": "sha256-n56nWDxYssTpSWBcverRA8BWmoLamNAPMf7x2mPtRVI=",
-    "rev": "05e44d38de0a79c11fba5f7bf8138791b1dbdd1e",
+    "hash": "sha256-49fKbUiA2cBgmte3KHxNqvldtK5IZkKsKEK002j3rXg=",
+    "rev": "c67fadd9a24230417267e4f9068227e093c0be2b",
     "url": "https://github.com/ibhagwan/fzf-lua"
   },
   "gitsigns.nvim": {
-    "hash": "sha256-UCjAXuN++Q29s/5Y2YCqwl8zTGMJdC6HFmMfyEgej28=",
-    "rev": "5be654f2232c10ddcad19c1607a67b6b4b78fc29",
+    "hash": "sha256-VB1XBtSWwR8+XJhxfXn5IzV4r7oC+wJ/eL/bg7sC44g=",
+    "rev": "fd780920613e541cbdfac41bf711583ed49f9249",
     "url": "https://github.com/lewis6991/gitsigns.nvim"
   },
   "lz.n": {
-    "hash": "sha256-SYaSRWfBAtq8sRXgHELBK8CDGcvWK7a2YkCZqwZQDXA=",
-    "rev": "232b3e981aee6f62405ac40342600ce4d1fe6a7f",
+    "hash": "sha256-jhje/J/+2n7b987HwLNyVVVYMQs2P9nQd4IuvogUt08=",
+    "rev": "a5be3da63d4fc3b9243d54961e28d02e97deb65d",
     "url": "https://github.com/lumen-oss/lz.n"
   },
   "mini.pairs": {
-    "hash": "sha256-PxtB01LKAZYED4Bb7zEgLy2+DDKZNOWQ5vE1a6Cqb2I=",
-    "rev": "b1c5a726921b7a8c9321e9a7a208aa0571de5810",
+    "hash": "sha256-41H0fep+U0m9IADLPhsICGjPgCPQly1FMdcg87qvio8=",
+    "rev": "03eb1f0062a2cee5314d1ac3939246e4bb21352e",
     "url": "https://github.com/echasnovski/mini.pairs"
   },
   "mini.pick": {
@@ -46,13 +46,13 @@
     "url": "https://github.com/nvim-mini/mini.pick"
   },
   "nonicons.nvim": {
-    "hash": "sha256-5N8zqOmzEHS2Ui6RIoMzVUVIAopw1IZkqW0LeDxpOS0=",
-    "rev": "cdb1e205661bb1f127c480d7a58efe09a2709d6a",
+    "hash": "sha256-vHKMu/VrWgDn3hKtfjcj2/iwABq6RJRbzmRT/QwPBiM=",
+    "rev": "9690f6dab2a33f85f6551646983ca6407857010e",
     "url": "https://github.com/barrettruth/nonicons.nvim"
   },
   "nvim-lspconfig": {
-    "hash": "sha256-qPB4WPkkSgwCQ8bIoHZbyca14xkeay81Dm382jdi/80=",
-    "rev": "84252f9832fb5b9024fe9f7258e7c2aff915e6fb",
+    "hash": "sha256-wwXYZ2WEfYiGWS2Lu5e9pwLZnw8i2VFNwhwopJRcCm8=",
+    "rev": "45a3a444b710511c39abca3b60bb6e23a21e3de5",
     "url": "https://github.com/neovim/nvim-lspconfig"
   },
   "nvim-surround": {
@@ -66,13 +66,13 @@
     "url": "https://github.com/nvim-treesitter/nvim-treesitter-textobjects"
   },
   "nvim-web-devicons": {
-    "hash": "sha256-H4lvZsrgXowfrMTcDbhyb+sZZYxv4/2Qg/6C0Pd7QJk=",
-    "rev": "5f032a85be210cd1c6ac98861eb3b187ff3bd5eb",
+    "hash": "sha256-qnHuXUWOV/zXDRO6fTHL41x2wt9lUZbrmVh0IgPyWFc=",
+    "rev": "ec309a0eaff6ea967e58c275996155ab5c16938d",
     "url": "https://github.com/nvim-tree/nvim-web-devicons"
   },
   "pr.nvim": {
-    "hash": "sha256-kfxVtMVy9VUV2W7K39wNHJzUtBniYMfPpRC4tabrDO0=",
-    "rev": "2d0648ec9d88de69393b01ba622a8194b99f55e6",
+    "hash": "sha256-Dwa6fUUi/V5H9YZjmltfdMJD12LbMV+fvq7VLib5L5E=",
+    "rev": "a4c49cdec95f52d703080f9513e8e3a739e26429",
     "url": "https://git.harivan.sh/harivansh-afk/pr.nvim"
   },
   "vim-fugitive": {

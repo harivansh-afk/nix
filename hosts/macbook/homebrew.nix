@@ -54,7 +54,6 @@ in
       "markdown-preview"
       "signal"
       "slack"
-      "superhuman"
       "tailscale-app"
       "thebrowsercompany-dia"
     ];

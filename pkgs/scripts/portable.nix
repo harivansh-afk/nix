@@ -38,16 +38,6 @@ let
       file = ./bin/ga.sh;
       runtimeInputs = with pkgs; [ git ];
     };
-
-    iosrun = mkScript {
-      name = "iosrun";
-      file = ./bin/iosrun.sh;
-      runtimeInputs = with pkgs; [
-        findutils
-        gnugrep
-        coreutils
-      ];
-    };
   }
   // remotePackages;
 in

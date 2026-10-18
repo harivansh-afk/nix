@@ -16,7 +16,6 @@
     "gws.env" = { };
     "forgejo-token".exposeToShell = false;
     "cloudflare-api-token".exposeToShell = false;
-    "gh-wiive-totp".exposeToShell = false;
     "heroku-uva.json".exposeToShell = false;
   };
 

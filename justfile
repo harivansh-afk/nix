@@ -28,10 +28,17 @@ switch:
     esac
 
 # nh >= 4.4 shells out to nom for remote builds (nh-remote), so it rides along.
+# On spark itself it switches locally instead of ssh-ing to its own name.
 switch-spark:
-    nix shell nixpkgs#nh nixpkgs#nix-output-monitor -c nh os switch . -H spark \
-      --target-host rathi@spark \
-      --build-host rathi@spark
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ "$(uname -n)" = spark ]; then
+      nix shell nixpkgs#nh nixpkgs#nix-output-monitor -c nh os switch . -H spark
+    else
+      nix shell nixpkgs#nh nixpkgs#nix-output-monitor -c nh os switch . -H spark \
+        --target-host rathi@spark \
+        --build-host rathi@spark
+    fi
 
 # --- dns (cloudflare) ---
 

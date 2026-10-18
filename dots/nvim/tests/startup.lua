@@ -27,19 +27,14 @@ local function check()
   for _, name in ipairs {
     "pr.nvim",
     "canola.nvim",
-    "fzf-lua",
-    "forge.nvim",
     "gitsigns.nvim",
     "mini.pairs",
-    "mini.completion",
+    "mini.pick",
     "nvim-surround",
-    "nvim-ufo",
-    "preview.nvim",
-    "render-markdown.nvim",
   } do
     require("lz.n").trigger_load(name)
   end
-  for _, command in ipairs { "PR", "Git", "Canola", "FzfLua", "Forge", "Preview", "RenderMarkdown", "ThemeSync" } do
+  for _, command in ipairs { "PR", "Git", "Canola", "Pick", "ThemeSync" } do
     assert(vim.fn.exists(":" .. command) == 2, command .. " missing")
   end
   local pr_source = debug.getinfo(require("pr").setup, "S").source
@@ -71,40 +66,18 @@ local function check()
     vim.api.nvim_buf_delete(buf, { force = true })
   end
   assert(require("nvim-treesitter").indentexpr, "Treesitter indentation missing")
-  assert(MiniCompletion and MiniPairs, "completion or pairs missing")
-  local icons = require "fzf-lua.devicons"
+  assert(MiniPick and MiniPairs, "picker or pairs missing")
+  assert(require "fzf-lua", "pr.nvim picker backend missing")
   for _, mode in ipairs { "dark", "light", "dark" } do
     require("theme").apply(mode)
     vim.wait(20)
-    assert(icons.load { plugin = true })
-    local glyph = icons.get_devicon "example.lua"
-    local expected = require("nvim-web-devicons").get_icon("example.lua", "lua", { default = true })
-    assert(glyph == expected and icons.state().bg == mode, "picker icons did not follow the theme")
+    assert(vim.o.background == mode, "theme did not switch")
     assert(vim.g.terminal_color_0 == (mode == "dark" and "#1d2021" or "#f9f5d7"))
   end
 
-  local get_clients = vim.lsp.get_clients
-  local first = { id = 1, supports_method = function() return true end }
-  local second = { id = 2, supports_method = function() return true end }
-  local clients = { first, second }
-  vim.lsp.get_clients = function() return clients end
-  local function event(name)
-    vim.api.nvim_exec_autocmds(name, { group = "AMiniCompletionLsp", buffer = 0, data = { client_id = 1 } })
-  end
-  event "LspAttach"
-  assert(vim.bo.omnifunc == "v:lua.MiniCompletion.completefunc_lsp")
-  event "LspDetach"
-  assert(vim.bo.omnifunc == "v:lua.MiniCompletion.completefunc_lsp", "second client still provides completion")
-  clients = { first }
-  event "LspDetach"
-  assert(vim.bo.omnifunc == "", "last client left a stale completion function")
-  vim.bo.omnifunc = "syntaxcomplete#Complete"
-  event "LspDetach"
-  assert(vim.bo.omnifunc == "syntaxcomplete#Complete", "detach removed another completion provider")
-  vim.lsp.get_clients = get_clients
-  assert(#vim.fn.getcompletion("fzf-lua", "help") > 0, "plugin help tags missing")
+  assert(#vim.fn.getcompletion("mini.pick", "help") > 0, "plugin help tags missing")
   assert(#errors == 0, table.concat(errors, "\n"))
-  print "Neovim smoke passed: keymaps, lazy loading, commands, completion, indentation, 11 parser/query pairs"
+  print "Neovim smoke passed: keymaps, lazy loading, commands, indentation, 11 parser/query pairs"
 end
 vim.defer_fn(function()
   local ok, err = xpcall(check, debug.traceback)

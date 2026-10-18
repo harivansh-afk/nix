@@ -23,11 +23,13 @@
   installMutableTools ? true,
   skillSources ? { },
   nvimCurated ? false,
+  neovimPackage ? pkgs.neovim,
 }:
 let
   inherit (user) name homeDirectory;
   neovim = import ../../lib/neovim.nix {
     inherit lib pkgs;
+    neovim = neovimPackage;
     curated = nvimCurated;
   };
   forgeLogins = {

@@ -7,6 +7,7 @@
       neovim = import ../lib/neovim.nix {
         inherit pkgs;
         inherit (pkgs) lib;
+        neovim = inputs.neovim-nightly.packages.${pkgs.stdenv.hostPlatform.system}.default;
         configDir = ../dots/nvim;
         curated = true;
         extraPackages = [ (pkgs.callPackage ../pkgs/baml-cli { }) ];

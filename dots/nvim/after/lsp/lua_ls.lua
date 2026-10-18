@@ -8,8 +8,6 @@ return {
         checkThirdParty = false,
         library = { vim.env.VIMRUNTIME },
       },
-      telemetry = { enable = false },
-      hint = { enable = true },
     },
   },
 }

@@ -2,6 +2,7 @@ return {
   {
     "pr.nvim",
     priority = 0,
+    before = function() vim.cmd.packadd { "fzf-lua", bang = true } end,
     after = function() require("pr").setup { keymaps = true } end,
   },
   {
@@ -34,25 +35,6 @@ return {
       map("n", "<leader>ghp", "<cmd>Gitsigns preview_hunk<cr>")
       map("n", "<leader>gB", "<cmd>Gitsigns toggle_current_line_blame<cr>")
     end,
-  },
-  {
-    "forge.nvim",
-    cmd = "Forge",
-    before = function()
-      vim.g.forge = {
-        sources = {
-          -- Key must name a module under lua/forge/. Forgejo/Gitea are served
-          -- by codeberg.lua (tea CLI); `forgejo` is only a host substring, and
-          -- using it as the key makes detection silently return nil.
-          codeberg = { hosts = { "git.harivan.sh" } },
-        },
-      }
-    end,
-    after = function() pcall(vim.cmd.packadd, "fzf-lua") end,
-    keys = {
-      -- forge has no M.open(); the entry point is the pickers module.
-      { "<c-t>", [[<cmd>lua require('forge.pickers').git()<cr>]], desc = "forge" },
-    },
   },
   {
     "diffs.nvim",

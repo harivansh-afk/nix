@@ -2,75 +2,15 @@ return {
   {
     "mini.pairs",
     event = "InsertEnter",
-    after = function() require("mini.pairs").setup() end,
-  },
-  {
-    "mini.completion",
-    event = "InsertEnter",
     after = function()
-      local completion = require "mini.completion"
-      completion.setup {
-        delay = { completion = 10000000, info = 100, signature = 50 },
-        fallback_action = "<c-x><c-n>",
-        lsp_completion = {
-          source_func = "omnifunc",
-          auto_setup = false,
-        },
-        mappings = {
-          force_twostep = "",
-          force_fallback = "",
-          scroll_down = "<c-f>",
-          scroll_up = "<c-b>",
-        },
-      }
-
-      local function set_omnifunc(bufnr, excluded_client)
-        if not vim.api.nvim_buf_is_valid(bufnr) then return end
-        for _, client in ipairs(vim.lsp.get_clients { bufnr = bufnr }) do
-          if client.id ~= excluded_client and client:supports_method "textDocument/completion" then
-            vim.bo[bufnr].omnifunc = "v:lua.MiniCompletion.completefunc_lsp"
-            return
-          end
-        end
-        if vim.bo[bufnr].omnifunc == "v:lua.MiniCompletion.completefunc_lsp" then vim.bo[bufnr].omnifunc = "" end
-      end
-
-      vim.api.nvim_create_autocmd("LspAttach", {
-        group = vim.api.nvim_create_augroup("AMiniCompletionLsp", { clear = true }),
-        callback = function(ev) set_omnifunc(ev.buf) end,
-      })
-
-      vim.api.nvim_create_autocmd("LspDetach", {
-        group = "AMiniCompletionLsp",
-        callback = function(ev) set_omnifunc(ev.buf, ev.data.client_id) end,
-      })
-
-      for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-        if vim.api.nvim_buf_is_loaded(bufnr) then set_omnifunc(bufnr) end
-      end
+      require("mini.pairs").setup()
 
       local function pumvisible() return vim.fn.pumvisible() == 1 end
 
       vim.keymap.set("i", "<c-n>", function()
         if pumvisible() then return "<c-n>" end
-        completion.complete_twostage()
-        return ""
+        return vim.bo.omnifunc ~= "" and "<c-x><c-o>" or "<c-n>"
       end, { expr = true, desc = "complete next" })
-      vim.keymap.set("i", "<c-p>", function() return pumvisible() and "<c-p>" or "" end, {
-        expr = true,
-        desc = "complete previous",
-      })
-      vim.keymap.set("i", "<c-j>", function() return pumvisible() and "<c-n>" or "<c-j>" end, {
-        expr = true,
-        desc = "complete next",
-      })
-      vim.keymap.set("i", "<c-k>", function() return pumvisible() and "<c-p>" or "<c-k>" end, {
-        expr = true,
-        desc = "complete previous",
-      })
-      vim.keymap.set("i", "<c-t>", "<c-x><c-f>", { desc = "file completion" })
-      vim.keymap.set("i", "<c-;>", "<c-x><c-v>", { desc = "vim command completion" })
-      vim.keymap.set("i", "<c-r>", "<c-x><c-r>", { desc = "register completion" })
       vim.keymap.set("i", "<cr>", function()
         if pumvisible() then return vim.keycode(vim.fn.complete_info().selected == -1 and "<c-n><c-y>" or "<c-y>") end
         return MiniPairs.cr()
@@ -90,40 +30,17 @@ return {
     },
   },
   {
-    "nvim-ufo",
-    event = "BufReadPost",
-    before = function() vim.cmd.packadd "promise-async" end,
-    after = function()
-      require("ufo").setup {
-        provider_selector = function() return { "treesitter", "indent" } end,
-      }
-    end,
+    "mini.pick",
+    cmd = "Pick",
+    after = function() require("mini.pick").setup() end,
     keys = {
-      {
-        "zR",
-        function() require("ufo").openAllFolds() end,
-        mode = "n",
-      },
-      {
-        "zM",
-        function() require("ufo").closeAllFolds() end,
-        mode = "n",
-      },
+      { "<C-f>", "<cmd>Pick files<cr>" },
+      { "<C-s>", "<cmd>Pick grep_live<cr>" },
+      { "<leader>ff", "<cmd>Pick files<cr>" },
+      { "<leader>fg", "<cmd>Pick grep_live<cr>" },
+      { "<leader>fb", "<cmd>Pick buffers<cr>" },
+      { "<leader>fh", "<cmd>Pick help<cr>" },
+      { "<leader>fr", "<cmd>Pick resume<cr>" },
     },
-  },
-  {
-    "preview.nvim",
-    cmd = "Preview",
-    ft = { "markdown", "tex", "typst" },
-    before = function()
-      vim.g.preview = {
-        typst = true,
-        latex = true,
-        github = {
-          output = function(ctx) return "/tmp/" .. vim.fn.fnamemodify(ctx.file, ":t:r") .. ".html" end,
-        },
-        mermaid = true,
-      }
-    end,
   },
 }

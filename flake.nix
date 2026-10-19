@@ -59,6 +59,13 @@
 
     devin-codex.url = "git+https://git.harivan.sh/harivansh-afk/devin-codex.git";
 
+    codex-lb.url = "github:Soju06/codex-lb";
+
+    codex-plugin-cc = {
+      url = "github:openai/codex-plugin-cc/v1.0.6";
+      flake = false;
+    };
+
     neovim-nightly = {
       url = "github:nix-community/neovim-nightly-overlay";
       inputs.nixpkgs.follows = "nixpkgs";

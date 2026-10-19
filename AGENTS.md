@@ -74,7 +74,9 @@ Rendered outputs: `~/.claude/CLAUDE.md` (core + coding + claude), `~/.codex/AGEN
 
 Skills come from the `mattpocock-skills` flake input. `modules/users/user-config/agents.nix` builds the selected skills into one link farm and the activation script links it to `~/.agents/skills` (Codex, and anything agentskills.io-compatible) and `~/.claude/skills` (Claude Code). Upgrade them with `nix flake update mattpocock-skills`.
 
-No agent harness has hooks configured, and none should be created.
+No agent harness configures its own hooks, and none should be created. The one exception is the Codex plugin below, whose session hooks ship with it.
+
+On spark, Claude Code delegates to Codex instead of its own subagents (`permissions.deny = [ "Agent" ]`). OpenAI's Codex plugin (`codex-plugin-cc` input, pinned to a release tag) is declared as a directory marketplace in the Nix-generated settings; Claude runs its companion script, exported as `$CODEX_COMPANION`, through background Bash so the completion notification carries Codex's report. The guidance lives in `dots/agents/claude.md`. Install the plugin once with `claude plugin install codex@openai-codex`; to update it, bump the input's tag and reinstall. The plugin's `/codex:rescue` needs the Agent tool and is unavailable; `/codex:review`, `/codex:status`, `/codex:result` and `/codex:cancel` work. Leave its Stop-hook review gate off.
 
 ## Module layout
 
@@ -246,6 +248,28 @@ post-deployment acceptance, read `hosts/spark/docs/hermes.md`.
 Nix owns runtimes, settings and the assistant guidance in `dots/hermes/`. Memory,
 learned skills and conversation state persist across rebuilds. Scheduled work is
 created only on request; the old scanners, graph and automatic loops remain absent.
+
+## Codex account gateway
+
+`hosts/spark/services/codex-lb.nix` runs codex-lb (the `codex-lb` input) as the
+`codex-lb` user unit on `127.0.0.1:18475`, with telemetry off. Spark's Codex
+config sets `model_provider = "codex-lb"`, so every Codex process on spark,
+including the Claude plugin's, spreads across the pooled ChatGPT accounts. The
+gateway owns OAuth refresh; accounts, its encryption key and SQLite database live in
+private mutable `~/.local/state/codex-lb`, outside Git and the store.
+
+Add accounts from the Mac with both ports forwarded, since the OpenAI OAuth
+callback is fixed at port 1455:
+
+```sh
+ssh -L 18475:127.0.0.1:18475 -L 1455:127.0.0.1:1455 spark
+```
+
+Then open `http://127.0.0.1:18475`, set the dashboard password, and add each
+account. Keep **Sticky threads** on: a Codex thread stays on one account for prompt
+caching, and threads spread across accounts. Pick the routing strategy under
+Settings → Routing. Codex still needs its own `codex login` for
+`requires_openai_auth`. A provider change needs `codex app-server daemon restart`.
 
 ## Beeper self-hosted bridges
 

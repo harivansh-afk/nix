@@ -8,6 +8,7 @@
   extraPackages ? [ ],
   forgeUsers ? { },
   skillSources ? { },
+  codexPlugin ? null,
   neovimPackage ? pkgs.neovim,
 }:
 let
@@ -49,6 +50,7 @@ let
       coreutilsBin
       forgeLogins
       skillSources
+      codexPlugin
       neovim
       ;
   };

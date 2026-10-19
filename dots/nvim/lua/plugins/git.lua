@@ -9,22 +9,7 @@ return {
     event = "BufReadPre",
     after = function()
       require("gitsigns").setup {
-        base = "HEAD",
-        signs = {
-          add = { text = "██" },
-          change = { text = "██" },
-          delete = { text = "▄▄" },
-          topdelete = { text = "▀▀" },
-          changedelete = { text = "██" },
-        },
-        signs_staged = {
-          add = { text = "▓▓" },
-          change = { text = "▓▓" },
-          delete = { text = "▄▄" },
-          topdelete = { text = "▀▀" },
-          changedelete = { text = "▓▓" },
-        },
-        signs_staged_enable = true,
+        signs_staged_enable = false,
       }
 
       map("n", "]g", "<cmd>Gitsigns nav_hunk next<cr>")

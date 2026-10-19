@@ -34,9 +34,9 @@ zmodload zsh/complist
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-za-z}'
 
 alias cc="ANTHROPIC_MODEL=claude-opus-5-5 cc-proxy"
-alias co="_devin_codex_trusted low"
-alias com="_devin_codex_trusted medium"
-alias coh="_devin_codex_trusted xhigh"
+alias co="codex -c model_reasoning_effort=low"
+alias com="codex -c model_reasoning_effort=high"
+alias coh="codex -c model_reasoning_effort=high"
 alias cl="clear"
 alias gc="git commit"
 alias gd="git diff"
@@ -135,21 +135,6 @@ _codex_apply_bat_theme() {
   else
     export BAT_THEME='gruvbox-dark'
   fi
-}
-
-_codex_trust_target() {
-  local target
-  local common_dir
-  common_dir="$(command git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" && target="$(dirname "$common_dir")" || target="$PWD"
-  builtin cd -q "$target" 2>/dev/null && pwd -P || printf '%s\n' "$target"
-}
-
-_devin_codex_trusted() {
-  local effort="$1"
-  shift
-  local target
-  target="$(_codex_trust_target)"
-  command devin-codex run --reasoning-effort "$effort" --trust-project "$target" -- "$@"
 }
 
 unalias ga 2>/dev/null

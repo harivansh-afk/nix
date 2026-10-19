@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790301782,
-        "narHash": "sha256-q2I0+1MwYxf33/cP0qlEiSikeZGxUI/TpTwsY9ctFtg=",
+        "lastModified": 1792390614,
+        "narHash": "sha256-9EXMjR+R1cxgGRM0uoCWkp221EUMOezeHl47k23MRf4=",
         "ref": "main",
-        "rev": "e17bfeeab9f96dff427fdaf988ed731d7d27f552",
-        "revCount": 9,
+        "rev": "5cb7283572dd7f68da34a27d69a6f5b6a1ce9401",
+        "revCount": 11,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/airplay-at-the-crib.git"
       },
@@ -87,11 +87,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791835997,
-        "narHash": "sha256-I1zdbHATm+w+HPqGMrKkBHpS/MRJajEBq50NhJkozbQ=",
+        "lastModified": 1792390515,
+        "narHash": "sha256-+dZ3R/nLAViIcBJ0raMVB9Xgpfl3gV7+xzjsO8oNx1g=",
         "ref": "main",
-        "rev": "400652e497aab5a6bcdad44fd7177d8602a71beb",
-        "revCount": 8,
+        "rev": "3938806cd6de85bf25515e172a13a593232c1667",
+        "revCount": 10,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/cc-proxy.git"
       },
@@ -217,11 +217,11 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "lastModified": 1790966875,
-        "narHash": "sha256-WQ6VG7shBDcs2hVb9xFUUR4V126ruRKMLRmGse+dz5U=",
+        "lastModified": 1792390510,
+        "narHash": "sha256-TL9WD6Trrr0AF+kE3FzQ2QHtLeua/RJgxv4kXdILM4I=",
         "ref": "refs/heads/main",
-        "rev": "91843b555ebdbdac4dcbd06f2e47f8758c48e428",
-        "revCount": 42,
+        "rev": "d4a6251bbd74a0ab0a3335dfbaa99fc8f9403ae8",
+        "revCount": 45,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/devin-codex.git"
       },
@@ -323,11 +323,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792282824,
-        "narHash": "sha256-GnQm04tGRsGI5w+MaTus8Lq/A+is5Dz8mvfLYXMPHJI=",
+        "lastModified": 1792390544,
+        "narHash": "sha256-Vp7sG5MXPmxxXdzDEuo83o4lkyJD7vKHH3Q4EBQnPrU=",
         "ref": "main",
-        "rev": "c206cca50a99b76a924d0d8d69a756650ae48b68",
-        "revCount": 4162,
+        "rev": "de348ce3e38fac4ff5d9b99ff611b34273e74780",
+        "revCount": 4164,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/draw.git"
       },
@@ -1248,11 +1248,11 @@
     },
     "nixpkgs_9": {
       "locked": {
-        "lastModified": 1787962033,
-        "narHash": "sha256-u6z9VTZA4Kf3RkHQo9sQI7NI4Ei/uiU9vrMqOiwWP1Y=",
+        "lastModified": 1792116957,
+        "narHash": "sha256-EjZqHKObBfIOeHZnMRVV87HB3pPq/WBkmRJWyFxmZu8=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "c5c4a43b0e8056328ec4529f735cabdb8f1942bb",
+        "rev": "f20cd90e28fe0403873f473b29e42662cd86e8c4",
         "type": "github"
       },
       "original": {
@@ -1290,11 +1290,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1787798363,
-        "narHash": "sha256-ky4zDUWwrEB/65RQBXZrr/HbKLL/idsebpedDB8b6wo=",
+        "lastModified": 1792390591,
+        "narHash": "sha256-uxW+nSGKv9Hz3G9RNIWqgZcazPSA2v/LSNe8VNLiGKc=",
         "ref": "main",
-        "rev": "4a6a575f57a0a4bd9f55cf3e403e88d78e209412",
-        "revCount": 51,
+        "rev": "d220181fb67b4d4e6408d98e0eb849c4d62efc1f",
+        "revCount": 52,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/pierrejo.git"
       },
@@ -1456,11 +1456,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788747866,
-        "narHash": "sha256-VQK5cb7PRp5gvoM2hxYMDkIXmx5LUZsm1jZgPdFCajQ=",
+        "lastModified": 1792390526,
+        "narHash": "sha256-ZpZqvoa4ZzbFTZmFWwW/Qfr1KD0yx61DYF34342lz4k=",
         "ref": "main",
-        "rev": "256e6fa7e3ef254cc5d9df9e22419f062377556c",
-        "revCount": 23,
+        "rev": "ba3d069bcbd068a7ff9601a3f5f29c27fac95155",
+        "revCount": 25,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/roomcast.git"
       },
@@ -1526,11 +1526,11 @@
         "nixpkgs": "nixpkgs_9"
       },
       "locked": {
-        "lastModified": 1791328638,
-        "narHash": "sha256-TeyVQrOSA5VHKb3+b9OX8bdDrJLvt5D5YKaztBNE6lQ=",
+        "lastModified": 1792390942,
+        "narHash": "sha256-9+y3EL57sHoZ3SRCGvCAGCFyYE2pXabIys3323wWRNg=",
         "ref": "main",
-        "rev": "c1718b8b0a15e6b42521db160159163df373f09c",
-        "revCount": 489,
+        "rev": "dbc38f29ace1b8cc281b4df5258da4b72d241be4",
+        "revCount": 492,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/sharefs.git"
       },

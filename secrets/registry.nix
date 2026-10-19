@@ -1,12 +1,3 @@
-# Every sops secret in the flake. modules/security/sops.nix declares these;
-# the file for `user.<name>` is secrets/user/<name>, for `hosts.<host>.<name>`
-# it is secrets/hosts/<host>/<name>, and each lands at /run/secrets/<name>.
-#
-# user secrets decrypt on every host the admin key reaches, default to
-# owner = username and mode 0400, and are sourced into interactive zsh unless
-# `exposeToShell = false` (raw tokens, anything that is not KEY=value).
-# host secrets decrypt on that host only; the entry is passed to sops.secrets
-# as is (owner, group, mode, restartUnits, neededForUsers).
 { username }:
 {
   user = {
@@ -74,7 +65,6 @@
       restartUnits = [ "vaultwarden.service" ];
     };
 
-    # Spotify client-credentials pair for the mixbridge yt-dlp API.
     "mixbridge.env" = {
       format = "dotenv";
       restartUnits = [ "mixbridge-api.service" ];

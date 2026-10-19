@@ -1,8 +1,3 @@
-# Per-remote connector, instantiated once per entry in lib/remotes.nix.
-# Opens a shell on the remote over mosh (`--ssh` forces ssh -t for
-# UDP-hostile networks). Plain `ssh @HOST@`, scp, and git are untouched;
-# this is the deliberate "console" entry point.
-
 transport="mosh"
 
 usage() {

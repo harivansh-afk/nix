@@ -1,4 +1,3 @@
-# macbook: facts and imports only.
 {
   inputs,
   pkgs,

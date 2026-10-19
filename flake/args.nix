@@ -1,7 +1,3 @@
-# The host registry. Two machines do not need a typed inventory layer:
-# each record carries the facts the flake wiring consumes (kind, system,
-# username) plus the values derived from them. Everything else about a
-# host lives in hosts/<name>/.
 {
   self,
   inputs,

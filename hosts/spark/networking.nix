@@ -4,13 +4,7 @@
   ...
 }:
 {
-  # Run a local stub resolver (127.0.0.53) so a resolver is always listening,
-  # even before NetworkManager has finished writing upstream nameservers into
-  # /etc/resolv.conf at boot. This removes the DNS race that previously killed
-  # cloudflared on startup (it queried [::1]:53 before resolv.conf was populated
-  # and got "connection refused"), makes nss-lookup.target a meaningful ordering
-  # barrier, and adds DNS caching so the upstream router is no longer a single
-  # point of failure for name resolution.
+
   services.resolved.enable = true;
 
   networking.networkmanager = {

@@ -1,20 +1,3 @@
-# Main interactive zsh config. Live-edited: ~/.zshrc is a nix-store shim
-# that sources nix-store plugin paths and then this file, so changes here
-# apply on the next shell without a rebuild.
-
-# --- rex / muxd panes ---
-# Rex renders with libghostty but starts panes as xterm-256color with no
-# shell integration, and a muxd pane (a Rex pane attached to spark, a Mux
-# pane) starts as xterm-ghostty with none either. Load Ghostty's zsh
-# integration for the OSC 133 prompt marks and OSC 7 working directory that
-# Rex's program status and pane directory read: Ghostty.app's copy on the
-# Mac, the store copy the zshrc shim names on spark. A Rex pane with no
-# REX_LOCAL hands itself to rex-spark first, which attaches it to the pane's
-# own muxd pty on spark (pkgs/scripts/bin/rex-spark.sh). It runs as a job,
-# not an exec: a job gets its own process group, so the pty's foreground
-# is the relay and Rex inspects that, where an exec would leave the group
-# login's and Rex looking at login. The shell exits when the relay does,
-# and closing the pane closes its spark pty.
 if [[ "$TERM_PROGRAM" == rex ]]; then
   export TERM=xterm-ghostty
   if [[ -z "$REX_LOCAL" ]] && (( $+commands[rex-spark] )); then
@@ -35,7 +18,6 @@ if [[ "$TERM" == xterm-ghostty && "$TERM_PROGRAM" != ghostty ]]; then
   unset _ghostty_zsh
 fi
 
-# --- history ---
 HISTSIZE=50000
 SAVEHIST=50000
 HISTFILE="${XDG_STATE_HOME:-$HOME/.local/state}/zsh_history"
@@ -45,15 +27,12 @@ setopt HIST_IGNORE_SPACE
 setopt EXTENDED_HISTORY
 setopt APPEND_HISTORY
 
-# --- vi mode ---
 bindkey -v
 
-# --- completion ---
 autoload -U compinit && compinit -d "${XDG_STATE_HOME:-$HOME/.local/state}/zcompdump" -u
 zmodload zsh/complist
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-za-z}'
 
-# --- aliases ---
 alias cc="ANTHROPIC_MODEL=claude-opus-5-5 cc-proxy"
 alias co="_devin_codex_trusted low"
 alias com="_devin_codex_trusted medium"
@@ -83,7 +62,6 @@ if [[ "$OSTYPE" == darwin* ]]; then
   alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 fi
 
-# --- shell integrations (tools come from the system package set) ---
 eval "$(zoxide init zsh)"
 eval "$(direnv hook zsh)"
 export DIRENV_LOG_FORMAT=""
@@ -91,7 +69,6 @@ if [[ $options[zle] = on ]] && command -v fzf >/dev/null 2>&1; then
   source <(fzf --zsh)
 fi
 
-# --- secrets ---
 if [[ -f ~/.config/secrets/shell.zsh ]]; then
   source ~/.config/secrets/shell.zsh
 elif [[ -f ~/.secrets ]]; then
@@ -101,10 +78,6 @@ fi
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 export BUN_INSTALL="$HOME/.bun"
-# Guarded because an unguarded "$(npm prefix -g)/bin" degrades to "/bin" on any
-# box without npm on PATH at this point, which puts /bin ahead of the nix
-# profiles and shadows every nix-installed tool with whatever the base image
-# ships.
 npm_global_prefix="$(npm prefix -g 2>/dev/null)"
 typeset -U path PATH
 path=(
@@ -125,18 +98,9 @@ if [[ -d /opt/homebrew/bin ]]; then
   path=(/opt/homebrew/bin /opt/homebrew/sbin $path)
 fi
 
-# aerospace ships via environment.systemPackages (modules/users/darwin.nix),
-# so its stable home is /run/current-system/sw/bin. ~/.nix-profile is legacy
-# imperative state whose store path can be GC'd away; tools that spawn
-# aerospace by absolute path (test-ide fleet server) honor AEROSPACE_BIN.
 [[ -x /run/current-system/sw/bin/aerospace ]] &&
   export AEROSPACE_BIN=/run/current-system/sw/bin/aerospace
 
-# --- theme plumbing ---
-# Mode files are nix-rendered (pure prompt zstyles, ZSH_HIGHLIGHT_STYLES,
-# BAT_THEME) and linked at ~/.config/zsh/themes/{dark,light}.zsh by system
-# activation. The `theme` script flips ~/.local/state/theme/current and the
-# precmd hooks below re-apply without restarting the shell.
 _codex_read_theme_mode() {
   local mode_file="$HOME/.local/state/theme/current"
   if [[ -f "$mode_file" ]]; then
@@ -212,7 +176,6 @@ add-zle-hook-widget zle-keymap-select _codex_cursor_select
 add-zle-hook-widget zle-line-init _codex_cursor_beam
 add-zle-hook-widget zle-line-finish _codex_cursor_beam
 
-# --- prompt (pure) ---
 source "${DOTS_ZSH_DIR:-$HOME/Documents/Git/nix/dots/zsh}/prompt.zsh"
 
 precmd() {
@@ -230,7 +193,6 @@ _codex_apply_bat_theme
 bindkey '^k' forward-char
 bindkey '^j' backward-char
 
-# ctrl+n at an empty prompt opens nvim in the cwd (runs the `nv` alias)
 _open_nvim() {
   if [[ -n "$BUFFER" ]]; then
     zle down-line-or-history
@@ -243,7 +205,6 @@ zle -N _open_nvim
 bindkey -M viins '^N' _open_nvim
 bindkey -M vicmd '^N' _open_nvim
 
-# ctrl+p opens nvim straight into the PR list
 _open_pr() {
   BUFFER="nvim +PR"
   zle accept-line
@@ -252,7 +213,6 @@ zle -N _open_pr
 bindkey -M viins '^P' _open_pr
 bindkey -M vicmd '^P' _open_pr
 
-# ctrl+g at an empty prompt opens nvim straight into fugitive (same as <C-g> inside nvim)
 _open_fugitive() {
   if [[ -n "$BUFFER" ]]; then
     zle list-expand
@@ -265,7 +225,6 @@ zle -N _open_fugitive
 bindkey -M viins '^G' _open_fugitive
 bindkey -M vicmd '^G' _open_fugitive
 
-# ctrl+f at an empty prompt opens nvim straight into the file finder (same as <C-f> inside nvim)
 _open_files() {
   if [[ -n "$BUFFER" ]]; then
     zle self-insert

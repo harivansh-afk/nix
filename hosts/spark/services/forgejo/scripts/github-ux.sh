@@ -45,7 +45,6 @@ die() {
 tea_api() { tea api --login "$TEA_LOGIN" "$@"; }
 gh_api() { gh api "$@"; }
 
-# Base64 helper for forgejo's content API (it wants raw base64, single-line).
 b64() {
   if base64 --version 2>/dev/null | grep -q GNU; then
     base64 -w0
@@ -54,8 +53,6 @@ b64() {
   fi
 }
 
-# Encode a string for use inside a JSON string value (escape backslashes,
-# double quotes, control chars). Uses jq for correctness.
 json_str() { jq -Rs . <<<"$1"; }
 
 REDIRECT_WORKFLOW=$(
@@ -99,8 +96,6 @@ jobs:
 YAML
 )
 
-# Pull the root README from forgejo (if present), prepend the mirror banner,
-# and emit on stdout.
 build_banner_readme() {
   local owner="$1" name="$2"
   local root
@@ -113,7 +108,7 @@ build_banner_readme() {
   fi
 
   if [ -z "$root" ]; then
-    # Fallback when forgejo has no README: write a banner-only file.
+
     cat <<EOF
 # $name
 
@@ -136,8 +131,6 @@ $rest
 EOF
 }
 
-# PUT/POST a file into forgejo's contents API. Idempotent: looks up existing
-# sha and uses PUT-with-sha to replace, or POST to create.
 put_forgejo_file() {
   local owner="$1" name="$2" path="$3" message="$4" content="$5"
   local b64content
@@ -169,7 +162,6 @@ put_forgejo_file() {
     tea_api -X POST "/repos/$owner/$name/contents/$path" -H "Content-Type: application/json" --input - >/dev/null
 }
 
-# True if file at path is byte-identical to provided content.
 forgejo_file_equals() {
   local owner="$1" name="$2" path="$3" content="$4"
   local remote
@@ -209,7 +201,7 @@ apply_github_metadata() {
   local desc_prefix="[mirror of $FORGEJO_HOST/$owner/$name]"
   local new_desc="$description"
   case "$description" in
-  "$desc_prefix"*) ;; # already prefixed
+  "$desc_prefix"*) ;;
   "") new_desc="$desc_prefix" ;;
   *) new_desc="$desc_prefix $description" ;;
   esac

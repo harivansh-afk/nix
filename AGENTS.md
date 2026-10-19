@@ -33,6 +33,8 @@ sops-nix with age encryption derived from each host's ed25519 SSH key. Secret fi
 
 `secrets/hosts/spark/[^/]+$` encrypts secrets for `admin_macbook` and `host_spark`.
 
+`secrets/registry.nix` declares every secret. `KEY=value` files under `secrets/user/` are named `.env` and sourced into interactive zsh; raw tokens have no extension and set `exposeToShell = false`.
+
 ## Conventions
 
 - No comments in `.nix` files. The code is the documentation. Agent guidance lives here.

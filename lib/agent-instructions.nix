@@ -1,7 +1,3 @@
-# Renders the layered agent instructions in dots/agents/ into one file per
-# harness. core.md is the trunk every agent gets; the other parts are the
-# deltas for one family of agents. Add a part to a list here rather than
-# repeating a fact in two markdown files.
 { pkgs }:
 let
   inherit (pkgs) lib;

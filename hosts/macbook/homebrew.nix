@@ -1,10 +1,6 @@
-# Homebrew via nix-homebrew. `cleanup = "zap"` makes this list the cask state
-# of the machine; anything installed and not declared is removed on switch.
-# Manual installs brew does not own (Raycast Beta, Docker) are never touched.
 { lib, username, ... }:
 let
-  # Homebrew 6 requires trusted taps and the Brewfile `trusted:` flag does
-  # not persist, so preActivation writes the trust store too.
+
   trustedTaps = [
     "humanlayer/humanlayer"
     "peripheryapp/periphery"
@@ -38,7 +34,6 @@ in
       "pngpaste"
     ];
 
-    # No voiceink: the cask is the paid build, ./voiceink builds the free one.
     casks = [
       "beeper"
       "cap"

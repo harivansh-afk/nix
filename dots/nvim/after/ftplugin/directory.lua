@@ -1,5 +1,3 @@
--- File operations on the entry under the cursor in nvim's built-in directory
--- listing (|dir|), which only browses. vim-eunuch covers the open file.
 local buf = vim.api.nvim_get_current_buf()
 
 local function dir() return vim.api.nvim_buf_get_name(buf) end

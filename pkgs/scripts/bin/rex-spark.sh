@@ -1,12 +1,3 @@
-# The shell a Rex pane runs on the Mac (dots/zsh/zshrc runs it inside Rex).
-# Attaches the pane to a muxd pty on @HOST@ named after the Rex block, so a
-# reopened pane finds its own shell and a split (REX_PARENT) starts in its
-# parent's directory; falls back to a local login shell when @HOST@ is away.
-# REX_LOCAL=1 on the fallback keeps zshrc from re-entering this script.
-# The relay mirrors the pty's foreground program in its own process name
-# (`claude` while claude runs there, `zsh` at the prompt), which is what
-# Rex reads for the pane's program status, icon and clear behaviour.
-
 host="@HOST@"
 block="${REX_BLOCK:-}"
 

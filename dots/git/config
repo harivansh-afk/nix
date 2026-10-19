@@ -1,8 +1,3 @@
-# Main git config, linked at ~/.config/git/config. Live-edited.
-# Machine-generated companions in the same directory:
-#   credentials.inc - forgejo credential helpers; on spark also rewrites
-#                     git.harivan.sh to loopback SSH (skips the CF tunnel)
-
 [user]
 	name = Harivansh Rathi
 	email = rathiharivansh@gmail.com

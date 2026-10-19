@@ -10,8 +10,7 @@ let
   packageSets = import ../pkgs/sets.nix { inherit inputs lib pkgs; };
 in
 {
-  # Shared with darwin's determinateNix.customSettings; see
-  # modules/nix-settings.nix for why there are two consumers.
+
   nix.settings = import ./nix-settings.nix username;
 
   nixpkgs.config.allowUnfree = true;
@@ -19,10 +18,6 @@ in
   programs.zsh.enable = true;
   environment.shells = lib.optionals hostConfig.isDarwin [ pkgs.zsh ];
 
-  # nh (Nix Helper): friendlier rebuild wrapper that uses nix-output-monitor
-  # internally and shows an nvd package diff on every switch. The programs.nh
-  # module only exists on NixOS (configured in hosts/spark), so on Darwin we
-  # install the package directly.
   environment.systemPackages =
     packageSets.core
     ++ packageSets.extras

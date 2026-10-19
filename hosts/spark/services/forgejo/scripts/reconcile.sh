@@ -30,12 +30,8 @@ die() {
 tea_api() { tea api --login "$TEA_LOGIN" "$@"; }
 gh_api() { gh api "$@"; }
 
-# Tab-separated, quiet 10s lock timeout. Options must precede the db path;
-# a leading PRAGMA would echo its value into the results, so use .timeout.
 sq() { sqlite3 -bail -batch -cmd '.timeout 10000' -cmd '.mode tabs' "$DB" "$*"; }
 
-# Normalize an SSH URL to the form forgejo stores: ssh://github.com/...
-# Strips a leading `git@` user. Leaves https:// untouched.
 normalize_ssh() {
   local u="$1"
   case "$u" in
@@ -44,8 +40,6 @@ normalize_ssh() {
   esac
 }
 
-# Convert an https://github.com/owner/repo(.git)? URL to ssh form.
-# Also strips embedded userinfo (https://TOKEN@github.com/...).
 https_to_ssh() {
   local u="$1"
   case "$u" in
@@ -60,9 +54,6 @@ https_to_ssh() {
   esac
 }
 
-# Strip embedded userinfo from an https github URL, leave anything else as-is.
-# Mirror auth belongs in the git credential store (fed from sops by the
-# forgejo preStart), never embedded in remote URLs.
 strip_cred() {
   local u="$1"
   case "$u" in
@@ -71,15 +62,11 @@ strip_cred() {
   esac
 }
 
-# Probe a remote the way forgejo syncs: as the git user, with its HOME and
-# thus its credential store. -C / because the caller's cwd (e.g. a checkout
-# under /home) may not be readable by the git user.
 probe_as_git() {
   runuser -u git -- env HOME=/var/lib/forgejo GIT_TERMINAL_PROMPT=0 \
     git -C / ls-remote "$1" HEAD >/dev/null 2>&1
 }
 
-# Print the upstream HEAD commit id (empty if unreachable).
 remote_head_as_git() {
   runuser -u git -- env HOME=/var/lib/forgejo GIT_TERMINAL_PROMPT=0 \
     git -C / ls-remote "$1" HEAD 2>/dev/null | awk '{print $1; exit}'
@@ -114,11 +101,8 @@ main() {
   retired_owners=$(jq -r '.retired_mirror_owners[]?' "$MANIFEST")
   github_canonical=$(jq -r '.github_canonical_repos[]?' "$MANIFEST")
 
-  # ------------------------------------------------------------------------
-  # 1. Owned repos: convert pull -> push, ensure push-mirror exists
-  # ------------------------------------------------------------------------
   log "phase 1: ensuring push-mirrors for $owned_owner/*"
-  # Keyed by lower case: the loop below reads lower_name from the DB.
+
   declare -A gh_canonical
   while IFS= read -r p; do [ -n "$p" ] && gh_canonical["${p,,}"]=1; done <<<"$github_canonical"
 
@@ -127,8 +111,6 @@ main() {
     local path="$owned_owner/$name"
     local dir="/var/lib/forgejo/repositories/$owned_owner/$name.git"
 
-    # GitHub-canonical repos are inbound pull mirrors. A push-mirror on one
-    # would force-push the forge over GitHub, so drop any stray one and skip.
     if [ -n "${gh_canonical[$path]+x}" ]; then
       if [ -z "$(sq "SELECT 1 FROM mirror WHERE repo_id=$rid LIMIT 1;" || true)" ]; then
         warn "  $path: github-canonical but not a pull mirror; re-migrate it as one"
@@ -143,9 +125,6 @@ main() {
       continue
     fi
 
-    # The pull-mirror fetch URL lives in the bare repo's git config (the DB
-    # only holds an encrypted copy for the UI). No mutation yet: converting
-    # is only safe once the guards below pass.
     local pull_url="" is_pull=""
     is_pull=$(sq "SELECT 1 FROM mirror WHERE repo_id=$rid LIMIT 1;" || true)
     if [ -n "$is_pull" ]; then
@@ -163,8 +142,7 @@ main() {
       target=$(sq "SELECT remote_address FROM push_mirror WHERE repo_id=$rid LIMIT 1;" || true)
     fi
     if [ -z "$target" ]; then
-      # Native forgejo repo (never lived on github): default to the canonical
-      # github address; the repo is created below if it does not exist yet.
+
       target="ssh://github.com/$owned_owner/$name.git"
       log "  $path: no upstream URL known; defaulting to $target"
     fi
@@ -178,8 +156,6 @@ main() {
       continue
     fi
 
-    # Guard: never let two repos push-mirror the same github target (they
-    # would take turns force-pushing over each other).
     local other
     other=$(sq "SELECT repo_id FROM push_mirror WHERE remote_address='$target' AND repo_id<>$rid LIMIT 1;" || true)
     if [ -n "$other" ]; then
@@ -187,8 +163,6 @@ main() {
       continue
     fi
 
-    # Guard: converting a live pull-mirror flips the direction of truth. Only
-    # do it when local and upstream HEAD agree, so nothing can be clobbered.
     if [ -n "$is_pull" ] && [ -n "$pull_url" ]; then
       local local_head remote_head
       local_head=$(runuser -u git -- git -C "$dir" rev-parse HEAD 2>/dev/null || true)
@@ -209,7 +183,6 @@ main() {
       sq "DELETE FROM mirror WHERE repo_id=$rid; UPDATE repository SET is_mirror=0 WHERE id=$rid;"
     fi
 
-    # Ensure the github repo exists (native repos have no github counterpart).
     local gh_path
     gh_path=${target#ssh://github.com/}
     gh_path=${gh_path%.git}
@@ -255,18 +228,11 @@ main() {
       warn "  $path: sync trigger failed"
   done < <(sq "SELECT r.id, r.lower_name, COALESCE(r.original_url,'') FROM repository r JOIN user u ON u.id=r.owner_id WHERE u.lower_name='$owned_owner' AND r.is_empty=0 AND r.is_archived=0 ORDER BY r.lower_name;")
 
-  # ------------------------------------------------------------------------
-  # 1b. Non-owned pull mirrors: strip embedded credentials from remote URLs
-  #     (auth belongs to the credential store fed by forgejo's preStart), and
-  #     convert mirrors whose upstream is gone into regular repos (data kept).
-  # ------------------------------------------------------------------------
   log "phase 1b: repairing non-owned pull mirrors"
 
   declare -A retired
   while IFS= read -r o; do [ -n "$o" ] && retired["$o"]=1; done <<<"$retired_owners"
 
-  # Abort the phase if github itself is unreachable, so a network blip can
-  # never mass-convert mirrors to regular repos.
   if ! probe_as_git https://github.com/git/git.git; then
     warn "  github unreachable from the git user; skipping phase 1b"
   else
@@ -275,7 +241,6 @@ main() {
       local path="$owner/$name"
       local dir="/var/lib/forgejo/repositories/$owner/$name.git"
 
-      # Retired owners: mirroring is off by policy, upstream state irrelevant.
       if [ -n "${retired[$owner]+x}" ]; then
         log "  $path: owner retired; converting to regular repo (data kept)"
         [ "$DRY" = "1" ] || sq "DELETE FROM mirror WHERE repo_id=$rid; UPDATE repository SET is_mirror=0 WHERE id=$rid;"
@@ -292,8 +257,7 @@ main() {
 
       if probe_as_git "$clean"; then
         if [ "$clean" != "$url" ]; then
-          # The DB only holds an encrypted display copy of the address; the
-          # URL git actually fetches from is the bare repo's git config.
+
           log "  $path: stripping embedded credential from remote URL"
           [ "$DRY" = "1" ] || runuser -u git -- git -C "$dir" remote set-url origin "$clean"
         fi
@@ -307,9 +271,6 @@ main() {
     done < <(sq "SELECT r.id, u.lower_name, r.lower_name FROM repository r JOIN user u ON u.id=r.owner_id JOIN mirror m ON m.repo_id=r.id WHERE u.lower_name != '$owned_owner' ORDER BY u.lower_name, r.lower_name;")
   fi
 
-  # ------------------------------------------------------------------------
-  # 2. actions: enable only on allowlist
-  # ------------------------------------------------------------------------
   log "phase 2: gating forgejo Actions per allowlist"
   declare -A allow
   while IFS= read -r p; do allow["$p"]=1; done <<<"$actions_enabled"
@@ -334,9 +295,6 @@ main() {
       warn "  $path: tea api patch failed"
   done < <(sq "SELECT u.lower_name, r.lower_name FROM repository r JOIN user u ON u.id=r.owner_id WHERE r.is_archived=0 AND r.is_empty=0 ORDER BY u.lower_name, r.lower_name;")
 
-  # ------------------------------------------------------------------------
-  # 3. re-jitter pull-mirror schedule (matches the forgejo prestart hook)
-  # ------------------------------------------------------------------------
   log "phase 3: re-jittering pull-mirror schedule"
   local interval_seconds=$((15 * 60))
   local interval_nanos=$((interval_seconds * 1000000000))

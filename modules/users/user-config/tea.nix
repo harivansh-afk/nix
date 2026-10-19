@@ -1,5 +1,3 @@
-# tea login fragment: emits one `logins:` entry, called once per forgejo
-# instance by the activation script with tokens read from sops secrets.
 { pkgs, ... }:
 {
   teaLoginYaml = pkgs.writeShellScript "tea-login-yaml" ''

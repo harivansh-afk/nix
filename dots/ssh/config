@@ -1,5 +1,3 @@
-# SSH client config, linked at ~/.ssh/config. Live-edited.
-
 Host spark
   HostName spark
   HostKeyAlias spark
@@ -26,9 +24,6 @@ Host spark-lan
   ServerAliveInterval 60
   ServerAliveCountMax 3
 
-# Reverse reach from spark -> mac over Tailscale, used by the clipboard
-# shims (dots/bin/wl-paste, dots/bin/xclip) to serve the Mac clipboard.
-# Harmless on the Mac itself (never dialed there).
 Host macbook
   HostName macbook
   User rathi

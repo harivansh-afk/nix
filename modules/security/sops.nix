@@ -1,4 +1,3 @@
-# sops-nix wiring for both platforms, driven by secrets/registry.nix.
 {
   hostConfig,
   hostname,

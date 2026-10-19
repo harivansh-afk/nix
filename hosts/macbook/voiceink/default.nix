@@ -1,6 +1,3 @@
-# VoiceInk built from source into /Applications (the cask is the paid build).
-# Needs the system Xcode and network, so it runs as an activation step keyed
-# on the pinned rev + patch; see build.sh for the signing and Sparkle story.
 {
   lib,
   pkgs,

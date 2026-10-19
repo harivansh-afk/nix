@@ -1,7 +1,3 @@
-# Startup guard: login items and launchd plists nix cannot declare. Runs at
-# login, on every switch and daily. Login items outside `loginItems` are
-# deleted through System Events (first run may prompt for Automation once);
-# launchd plists outside org.nixos.* and `plists` only log and notify.
 { config, pkgs, ... }:
 let
   loginItems = [

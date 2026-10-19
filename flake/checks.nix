@@ -1,4 +1,3 @@
-# Lint gates as flake checks: one entrypoint for local and CI.
 { self, inputs, ... }:
 {
   perSystem =
@@ -26,15 +25,14 @@
       checks = {
         claude-proxy = inputs.cc-proxy.checks.${pkgs.stdenv.hostPlatform.system}.gateway;
         cc-proxy = inputs.cc-proxy.checks.${pkgs.stdenv.hostPlatform.system}.cli;
-        # House nix rules (ast-grep/nix/rules); the test check keeps each
-        # rule matching its fixtures.
+
         ast-grep = lint "ast-grep" [ pkgs.ast-grep ] "ast-grep scan --error .";
         ast-grep-test = lint "ast-grep-test" [ pkgs.ast-grep ] "ast-grep test --skip-snapshot-tests";
         statix = lint "statix" [ pkgs.statix ] "statix check .";
         deadnix = lint "deadnix" [ pkgs.deadnix ] ''
           deadnix --fail --exclude ./hosts/spark/hardware-configuration.nix -- . # generated file
         '';
-        # dots/zsh excluded: shfmt cannot parse zsh.
+
         shfmt = lint "shfmt" [
           pkgs.shfmt
           pkgs.findutils

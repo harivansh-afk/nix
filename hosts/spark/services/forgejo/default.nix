@@ -148,8 +148,7 @@ let
       patches = [
         "${pkgs.path}/pkgs/by-name/fo/forgejo/static-root-path.patch"
       ];
-      # Forgejo 16 git hooks use "#!/usr/bin/env" shebangs, absent in the
-      # sandbox; nixpkgs master's generic.nix fixes, until the pin catches up.
+
       preCheck = (old.preCheck or "") + ''
         substituteInPlace modules/git/hook_generate.go \
           --replace-fail "#!/usr/bin/env" "#!${pkgs.lib.getExe' pkgs.coreutils "env"}"
@@ -202,7 +201,6 @@ in
     ];
   };
 
-  # Forgejo parses templates once at startup.
   systemd.services.forgejo.restartTriggers = [
     forgejoWeb.frontend
     forgejoWeb.js
@@ -248,8 +246,7 @@ in
       };
       repository = {
         DEFAULT_PRIVATE = "private";
-        # Only mirror-manifest.actions_enabled_repos opt back in (see
-        # forgejo-actions-enforce below).
+
         DEFAULT_REPO_UNITS = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
         DEFAULT_FORK_REPO_UNITS = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
         DEFAULT_MIRROR_REPO_UNITS = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
@@ -347,8 +344,6 @@ in
     lib.mapAttrsToList (name: path: "${name}:${path}") forgejoOauthCredentials
   );
 
-  # Actions are off for every repo except mirror-manifest.actions_enabled_repos;
-  # this re-clamps newly migrated mirrors before they can run anything.
   systemd.services.forgejo-actions-enforce = {
     description = "Force Actions on/off per mirror-manifest allowlist";
     after = [ "forgejo.service" ];
@@ -420,8 +415,6 @@ in
     "d ${runnerCacheRoot}/uv 0750 gitea-runner gitea-runner -"
     "d ${runnerCacheRoot}/actcache 0750 gitea-runner gitea-runner -"
 
-    # git runs with HOME=/var/lib/forgejo but the rendered gitconfig (with
-    # the credential helper) lands under data/home.
     "L+ /var/lib/forgejo/.gitconfig - - - - /var/lib/forgejo/data/home/.gitconfig"
 
     "d /var/lib/forgejo/custom 0750 git git -"

@@ -147,10 +147,7 @@ in
         "SendFeedback"
         "SendMessage"
       ]
-      ++ lib.optionals delegateToCodex [
-        "Agent"
-        "Workflow"
-      ];
+      ++ lib.optionals delegateToCodex [ "Workflow" ];
     };
     includeCoAuthoredBy = false;
     autoCompactEnabled = true;

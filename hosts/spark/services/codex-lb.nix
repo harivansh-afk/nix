@@ -19,6 +19,7 @@ in
       CODEX_LB_DATA_DIR = state;
       CODEX_LB_TELEMETRY_ENABLED = "false";
       CODEX_LB_OAUTH_CALLBACK_HOST = "127.0.0.1";
+      CODEX_LB_DASHBOARD_AUTH_MODE = "disabled";
     };
     serviceConfig = {
       ExecStartPre = "${pkgs.coreutils}/bin/install -d -m 0700 ${state}";

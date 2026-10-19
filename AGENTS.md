@@ -253,24 +253,26 @@ created only on request; the old scanners, graph and automatic loops remain abse
 ## Codex account gateway
 
 `hosts/spark/services/codex-lb.nix` runs codex-lb (the `codex-lb` input) as the
-`codex-lb` user unit on `127.0.0.1:18475`, with telemetry off. Spark's Codex
-config sets `model_provider = "codex-lb"`, so every Codex process on spark,
-including the `codex` MCP tool's, spreads across the pooled ChatGPT accounts. The
-gateway owns OAuth refresh; accounts, its encryption key and SQLite database live in
+`codex-lb` user unit on `127.0.0.1:18475`, with telemetry and dashboard auth off
+(loopback, single user). Spark's Codex config sets `model_provider = "codex-lb"`,
+so every Codex process on spark, the `codex` MCP tool included, spreads across the
+pooled ChatGPT accounts. Sticky threads keep a thread on one account. The gateway
+owns OAuth refresh; accounts, its encryption key and SQLite database live in
 private mutable `~/.local/state/codex-lb`, outside Git and the store.
 
-Add accounts from the Mac with both ports forwarded, since the OpenAI OAuth
-callback is fixed at port 1455:
+Add an account without the dashboard: log in fresh with a throwaway `CODEX_HOME`,
+import its `auth.json`, then delete it. Never import `~/.codex/auth.json`: sharing
+one refresh token between codex-lb and local Codex breaks whichever refreshes second.
 
 ```sh
-ssh -L 18475:127.0.0.1:18475 -L 1455:127.0.0.1:1455 spark
+d=$(mktemp -d); CODEX_HOME=$d codex login --device-auth
+curl -F "auth_json=@$d/auth.json;type=application/json" http://127.0.0.1:18475/api/accounts/import
+rm -rf "$d"
+curl -s http://127.0.0.1:18475/api/accounts | jq '.accounts[] | {email, status}'
 ```
 
-Then open `http://127.0.0.1:18475`, set the dashboard password, and add each
-account. Keep **Sticky threads** on: a Codex thread stays on one account for prompt
-caching, and threads spread across accounts. Pick the routing strategy under
-Settings → Routing. Codex still needs its own `codex login` for
-`requires_openai_auth`. A provider change needs `codex app-server daemon restart`.
+Codex still needs its own `codex login` for `requires_openai_auth`. A provider
+change needs `codex app-server daemon restart`.
 
 ## Beeper self-hosted bridges
 

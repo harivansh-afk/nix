@@ -120,7 +120,7 @@ in
     else
       null;
 
-  claudeSettings = jsonFormat.generate "claude-settings.json" ({
+  claudeSettings = jsonFormat.generate "claude-settings.json" {
     "$schema" = "https://json.schemastore.org/claude-code-settings.json";
     env = {
       CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
@@ -145,7 +145,7 @@ in
       command = "${homeDirectory}/.claude/statusline.sh";
     };
     voiceEnabled = true;
-  });
+  };
 
   codexConfigSource = pkgs.writeText "codex-config.toml" (
     lib.optionalString (hostname == "spark") ''

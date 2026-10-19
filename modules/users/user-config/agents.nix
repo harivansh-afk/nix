@@ -1,7 +1,7 @@
 {
   lib,
-  pkgs,
   homeDirectory,
+  pkgs,
   hostname,
   isDarwin,
   skillSources,

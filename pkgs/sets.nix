@@ -6,7 +6,6 @@
 }:
 let
   inherit (pkgs.stdenv.hostPlatform) system;
-  gwsPackage = inputs.googleworkspace-cli.packages.${system}.default or null;
 in
 {
   core =
@@ -40,15 +39,10 @@ in
       pkgs.xdg-utils
     ];
 
-  extras =
-    (with pkgs; [
-      cloudflared
-      git-lfs
-      lazygit
-    ])
-    ++ (builtins.filter (p: p != null) [
-      gwsPackage
-    ]);
+  extras = with pkgs; [
+    cloudflared
+    git-lfs
+  ];
 
   darwinExtras = with pkgs; [
     coreutils-prefixed

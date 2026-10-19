@@ -17,7 +17,6 @@
   zshrcShim,
   zshThemes,
   gitCredentialsInc,
-  btopConf,
   fzfThemes,
   sketchybarThemes,
   ghosttyTerminfo,
@@ -62,12 +61,10 @@ pkgs.writeShellScript "user-config-${name}" ''
     "${configHome}/jj" \
     "${configHome}/fzf/themes" \
     "${configHome}/ghostty/themes" \
-    "${configHome}/lazygit" \
     "${configHome}/direnv/lib" \
     "${configHome}/gh" \
     "${configHome}/npm" \
     "${configHome}/python" \
-    "${configHome}/btop" \
     "${configHome}/devin" \
     "${configHome}/tea" \
     "${homeDirectory}/.claude" \
@@ -109,9 +106,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   fi
   mkSymlink "${dotsRoot}/nvim" "${configHome}/nvim"
 
-  rm -f "${configHome}/btop/btop.conf"
-  ${pkgs.gnused}/bin/sed "s/@HOSTNAME@/$(uname -n)/" "${btopConf}" \
-    > "${configHome}/btop/btop.conf"
   mkSymlink "${dotsRoot}/direnv/direnv.toml" "${configHome}/direnv/direnv.toml"
   mkSymlink "${pkgs.nix-direnv}/share/nix-direnv/direnvrc" "${configHome}/direnv/lib/nix-direnv.sh"
   mkSymlink "${dotsRoot}/wgetrc" "${configHome}/wgetrc"
@@ -124,7 +118,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${ghosttyTerminfo}/share/terminfo" "${homeDirectory}/.terminfo"
   mkSymlink "${fzfThemes.dark}" "${configHome}/fzf/themes/cozybox-dark"
   mkSymlink "${fzfThemes.light}" "${configHome}/fzf/themes/cozybox-light"
-  mkSymlink "${dotsRoot}/lazygit/config.yml" "${configHome}/lazygit/config.yml"
 
   rm -f "${configHome}/gh/config.yml"
   cp -f "${dotsRoot}/gh/config.yml" "${configHome}/gh/config.yml"
@@ -239,9 +232,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     mkdir -p "$ghostty_appsupport"
     mkSymlink "${dotsRoot}/ghostty/config" "$ghostty_appsupport/config"
 
-    lg_darwin="${homeDirectory}/Library/Application Support/lazygit"
-    mkdir -p "$lg_darwin"
-    mkSymlink "${dotsRoot}/lazygit/config.yml" "$lg_darwin/config.yml"
 
     mkSymlink "${dotsRoot}/karabiner" "${configHome}/karabiner"
 

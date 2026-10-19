@@ -86,7 +86,6 @@ let
         writeXattr
         ;
       inherit (apps)
-        btopConf
         fzfThemes
         ghosttyTerminfo
         ghosttyThemes

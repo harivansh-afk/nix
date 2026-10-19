@@ -122,19 +122,32 @@ in
 
   claudeSettings = jsonFormat.generate "claude-settings.json" {
     "$schema" = "https://json.schemastore.org/claude-code-settings.json";
-    env = {
-      CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
-    }
-    // lib.optionalAttrs delegateToCodex {
-      CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS = "10000";
-    };
+    env =
+      if delegateToCodex then
+        { CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS = "10000"; }
+      else
+        { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"; };
     model = "claude-fable-5-1";
     tui = "fullscreen";
     permissions = {
       defaultMode = "bypassPermissions";
-    }
-    // lib.optionalAttrs delegateToCodex {
       deny = [
+        "Artifact"
+        "ArtifactComments"
+        "ArtifactData"
+        "AskUserQuestion"
+        "CronCreate"
+        "CronDelete"
+        "CronList"
+        "DesignSync"
+        "EnterWorktree"
+        "ExitWorktree"
+        "ListAgents"
+        "ScheduleWakeup"
+        "SendFeedback"
+        "SendMessage"
+      ]
+      ++ lib.optionals delegateToCodex [
         "Agent"
         "Workflow"
       ];

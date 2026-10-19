@@ -134,7 +134,10 @@ in
       defaultMode = "bypassPermissions";
     }
     // lib.optionalAttrs delegateToCodex {
-      deny = [ "Agent" ];
+      deny = [
+        "Agent"
+        "Workflow"
+      ];
     };
     includeCoAuthoredBy = false;
     autoCompactEnabled = true;

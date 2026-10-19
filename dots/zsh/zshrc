@@ -35,8 +35,8 @@ zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-za-z}'
 
 alias cc="ANTHROPIC_MODEL=claude-opus-5-5 cc-proxy"
 alias co="codex -c model_reasoning_effort=low"
-alias com="codex"
-alias coh="codex -c model_reasoning_effort=xhigh"
+alias com="codex -c model_reasoning_effort=high"
+alias coh="codex -c model_reasoning_effort=high"
 alias cl="clear"
 alias gc="git commit"
 alias gd="git diff"

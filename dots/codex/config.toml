@@ -1,6 +1,6 @@
 model = "gpt-6-astra"
 model_verbosity = "low"
-model_reasoning_effort = "medium"
+model_reasoning_effort = "low"
 personality = "pragmatic"
 suppress_unstable_features_warning = true
 web_search = "live"
@@ -33,7 +33,7 @@ enabled = true
 max_concurrent_threads_per_session = 8
 
 [agents]
-max_depth = 3
+max_depth = 1
 job_max_runtime_seconds = 1800
 
 [agents.worker]

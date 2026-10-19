@@ -50,6 +50,14 @@ in
       root.hashedPassword = "!";
     };
 
+  programs.ssh.knownHosts.macbook = {
+    hostNames = [
+      "macbook"
+      "macbook.taileb8b41.ts.net"
+    ];
+    publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINrnPjchazeyNUezSpyXgpsfo3F/01aajNtzlDSq9aHJ";
+  };
+
   services.openssh = {
     enable = true;
     openFirewall = false;

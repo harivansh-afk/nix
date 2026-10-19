@@ -16,7 +16,6 @@ let
     import ./user-config.nix {
       inherit lib pkgs hostname;
       skillSources.mattpocock = inputs.mattpocock-skills;
-      codexPlugin = if hostname == "spark" then inputs.codex-plugin-cc else null;
       neovimPackage = inputs.neovim-nightly.packages.${pkgs.stdenv.hostPlatform.system}.default;
       isDarwin = false;
       user = {

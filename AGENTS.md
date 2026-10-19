@@ -74,9 +74,9 @@ Rendered outputs: `~/.claude/CLAUDE.md` (core + coding + claude), `~/.codex/AGEN
 
 Skills come from the `mattpocock-skills` flake input. `modules/users/user-config/agents.nix` builds the selected skills into one link farm and the activation script links it to `~/.agents/skills` (Codex, and anything agentskills.io-compatible) and `~/.claude/skills` (Claude Code). Upgrade them with `nix flake update mattpocock-skills`.
 
-No agent harness configures its own hooks, and none should be created. The one exception is the Codex plugin below, whose session hooks ship with it.
+No agent harness has hooks configured, and none should be created.
 
-On spark, Claude Code delegates to Codex instead of its own subagents (`permissions.deny = [ "Agent" ]`). OpenAI's Codex plugin (`codex-plugin-cc` input, pinned to a release tag) is declared as a directory marketplace in the Nix-generated settings; Claude runs its companion script, exported as `$CODEX_COMPANION`, through background Bash so the completion notification carries Codex's report. The guidance lives in `dots/agents/claude.md`. Install the plugin once with `claude plugin install codex@openai-codex`; to update it, bump the input's tag and reinstall. The plugin's `/codex:rescue` needs the Agent tool and is unavailable; `/codex:review`, `/codex:status`, `/codex:result` and `/codex:cancel` work. Leave its Stop-hook review gate off.
+On spark, Claude Code delegates to Codex instead of its own subagents: `permissions.deny = [ "Agent" ]`, plus the `codex` MCP server from `pkgs/codex-mcp` (one Python file on the MCP SDK). Its `codex(prompt)` and `codex_reply(thread_id, prompt)` tools run `codex exec --json` in the session's directory with the normal Codex config (`gpt-6-astra`, medium), stream each event as MCP progress, and return the status, thread id, files changed and Codex's final message. Claude Code moves calls running past 10s (`CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS`) to `/tasks`, and the result comes back as a task notification. Stopping the task kills Codex. A run with no events for 20 minutes (`CODEX_MCP_STALL_SECONDS`) is stopped and reported as `stalled`. The server's MCP instructions carry the delegation guidance.
 
 ## Module layout
 
@@ -129,6 +129,7 @@ hosts/
       website.nix      harivan.sh static site; caddy logs the view beacon, website-views timer bakes the counts (tools/views.mjs in the website repo)
       forgejo/         Forgejo server, cozybox css in assets/, mirror manifest, Actions runner, run-by-hand scripts/
 pkgs/
+  codex-mcp/           MCP server that gives Claude Code the codex and codex_reply tools
   sets.nix             Shared package sets (core, extras, darwinExtras, fonts) for modules/common.nix
   scripts/
     default.nix        Full script set for user profiles (portable + theme, account helpers)
@@ -254,7 +255,7 @@ created only on request; the old scanners, graph and automatic loops remain abse
 `hosts/spark/services/codex-lb.nix` runs codex-lb (the `codex-lb` input) as the
 `codex-lb` user unit on `127.0.0.1:18475`, with telemetry off. Spark's Codex
 config sets `model_provider = "codex-lb"`, so every Codex process on spark,
-including the Claude plugin's, spreads across the pooled ChatGPT accounts. The
+including the `codex` MCP tool's, spreads across the pooled ChatGPT accounts. The
 gateway owns OAuth refresh; accounts, its encryption key and SQLite database live in
 private mutable `~/.local/state/codex-lb`, outside Git and the store.
 

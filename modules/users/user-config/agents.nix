@@ -5,7 +5,6 @@
   hostname,
   isDarwin,
   skillSources,
-  codexPlugin,
   ...
 }:
 let
@@ -41,7 +40,8 @@ let
 
   codexXattr = "user.hari.codex-seed-source";
 
-  delegateToCodex = codexPlugin != null;
+  delegateToCodex = hostname == "spark";
+  codexMcp = import ../../../pkgs/codex-mcp { inherit pkgs; };
 
 in
 {
@@ -110,47 +110,42 @@ in
             type = "http";
             url = "http://127.0.0.1:23373/v0/mcp";
           };
+          codex = {
+            type = "stdio";
+            command = "${codexMcp}/bin/codex-mcp";
+            timeout = 14400000;
+          };
         }
       )
     else
       null;
 
-  claudeSettings = jsonFormat.generate "claude-settings.json" (
-    {
-      "$schema" = "https://json.schemastore.org/claude-code-settings.json";
-      env = {
-        CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
-      }
-      // lib.optionalAttrs delegateToCodex {
-        CODEX_COMPANION = "${codexPlugin}/plugins/codex/scripts/codex-companion.mjs";
-        BASH_MAX_TIMEOUT_MS = "14400000";
-      };
-      model = "claude-fable-5-1";
-      tui = "fullscreen";
-      permissions = {
-        defaultMode = "bypassPermissions";
-      }
-      // lib.optionalAttrs delegateToCodex {
-        deny = [ "Agent" ];
-      };
-      includeCoAuthoredBy = false;
-      autoCompactEnabled = true;
-      autoMemoryEnabled = false;
-      showThinkingSummaries = true;
-      statusLine = {
-        type = "command";
-        command = "${homeDirectory}/.claude/statusline.sh";
-      };
-      voiceEnabled = true;
+  claudeSettings = jsonFormat.generate "claude-settings.json" ({
+    "$schema" = "https://json.schemastore.org/claude-code-settings.json";
+    env = {
+      CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
     }
     // lib.optionalAttrs delegateToCodex {
-      extraKnownMarketplaces.openai-codex.source = {
-        source = "directory";
-        path = "${codexPlugin}";
-      };
-      enabledPlugins."codex@openai-codex" = true;
+      CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS = "10000";
+    };
+    model = "claude-fable-5-1";
+    tui = "fullscreen";
+    permissions = {
+      defaultMode = "bypassPermissions";
     }
-  );
+    // lib.optionalAttrs delegateToCodex {
+      deny = [ "Agent" ];
+    };
+    includeCoAuthoredBy = false;
+    autoCompactEnabled = true;
+    autoMemoryEnabled = false;
+    showThinkingSummaries = true;
+    statusLine = {
+      type = "command";
+      command = "${homeDirectory}/.claude/statusline.sh";
+    };
+    voiceEnabled = true;
+  });
 
   codexConfigSource = pkgs.writeText "codex-config.toml" (
     lib.optionalString (hostname == "spark") ''
@@ -166,9 +161,6 @@ in
       supports_websockets = true
       supports_standalone_web_search = true
       requires_openai_auth = true
-
-      [sandbox_workspace_write]
-      network_access = true
 
       [mcp_servers.computer]
       command = "${computer.servers.computer.command}"

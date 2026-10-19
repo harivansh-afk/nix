@@ -142,10 +142,8 @@ in
         "DesignSync"
         "EnterWorktree"
         "ExitWorktree"
-        "ListAgents"
         "ScheduleWakeup"
         "SendFeedback"
-        "SendMessage"
       ]
       ++ lib.optionals delegateToCodex [ "Workflow" ];
     };
@@ -163,6 +161,7 @@ in
   codexConfigSource = pkgs.writeText "codex-config.toml" (
     lib.optionalString (hostname == "spark") ''
       model_provider = "codex-lb"
+      mcp_oauth_credentials_store = "file"
     ''
     + builtins.readFile ../../../dots/codex/config.toml
     + lib.optionalString (hostname == "spark") ''
@@ -182,6 +181,7 @@ in
 
       [mcp_servers.beeper]
       url = "http://127.0.0.1:23373/v0/mcp"
+      startup_timeout_sec = 20
 
     ''
   );

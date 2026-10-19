@@ -25,6 +25,7 @@ let
       status=0
       systemd-run --unit="$unit" --wait --collect --quiet \
         --setenv=SUDO_UID="''${SUDO_UID:?run spark-deploy through sudo}" \
+        --setenv=PATH=/run/wrappers/bin:/run/current-system/sw/bin \
         --property=TimeoutStartSec=40min \
         /run/current-system/sw/bin/nixos-rebuild switch --flake "$flake#spark" || status=$?
       journalctl --unit="$unit" --output=cat --no-pager

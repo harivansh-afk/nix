@@ -76,6 +76,8 @@ Skills come from the `mattpocock-skills` flake input. `modules/users/user-config
 
 No agent harness has hooks configured, and none should be created.
 
+On spark, Claude Code delegates to Codex instead of its own subagents: `permissions.deny = [ "Agent" ]`, plus the `codex` MCP server from `pkgs/codex-mcp` (one Python file on the MCP SDK). Its `codex(prompt)` and `codex_reply(thread_id, prompt)` tools run `codex exec --json` in the session's directory with the normal Codex config (`gpt-6-astra`, medium), stream each event as MCP progress, and return the status, thread id, files changed and Codex's final message. Claude Code moves calls running past 10s (`CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS`) to `/tasks`, and the result comes back as a task notification. Stopping the task kills Codex. A run with no events for 20 minutes (`CODEX_MCP_STALL_SECONDS`) is stopped and reported as `stalled`. The server's MCP instructions carry the delegation guidance.
+
 ## Module layout
 
 ```
@@ -127,6 +129,7 @@ hosts/
       website.nix      harivan.sh static site; caddy logs the view beacon, website-views timer bakes the counts (tools/views.mjs in the website repo)
       forgejo/         Forgejo server, cozybox css in assets/, mirror manifest, Actions runner, run-by-hand scripts/
 pkgs/
+  codex-mcp/           MCP server that gives Claude Code the codex and codex_reply tools
   sets.nix             Shared package sets (core, extras, darwinExtras, fonts) for modules/common.nix
   scripts/
     default.nix        Full script set for user profiles (portable + theme, account helpers)
@@ -246,6 +249,30 @@ post-deployment acceptance, read `hosts/spark/docs/hermes.md`.
 Nix owns runtimes, settings and the assistant guidance in `dots/hermes/`. Memory,
 learned skills and conversation state persist across rebuilds. Scheduled work is
 created only on request; the old scanners, graph and automatic loops remain absent.
+
+## Codex account gateway
+
+`hosts/spark/services/codex-lb.nix` runs codex-lb (the `codex-lb` input) as the
+`codex-lb` user unit on `127.0.0.1:18475`, with telemetry and dashboard auth off
+(loopback, single user). Spark's Codex config sets `model_provider = "codex-lb"`,
+so every Codex process on spark, the `codex` MCP tool included, spreads across the
+pooled ChatGPT accounts. Sticky threads keep a thread on one account. The gateway
+owns OAuth refresh; accounts, its encryption key and SQLite database live in
+private mutable `~/.local/state/codex-lb`, outside Git and the store.
+
+Add an account without the dashboard: log in fresh with a throwaway `CODEX_HOME`,
+import its `auth.json`, then delete it. Never import `~/.codex/auth.json`: sharing
+one refresh token between codex-lb and local Codex breaks whichever refreshes second.
+
+```sh
+d=$(mktemp -d); CODEX_HOME=$d codex login --device-auth
+curl -F "auth_json=@$d/auth.json;type=application/json" http://127.0.0.1:18475/api/accounts/import
+rm -rf "$d"
+curl -s http://127.0.0.1:18475/api/accounts | jq '.accounts[] | {email, status}'
+```
+
+Codex still needs its own `codex login` for `requires_openai_auth`. A provider
+change needs `codex app-server daemon restart`.
 
 ## Beeper self-hosted bridges
 

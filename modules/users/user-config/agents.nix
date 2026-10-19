@@ -40,6 +40,9 @@ let
 
   codexXattr = "user.hari.codex-seed-source";
 
+  delegateToCodex = hostname == "spark";
+  codexMcp = import ../../../pkgs/codex-mcp { inherit pkgs; };
+
 in
 {
   claudeMd = agentInstructions.claude;
@@ -107,6 +110,11 @@ in
             type = "http";
             url = "http://127.0.0.1:23373/v0/mcp";
           };
+          codex = {
+            type = "stdio";
+            command = "${codexMcp}/bin/codex-mcp";
+            timeout = 14400000;
+          };
         }
       )
     else
@@ -114,10 +122,20 @@ in
 
   claudeSettings = jsonFormat.generate "claude-settings.json" {
     "$schema" = "https://json.schemastore.org/claude-code-settings.json";
-    env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
+    env = {
+      CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
+    }
+    // lib.optionalAttrs delegateToCodex {
+      CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS = "10000";
+    };
     model = "claude-fable-5-1";
     tui = "fullscreen";
-    permissions.defaultMode = "bypassPermissions";
+    permissions = {
+      defaultMode = "bypassPermissions";
+    }
+    // lib.optionalAttrs delegateToCodex {
+      deny = [ "Agent" ];
+    };
     includeCoAuthoredBy = false;
     autoCompactEnabled = true;
     autoMemoryEnabled = false;
@@ -130,8 +148,19 @@ in
   };
 
   codexConfigSource = pkgs.writeText "codex-config.toml" (
-    builtins.readFile ../../../dots/codex/config.toml
+    lib.optionalString (hostname == "spark") ''
+      model_provider = "codex-lb"
+    ''
+    + builtins.readFile ../../../dots/codex/config.toml
     + lib.optionalString (hostname == "spark") ''
+
+      [model_providers.codex-lb]
+      name = "openai"
+      base_url = "http://127.0.0.1:18475/backend-api/codex"
+      wire_api = "responses"
+      supports_websockets = true
+      supports_standalone_web_search = true
+      requires_openai_auth = true
 
       [mcp_servers.computer]
       command = "${computer.servers.computer.command}"

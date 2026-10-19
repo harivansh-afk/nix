@@ -19,6 +19,7 @@
     ./services/beeper-bridges.nix
     ./services/caddy.nix
     ./services/claude-proxy.nix
+    ./services/codex-lb.nix
     ./services/desktop.nix
     ./services/cloudflared.nix
     ./services/sharefs.nix

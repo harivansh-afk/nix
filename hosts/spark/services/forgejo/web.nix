@@ -1,6 +1,5 @@
 {
   forgejoDomain,
-  forgejoPackage,
   lib,
   pierreForgejo,
   pkgs,
@@ -55,19 +54,6 @@ in
     ${lib.concatStrings (
       lib.mapAttrsToList (name: tmpl: "cp ${tmpl} $out/mail/auth/${name}.tmpl\n") mails
     )}
-
-    cp ${forgejoPackage.data}/templates/repo/commit_header.tmpl $out/repo/commit_header.tmpl
-    cp ${forgejoPackage.data}/templates/repo/shabox_badge.tmpl $out/repo/shabox_badge.tmpl
-    chmod u+w $out/repo/commit_header.tmpl $out/repo/shabox_badge.tmpl
-
-    substituteInPlace $out/repo/commit_header.tmpl \
-      --replace-fail \
-        '{{ctx.AvatarUtils.AvatarByEmail .Verification.SigningEmail "" 28 "tw-mr-2"}}' \
-        '<img loading="lazy" alt="" class="ui avatar tw-align-middle tw-mr-2" src="{{AppSubUrl}}/assets/img/forgejo.svg" title="Forgejo" width="28" height="28"/>'
-    substituteInPlace $out/repo/shabox_badge.tmpl \
-      --replace-fail \
-        '{{ctx.AvatarUtils.AvatarByEmail .verification.SigningEmail "" 28}}' \
-        '<img loading="lazy" alt="" class="ui avatar tw-align-middle" src="{{AppSubUrl}}/assets/img/forgejo.svg" title="Forgejo" width="28" height="28"/>'
 
     version_for() {
       sha256sum "$1" | cut -c1-16

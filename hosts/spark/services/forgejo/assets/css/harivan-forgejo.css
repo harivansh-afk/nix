@@ -80,6 +80,15 @@ samp,
   box-shadow: var(--harivan-shadow);
 }
 
+.ui.segments > .segment {
+  box-shadow: none;
+}
+
+/* The language bar is a square strip inside the summary; clip it to the curve. */
+.repository .repository-summary {
+  overflow: hidden;
+}
+
 /* Attached stacks round only their outer ends so the seams stay square. */
 .ui.top.attached.header,
 .ui.top.attached.segment {

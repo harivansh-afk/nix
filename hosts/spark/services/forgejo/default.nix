@@ -130,19 +130,18 @@ let
     codeLivesVar = ".ActiveCodeLives";
   };
   pierreForgejo = inputs.pierrejo.lib.mkPierreForgejo { inherit pkgs; };
-  forgejoWeb = import ./web.nix {
+  forgejoTemplates = import ./web.nix {
     inherit
       forgejoPackage
-      lib
       pierreForgejo
       pkgs
       ;
   };
   forgejoPackageBase = pkgs.callPackage (import "${pkgs.path}/pkgs/by-name/fo/forgejo/generic.nix" {
-    version = "16.0.3";
-    hash = "sha256-G2kp2k/ivqxXG68+piBczXujtj3f/fLr+DnHoiMKOB4=";
-    npmDepsHash = "sha256-QwZ8X0pVxs5u4jMOqy3VGcBGVqqDKpLCMPmwoECVwEg=";
-    vendorHash = "sha256-0nvMy0oyVIy2qBngg1eu0UAGBEuoCGzDdsBYUuU/A48=";
+    version = "16.0.6";
+    hash = "sha256-629cbLUh+okT3SFHwHFQDPiOoao0hrTxOzdOKxYEd6Q=";
+    npmDepsHash = "sha256-C/ht4Z3ivtm6nBNHUkNmKpLsnmnrpzW6rBq153LuITc=";
+    vendorHash = "sha256-wOAbZ6eEwlavMIcTOmqPpdgLNcgylCX4MwxuI/35YZw=";
     lts = false;
   }) { };
   forgejoPackage = pierreForgejo.mkForgejoWithPierre (
@@ -176,8 +175,11 @@ in
           @forgejoAssets path /assets/* /manifest.json /favicon.svg /favicon.png /apple-touch-icon.png
           header @forgejoAssets Cache-Control "public, max-age=21600"
 
-          @forgejoFonts path /assets/fonts/*
-          header @forgejoFonts Cache-Control "public, max-age=31536000, immutable"
+          handle_path /assets/fonts/* {
+            root * /srv/harivan.sh/dist/fonts
+            header Cache-Control "public, max-age=31536000, immutable"
+            file_server
+          }
 
           reverse_proxy 127.0.0.1:${toString backendPort}
         '';
@@ -204,10 +206,8 @@ in
   };
 
   systemd.services.forgejo.restartTriggers = [
-    forgejoWeb.frontend
-    forgejoWeb.js
-    forgejoWeb.templates
-    forgejoWeb.assets
+    forgejoTemplates
+    ./assets
     pierreForgejo.frontend
     pierreForgejo.assets
     pierreForgejo.templates
@@ -423,21 +423,18 @@ in
     "d /var/lib/forgejo/custom/public 0750 git git -"
     "d /var/lib/forgejo/custom/public/assets 0750 git git -"
     "d /var/lib/forgejo/custom/public/assets/css 0750 git git -"
-    "d /var/lib/forgejo/custom/public/assets/fonts 0750 git git -"
     "d /var/lib/forgejo/custom/public/assets/img 0750 git git -"
-    "L+ /var/lib/forgejo/custom/public/assets/css/harivan-forgejo.css - - - - ${forgejoWeb.assets}/css/harivan-forgejo.css"
+    "L+ /var/lib/forgejo/custom/public/assets/css/harivan-forgejo.css - - - - ${./assets}/css/harivan-forgejo.css"
     "L+ /var/lib/forgejo/custom/public/assets/css/pierre-forgejo.css - - - - ${pierreForgejo.assets}/css/pierre-forgejo.css"
-    "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-auto.css - - - - ${forgejoWeb.assets}/css/theme-cozybox-auto.css"
-    "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-light.css - - - - ${forgejoWeb.assets}/css/theme-cozybox-light.css"
-    "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-dark.css - - - - ${forgejoWeb.assets}/css/theme-cozybox-dark.css"
-    "L+ /var/lib/forgejo/custom/public/assets/fonts/BerkeleyMono-Regular.otf - - - - /srv/harivan.sh/dist/fonts/BerkeleyMono-Regular.otf"
-    "L+ /var/lib/forgejo/custom/public/assets/js - - - - ${forgejoWeb.js}/js"
+    "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-auto.css - - - - ${./assets}/css/theme-cozybox-auto.css"
+    "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-light.css - - - - ${./assets}/css/theme-cozybox-light.css"
+    "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-dark.css - - - - ${./assets}/css/theme-cozybox-dark.css"
+    "L+ /var/lib/forgejo/custom/public/assets/js - - - - ${pierreForgejo.frontend}/js"
     "L+ /var/lib/forgejo/custom/public/assets/img/favicon.svg - - - - ${forgejoBrandingAssets}/favicon.svg"
     "L+ /var/lib/forgejo/custom/public/assets/img/favicon.png - - - - ${forgejoBrandingAssets}/favicon.png"
     "L+ /var/lib/forgejo/custom/public/assets/img/logo.svg - - - - ${forgejoBrandingAssets}/logo.svg"
     "L+ /var/lib/forgejo/custom/public/assets/img/logo.png - - - - ${forgejoBrandingAssets}/logo.png"
     "L+ /var/lib/forgejo/custom/public/assets/img/apple-touch-icon.png - - - - ${forgejoBrandingAssets}/apple-touch-icon.png"
-    "L+ /var/lib/forgejo/custom/public/assets/img/avatar_default.png - - - - ${forgejoPackage.data}/public/assets/img/avatar_default.png"
 
     "d /var/lib/forgejo/custom/templates 0750 git git -"
     "d /var/lib/forgejo/custom/templates/custom 0750 git git -"
@@ -445,12 +442,11 @@ in
     "d /var/lib/forgejo/custom/templates/repo/diff 0750 git git -"
     "d /var/lib/forgejo/custom/templates/mail 0750 git git -"
     "d /var/lib/forgejo/custom/templates/mail/auth 0750 git git -"
-    "L+ /var/lib/forgejo/custom/templates/custom/header.tmpl - - - - ${forgejoWeb.templates}/custom/header.tmpl"
-    "L+ /var/lib/forgejo/custom/templates/custom/footer.tmpl - - - - ${forgejoWeb.templates}/custom/footer.tmpl"
-    "L+ /var/lib/forgejo/custom/templates/repo/commit_header.tmpl - - - - ${forgejoWeb.templates}/repo/commit_header.tmpl"
+    "L+ /var/lib/forgejo/custom/templates/custom/header.tmpl - - - - ${forgejoTemplates}/custom/header.tmpl"
+    "L+ /var/lib/forgejo/custom/templates/custom/footer.tmpl - - - - ${forgejoTemplates}/custom/footer.tmpl"
+    "L+ /var/lib/forgejo/custom/templates/repo/commit_header.tmpl - - - - ${forgejoTemplates}/repo/commit_header.tmpl"
     "L+ /var/lib/forgejo/custom/templates/repo/diff/box.tmpl - - - - ${pierreForgejo.templates}/repo/diff/box.tmpl"
-    "L+ /var/lib/forgejo/custom/templates/repo/shabox_badge.tmpl - - - - ${forgejoWeb.templates}/repo/shabox_badge.tmpl"
-    "L+ /var/lib/forgejo/custom/templates/repo/view_file.tmpl - - - - ${forgejoWeb.templates}/repo/view_file.tmpl"
+    "L+ /var/lib/forgejo/custom/templates/repo/shabox_badge.tmpl - - - - ${forgejoTemplates}/repo/shabox_badge.tmpl"
     "L+ /var/lib/forgejo/custom/templates/mail/auth/activate.tmpl - - - - ${forgejoMailActivateTmpl}"
     "L+ /var/lib/forgejo/custom/templates/mail/auth/reset_passwd.tmpl - - - - ${forgejoMailResetPasswdTmpl}"
     "L+ /var/lib/forgejo/custom/templates/mail/auth/activate_email.tmpl - - - - ${forgejoMailActivateEmailTmpl}"

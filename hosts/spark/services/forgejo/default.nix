@@ -93,7 +93,6 @@ let
   forgejoWeb = import ./web.nix {
     inherit
       forgejoDomain
-      forgejoPackage
       lib
       pierreForgejo
       pkgs

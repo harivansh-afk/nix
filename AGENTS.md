@@ -195,11 +195,10 @@ Rex (Superlogical's multiplexer, `/Applications/Rex Beta.app`) is installed by h
 
 ## Forgejo mirroring
 
-The legacy gitea-mirror Bun service has been removed. Forgejo's native mirror tables (`mirror` for inbound pulls, `push_mirror` for outbound pushes) are the source of truth. Two files drive the system:
+Forgejo's native mirror tables (`mirror` for inbound pulls, `push_mirror` for outbound pushes) are the source of truth. Two files drive the system:
 
 - `hosts/spark/services/forgejo/mirror-manifest.nix`: policy-only config (intervals, `owned_owner`, the `github_canonical_repos` and `actions_enabled_repos` lists, `retired_mirror_owners`). No repo inventory is checked into nix; the actual list of repos to mirror is discovered at runtime by querying forgejo's own database. Rendered to `/etc/forgejo-mirror/manifest.json` at activation.
 - `hosts/spark/services/forgejo/scripts/reconcile.sh`: idempotent script that reads the manifest, deletes pull-mirror rows on push-mirror targets, creates missing push-mirrors with `use_ssh=true sync_on_commit=true interval=15m`, registers the forgejo-generated public key as a github deploy key, and flips `has_actions` per the allowlist. Run as root: `sudo FORGEJO_MIRROR_MANIFEST=/etc/forgejo-mirror/manifest.json bash hosts/spark/services/forgejo/scripts/reconcile.sh [--dry-run]`.
-- `hosts/spark/services/forgejo/scripts/github-ux.sh`: optional, applies the barrettruth full treatment (github description/homepage/has_* metadata, `.github/README.md` banner, redirect-pr workflow) to every push-mirror. Run on demand: `bash hosts/spark/services/forgejo/scripts/github-ux.sh [--dry-run] [--only owner/name]`.
 
 ### GitHub-canonical repos
 
@@ -213,7 +212,7 @@ Inbound pull mirrors do not carry per-repo credentials. Their remote URLs are ba
 credential.helper = store --file /var/lib/forgejo/.git-credentials
 ```
 
-The token behind it lives in its own secret, `secrets/hosts/spark/forgejo-mirror-github-token.env` (`GITHUB_TOKEN=<classic PAT with repo scope>`). It is deliberately split from `forgejo-mirror.env`, which holds the long-lived `FORGEJO_TOKEN` used by `forgejo-actions-enforce` and `avatar-backfill.sh`: the GitHub PAT is rotated on an expiry cadence and routine rotation should not touch the Forgejo API token.
+The token behind it lives in its own secret, `secrets/hosts/spark/forgejo-mirror-github-token.env` (`GITHUB_TOKEN=<classic PAT with repo scope>`). It is deliberately split from `forgejo-mirror.env`, which holds the long-lived `FORGEJO_TOKEN` used by `forgejo-actions-enforce`: the GitHub PAT is rotated on an expiry cadence and routine rotation should not touch the Forgejo API token.
 
 Rotating is one edit plus a rebuild, never per-repo work:
 

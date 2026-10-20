@@ -1,68 +1,143 @@
 @font-face {
   font-family: "Berkeley Mono";
-  src: url("/assets/fonts/BerkeleyMono-Regular.otf") format("opentype");
+  src: url("/assets/fonts/BerkeleyMono-Regular.woff2") format("woff2");
   font-weight: 400;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Nonicons";
-  src: url("/assets/fonts/nonicons.woff") format("woff");
-  font-weight: 400;
-  font-style: normal;
-  font-display: block;
+  font-family: "Suisse Intl";
+  src: url("/assets/fonts/SuisseIntl-Light.woff2") format("woff2");
+  font-weight: 300 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Suisse Intl";
+  src: url("/assets/fonts/SuisseIntl-LightItalic.woff2") format("woff2");
+  font-weight: 300 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Suisse Intl";
+  src: url("/assets/fonts/SuisseIntl-Medium.woff2") format("woff2");
+  font-weight: 500 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Suisse Intl";
+  src: url("/assets/fonts/SuisseIntl-MediumItalic.woff2") format("woff2");
+  font-weight: 500 700;
+  font-style: italic;
+  font-display: swap;
 }
 
 :root {
+  --fonts-proportional: "Suisse Intl", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
   --fonts-monospace: "Berkeley Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace, var(--fonts-emoji);
+  --border-radius: 10px;
+  --border-radius-medium: 14px;
+  --border-radius-large: 20px;
+  --harivan-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.06), 0 8px 20px -8px rgb(0 0 0 / 0.18);
 }
 
-.harivan-nonicon {
-  display: inline-flex;
-  width: 16px;
-  min-width: 16px;
-  height: 16px;
-  align-items: center;
-  justify-content: center;
-  margin-right: 8px;
-  color: var(--color-text-light-2);
-  font-family: "Nonicons";
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 1;
-  vertical-align: -0.125em;
+body {
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: 0.005em;
 }
 
-.harivan-nonicon-folder {
-  color: var(--color-primary);
-}
-
-/* The diff file tree lays its rows out with flex gap, so drop the trailing
-   margin and let the gap space the nonicon exactly like the native octicon. */
-#diff-file-tree .harivan-nonicon {
-  margin-right: 0;
-}
-
-body,
-input,
-textarea,
-button,
-.ui,
-.menu,
-.repository,
-.markdown,
-pre,
 code,
+pre,
 kbd,
 samp,
-.repository .code-view,
-.repository .code-diff,
-.repository .file-view {
+.lines-num,
+.lines-code,
+.commit-id,
+.sha,
+.markup code,
+.markup pre {
   font-family: var(--fonts-monospace);
 }
 
+/* Cards and segments: large radius, no hard border, a soft lift. */
+.ui.segment,
+.ui.segments,
+.ui.card,
+.ui.cards > .card,
+.repository .commit-list .commit,
+.dashboard.feeds .news .ui.segment {
+  border-radius: var(--border-radius-medium);
+}
+
+.ui.segment:not(.basic):not(.attached),
+.ui.segments,
+.ui.card,
+.ui.cards > .card {
+  box-shadow: var(--harivan-shadow);
+}
+
+/* Attached stacks round only their outer ends so the seams stay square. */
+.ui.top.attached.header,
+.ui.top.attached.segment {
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.ui.bottom.attached.header,
+.ui.bottom.attached.segment,
+.ui.attached.segment:last-child {
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+.ui.attached.header:not(.top):not(.bottom),
+.ui.attached.segment:not(.top):not(.bottom):not(:last-child) {
+  border-radius: 0;
+}
+
+.ui.top.attached.segment:only-child {
+  border-radius: var(--border-radius);
+}
+
+.file-view.code-view {
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+.ui.button {
+  border-radius: 9999px;
+  font-weight: 500;
+  transition: background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.ui.icon.button:not(.labeled) {
+  border-radius: var(--border-radius);
+}
+
+.ui.buttons > .button:first-child { border-radius: 9999px 0 0 9999px; }
+.ui.buttons > .button:last-child { border-radius: 0 9999px 9999px 0; }
+.ui.buttons > .button:not(:first-child):not(:last-child) { border-radius: 0; }
+.ui.buttons > .button:only-child { border-radius: 9999px; }
+
+.navbar-left.ui.secondary.menu .item,
+.navbar-right.ui.secondary.menu .item {
+  border-radius: var(--border-radius);
+}
+
+.ui.modal {
+  border-radius: var(--border-radius-medium);
+}
+
+.ui.popup,
+.ui.dropdown .menu,
+.ui.menu .ui.dropdown .menu {
+  border-radius: var(--border-radius);
+  box-shadow: var(--harivan-shadow);
+}
+
+.ui.dropdown .menu {
+  overflow: hidden;
+}
 
 .repository .code-diff,
 .repository .code-view {
@@ -73,7 +148,6 @@ samp,
 .repository .code-diff .lines-code code.code-inner,
 .repository .code-view .lines-code,
 .repository .code-view .lines-code code.code-inner {
-  font-family: var(--fonts-monospace);
   font-size: 13px;
   line-height: 1.6;
   tab-size: 2;
@@ -106,3 +180,20 @@ samp,
 .shiki span {
   color: light-dark(var(--shiki-light), var(--shiki-dark));
 }
+
+.page-footer { display: none !important; }
+#navbar-logo img { display: none !important; }
+#navbar-logo::before {
+  content: "Home" !important;
+  display: inline-block !important;
+  position: static !important;
+  background: none !important;
+  width: auto !important;
+  height: auto !important;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-text);
+}
+.code-diff tr.tag-code,
+.code-diff tr.tag-code td,
+.code-diff tr.tag-code .blob-excerpt { background-color: var(--color-body); }

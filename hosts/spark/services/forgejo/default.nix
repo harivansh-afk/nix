@@ -72,6 +72,7 @@ let
   ) forgejoOauthSourceList;
 
   forgejoDb = "/var/lib/forgejo/data/forgejo.db";
+  repoUnits = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
   mirrorIntervalSeconds = 15 * 60;
 
   actionsEnforce = pkgs.writeShellScript "forgejo-actions-enforce" ''
@@ -88,50 +89,10 @@ let
     exec ${pkgs.python3}/bin/python3 ${./normalize-mirror-schedule.py}
   '';
 
-  forgejoIconSvg = ./icon.svg;
-  forgejoBrandingAssets =
-    pkgs.runCommand "forgejo-branding-assets"
-      {
-        nativeBuildInputs = [ pkgs.librsvg ];
-      }
-      ''
-        mkdir -p $out
-        cp ${forgejoIconSvg} $out/favicon.svg
-        cp ${forgejoIconSvg} $out/logo.svg
-        rsvg-convert -w 192 -h 192 ${forgejoIconSvg} > $out/favicon.png
-        rsvg-convert -w 180 -h 180 ${forgejoIconSvg} > $out/apple-touch-icon.png
-        rsvg-convert -w 512 -h 512 ${forgejoIconSvg} > $out/logo.png
-      '';
-
-  mkForgejoAuthMail =
-    args: pkgs.replaceVars ./mail-auth.tmpl.in ({ domain = forgejoDomain; } // args);
-
-  forgejoMailActivateTmpl = mkForgejoAuthMail {
-    title = "Welcome to ${forgejoDomain}";
-    heading = "Welcome to ${forgejoDomain}";
-    urlExpr = ''printf "%suser/activate?code=%s" AppUrl (QueryEscape .Code)'';
-    buttonLabel = "Confirm your account";
-    codeLivesVar = ".ActiveCodeLives";
-  };
-
-  forgejoMailResetPasswdTmpl = mkForgejoAuthMail {
-    title = "Reset your password";
-    heading = "Reset your password";
-    urlExpr = ''printf "%suser/recover_account?code=%s" AppUrl (QueryEscape .Code)'';
-    buttonLabel = "Reset password";
-    codeLivesVar = ".ResetPwdCodeLives";
-  };
-
-  forgejoMailActivateEmailTmpl = mkForgejoAuthMail {
-    title = "Confirm your new email";
-    heading = "Confirm your new email";
-    urlExpr = ''printf "%suser/activate_email?code=%s&email=%s" AppUrl (QueryEscape .Code) (QueryEscape .Email)'';
-    buttonLabel = "Confirm email";
-    codeLivesVar = ".ActiveCodeLives";
-  };
   pierreForgejo = inputs.pierrejo.lib.mkPierreForgejo { inherit pkgs; };
   forgejoWeb = import ./web.nix {
     inherit
+      forgejoDomain
       forgejoPackage
       lib
       pierreForgejo
@@ -139,10 +100,10 @@ let
       ;
   };
   forgejoPackageBase = pkgs.callPackage (import "${pkgs.path}/pkgs/by-name/fo/forgejo/generic.nix" {
-    version = "16.0.3";
-    hash = "sha256-G2kp2k/ivqxXG68+piBczXujtj3f/fLr+DnHoiMKOB4=";
-    npmDepsHash = "sha256-QwZ8X0pVxs5u4jMOqy3VGcBGVqqDKpLCMPmwoECVwEg=";
-    vendorHash = "sha256-0nvMy0oyVIy2qBngg1eu0UAGBEuoCGzDdsBYUuU/A48=";
+    version = "16.0.6";
+    hash = "sha256-629cbLUh+okT3SFHwHFQDPiOoao0hrTxOzdOKxYEd6Q=";
+    npmDepsHash = "sha256-C/ht4Z3ivtm6nBNHUkNmKpLsnmnrpzW6rBq153LuITc=";
+    vendorHash = "sha256-wOAbZ6eEwlavMIcTOmqPpdgLNcgylCX4MwxuI/35YZw=";
     lts = false;
   }) { };
   forgejoPackage = pierreForgejo.mkForgejoWithPierre (
@@ -176,8 +137,11 @@ in
           @forgejoAssets path /assets/* /manifest.json /favicon.svg /favicon.png /apple-touch-icon.png
           header @forgejoAssets Cache-Control "public, max-age=21600"
 
-          @forgejoFonts path /assets/fonts/*
-          header @forgejoFonts Cache-Control "public, max-age=31536000, immutable"
+          handle_path /assets/fonts/* {
+            root * /srv/harivan.sh/dist/fonts
+            header Cache-Control "public, max-age=31536000, immutable"
+            file_server
+          }
 
           reverse_proxy 127.0.0.1:${toString backendPort}
         '';
@@ -204,13 +168,8 @@ in
   };
 
   systemd.services.forgejo.restartTriggers = [
-    forgejoWeb.frontend
-    forgejoWeb.js
+    forgejoWeb.public
     forgejoWeb.templates
-    forgejoWeb.assets
-    pierreForgejo.frontend
-    pierreForgejo.assets
-    pierreForgejo.templates
   ];
 
   systemd.services.forgejo.preStart = lib.mkAfter ''
@@ -249,10 +208,10 @@ in
       repository = {
         DEFAULT_PRIVATE = "private";
 
-        DEFAULT_REPO_UNITS = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
-        DEFAULT_FORK_REPO_UNITS = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
-        DEFAULT_MIRROR_REPO_UNITS = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
-        DEFAULT_TEMPLATE_REPO_UNITS = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
+        DEFAULT_REPO_UNITS = repoUnits;
+        DEFAULT_FORK_REPO_UNITS = repoUnits;
+        DEFAULT_MIRROR_REPO_UNITS = repoUnits;
+        DEFAULT_TEMPLATE_REPO_UNITS = repoUnits;
       };
       mailer = {
         ENABLED = true;
@@ -393,13 +352,6 @@ in
       users = [ "gitea-runner" ];
       commands = [
         {
-          command = "/run/current-system/sw/bin/nixos-rebuild";
-          options = [
-            "NOPASSWD"
-            "SETENV"
-          ];
-        }
-        {
           command = "/run/current-system/sw/bin/spark-deploy";
           options = [ "NOPASSWD" ];
         }
@@ -419,41 +371,8 @@ in
 
     "L+ /var/lib/forgejo/.gitconfig - - - - /var/lib/forgejo/data/home/.gitconfig"
 
-    "d /var/lib/forgejo/custom 0750 git git -"
-    "d /var/lib/forgejo/custom/public 0750 git git -"
-    "d /var/lib/forgejo/custom/public/assets 0750 git git -"
-    "d /var/lib/forgejo/custom/public/assets/css 0750 git git -"
-    "d /var/lib/forgejo/custom/public/assets/fonts 0750 git git -"
-    "d /var/lib/forgejo/custom/public/assets/img 0750 git git -"
-    "L+ /var/lib/forgejo/custom/public/assets/css/harivan-forgejo.css - - - - ${forgejoWeb.assets}/css/harivan-forgejo.css"
-    "L+ /var/lib/forgejo/custom/public/assets/css/pierre-forgejo.css - - - - ${pierreForgejo.assets}/css/pierre-forgejo.css"
-    "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-auto.css - - - - ${forgejoWeb.assets}/css/theme-cozybox-auto.css"
-    "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-light.css - - - - ${forgejoWeb.assets}/css/theme-cozybox-light.css"
-    "L+ /var/lib/forgejo/custom/public/assets/css/theme-cozybox-dark.css - - - - ${forgejoWeb.assets}/css/theme-cozybox-dark.css"
-    "L+ /var/lib/forgejo/custom/public/assets/fonts/BerkeleyMono-Regular.otf - - - - /srv/harivan.sh/dist/fonts/BerkeleyMono-Regular.otf"
-    "L+ /var/lib/forgejo/custom/public/assets/js - - - - ${forgejoWeb.js}/js"
-    "L+ /var/lib/forgejo/custom/public/assets/img/favicon.svg - - - - ${forgejoBrandingAssets}/favicon.svg"
-    "L+ /var/lib/forgejo/custom/public/assets/img/favicon.png - - - - ${forgejoBrandingAssets}/favicon.png"
-    "L+ /var/lib/forgejo/custom/public/assets/img/logo.svg - - - - ${forgejoBrandingAssets}/logo.svg"
-    "L+ /var/lib/forgejo/custom/public/assets/img/logo.png - - - - ${forgejoBrandingAssets}/logo.png"
-    "L+ /var/lib/forgejo/custom/public/assets/img/apple-touch-icon.png - - - - ${forgejoBrandingAssets}/apple-touch-icon.png"
-    "L+ /var/lib/forgejo/custom/public/assets/img/avatar_default.png - - - - ${forgejoPackage.data}/public/assets/img/avatar_default.png"
-
-    "d /var/lib/forgejo/custom/templates 0750 git git -"
-    "d /var/lib/forgejo/custom/templates/custom 0750 git git -"
-    "d /var/lib/forgejo/custom/templates/repo 0750 git git -"
-    "d /var/lib/forgejo/custom/templates/repo/diff 0750 git git -"
-    "d /var/lib/forgejo/custom/templates/mail 0750 git git -"
-    "d /var/lib/forgejo/custom/templates/mail/auth 0750 git git -"
-    "L+ /var/lib/forgejo/custom/templates/custom/header.tmpl - - - - ${forgejoWeb.templates}/custom/header.tmpl"
-    "L+ /var/lib/forgejo/custom/templates/custom/footer.tmpl - - - - ${forgejoWeb.templates}/custom/footer.tmpl"
-    "L+ /var/lib/forgejo/custom/templates/repo/commit_header.tmpl - - - - ${forgejoWeb.templates}/repo/commit_header.tmpl"
-    "L+ /var/lib/forgejo/custom/templates/repo/diff/box.tmpl - - - - ${pierreForgejo.templates}/repo/diff/box.tmpl"
-    "L+ /var/lib/forgejo/custom/templates/repo/shabox_badge.tmpl - - - - ${forgejoWeb.templates}/repo/shabox_badge.tmpl"
-    "L+ /var/lib/forgejo/custom/templates/repo/view_file.tmpl - - - - ${forgejoWeb.templates}/repo/view_file.tmpl"
-    "L+ /var/lib/forgejo/custom/templates/mail/auth/activate.tmpl - - - - ${forgejoMailActivateTmpl}"
-    "L+ /var/lib/forgejo/custom/templates/mail/auth/reset_passwd.tmpl - - - - ${forgejoMailResetPasswdTmpl}"
-    "L+ /var/lib/forgejo/custom/templates/mail/auth/activate_email.tmpl - - - - ${forgejoMailActivateEmailTmpl}"
+    "L+ /var/lib/forgejo/custom/public - - - - ${forgejoWeb.public}"
+    "L+ /var/lib/forgejo/custom/templates - - - - ${forgejoWeb.templates}"
   ];
 
   services.gitea-actions-runner = {

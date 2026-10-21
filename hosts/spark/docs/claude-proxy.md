@@ -34,25 +34,11 @@ interrupt an active response. A Fable-specific limit does not exhaust other
 models. Details and tests live in the source repo's
 [usage notes](https://git.harivan.sh/harivansh-afk/cc-proxy/src/branch/main/docs/usage-semantics.md).
 
-## Default model and API keys
+## Default model
 
 The `cc` alias in `dots/zsh/zshrc` starts Claude on Opus 5.5 through
 `ANTHROPIC_MODEL`; `--model` and `/model` override it, and plain `claude` keeps
 the Nix default.
-
-Anthropic API keys are a paid fallback for Fable 5.1 and Opus 5.5. The gateway
-uses them only while every account is cooling down for that model, and rotates
-between them when it does. A session that fails over to a key stays on it for
-the 24h affinity window. Keys live one per line in the sops secret
-`secrets/hosts/spark/claude-proxy-api-keys`; the service links it to
-`~/.local/state/claude-proxy/api-keys` before starting. sops cannot restart user
-units, so a changed key file needs a restart:
-
-```sh
-just sops-edit secrets/hosts/spark/claude-proxy-api-keys
-just switch-spark
-systemctl --user restart claude-proxy
-```
 
 ## Deploy and update
 

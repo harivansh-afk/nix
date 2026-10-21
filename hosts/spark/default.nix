@@ -6,6 +6,14 @@
   pkgs,
   ...
 }:
+let
+  caBundle = "/etc/ssl/certs/ca-certificates.crt";
+  caBundleEnv = {
+    NIX_SSL_CERT_FILE = caBundle;
+    SSL_CERT_FILE = caBundle;
+    REQUESTS_CA_BUNDLE = caBundle;
+  };
+in
 {
   imports = [
     inputs.disko.nixosModules.disko
@@ -52,6 +60,28 @@
   };
 
   security.tpm2.enable = true;
+
+  security.pki.caCertificateBlacklist = [
+    "Comodo AAA Services root"
+    "emSign ECC Root CA - G3"
+  ];
+
+  environment.variables = caBundleEnv;
+  systemd.services =
+    lib.genAttrs
+      [
+        "hermes-agent"
+        "hermes-backend"
+        "mixbridge-api"
+        "roomcast"
+        "roomcast-mcp"
+      ]
+      (_: {
+        environment = lib.mapAttrs (_: lib.mkForce) caBundleEnv;
+      });
+  systemd.user.settings.Manager.DefaultEnvironment = lib.mapAttrsToList (
+    name: value: "${name}=${value}"
+  ) caBundleEnv;
 
   nixpkgs.config.cudaCapabilities = [ "12.1" ];
 

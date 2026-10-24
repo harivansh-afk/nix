@@ -39,13 +39,6 @@ is already running, use `systemctl --user start beeper`; no Sway restart is need
    The endpoint is `http://localhost:23373/v0/mcp`. Check
    `ss -ltnp '( sport = :23373 )'`: only `127.0.0.1`/`::1` is acceptable.
    Do not expose it through Caddy, cloudflared, firewall rules or the tailnet.
-4. Desktop and iMessage Hermes profiles declare the Beeper MCP with OAuth.
-   Authorize each separately with `hermes --profile desktop mcp login beeper`
-   and `hermes --profile imessage mcp login beeper`. Open the authorization URL
-   on Spark, then approve the named client in Beeper. Keep the browser navigation
-   asynchronous: it waits for the native approval dialog. The approval has an
-   expiry (30 days by default); reauthorize when it expires.
-   Credentials stay in each profile's runtime OAuth store, never Git or Nix.
 
 ## Coding agents
 
@@ -58,18 +51,17 @@ claude mcp login beeper
 ```
 
 Open each authorization URL on Spark and approve its named client in Beeper.
-Codex uses dynamic client registration, matching Hermes's `cimd = false` setup.
+Codex uses dynamic client registration.
 Each client retains its own OAuth credentials across sessions and Nix rebuilds;
 reauthorize when the Beeper approval expires or is revoked. Rebuilds register the
-endpoint but do not grant access or copy Hermes credentials. Mac-local agents
+endpoint but do not grant access or copy credentials. Mac-local agents
 are not configured to reach Spark's loopback API.
 
 ## Verification
 
 After deployment and authorization, start a fresh session in each client and ask
 it to list connected messaging accounts, find a specific chat, and read recent
-messages. Tool discovery alone is not acceptance. iMessage uses Hermes's native
-tool discovery for Beeper reads and actions.
+messages. Tool discovery alone is not acceptance.
 
 Beeper must stay running for its API and on-device connections. Reading messages
 does not verify sending, attachments, audio, or every network's synchronization.

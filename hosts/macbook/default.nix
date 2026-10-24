@@ -14,7 +14,6 @@
     ../../modules/users/darwin.nix
     ./apps.nix
     ./defaults.nix
-    ./hermes-desktop.nix
     ./homebrew.nix
     ./logitech
     ./muxd.nix

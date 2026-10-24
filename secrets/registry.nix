@@ -28,29 +28,6 @@
     "wayvnc.conf".owner = username;
     "user-password-hash".neededForUsers = true;
 
-    "hermes-dashboard.env" = {
-      format = "dotenv";
-      owner = username;
-      restartUnits = [ "hermes-backend.service" ];
-    };
-
-    "hermes-voice.env" = {
-      format = "dotenv";
-      owner = "root";
-      restartUnits = [ "hermes-backend.service" ];
-    };
-
-    "hermes-relay.env" = {
-      format = "dotenv";
-      owner = username;
-      restartUnits = [ "hermes-agent.service" ];
-    };
-
-    "hermes-telegram.env" = {
-      owner = username;
-      restartUnits = [ "hermes-agent.service" ];
-    };
-
     "wifi.env".restartUnits = [ "NetworkManager-ensure-profiles.service" ];
 
     "cloudflared.json" = {

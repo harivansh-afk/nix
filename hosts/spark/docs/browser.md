@@ -51,7 +51,7 @@ the new bar with `systemctl --user start waybar` if needed.
 
 `spark-cua-mcp` only resolves the user runtime directory and executes upstream
 `cua-driver mcp --socket .../cua-driver/control.sock`. The existing user service
-owns the Sway and D-Bus environment. Hermes, Codex, Claude Code and omp connect
+owns the Sway and D-Bus environment. Codex, Claude Code and omp connect
 to this same native backend. The facade's `computer_exec`/`computer_close` tools
 are removed; start fresh agent sessions after deployment.
 

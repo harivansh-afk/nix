@@ -32,7 +32,6 @@ in
     ./services/cloudflared.nix
     ./services/sharefs.nix
     ./services/forgejo
-    ./services/hermes
     ./services/roomcast.nix
     ./services/airplay-beacon.nix
     ./services/inference.nix
@@ -70,8 +69,6 @@ in
   systemd.services =
     lib.genAttrs
       [
-        "hermes-agent"
-        "hermes-backend"
         "mixbridge-api"
         "roomcast"
         "roomcast-mcp"

@@ -1,8 +1,7 @@
 # Local inference
 
 Spark serves `qwen3.8-flash-next` at `http://127.0.0.1:18080/v1` through
-NixOS's Podman container module. OMP's local overlay uses it for both roles;
-Hermes's optional `spark` provider uses it too. Hermes's default stays Astra.
+NixOS's Podman container module. OMP's local overlay uses it for both roles.
 llama.cpp and Ollama are not part of the runtime. A retained abliterated GGUF
 is not configured for serving.
 
@@ -42,8 +41,7 @@ have not been verified by the storage cleanup.
 After deployment, follow `journalctl -fu vllm-model-download` and then
 `journalctl -fu podman-vllm`. Systemd's container-active state does not mean
 model-ready; check `curl -f http://127.0.0.1:18080/health` and `/v1/models`.
-Verify streaming, reasoning and actual tool-call round trips through OMP and
-Hermes, then measure decode speed and peak host/GPU memory during a long
+Verify streaming, reasoning and actual tool-call round trips through OMP, then measure decode speed and peak host/GPU memory during a long
 prefill. Watch the other services for memory pressure. Unlike the previous
 router, this runtime keeps its model resident while idle.
 
@@ -56,6 +54,6 @@ its model files; the retired model downloads have been deleted.
 ## Retired knowledge base
 
 The unused KB implementation has been removed from the repository. Its services
-and Hermes plugin remain disabled. Existing PostgreSQL data, `/var/lib/kb`,
+remain disabled. Existing PostgreSQL data, `/var/lib/kb`,
 `/var/lib/llama-cpp-embed`, and `/var/lib/cognee` are retained on disk.
 Removing the source does not delete stored data.

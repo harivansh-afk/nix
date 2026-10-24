@@ -50,8 +50,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hermes-agent.url = "github:NousResearch/hermes-agent";
-
     cc-proxy = {
       url = "git+https://git.harivan.sh/harivansh-afk/cc-proxy.git?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";

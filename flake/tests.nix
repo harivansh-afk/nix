@@ -28,22 +28,6 @@
         (lib.assertMsg (
           !(lib.elem 23373 proxiedPorts)
         ) "spark: Beeper's local API must not be reverse-proxied")
-        (lib.assertMsg (
-          let
-            desktop = builtins.fromJSON (
-              builtins.unsafeDiscardStringContext
-                spark.services.hermes-agent.hermesHomeFiles."profiles/desktop/config.yaml"
-            );
-            secret = spark.sops.secrets."hermes-voice.env";
-          in
-          desktop.voice.voice_chat_mode == "gpt-live"
-          && desktop.voice.gpt_live.voice == "marin"
-          && !(desktop.voice.gpt_live ? api_key)
-          && secret.format == "dotenv"
-          && secret.owner == "root"
-          && lib.elem "hermes-backend.service" secret.restartUnits
-          && lib.elem secret.path spark.systemd.services.hermes-backend.serviceConfig.EnvironmentFile
-        ) "spark: desktop GPT-Live must use the runtime SOPS voice credential, not a store-embedded key")
         (lib.assertMsg (proxiedPorts != [ ])
           "spark: expected at least one caddy reverse_proxy backend; the port-extraction regex may have rotted"
         )
@@ -99,18 +83,13 @@
           && lib.hasInfix "Restart=no" spark.systemd.units."podman-vllm.service".text
         ) "spark: vLLM must stay loopback-only, bounded, and stop after a failed experiment")
         (lib.assertMsg (
-          vllmSettings.served-model-name == spark.services.hermes-agent.settings.providers.spark.model
-          && vllmSettings.speculative-config.method == "mtp"
+          vllmSettings.speculative-config.method == "mtp"
           && vllmSettings.speculative-config.num_speculative_tokens == 2
           && lib.elem "vllm-model-download.service" spark.systemd.services.podman-vllm.requires
-        ) "spark: the local provider must match vLLM, with MTP and weights staged before startup")
-        (lib.assertMsg (
-          lib.all (name: !(lib.hasPrefix "kb-" name) && !(lib.hasPrefix "llama-cpp-embed" name)) (
-            lib.attrNames spark.systemd.units
-          )
-          && lib.elem "knowledge-base" spark.services.hermes-agent.settings.plugins.disabled
-          && !(lib.elem "knowledge-base" spark.services.hermes-agent.settings.plugins.enabled)
-        ) "spark: personal KB services, timers and the Hermes KB plugin must stay disabled")
+        ) "spark: vLLM must use MTP with weights staged before startup")
+        (lib.assertMsg (lib.all (
+          name: !(lib.hasPrefix "kb-" name) && !(lib.hasPrefix "llama-cpp-embed" name)
+        ) (lib.attrNames spark.systemd.units)) "spark: personal KB services and timers must stay disabled")
 
         (
           let

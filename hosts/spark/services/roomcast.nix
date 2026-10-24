@@ -82,11 +82,6 @@ in
     };
   };
 
-  systemd.services.hermes-agent = {
-    wants = [ "roomcast-mcp.service" ];
-    after = [ "roomcast-mcp.service" ];
-  };
-
   services.roomcast = {
     enable = true;
     lanInterface = "wlP9s9";
@@ -103,11 +98,4 @@ in
   };
 
   users.users.${username}.extraGroups = [ "roomcast" ];
-  systemd.services.hermes-agent.serviceConfig.SupplementaryGroups = [ "roomcast" ];
-
-  services.hermes-agent.settings.mcp_servers.roomcast = {
-    url = "http://127.0.0.1:${toString mcpPort}/mcp";
-    transport = "http";
-    lazy = false;
-  };
 }

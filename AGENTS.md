@@ -124,7 +124,6 @@ hosts/
       caddy.nix        Reverse proxy on loopback, loopbackVhost helper
       cloudflared.nix  Cloudflare tunnel to Caddy
       draw.nix         draw (self-hosted Excalidraw+) via the draw flake's NixOS module
-      hermes/          Hermes gateway, desktop backend and messaging profiles
       inference.nix    Local vLLM inference container (GPU)
       mosh.nix         Mosh UDP server config
       vaultwarden.nix  Vaultwarden password manager
@@ -231,25 +230,16 @@ journalctl -u forgejo --since today | rg "Invalid username or token"
 
 Forgejo's own `[mirror] DEFAULT_INTERVAL` is `15m` and `[queue.mirror] MAX_WORKERS` is capped at `1`. The pre-start hook in `hosts/spark/services/forgejo/default.nix` uniformly jitters every pull-mirror's `next_update_unix` to `now + (repo_id % 900s)` on each forgejo start, so 100+ mirrors never bunch into a single hour the way they did under the old gitea-mirror scheduler.
 
-## Hermes
+## Agent desktop
 
-Hermes runs through upstream's NixOS module in `hosts/spark/services/hermes/default.nix`.
-The gateway and dashboard share `~/.local/state/hermes/.hermes`; the `~/.hermes`
-symlink keeps existing CLI state reachable. Desktop uses Devin Astra; Relay uses Claude Opus 5.5;
-provider setup and limitations are in `hosts/spark/docs/hermes.md`.
-Browser and desktop actions use agent-browser CLI and upstream Cua MCP
-through the `spark-computer` skill, also installed for coding agents. Delegation,
-memory and skills are enabled for CLI and Relay. The personal KB,
-its ingestion and embedding services, and its Hermes plugin are disabled.
+Browser and desktop actions on spark use agent-browser CLI and upstream Cua MCP
+through the `spark-computer` skill, installed for coding agents; see
+`hosts/spark/docs/browser.md`. The personal KB and its ingestion and embedding
+services are disabled.
 
 Chromium's existing Default profile is private mutable state; agents attach to
 the running browser and create task-owned tabs. Never commit profiles or put credentials
-in the store. For browser identity, Sway/CUA diagnostics, Relay recovery or
-post-deployment acceptance, read `hosts/spark/docs/hermes.md`.
-
-Nix owns runtimes, settings and the assistant guidance in `dots/hermes/`. Memory,
-learned skills and conversation state persist across rebuilds. Scheduled work is
-created only on request; the old scanners, graph and automatic loops remain absent.
+in the store.
 
 ## Codex account gateway
 

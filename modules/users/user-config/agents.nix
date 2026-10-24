@@ -89,8 +89,8 @@ in
     ]
     ++ [
       {
-        name = "paper-deck";
-        path = ../../../dots/agents/skills/paper-deck;
+        name = "crux";
+        path = ../../../dots/agents/skills/crux;
       }
     ]
   );

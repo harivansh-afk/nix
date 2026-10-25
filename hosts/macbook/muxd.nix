@@ -19,6 +19,21 @@ in
 
   environment.systemPackages = [ config.services.muxd.package ];
 
+  launchd.user.agents.muxd.serviceConfig.ProgramArguments = lib.mkForce [
+    "/bin/sh"
+    "-c"
+    (
+      "/bin/wait4path /nix/store && exec "
+      + lib.escapeShellArgs (
+        [ (lib.getExe config.services.muxd.package) ]
+        ++ lib.optionals (config.services.muxd.listen != null) [
+          "--listen-quic"
+          config.services.muxd.listen
+        ]
+      )
+    )
+  ];
+
   system.activationScripts.postActivation.text = lib.mkAfter ''
     sudo -H -u ${username} ${pkgs.bash}/bin/bash -c '
       set -eu

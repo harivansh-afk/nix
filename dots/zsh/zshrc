@@ -1,7 +1,7 @@
 if [[ "$TERM_PROGRAM" == rex ]]; then
   export TERM=xterm-ghostty
   if [[ -z "$REX_LOCAL" ]] && (( $+commands[rex-spark] )); then
-    trap 'muxd close "spark:rex-$REX_BLOCK" &>/dev/null' HUP
+    trap 'muxd close "spark:rex-$REX_BLOCK" &>/dev/null' EXIT HUP
     rex-spark
     exit
   fi

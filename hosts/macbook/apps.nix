@@ -1,6 +1,7 @@
 { lib, ... }:
 let
   loginApps = [
+    "Tailscale"
     "VoiceInk"
   ];
 in

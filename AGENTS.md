@@ -67,7 +67,6 @@ Instructions for every agent harness are layered in `dots/agents/` and rendered 
 | Part | Read by | Holds |
 |------|---------|-------|
 | `core.md` | every agent | who Hari is, machines, forge, knowledge base, how to work with him |
-| `coding.md` | Claude Code, Codex | tooling, git conventions, Spark CLI tools |
 | `claude.md` | Claude Code | Claude-only steering (prose questions, outcome-first replies, delegation) |
 
 Rendered outputs: `~/.claude/CLAUDE.md` (core + coding + claude), `~/.codex/AGENTS.md` (core + coding). A fact that is true for two parts moves up to `core.md`; a repo-specific fact belongs in that repo's `AGENTS.md` (this file), which the tracked `CLAUDE.md` imports with `@AGENTS.md`. Keep that file as the single import so local copies cannot accumulate conflicting instructions.

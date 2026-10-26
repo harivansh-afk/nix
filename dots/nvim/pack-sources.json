@@ -1,7 +1,7 @@
 {
   "cozybox.nvim": {
-    "hash": "sha256-QulyQlUptCB/uwO3u4d2BY0jAT/9ijVqTpH0KP3of6E=",
-    "rev": "67815e6b9230dd24d2b3090398de833125b6afa1",
+    "hash": "sha256-czvfxQSY12+R9lYAyRQ5gc5AuNcsCGaeSfxTjNd/trM=",
+    "rev": "7948267696ca483ad0adc8a6733a00919bcce2e1",
     "url": "https://git.harivan.sh/harivansh-afk/cozybox.nvim"
   },
   "diffs.nvim": {

@@ -37,7 +37,7 @@
             echo "cloudflare-dns: no Cloudflare API token available." >&2
             echo "  Expected the sops secret at $sops_token (run a switch after adding it)," >&2
             echo "  or set CLOUDFLARE_API_TOKEN for a one-off." >&2
-            echo "  See terraform/cloudflare/README.md (SOP: API token)." >&2
+            echo "  Scopes on both zones: Zone:Read, DNS:Edit, Zone WAF:Edit, Bot Management:Edit." >&2
             exit 1
           fi
 

@@ -89,7 +89,7 @@ def act(message, fn, *args, **kwargs):
         return None
     try:
         return fn(*args, **kwargs)
-    except (HTTPError, TimeoutError) as e:
+    except (HTTPError, urllib.error.URLError, TimeoutError) as e:
         print(f"  failed: {e}", flush=True)
         return None
 

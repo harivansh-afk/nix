@@ -2,7 +2,7 @@
 local terminal = "com.superlogical.terminal"
 local shells = { zsh = true, bash = true, fish = true, sh = true }
 
-local relays = { ["mux-attach"] = true, ["mosh-client"] = true }
+local relays = { ssh = true, ["mosh-client"] = true }
 local function basename(path)
   return path and path:match("([^/]+)$")
 end
@@ -45,11 +45,16 @@ local function split(ctx, direction, options)
   if err ~= nil then error(err, 0) end
 end
 
-local function pane_dir(ctx)
+local function remote_dir(ctx)
   local result = rex.block.call(terminal, "pwd", { block_id = ctx.block_id })
   local path = result and result.pwd and result.pwd:match("^[%w+.-]+://[^/]*(/.*)$")
+  if not path then return nil end
+  return (path:gsub("%%(%x%x)", function(hex) return string.char(tonumber(hex, 16)) end))
+end
+
+local function pane_dir(ctx)
+  local path = remote_dir(ctx)
   if not path then return home end
-  path = path:gsub("%%(%x%x)", function(hex) return string.char(tonumber(hex, 16)) end)
   return (path:gsub("^/home/[^/]+", home))
 end
 
@@ -71,7 +76,7 @@ for _, direction in ipairs({ "right", "below" }) do
     title = "Spark Shell " .. direction:sub(1, 1):upper() .. direction:sub(2),
     category = "Terminal",
     run = function(ctx)
-      split(ctx, direction, { command = { "env", "REX_PARENT=" .. ctx.block_id, "zsh", "-l" } })
+      split(ctx, direction, { command = { "env", "REX_CWD=" .. (remote_dir(ctx) or ""), "zsh", "-l" } })
     end,
   }
 end

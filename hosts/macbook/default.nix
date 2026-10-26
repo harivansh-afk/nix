@@ -16,7 +16,6 @@
     ./defaults.nix
     ./homebrew.nix
     ./logitech
-    ./muxd.nix
     ./services.nix
     ./startup
     ./voiceink

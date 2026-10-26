@@ -8,9 +8,9 @@
 # `wl-paste -l` then `wl-paste --type image/png` on the machine they run on.
 # On spark that clipboard does not exist; the one that matters is the Mac's.
 # With this shim first in PATH those calls come back with the Mac clipboard,
-# so image paste works inside remote sessions. Delete it when Claude Code
-# ships the Kitty clipboard protocol (OSC 5522): mux already serves that
-# end to end and does it with a permission prompt, which this bypasses.
+# so image paste works inside remote sessions. Delete it once Claude Code
+# and the terminal both speak the Kitty clipboard protocol (OSC 5522),
+# which asks permission where this shim bypasses it.
 #
 # Supported calls (the shapes Claude Code uses, plus text for convenience):
 #   wl-paste -l | --list-types             print available MIME types

@@ -34,7 +34,7 @@
 <rect x="454" y="216" width="125.136" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
 <text x="466" y="230.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">dots/ · 28 tools</text>
 <rect x="334" y="244" width="42.963" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
-<text x="346" y="258.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">mux</text>
+<text x="346" y="258.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">zmx</text>
 <rect x="454" y="244" width="156.741" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>
 <text x="466" y="258.8" font-family="ui-monospace,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace" font-size="10.5" fill="#a89984" font-weight="normal" text-anchor="start">sops-nix · 27 secrets</text>
 <rect x="334" y="272" width="99.852" height="22" rx="11.0" fill="#131313" stroke="#3c3836" stroke-width="1"/>

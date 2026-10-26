@@ -12,7 +12,7 @@ export PURE_GIT_PULL=0
 export PURE_GIT_UNTRACKED_DIRTY=1
 zstyle ':prompt:pure:git:stash' show yes
 
-[[ "$OSTYPE" != darwin* ]] && export PROMPT_PURE_SSH_CONNECTION=${PROMPT_PURE_SSH_CONNECTION:-mux}
+[[ "$OSTYPE" != darwin* ]] && export PROMPT_PURE_SSH_CONNECTION=${PROMPT_PURE_SSH_CONNECTION:-zmx}
 
 _codex_source_theme_file "$(_codex_read_theme_mode)"
 

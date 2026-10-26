@@ -7,17 +7,25 @@ local_shell() {
 }
 
 [ -n "$block" ] || local_shell "REX_BLOCK is unset, not a Rex pane"
-command -v mux-attach >/dev/null || local_shell "mux-attach is not on PATH"
+ssh -o BatchMode=yes -o ConnectTimeout=5 "$host" true 2>/dev/null || local_shell "$host is unreachable"
 
-listing="$(muxd ls "$host" 2>/dev/null)" || local_shell "$host is unreachable"
-
-target="rex-$block"
-flags=()
-if printf '%s\n' "$listing" | jq -e --arg n "$target" 'select(.name == $n and .exited == false)' >/dev/null 2>&1; then
-  flags+=(--expect-existing)
-elif [ -n "${REX_PARENT:-}" ]; then
-  flags+=(--cwd-from "rex-$REX_PARENT")
+session="rex-$block"
+remote="exec zmx attach $session"
+if [ -n "${REX_CWD:-}" ]; then
+  # A split starts in its parent's directory; an existing session ignores it.
+  printf -v dir '%q' "$REX_CWD"
+  remote="cd $dir 2>/dev/null; $remote"
 fi
 
 export TERM=xterm-ghostty
-exec mux-attach "$host:$target" --mirror-foreground "${flags[@]}"
+while :; do
+  ssh -t "$host" "$remote" && status=0 || status=$?
+  if [ "$status" -eq 255 ]; then
+    echo "rex-spark: lost $host; reconnecting" >&2
+    sleep 1
+    continue
+  fi
+  # zmx returns on shell exit and on detach (ctrl+\); a pane has no use for
+  # a detached session, so reattach while it lives.
+  ssh "$host" zmx list --short 2>/dev/null | grep -qxF "$session" || exit "$status"
+done

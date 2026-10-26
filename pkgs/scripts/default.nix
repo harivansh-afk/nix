@@ -97,7 +97,7 @@ let
       file = ./bin/rex-spark.sh;
       runtimeInputs = with pkgs; [
         coreutils
-        jq
+        gnugrep
       ];
       replacements = {
         "@HOST@" = "spark";

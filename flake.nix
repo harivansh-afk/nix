@@ -64,10 +64,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    mux = {
-      url = "git+https://git.harivan.sh/harivansh-afk/mux.git?ref=main";
-    };
-
     dgx-spark = {
       url = "github:graham33/nixos-dgx-spark";
     };

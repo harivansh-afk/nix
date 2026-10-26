@@ -18,5 +18,5 @@ pkgs/                derivations: package sets, packaged scripts
 scripts/             repo tooling (CI smoke tests, lock regeneration)
 secrets/             sops-encrypted secrets per host
 terraform/           declarative Cloudflare DNS via terranix
-assets/              readme artwork, wallpapers
+assets/              wallpapers
 ```

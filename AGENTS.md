@@ -1,292 +1,112 @@
 # AGENTS.md
 
-## Architecture
+## Hosts
 
-Two hosts, one flake:
+| Host | System | Role |
+|------|--------|------|
+| `macbook` | nix-darwin, aarch64-darwin | Workstation: Homebrew casks, Determinate Nix |
+| `spark` | NixOS, aarch64-linux | DGX Spark server: disko, sops-nix, Caddy, cloudflared, Tailscale |
 
-| Host | Platform | System | Role |
-|------|----------|--------|------|
-| `macbook` | nix-darwin | aarch64-darwin | Dev workstation |
-| `spark` | NixOS | aarch64-linux | NVIDIA DGX Spark server |
+Host records live in `flake/args.nix`; `flake/hosts.nix` builds darwin and `flake/nixos.nix` builds NixOS.
 
-Both are declared as host records in `flake/args.nix` and assembled in `flake/hosts.nix` (darwin) and `flake/nixos.nix` (nixos). The same args module wires the shared args (`hosts`, `mkSpecialArgs`) consumed by both host builders; each host's primary `username` comes from its record.
+Spark web traffic: Cloudflare edge → cloudflared → Caddy on `127.0.0.1:80` → services on loopback ports. No ACME, no public web ports.
 
-### Host topology
+## Secrets
 
-- `macbook`: nix-darwin + Homebrew casks + Determinate Nix
-- `spark`: NixOS + disko + sops-nix + dgx-spark upstream module + Caddy + cloudflared tunnel + Tailscale
-
-### Service routing on spark
-
-Internet traffic hits Cloudflare edge (TLS termination), then cloudflared tunnel delivers plain HTTP to Caddy on 127.0.0.1:80. Caddy dispatches by Host header to backend services, each bound to 127.0.0.1 on their own port. No ACME, no public firewall ports for web traffic.
-
-Services: Forgejo (`git.harivan.sh`), Vaultwarden (`vault.harivan.sh`), draw (`draw.harivan.sh`, self-hosted Excalidraw+ from the `draw` flake input; see `hosts/spark/docs/draw.md`).
-
-### Secrets
-
-sops-nix with age encryption derived from each host's ed25519 SSH key. Secret files live under `secrets/hosts/<hostname>/` (plus per-admin secrets under `secrets/user/`). Edit with `just sops-edit secrets/hosts/spark/<file>`.
-
-`.sops.yaml` recipient anchors are derived via `ssh-to-age`:
-
-- `admin_macbook` — Hari's macbook SSH pubkey, edits everything.
-- `host_spark` — Spark's `/etc/ssh/ssh_host_ed25519_key.pub`, decrypts at activation.
-
-`secrets/hosts/spark/[^/]+$` encrypts secrets for `admin_macbook` and `host_spark`.
-
-`secrets/registry.nix` declares every secret. `KEY=value` files under `secrets/user/` are named `.env` and sourced into interactive zsh; raw tokens have no extension and set `exposeToShell = false`.
+sops-nix with age keys derived from each host's ed25519 SSH key (`admin_macbook` edits everything, `host_spark` decrypts at activation). Secrets live in `secrets/hosts/<host>/` and `secrets/user/`, and every one is declared in `secrets/registry.nix`. Edit with `just sops-edit <file>`. `secrets/user/*.env` files are sourced into interactive zsh; raw tokens set `exposeToShell = false`.
 
 ## Conventions
 
-- No comments in `.nix` files. The code is the documentation. Agent guidance lives here.
-- Use `just switch` for macbook rebuilds, `just switch-spark` for spark rebuilds.
-- `just fmt` runs `nix fmt` (nixfmt-tree).
-- Pull requests for this repo go to Forgejo (`origin`, git.harivan.sh), never GitHub. The `github` remote is a push-mirror target only; its redirect-pr workflow auto-closes PRs opened there. Create PRs with `tea pr create --login harivan --repo harivansh-afk/nix --base main --head <branch>`.
-- For multiline PR bodies, pass a real file's contents to `tea pr create --description` (or `gh --body-file -` when working on actual GitHub repos). Do not pass escaped `\\n` text; it renders as literal backslash-n. After creating or editing a PR, verify the rendered body before calling it done.
-- Prefer common package definitions across macbook and spark; keep only truly macOS-specific Homebrew and GUI integrations Darwin-only.
-- Bugfix PRs keep the diff minimal and exclude unrelated changes.
-- Berkeley Mono is installed out-of-band. The flake only provides nerd-fonts symbol glyphs.
-- There is no home-manager. Per-user config is `modules/users/user-config.nix`: plain dotfiles in `dots/` symlinked into the home directory by an activation script that runs as the user. The repo owner's links point at the live checkout (`~/Documents/Git/nix/dots`), so dotfile edits apply without a rebuild; other users get the nix-store copy. Configs that need store paths (zsh plugins, git credential helpers, theme renders) are store-generated shims that defer to the live dots file.
-- Ghostty is installed via Homebrew cask, not nixpkgs. The flake owns its config files and its terminfo: `xterm-ghostty` is declarative in `modules/common.nix` (`pkgs.ghostty-bin.terminfo` on darwin, `pkgs.ghostty.terminfo` on linux) so env-scrubbed shells resolve it without `TERMINFO`. Never fix terminfo imperatively via `tic` into `~/.terminfo`.
-- Neovim uses one package definition, `lib/neovim.nix`, for workstations and the portable command. Nix owns plugins, grammars, and matched queries; `lz.n` owns lazy loading. Plugin pins live in `dots/nvim/pack-sources.json`; update one with `just nvim-update <plugin> [revision]` and rebuild. Never add runtime installs or seed writable plugin copies. Keep the query-inheritance build check: missing shared queries silently break highlighting.
-- Karabiner config is a directory symlink to `dots/karabiner/` so Karabiner can write freely.
-- Claude and Codex are curl-installed binaries. On NixOS they need nix-ld.
-- Devin config is seeded as a mutable copy since Devin rewrites it.
-- `devin-codex` packages only the adapter; it uses the installed Codex and existing Devin login. Its native `/model` selector writes `~/.codex/devin-codex.config.toml`; leave that profile mutable and keep credentials out of the Nix closure. Protocol fixes belong in `~/Documents/Git/devin-codex`, then update this flake's input.
+- No comments in `.nix` files.
+- `just switch` rebuilds the macbook, `just switch-spark` rebuilds spark, `just fmt` formats.
+- PRs go to Forgejo (`origin`, git.harivan.sh), never GitHub; `github` is a push mirror. Create them with `tea pr create --login harivan --repo harivansh-afk/nix --base main --head <branch>`, passing multiline bodies as real text, and check the rendered body afterwards.
+- Share package definitions across hosts; only macOS GUI integrations are Darwin-only.
+- Bugfix PRs stay minimal.
+- No home-manager. `modules/users/user-config.nix` builds an activation script that symlinks `dots/` into the home directory. The owner's links point at the live checkout, so dotfile edits apply without a rebuild; other users get store copies.
+- Berkeley Mono and Ghostty (Homebrew cask) are installed out of band. Ghostty's terminfo is declared in `modules/common.nix`; never `tic` into `~/.terminfo`.
+- Neovim: one package in `lib/neovim.nix`. Plugin pins live in `dots/nvim/pack-sources.json`; bump one with `just nvim-update <plugin> [rev]`. No runtime plugin installs.
+- Claude and Codex are curl-installed and need nix-ld on NixOS. Devin's config is a mutable copy because Devin rewrites it.
 
 ## Worktrees
 
-- Always create task worktrees under the repo-local `.worktrees/<topic>` directory. For this repo, that means paths like `/home/rathi/Documents/Git/nix/.worktrees/<topic>`.
-- Do not create sibling worktree directories such as `/home/rathi/Documents/Git/nix-<topic>` or global worktree directories such as `~/wt/<repo>/<topic>`.
-- Create worktrees with plain Git from the main checkout: `git worktree add .worktrees/<topic> -b <branch> main`.
-- Keep the main checkout on `main` unless the user explicitly asks otherwise.
+Create task worktrees with `git worktree add .worktrees/<topic> -b <branch> main` from the main checkout, which stays on `main`.
 
 ## Agent instructions
 
-Instructions for every agent harness are layered in `dots/agents/` and rendered by `lib/agent-instructions.nix`:
+`dots/agents/core.md` (every agent) and `claude.md` (Claude Code only) are rendered by `lib/agent-instructions.nix` into `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`. Repo facts belong in the repo's `AGENTS.md`; the tracked `CLAUDE.md` only imports it.
 
-| Part | Read by | Holds |
-|------|---------|-------|
-| `core.md` | every agent | who Hari is, machines, forge, knowledge base, how to work with him |
-| `claude.md` | Claude Code | Claude-only steering (prose questions, outcome-first replies, delegation) |
+Skills come from the `mattpocock-skills` input and are linked into `~/.agents/skills` and `~/.claude/skills`. No harness has hooks, and none should be added. Claude Code's denied tools are `permissions.deny` in `modules/users/user-config/agents.nix`.
 
-Rendered outputs: `~/.claude/CLAUDE.md` (core + coding + claude), `~/.codex/AGENTS.md` (core + coding). A fact that is true for two parts moves up to `core.md`; a repo-specific fact belongs in that repo's `AGENTS.md` (this file), which the tracked `CLAUDE.md` imports with `@AGENTS.md`. Keep that file as the single import so local copies cannot accumulate conflicting instructions.
+On spark, Claude Code also gets the `codex` MCP server (`pkgs/codex-mcp`): `codex` and `codex_reply` run `codex exec --json` in the session directory and come back as task notifications. Codex keeps MCP OAuth tokens in files because the headless keyring hangs `codex exec`. Reauthorize Beeper with `codex mcp login beeper --oauth-client-registration dcr`.
 
-Skills come from the `mattpocock-skills` flake input. `modules/users/user-config/agents.nix` builds the selected skills into one link farm and the activation script links it to `~/.agents/skills` (Codex, and anything agentskills.io-compatible) and `~/.claude/skills` (Claude Code). Upgrade them with `nix flake update mattpocock-skills`.
-
-No agent harness has hooks configured, and none should be created.
-
-Claude Code denies, on both hosts, the tools that publish to claude.ai (`Artifact*`, `DesignSync`), its own worktrees (`EnterWorktree`/`ExitWorktree`, which bypass `.worktrees/`), scheduling (`Cron*`, `ScheduleWakeup`), `SendFeedback`, and `AskUserQuestion` (questions are asked in prose). The list is `permissions.deny` in `modules/users/user-config/agents.nix`.
-
-On spark, Claude Code keeps its own subagents (`Agent`) alongside Codex delegation: `Workflow` is denied and agent teams stay off, plus the `codex` MCP server from `pkgs/codex-mcp` (one Python file on the MCP SDK). Its `codex(prompt)` and `codex_reply(thread_id, prompt)` tools run `codex exec --json` in the session's directory with the normal Codex config (`gpt-6.1-sol`, medium), stream each event as MCP progress, and return the status, thread id, files changed and Codex's final message. Claude Code moves calls running past 10s (`CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS`) to `/tasks`, and the result comes back as a task notification. Stopping the task kills Codex. A run with no events for 20 minutes (`CODEX_MCP_STALL_SECONDS`) is stopped and reported as `stalled`. The server's MCP instructions carry the delegation guidance. Codex keeps MCP OAuth tokens in files (`mcp_oauth_credentials_store = "file"`): the desktop keyring stays locked on headless spark, and a locked keyring hangs every `codex exec` before its first event. Reauthorize Beeper with `codex mcp login beeper --oauth-client-registration dcr` and approve it in Beeper.
-
-## Module layout
+## Layout
 
 ```
-flake.nix              Inputs + flake-parts structure
-flake/
-  args.nix             Host records (the two machines) + shared builders (mkPkgs, mkSpecialArgs)
-  devshell.nix         Dev tools + formatter
-  hosts.nix            macbook darwin configuration
-  nixos.nix            spark NixOS configuration
-  packages.nix         packages.<system> output: portable scripts (ga, connectors) + tool wrappers
-lib/
-  remotes.nix          Remote server registry: hosts for the per-remote connector commands
-  palette.json         Cozybox dark and light colours
-  theme.nix            Cozybox renderers for ghostty/fzf/pure-prompt/rex/sketchybar/zsh-highlights
-modules/
-  common.nix           Shared nix settings, overlays, the shared package set, fonts
-  nix-settings.nix     nix.conf settings both hosts share (nix.settings on spark, determinateNix.customSettings on darwin)
-  users/
-    user-config.nix    Shared per-user dotfile/symlink/package builder (no home-manager)
-    accounts/          User registry (rathi.nix: SSH keys + groups)
-    nixos.nix          NixOS adapter: every user in accounts/, owner gets live dots
-    darwin.nix         nix-darwin adapter: primary user, live dots
-  security/
-    sops.nix           sops-nix setup, age key from SSH host key
-hosts/
-  macbook/
-    default.nix        Facts + imports only (hostname, user, stateVersion)
-    apps.nix           GUI apps nix launches at login (apps with their own launch-at-login are NOT duplicated here)
-    defaults.nix       System defaults (dock, finder, keyboard, screenshots, loginwindow)
-    homebrew.nix       Taps, formulae, casks (every cask on the machine is declared)
-    services.nix       Every launchd unit (aerospace, sketchybar, limit.maxfiles); the only service manager
-    startup/           Login-item allowlist enforcement, undeclared launchd plist warnings (default.nix + guard.sh)
-    voiceink/          VoiceInk built from source at activation (default.nix + build.sh)
-    notch-inset/, sketchybar-feed/  ObjC sources compiled by services.nix
-  spark/
-    default.nix        Base NixOS config, nix-ld, verified boot
-    hardware.nix       DGX Spark module + disko disk layout
-    kernel-hardening.nix  Running-kernel boundary: module lock, sysctls, LSM order
-    networking.nix     Wi-Fi (NetworkManager), Tailscale, firewall, zram
-    users.nix          User accounts from modules/users/accounts, SSH, sudo
-    docs/              Notes on the verified-boot, module-lock and strict-DMA setup
-    services/          Every spark service; single-host, so they live with the host
-      caddy.nix        Reverse proxy on loopback, loopbackVhost helper
-      cloudflared.nix  Cloudflare tunnel to Caddy
-      draw.nix         draw (self-hosted Excalidraw+) via the draw flake's NixOS module
-      inference.nix    Local vLLM inference container (GPU)
-      mosh.nix         Mosh UDP server config
-      vaultwarden.nix  Vaultwarden password manager
-      website.nix      harivan.sh static site; caddy logs the view beacon, website-views timer bakes the counts (tools/views.mjs in the website repo)
-      forgejo/         Forgejo server, cozybox css in assets/, mirror manifest, Actions runner, run-by-hand scripts/
-pkgs/
-  codex-mcp/           MCP server that gives Claude Code the codex and codex_reply tools
-  zmx/                 zmx release binary, the session holder behind spark's Rex panes
-  sets.nix             Shared package sets (core, extras, darwinExtras, fonts) for modules/common.nix
-  scripts/
-    default.nix        Full script set for user profiles (portable + theme, account helpers)
-    portable.nix       Home-independent scripts (ga, remote connectors)
-    bin/               Script sources wired by default.nix
-    lib/               Rex font helper (rex-font.py)
-terraform/
-  cloudflare/          Declarative Cloudflare DNS for harivan.sh and hari.cafe via terranix
-scripts/               Repo tooling: nvim-smoke.sh, nvim-update.sh
-assets/                Static wallpapers
-dots/                  Dotfile sources (nvim, karabiner, lazygit, agents/ instructions + skills, etc.)
+flake/        host records, builders, packages, checks
+lib/          palette.json, theme.nix (renderers), neovim.nix, remotes.nix, agent-instructions.nix
+modules/      common.nix, nix-settings.nix, users/ (user-config, accounts), security/sops.nix
+hosts/macbook defaults, homebrew, launchd services, startup guard, voiceink, logitech
+hosts/spark   hardware, networking, users, kernel hardening, services/ (one file per service)
+pkgs/         sets.nix, scripts/, zmx/, codex-mcp/, other derivations
+dots/         live dotfiles
+terraform/    Cloudflare DNS via terranix
+scripts/      nvim-smoke.sh, nvim-update.sh
 ```
 
-## Theme system
+## Theme
 
-The "cozybox" palette lives in `lib/palette.json`, with dark and light variants. `lib/theme.nix` renders it for each app. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `pkgs/scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, and the wallpaper, then pokes live nvim servers. Wallpapers are fixed store assets: black for dark mode and white for light mode. Shell hooks in `dots/zsh/zshrc` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
+The cozybox palette is `lib/palette.json`; `lib/theme.nix` renders it for ghostty, fzf, pure, rex, sketchybar and zsh highlights. `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script switches the symlinks and pokes live nvim servers; zsh re-syncs on `precmd`. Neovim's colours come from `cozybox.nvim`.
 
-## Remote sessions
+## Remote sessions and Rex
 
-Spark sessions persist in zmx (`pkgs/zmx`): each Rex pane on spark is a zmx session named `rex-<REX_BLOCK>` (see Rex below). Rex owns panes and layout; nothing here multiplexes terminals.
-
-The portable scripts (`ga`, the remote connectors) build without a home directory (`pkgs/scripts/portable.nix`) and are exposed as flake `packages`, so hosts not managed by this flake can install them with `nix profile add git+https://git.harivan.sh/harivansh-afk/nix#<name>`.
-
-`lib/remotes.nix` maps a command name to the remote hostname. `pkgs/scripts/portable.nix` renders each entry into a connector command (via `pkgs/scripts/bin/remote.sh`) that lands in every user's profile: `spark` or `macbook` opens a shell over `mosh <host>`; `--ssh` forces `ssh -t` for UDP-hostile networks. Transport config (hostnames, keys, ControlMaster) stays in the live-edited `dots/ssh/config`; ssh, scp, and git are never wrapped. To add a server: one entry in `lib/remotes.nix` plus its `Host` block in `dots/ssh/config`.
-
-## Rex
-
-Rex (Superlogical's multiplexer, `/Applications/Rex Beta.app`) is installed by hand: the beta download sits behind a Discord login and Sparkle updates it in place. Everything else is declared here and applied by the darwin activation script.
-
-- `dots/rex/init.lua` is linked to `~/.config/rex/init.lua` and read by the Rex server: ⌘K clears like Ghostty, ⌘⌥+arrows and ⌘[ / ⌘] move between panes, and `ctrl+b` sequences follow tmux-style prefix keys. Apply edits with `rex config reload`; `rex keymap` shows the merged keymap. Shortcuts recorded in Rex's Settings override this file, so record none.
-- Rex keeps its theme, font and terminal options in `com.superlogical.rex` defaults, not in a file. Activation rewrites them on every switch: the Cozybox themes from `theme.renderRex`, plus every other key in `rexDefaults` (`modules/users/user-config/apps.nix`), which carries the font, option-as-alt, padding colour and copy-on-select from Ghostty's config and the interface choices. To keep a setting changed in Rex's Settings, add it there; read the current values with `defaults read com.superlogical.rex`. Changing one of them in Settings lasts until the next switch. Quit and reopen Rex to pick up a change.
-- Rex has one terminal font and no `font-codepoint-map`. Activation copies the nonicons glyphs into the out-of-band Berkeley Mono (`pkgs/scripts/lib/rex-font.py`, fontTools) as `~/Library/Fonts/BerkeleyMonoNonicons-*.otf`, family `Berkeley Mono Nonicons`, and rebuilds it only when an input changes. The icons keep nonicons' own em size, larger than a cell, because Ghostty's renderer (which Rex uses) only shrinks Nerd Font range glyphs to fit, into two cells when a space follows. Never use nerd-font-patcher here: it merges its Devicons set too, whose glyph names collide with Berkeley Mono's and shift its punctuation. Nothing is built when Berkeley Mono is missing.
-- Rex starts panes as `xterm-256color` without shell integration, and zmx sessions inherit `xterm-ghostty` from the ssh that attaches them, also without it. `dots/zsh/zshrc` sets `TERM=xterm-ghostty` inside Rex and sources Ghostty's zsh integration in any `xterm-ghostty` shell outside Ghostty itself, for the OSC 133 prompt marks and OSC 7 working directory that Rex's program status and pane directory read. The Mac uses Rex's bundled copy (`GHOSTTY_RESOURCES_DIR`); on linux the zshrc shim exports `GHOSTTY_SHELL_INTEGRATION_DIR` from `pkgs.ghostty.shell_integration` (120 KiB, cached), so spark panes mark their prompts too.
-- `rex` on PATH is `~/.local/bin/rex`, a link to the app's bundled CLI at `Contents/Helpers/Rex Server.rex/Contents/MacOS/rex` (`Rex Server.app` before the October 2026 builds; activation links whichever exists).
-- Rex has no remote server yet, so spark panes go through zmx over ssh: zshrc runs `rex-spark` (`pkgs/scripts/bin/rex-spark.sh`), which runs `ssh -t spark zmx attach rex-<REX_BLOCK>`, reconnects when ssh exits 255, and reattaches after a detach while the session lives. Spark splits (`ctrl+b '`, `ctrl+b -`) pass `REX_CWD` from the pane's OSC 7 `pwd`. Closing the pane runs `zmx kill` from the zshrc exit trap.
-- Rex reads a pane's program (icon, status, the cmd+k rule) from the Mac process in the pty's foreground, and nothing in an escape sequence substitutes for that. zshrc runs `rex-spark` as a job rather than an exec, so the relay has its own process group and is the foreground Rex inspects (an exec stays in `login`'s group and Rex sees `login`); for a spark pane that is `ssh`. `ctrl+b shift+h/j/k/l` splits a plain Mac shell off the focused pane on that side (`local_split_*` in `dots/rex/init.lua`, a block with a `command`, which starts from a non-interactive login shell that zshrc never routes to spark, with `REX_LOCAL=1`). It starts in the focused pane's directory, read from the terminal block's `pwd` method with a spark pane's home mapped to the Mac's; Rex falls back to home when the path does not exist on the Mac. `ctrl+b r` then `shift+h/j/k/l` moves the focused pane to that side of its neighbour (`move_pane_*`, which reads the session view for rects and calls `rex.session.move_block`). `cmd+k` clears a pane whose foreground is a relay (`ssh`, `mosh-client`) as well as a shell.
+- `spark` / `macbook` connectors (`lib/remotes.nix`, `pkgs/scripts/bin/remote.sh`) open `mosh <host>`; `--ssh` forces ssh. Host settings live in `dots/ssh/config`. Portable scripts are flake packages for hosts outside this flake.
+- Rex (`/Applications/Rex Beta.app`) is installed by hand. `dots/rex/init.lua` holds the keymap (`rex config reload` applies it). Activation rewrites `com.superlogical.rex` defaults from `rexDefaults` and `theme.renderRex`, so settings changed in Rex's UI last until the next switch.
+- Activation builds `Berkeley Mono Nonicons` (`pkgs/scripts/lib/rex-font.py`) because Rex has a single font. Never use nerd-font-patcher; its glyph names collide with Berkeley Mono's.
+- A Rex pane runs `rex-spark`, which runs `ssh -t spark zmx attach rex-<REX_BLOCK>` and reconnects when ssh drops. Closing the pane kills the session. `REX_LOCAL=1` (the `ctrl+b shift+hjkl` splits) gives a plain Mac shell.
 
 ## Key dependencies
 
-- `dgx-spark`: Upstream NixOS module for DGX Spark hardware. Do not set `inputs.nixpkgs.follows` - the upstream pins nixpkgs to a known-good revision for the NVIDIA kernel build. It also makes podman the machine's only container runtime and serves the Docker-compatible API at `/run/podman/podman.sock` (`dockerCompat`, `dockerSocket.enable`, socket group `podman`); anything speaking the Docker API (dockerode, docker CLI) uses that socket. Never set `virtualisation.docker.enable` - it conflicts with the podman socket, and enabling it rewired the CI runner's unit and aborted the #479 deploy mid-switch.
-- `determinate`: Manages the Nix installation, daemon, and `/etc/nix/nix.conf`. On darwin, use `determinateNix.customSettings` instead of `nix.settings`.
-- `neovim-nightly`: Both hosts' `nvim` runs this input's `packages.<system>.default`, passed to `lib/neovim.nix` through the user-config adapters; the `neovim` flake check uses it too. Never apply its overlay: replacing `pkgs.neovim` rebuilds every vim plugin and treesitter grammar from source (~660 derivations on spark). The portable command uses it too: the config relies on nightly-only runtime such as the `dir` directory viewer. nix-community's cache has no aarch64-linux build, so spark compiles nightly whenever the pin moves.
+- `dgx-spark`: never set `inputs.nixpkgs.follows`; it pins nixpkgs for the NVIDIA kernel. Podman is the only container runtime (Docker API at `/run/podman/podman.sock`); never enable `virtualisation.docker`.
+- `determinate`: owns Nix and `nix.conf`; on darwin use `determinateNix.customSettings`.
+- `neovim-nightly`: use its package, never its overlay (the overlay rebuilds every plugin and grammar).
 
-## Adding a new service on spark
+## Adding a service on spark
 
-1. Create `hosts/spark/services/<name>.nix`.
-2. Add the sops secret: create `secrets/hosts/spark/<name>.env`, encrypt with `just sops-edit`, and register it in `secrets/registry.nix`.
-3. Use `loopbackVhost` from caddy.nix: `services.caddy.virtualHosts."http://<domain>" = loopbackVhost <port>;`.
-4. Import the new module in `hosts/spark/default.nix`.
-5. Add the DNS record in Cloudflare pointing to the tunnel.
+1. Add `hosts/spark/services/<name>.nix` and import it in `hosts/spark/default.nix`.
+2. Add any secret under `secrets/hosts/spark/` and register it in `secrets/registry.nix`.
+3. Route it with `services.caddy.virtualHosts."http://<domain>" = loopbackVhost <port>;`.
+4. Add the DNS record in `terraform/cloudflare`.
 
-## Adding a new user on spark
+## Adding a user on spark
 
-1. Create `modules/users/accounts/<name>.nix` with `sshKeys`, `shell`, and `extraGroups`.
-2. Add its import to `modules/users/accounts/default.nix`. `hosts/spark/users.nix` creates the account and `modules/users/nixos.nix` installs dotfiles and packages; non-owner dotfiles point at the Nix store.
-3. For user-specific system config (services, slices), add a module under `hosts/spark/<name>/` and import it from `hosts/spark/default.nix`.
+Add `modules/users/accounts/<name>.nix` (`sshKeys`, `shell`, `extraGroups`) and import it from `accounts/default.nix`. Per-user system config goes in `hosts/spark/<name>/`.
 
 ## CI deploys
 
-`deploy.yml` runs `spark-deploy`, which starts `nixos-rebuild switch` as its own root unit (`spark-deploy-<epoch>`) and prints its journal when it finishes, so a switch that stops or replaces the runner no longer takes the switch down with it. The pin below still keeps routine deploys from restarting the runner: `gitea-runner-spark.service` is pinned `restartIfChanged = false` in `hosts/spark/services/forgejo/default.nix`. Without it, any config change that touches the runner unit (enabling docker did, via the gitea-actions-runner module's docker-label wiring) makes activation restart the runner mid-deploy; the runner's `shutdown_timeout=0s` kills its own jobs, including the nixos-rebuild driving the switch, and `switch-to-configuration` dies with its pty, leaving the system half-switched (the #479 deploy stopped postgresql and the runner this way and restarted neither). The cost: a changed runner unit lands on disk at switch but only applies on the next manual `systemctl restart gitea-runner-spark` or reboot. A cancelled sibling job on the same runner reads as a spurious failure (that is what "quality / Nix Format Check: failing after 0s" was), so check the runner journal before trusting a red X that raced a deploy.
+`deploy.yml` runs `spark-deploy`, which runs `nixos-rebuild switch` as its own root unit. `gitea-runner-spark` is `restartIfChanged = false`, because restarting the runner mid-deploy kills the switch. A changed runner unit applies only after a manual restart. A red X that raced a deploy may be a cancelled sibling job, so check the runner journal.
 
 ## Forgejo mirroring
 
-Forgejo's native mirror tables (`mirror` for inbound pulls, `push_mirror` for outbound pushes) are the source of truth. Two files drive the system:
-
-- `hosts/spark/services/forgejo/mirror-manifest.nix`: policy-only config (intervals, `owned_owner`, the `github_canonical_repos` and `actions_enabled_repos` lists, `retired_mirror_owners`). No repo inventory is checked into nix; the actual list of repos to mirror is discovered at runtime by querying forgejo's own database. Rendered to `/etc/forgejo-mirror/manifest.json` at activation.
-- `hosts/spark/services/forgejo/scripts/reconcile.sh`: idempotent script that reads the manifest, deletes pull-mirror rows on push-mirror targets, creates missing push-mirrors with `use_ssh=true sync_on_commit=true interval=15m`, registers the forgejo-generated public key as a github deploy key, and flips `has_actions` per the allowlist. Run as root: `sudo FORGEJO_MIRROR_MANIFEST=/etc/forgejo-mirror/manifest.json bash hosts/spark/services/forgejo/scripts/reconcile.sh [--dry-run]`.
-
-### GitHub-canonical repos
-
-Owned repos default to forge-canonical with a push-mirror to GitHub. `github_canonical_repos` in the manifest inverts that for the few whose truth has to live on GitHub (TouchedTips: Xcode Cloud builds from GitHub and PRs merge there). Such a repo sits on the forge as an ordinary inbound pull mirror, and phase 1 of reconcile.sh deletes any push-mirror it finds on it instead of creating one. To add one: rename the existing forge repo aside and archive it, migrate the GitHub repo as a mirror under the original name (`POST /repos/migrate` with `mirror: true`), add `owner/name` to the manifest, `just switch-spark`. Matching is case-insensitive, since the DB rows carry `lower_name`.
-
-### Pull-mirror credentials
-
-Inbound pull mirrors do not carry per-repo credentials. Their remote URLs are bare `https://github.com/...` and git resolves auth through a single host-scoped entry written by the forgejo `preStart` hook:
-
-```
-credential.helper = store --file /var/lib/forgejo/.git-credentials
-```
-
-The token behind it lives in its own secret, `secrets/hosts/spark/forgejo-mirror-github-token.env` (`GITHUB_TOKEN=<classic PAT with repo scope>`). It is deliberately split from `forgejo-mirror.env`, which holds the long-lived `FORGEJO_TOKEN` used by `forgejo-actions-enforce`: the GitHub PAT is rotated on an expiry cadence and routine rotation should not touch the Forgejo API token.
-
-Rotating is one edit plus a rebuild, never per-repo work:
-
-```
-just sops-edit secrets/hosts/spark/forgejo-mirror-github-token.env
-just switch-spark
-```
-
-Generate the PAT with the **`repo`** scope and **no expiration**. A scopeless token still authenticates and still fetches public repos, so it looks healthy while every private mirror fails.
-
-Two failure modes to know about. Git only consults the credential helper on a `401`, so when the token dies, public mirrors keep syncing and only private ones break: partial symptoms, not total. And forgejo bumps `mirror_updated` even when a sync fails, so the UI shows fresh timestamps on mirrors that have not updated in months. Never trust `mirror_updated` to prove a mirror is current; compare HEAD against upstream, or grep the journal:
-
-```
-journalctl -u forgejo --since today | rg "Invalid username or token"
-```
-
-Forgejo's own `[mirror] DEFAULT_INTERVAL` is `15m` and `[queue.mirror] MAX_WORKERS` is capped at `1`. The pre-start hook in `hosts/spark/services/forgejo/default.nix` uniformly jitters every pull-mirror's `next_update_unix` to `now + (repo_id % 900s)` on each forgejo start, so 100+ mirrors never bunch into a single hour the way they did under the old gitea-mirror scheduler.
+- `hosts/spark/services/forgejo/mirror-manifest.nix` holds policy only. Repos are discovered from Forgejo's database, and `scripts/reconcile.sh` (root, `--dry-run` available) makes the mirror tables match.
+- Owned repos are forge-canonical and push-mirror to GitHub. Repos in `github_canonical_repos` are inbound pull mirrors instead.
+- Pull mirrors authenticate through one credential-store entry fed by `secrets/hosts/spark/forgejo-mirror-github-token.env`: a classic PAT with `repo` scope and no expiry. A dead token only breaks private mirrors, and `mirror_updated` advances even when a sync fails, so check with `journalctl -u forgejo | rg "Invalid username or token"`.
 
 ## Agent desktop
 
-Browser and desktop actions on spark use agent-browser CLI and upstream Cua MCP
-through the `spark-computer` skill, installed for coding agents; see
-`hosts/spark/docs/browser.md`. The personal KB and its ingestion and embedding
-services are disabled.
-
-Chromium's existing Default profile is private mutable state; agents attach to
-the running browser and create task-owned tabs. Never commit profiles or put credentials
-in the store.
+Browser and desktop work on spark goes through the `spark-computer` skill (agent-browser plus Cua MCP). Agents attach to the running Chromium and use their own tabs. Never commit profiles or put credentials in the store.
 
 ## Codex account gateway
 
-`hosts/spark/services/codex-lb.nix` runs codex-lb (the `codex-lb` input) as the
-`codex-lb` user unit on `127.0.0.1:18475`, with telemetry and dashboard auth off
-(loopback, single user). Spark's Codex config sets `model_provider = "codex-lb"`,
-so every Codex process on spark, the `codex` MCP tool included, spreads across the
-pooled ChatGPT accounts. Sticky threads keep a thread on one account. The gateway
-owns OAuth refresh; accounts, its encryption key and SQLite database live in
-private mutable `~/.local/state/codex-lb`, outside Git and the store.
-
-Add an account without the dashboard: log in fresh with a throwaway `CODEX_HOME`,
-import its `auth.json`, then delete it. Never import `~/.codex/auth.json`: sharing
-one refresh token between codex-lb and local Codex breaks whichever refreshes second.
+`hosts/spark/services/codex-lb.nix` runs codex-lb on `127.0.0.1:18475`, and spark's Codex uses it as `model_provider`. State lives in `~/.local/state/codex-lb`. Add an account from a throwaway `CODEX_HOME`, never from `~/.codex/auth.json`:
 
 ```sh
 d=$(mktemp -d); CODEX_HOME=$d codex login --device-auth
 curl -F "auth_json=@$d/auth.json;type=application/json" http://127.0.0.1:18475/api/accounts/import
 rm -rf "$d"
-curl -s http://127.0.0.1:18475/api/accounts | jq '.accounts[] | {email, status}'
 ```
 
-Codex still needs its own `codex login` for `requires_openai_auth`. A provider
-change needs `codex app-server daemon restart`.
+After changing the provider, run `codex app-server daemon restart`.
 
-## Beeper self-hosted bridges
+## Beeper bridges
 
-`hosts/spark/services/beeper-bridges.nix` runs mautrix bridges on spark through
-`bbctl` (nixpkgs `beeper-bridge-manager`, source-overridden to the latest upstream
-tag because Beeper's server refuses older clients at login with "Your client is
-out of date"), registered against the owner's Beeper account. Self-hosted bridges are free and do not count toward Beeper's account
-limits, which is the point: unlimited networks and unlimited accounts per network.
-The `bridges` attrset maps a short name to the bridge package; `mkBridge` stamps
-out one user unit per entry (`beeper-<name>`, bbctl bridge name `sh-<name>`,
-bot `@sh-<name>bot:beeper.local`). `--custom-startup-command` points bbctl at
-the Nix-packaged binary so it never downloads or updates bridges outside Nix.
-Slack uses the hash-pinned upstream ARM64 release: nixpkgs' 26.05 aborts login
-when Slack omits version metadata, while 26.09.1 continues successfully.
-For source-built bridges, prefer `withGoolm = true` to avoid libolm's
-insecure-package allowlist.
-
-First-time setup is interactive: `bbctl login`, then `systemctl --user start
-beeper-slack`, then DM `@sh-slackbot:beeper.local` in Beeper and `login` once per
-Slack workspace (one bridge process holds every workspace). Units skip startup
-until `~/.config/bbctl/config.json` exists. Credentials and bridge databases live
-in private mutable `~/.config/bbctl` and `~/.local/share/bbctl/prod/<bridge>`;
-preserve both across rebuilds and keep them out of Git and the Nix store.
-Verify a real chat in Beeper before removing the equivalent cloud or on-device
-connection. Signal stays on-device; iMessage needs the macbook, not spark.
+`hosts/spark/services/beeper-bridges.nix` runs self-hosted mautrix bridges through `bbctl`, one user unit per entry in `bridges` (`beeper-<name>`, bot `@sh-<name>bot:beeper.local`). Binaries come from Nix, never from bbctl downloads. Setup: `bbctl login`, start the unit, then DM the bot `login`. State in `~/.config/bbctl` and `~/.local/share/bbctl` is private and mutable.

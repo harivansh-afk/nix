@@ -48,6 +48,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink() {
     target="$1"
     link="$2"
+    mkdir -p "$(dirname "$link")"
     if [ -d "$link" ] && [ ! -L "$link" ]; then
       rm -rf "$link"
     fi
@@ -55,25 +56,14 @@ pkgs.writeShellScript "user-config-${name}" ''
   }
 
   mkdir -p \
-    "${configHome}/zsh/themes" \
-    "${configHome}/environment.d" \
-    "${configHome}/git" \
-    "${configHome}/jj" \
-    "${configHome}/fzf/themes" \
-    "${configHome}/ghostty/themes" \
-    "${configHome}/direnv/lib" \
     "${configHome}/gh" \
-    "${configHome}/npm" \
-    "${configHome}/python" \
     "${configHome}/devin" \
-    "${configHome}/tea" \
-    "${homeDirectory}/.claude" \
-    "${homeDirectory}/.agents" \
     "${homeDirectory}/.codex" \
-    "${homeDirectory}/.local/bin" \
     "${homeDirectory}/.ssh/sockets" \
     "${stateHome}" \
     "${theme.paths.stateDir}" \
+    "${theme.paths.fzfDir}" \
+    "${theme.paths.ghosttyDir}" \
     "${theme.wallpapers.dir}"
 
   mkSymlink "${zshrcShim}" "${homeDirectory}/.zshrc"
@@ -93,7 +83,6 @@ pkgs.writeShellScript "user-config-${name}" ''
 
   ${lib.optionalString (!isDarwin) ''
     mkSymlink "${dotsRoot}/bin/open" "${homeDirectory}/.local/bin/open"
-    mkdir -p "${homeDirectory}/.local/share/applications"
     mkSymlink "${dotsRoot}/bin/macbook-open" "${homeDirectory}/.local/bin/macbook-open"
     mkSymlink "${dotsRoot}/xdg/macbook-open.desktop" "${homeDirectory}/.local/share/applications/macbook-open.desktop"
     mkSymlink "${dotsRoot}/xdg/mimeapps.list" "${configHome}/mimeapps.list"
@@ -101,9 +90,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     mkSymlink "${dotsRoot}/bin/xclip" "${homeDirectory}/.local/bin/xclip"
   ''}
 
-  if [ -d "${configHome}/nvim" ] && [ ! -L "${configHome}/nvim" ]; then
-    mv "${configHome}/nvim" "$(mktemp -d "${configHome}/nvim-backup.XXXXXX")/nvim"
-  fi
   mkSymlink "${dotsRoot}/nvim" "${configHome}/nvim"
 
   mkSymlink "${dotsRoot}/direnv/direnv.toml" "${configHome}/direnv/direnv.toml"
@@ -124,16 +110,13 @@ pkgs.writeShellScript "user-config-${name}" ''
   chmod u+w "${configHome}/gh/config.yml"
 
   ${lib.optionalString (hostname == "spark") ''
-    mkdir -p "${homeDirectory}/.agent-browser"
     mkSymlink "${dotsRoot}/agent-browser/config.json" "${homeDirectory}/.agent-browser/config.json"
   ''}
-  rm -rf "${homeDirectory}/.claude/hooks"
   mkSymlink "${claudeMd}" "${homeDirectory}/.claude/CLAUDE.md"
   mkSymlink "${agentSkills}" "${homeDirectory}/.agents/skills"
   mkSymlink "${agentSkills}" "${homeDirectory}/.claude/skills"
   mkSymlink "${claudeSettings}" "${homeDirectory}/.claude/settings.json"
   ${lib.optionalString (piModels != null) ''
-    mkdir -p "${homeDirectory}/.pi/agent"
     mkSymlink "${piModels}" "${homeDirectory}/.pi/agent/models.json"
   ''}
 
@@ -154,15 +137,8 @@ pkgs.writeShellScript "user-config-${name}" ''
 
   target="${homeDirectory}/.codex/config.toml"
   source="${codexConfigSource}"
-  current=""
-
-  if [ -e "$target" ] && [ ! -L "$target" ]; then
-    if xattr_value="$(${readXattr})"; then
-      current="$xattr_value"
-    fi
-  fi
-
-  if [ ! -e "$target" ] || [ -L "$target" ] || [ "$current" != "$source" ]; then
+  # Reseed codex's writable config only when its nix source changes.
+  if [ -L "$target" ] || [ "$(${readXattr} || true)" != "$source" ]; then
     tmp="$target.seed-tmp"
     rm -f "$target" "$tmp"
     cp "$source" "$tmp"
@@ -171,21 +147,9 @@ pkgs.writeShellScript "user-config-${name}" ''
     ${writeXattr}
   fi
 
-  if [ -f "${configHome}/devin/config.json" ] \
-    && ! ${pkgs.diffutils}/bin/cmp -s "${dotsRoot}/devin/config.json" "${configHome}/devin/config.json"; then
-    timestamp="$(date +%Y%m%d%H%M%S)"
-    cp "${configHome}/devin/config.json" "${configHome}/devin/config.json.bak.$timestamp"
-  fi
   install -m 600 "${dotsRoot}/devin/config.json" "${configHome}/devin/config.json"
 
-  harivanTokenFile=/run/secrets/forgejo-token
-
-  harivanToken=
-  if [ -r "$harivanTokenFile" ]; then
-    harivanToken=$(cat "$harivanTokenFile")
-  fi
-
-  if [ -n "$harivanToken" ]; then
+  if [ -r /run/secrets/forgejo-token ] && harivanToken=$(cat /run/secrets/forgejo-token) && [ -n "$harivanToken" ]; then
     install -d -m 0700 "${configHome}/tea"
     umask 077
     tmp="${configHome}/tea/config.yml.tmp"
@@ -207,11 +171,6 @@ pkgs.writeShellScript "user-config-${name}" ''
 
   ${customScripts.themeAssetsText}
 
-  mkdir -p "${theme.paths.stateDir}" \
-           "${theme.paths.fzfDir}" \
-           "${theme.paths.ghosttyDir}" \
-           "${theme.wallpapers.dir}"
-
   if [ -f "${theme.paths.stateFile}" ]; then
     mode=$(tr -d '[:space:]' < "${theme.paths.stateFile}")
   else
@@ -229,22 +188,17 @@ pkgs.writeShellScript "user-config-${name}" ''
 
   ${lib.optionalString isDarwin ''
     ghostty_appsupport="${homeDirectory}/Library/Application Support/com.mitchellh.ghostty"
-    mkdir -p "$ghostty_appsupport"
     mkSymlink "${dotsRoot}/ghostty/config" "$ghostty_appsupport/config"
-
 
     mkSymlink "${dotsRoot}/karabiner" "${configHome}/karabiner"
 
-    mkdir -p "${configHome}/aerospace"
     mkSymlink "${dotsRoot}/aerospace/aerospace.toml" "${configHome}/aerospace/aerospace.toml"
 
-    mkdir -p "${theme.paths.sketchybarDir}"
     mkSymlink "${dotsRoot}/sketchybar/sketchybarrc" "${configHome}/sketchybar/sketchybarrc"
     mkSymlink "${sketchybarThemes.dark}" "${theme.paths.sketchybarDir}/cozybox-dark.sh"
     mkSymlink "${sketchybarThemes.light}" "${theme.paths.sketchybarDir}/cozybox-light.sh"
     ln -sfn "$THEME_SKETCHYBAR_TARGET" "${theme.paths.sketchybarCurrentFile}"
 
-    mkdir -p "${configHome}/rex"
     mkSymlink "${dotsRoot}/rex/init.lua" "${configHome}/rex/init.lua"
     for rex_bin in "/Applications/Rex Beta.app/Contents/Helpers/Rex Server."{rex,app}"/Contents/MacOS/rex"; do
       if [ -x "$rex_bin" ]; then
@@ -272,7 +226,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     fi
 
     helium_ext="${homeDirectory}/Library/Application Support/net.imput.helium/External Extensions"
-    mkdir -p "$helium_ext"
     ${lib.concatMapStringsSep "\n" (id: ''
       mkSymlink "${heliumExtJson}" "$helium_ext/${id}.json"
     '') heliumExtensions}

@@ -37,7 +37,7 @@ Create task worktrees with `git worktree add .worktrees/<topic> -b <branch> main
 
 Skills come from the `mattpocock-skills` input and are linked into `~/.agents/skills` and `~/.claude/skills`. No harness has hooks, and none should be added. Claude Code's denied tools are `permissions.deny` in `modules/users/user-config/agents.nix`.
 
-On spark, Claude Code also gets the `codex` MCP server (`pkgs/codex-mcp`): `codex` and `codex_reply` run `codex exec --json` in the session directory and come back as task notifications. Codex keeps MCP OAuth tokens in files because the headless keyring hangs `codex exec`. Reauthorize Beeper with `codex mcp login beeper --oauth-client-registration dcr`.
+On spark, Claude Code also gets the `codex` MCP server (`pkgs/codex-mcp`): `codex` and `codex_reply` run `codex exec --json` in the session directory, with Codex fan-out and multi-agent turned off, and come back as task notifications. Codex keeps MCP OAuth tokens in files because the headless keyring hangs `codex exec`. Reauthorize Beeper with `codex mcp login beeper --oauth-client-registration dcr`.
 
 ## Layout
 

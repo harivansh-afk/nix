@@ -6,6 +6,10 @@ import signal
 from mcp.server.fastmcp import Context, FastMCP
 
 STALL_SECONDS = int(os.environ.get("CODEX_MCP_STALL_SECONDS", "1200"))
+SINGLE_AGENT = [
+    "-c", "features.enable_fanout=false",
+    "-c", "features.multi_agent_v2.enabled=false",
+]
 
 mcp = FastMCP(
     "codex",
@@ -22,7 +26,7 @@ mcp = FastMCP(
 
 async def run_codex(args, prompt, ctx):
     proc = await asyncio.create_subprocess_exec(
-        "codex", "exec", *args, "--json", "--skip-git-repo-check", "-",
+        "codex", "exec", *SINGLE_AGENT, *args, "--json", "--skip-git-repo-check", "-",
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.DEVNULL,

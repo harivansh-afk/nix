@@ -12,76 +12,24 @@ let
   backendPort = 19300;
   gitCredentialFile = "/var/lib/forgejo/.git-credentials";
   smtpPasswordFile = config.sops.secrets."forgejo-smtp-password".path;
-  mirrorEnvFile = config.sops.secrets."forgejo-mirror.env".path;
   mirrorGithubTokenFile = config.sops.secrets."forgejo-mirror-github-token.env".path;
-  runnerTokenFile = config.sops.secrets."forgejo-runner-token".path;
-  runnerCacheRoot = "/var/cache/forgejo-runner";
-  sparkDeploy = pkgs.writeShellApplication {
-    name = "spark-deploy";
-    runtimeInputs = [ pkgs.systemd ];
-    text = ''
-      flake="$1"
-      unit="spark-deploy-$(date +%s)"
-      status=0
-      systemd-run --unit="$unit" --wait --collect --quiet \
-        --setenv=SUDO_UID="''${SUDO_UID:?run spark-deploy through sudo}" \
-        --setenv=PATH=/run/wrappers/bin:/run/current-system/sw/bin \
-        --property=TimeoutStartSec=40min \
-        /run/current-system/sw/bin/nixos-rebuild switch --flake "$flake#spark" || status=$?
-      journalctl --unit="$unit" --output=cat --no-pager
-      exit "$status"
-    '';
+  oauthProviders = {
+    github = "github";
+    google = "gplus";
   };
-
-  forgejoOauthSources = {
-    github = {
-      provider = "github";
-      secretName = "forgejo-github-oauth.env";
-      clientIdVariable = "GITHUB_OAUTH_CLIENT_ID";
-      clientSecretVariable = "GITHUB_OAUTH_CLIENT_SECRET";
-    };
-
-    google = {
-      provider = "gplus";
-      secretName = "forgejo-google-oauth.env";
-      clientIdVariable = "GOOGLE_OAUTH_CLIENT_ID";
-      clientSecretVariable = "GOOGLE_OAUTH_CLIENT_SECRET";
-    };
-  };
-
-  forgejoOauthSourceList = lib.mapAttrsToList (
-    name: source: source // { inherit name; }
-  ) forgejoOauthSources;
-
-  forgejoOauthCredentials = lib.listToAttrs (
-    map (source: {
-      name = "oauth-${source.name}";
-      value = config.sops.secrets.${source.secretName}.path;
-    }) forgejoOauthSourceList
+  oauthSources = lib.concatStringsSep "\n" (
+    lib.mapAttrsToList (
+      name: provider:
+      let
+        prefix = lib.toUpper name;
+      in
+      "${name}:${provider}:oauth-${name}:${prefix}_OAUTH_CLIENT_ID:${prefix}_OAUTH_CLIENT_SECRET"
+    ) oauthProviders
   );
-
-  oauthSources = lib.concatMapStringsSep "\n" (
-    source:
-    lib.concatStringsSep ":" [
-      source.name
-      source.provider
-      "oauth-${source.name}"
-      source.clientIdVariable
-      source.clientSecretVariable
-    ]
-  ) forgejoOauthSourceList;
 
   forgejoDb = "/var/lib/forgejo/data/forgejo.db";
   repoUnits = "repo.code,repo.releases,repo.issues,repo.pulls,repo.wiki,repo.projects,repo.packages";
   mirrorIntervalSeconds = 15 * 60;
-
-  actionsEnforce = pkgs.writeShellScript "forgejo-actions-enforce" ''
-    export PATH=${lib.makeBinPath [ pkgs.curl ]}
-    export FORGEJO_API="https://${forgejoDomain}/api/v1"
-    export FORGEJO_MIRROR_MANIFEST=/etc/forgejo-mirror/manifest.json
-    export FORGEJO_DB=${forgejoDb}
-    exec ${pkgs.python3}/bin/python3 ${./actions-enforce.py}
-  '';
 
   normalizeMirrorSchedule = pkgs.writeShellScript "forgejo-normalize-mirror-schedule" ''
     export FORGEJO_DB=${forgejoDb}
@@ -123,7 +71,8 @@ let
 in
 {
   imports = [
-    ./mirror-manifest.nix
+    ./mirror.nix
+    ./runner.nix
     pierreForgejo.nixosModule
   ];
 
@@ -192,7 +141,10 @@ in
     group = "git";
     secrets.mailer.PASSWD = smtpPasswordFile;
     settings = {
-      "git.timeout".MIRROR = 1800;
+      "git.timeout" = {
+        MIRROR = 1800;
+        MIGRATE = 1800;
+      };
       server = {
         DOMAIN = forgejoDomain;
         ROOT_URL = "https://${forgejoDomain}/";
@@ -301,142 +253,16 @@ in
     normalizeMirrorSchedule
   ];
   systemd.services.forgejo.serviceConfig.LoadCredential = lib.mkAfter (
-    lib.mapAttrsToList (name: path: "${name}:${path}") forgejoOauthCredentials
+    lib.mapAttrsToList (
+      name: _: "oauth-${name}:${config.sops.secrets."forgejo-${name}-oauth.env".path}"
+    ) oauthProviders
   );
 
-  systemd.services.forgejo-actions-enforce = {
-    description = "Force Actions on/off per mirror-manifest allowlist";
-    after = [ "forgejo.service" ];
-    requires = [ "forgejo.service" ];
-    serviceConfig = {
-      Type = "oneshot";
-      EnvironmentFile = [ mirrorEnvFile ];
-      ExecStart = actionsEnforce;
-    };
-  };
-  systemd.timers.forgejo-actions-enforce = {
-    description = "Periodic Actions allowlist enforcement";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnBootSec = "2min";
-      OnUnitActiveSec = "30min";
-      AccuracySec = "30s";
-      Unit = "forgejo-actions-enforce.service";
-    };
-  };
-
-  systemd.services.gitea-runner-spark = {
-    restartIfChanged = false;
-    serviceConfig = {
-      DynamicUser = lib.mkForce false;
-      User = lib.mkForce "gitea-runner";
-      Group = lib.mkForce "gitea-runner";
-      NoNewPrivileges = lib.mkForce false;
-      RestrictSUIDSGID = lib.mkForce false;
-    };
-  };
-
-  users.users.gitea-runner = {
-    isSystemUser = true;
-    group = "gitea-runner";
-    home = "/var/lib/gitea-runner";
-    createHome = true;
-  };
-  users.groups.gitea-runner = { };
-
-  environment.systemPackages = [ sparkDeploy ];
-
-  security.sudo.extraRules = [
-    {
-      users = [ "gitea-runner" ];
-      commands = [
-        {
-          command = "/run/current-system/sw/bin/spark-deploy";
-          options = [ "NOPASSWD" ];
-        }
-      ];
-    }
-  ];
-
   systemd.tmpfiles.rules = [
-    "d ${runnerCacheRoot} 0750 gitea-runner gitea-runner -"
-    "d ${runnerCacheRoot}/cargo 0750 gitea-runner gitea-runner -"
-    "d ${runnerCacheRoot}/npm 0750 gitea-runner gitea-runner -"
-    "d ${runnerCacheRoot}/pip 0750 gitea-runner gitea-runner -"
-    "d ${runnerCacheRoot}/pre-commit 0750 gitea-runner gitea-runner -"
-    "d ${runnerCacheRoot}/rustup 0750 gitea-runner gitea-runner -"
-    "d ${runnerCacheRoot}/uv 0750 gitea-runner gitea-runner -"
-    "d ${runnerCacheRoot}/actcache 0750 gitea-runner gitea-runner -"
-
     "L+ /var/lib/forgejo/.gitconfig - - - - /var/lib/forgejo/data/home/.gitconfig"
 
     "L+ /var/lib/forgejo/custom/public - - - - ${forgejoWeb.public}"
     "L+ /var/lib/forgejo/custom/templates - - - - ${forgejoWeb.templates}"
   ];
 
-  services.gitea-actions-runner = {
-    package = pkgs.forgejo-runner;
-
-    instances.spark = {
-      enable = true;
-      name = "spark";
-      url = "https://${forgejoDomain}";
-      tokenFile = runnerTokenFile;
-
-      labels = [
-        "native:host"
-        "spark:host"
-        "ubuntu-latest:docker://node:24-bookworm"
-      ];
-
-      hostPackages = with pkgs; [
-        bash
-        coreutils
-        curl
-        fd
-        gh
-        git
-        gnumake
-        gnused
-        gnutar
-        gzip
-        gawk
-        jq
-        nix
-        nixos-rebuild
-        nodejs_24
-        pkg-config
-        pnpm
-        python3
-        python3Packages.pip
-        ripgrep
-        rustup
-        stdenv.cc
-        unzip
-        uv
-        wget
-        xvfb-run
-        xz
-        zip
-      ];
-
-      settings = {
-        runner = {
-          capacity = 2;
-          timeout = "3h";
-          envs = {
-            CARGO_HOME = "${runnerCacheRoot}/cargo";
-            PIP_CACHE_DIR = "${runnerCacheRoot}/pip";
-            PRE_COMMIT_HOME = "${runnerCacheRoot}/pre-commit";
-            RUSTUP_HOME = "${runnerCacheRoot}/rustup";
-            UV_CACHE_DIR = "${runnerCacheRoot}/uv";
-            npm_config_cache = "${runnerCacheRoot}/npm";
-          };
-        };
-        cache = {
-          dir = "${runnerCacheRoot}/actcache";
-        };
-      };
-    };
-  };
 }

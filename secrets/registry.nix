@@ -52,13 +52,14 @@
 
     "forgejo-mirror.env" = {
       owner = "git";
-      restartUnits = [ "forgejo.service" ];
     };
 
     "forgejo-mirror-github-token.env" = {
       owner = "git";
       restartUnits = [ "forgejo.service" ];
     };
+
+    "forgejo-mirror-github-accounts.env".owner = "git";
 
     "forgejo-google-oauth.env" = {
       owner = "git";

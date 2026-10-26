@@ -87,9 +87,8 @@ Add `modules/users/accounts/<name>.nix` (`sshKeys`, `shell`, `extraGroups`) and 
 
 ## Forgejo mirroring
 
-- `hosts/spark/services/forgejo/mirror-manifest.nix` holds policy only. Repos are discovered from Forgejo's database, and `scripts/reconcile.sh` (root, `--dry-run` available) makes the mirror tables match.
-- Owned repos are forge-canonical and push-mirror to GitHub. Repos in `github_canonical_repos` are inbound pull mirrors instead.
-- Pull mirrors authenticate through one credential-store entry fed by `secrets/hosts/spark/forgejo-mirror-github-token.env`: a classic PAT with `repo` scope and no expiry. A dead token only breaks private mirrors, and `mirror_updated` advances even when a sync fails, so check with `journalctl -u forgejo | rg "Invalid username or token"`.
+- `forgejo-mirror-sync` (`hosts/spark/services/forgejo/mirror.nix`) mirrors every GitHub org repo each account can see, every 30 minutes, with pruning off. It only adds; it never deletes, converts or pushes to GitHub. A same-named regular forge repo blocks the mirror: rename it to `<name>-bak` first.
+- Accounts are `GITHUB_TOKEN` (`forgejo-mirror-github-token.env`) plus `GITHUB_TOKEN_<NAME>` in `forgejo-mirror-github-accounts.env` (separate Dueflow and Wiive logins). Forgejo stores the token each mirror was created with, encrypted per mirror, so a rotated token only applies to new mirrors.
 
 ## Agent desktop
 

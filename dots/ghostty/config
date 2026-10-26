@@ -18,6 +18,5 @@ window-padding-balance = true
 window-save-state = always
 shell-integration-features = true
 copy-on-select = clipboard
-focus-follows-mouse = true
 link-url = true
 window-decoration = none

@@ -109,7 +109,7 @@
   --color-primary-active:   var(--color-primary-light-2);
   --color-accent:           #5b84de;
 
-  /* cozybox dark accents (aligned to terminal palette in lib/theme.nix) */
+  /* cozybox dark accents (aligned to terminal palette in lib/palette.json) */
   --color-red:    #ea6962;
   --color-orange: #fe8019;
   --color-yellow: #d79921;

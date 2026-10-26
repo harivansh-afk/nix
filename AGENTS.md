@@ -91,7 +91,8 @@ flake/
   packages.nix         packages.<system> output: portable scripts (ga, connectors) + tool wrappers
 lib/
   remotes.nix          Remote server registry: hosts for the per-remote connector commands
-  theme.nix            Cozybox theme: colors, renderers for ghostty/fzf/pure-prompt/rex/sketchybar/zsh-highlights
+  palette.json         Cozybox dark and light colours
+  theme.nix            Cozybox renderers for ghostty/fzf/pure-prompt/rex/sketchybar/zsh-highlights
 modules/
   common.nix           Shared nix settings, overlays, the shared package set, fonts
   nix-settings.nix     nix.conf settings both hosts share (nix.settings on spark, determinateNix.customSettings on darwin)
@@ -146,7 +147,7 @@ dots/                  Dotfile sources (nvim, karabiner, lazygit, agents/ instru
 
 ## Theme system
 
-The "cozybox" theme has dark and light variants defined in `lib/theme.nix`. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `pkgs/scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, and the wallpaper, then pokes live nvim servers. Wallpapers are fixed store assets: black for dark mode and white for light mode. Shell hooks in `dots/zsh/zshrc` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
+The "cozybox" palette lives in `lib/palette.json`, with dark and light variants. `lib/theme.nix` renders it for each app. A runtime state file at `~/.local/state/theme/current` holds `dark` or `light`. The `theme` script (from `pkgs/scripts/bin/theme.sh`) switches mode by updating symlinks for fzf, ghostty, and the wallpaper, then pokes live nvim servers. Wallpapers are fixed store assets: black for dark mode and white for light mode. Shell hooks in `dots/zsh/zshrc` re-apply prompt colors, zsh syntax highlights, and bat theme on every `precmd`.
 
 ## Remote sessions
 

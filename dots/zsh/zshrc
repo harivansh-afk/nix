@@ -36,7 +36,6 @@ zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-za-z}'
 alias cc="ANTHROPIC_MODEL=claude-opus-5-5 cc-proxy"
 alias co="codex -c model_reasoning_effort=low"
 alias com="codex -c model_reasoning_effort=high"
-alias coh="codex -c model_reasoning_effort=high"
 alias cl="clear"
 alias gc="git commit"
 alias gd="git diff"
@@ -82,7 +81,6 @@ typeset -U path PATH
 path=(
   "$HOME/.amp/bin"
   "$BUN_INSTALL/bin"
-  "$HOME/.antigravity/antigravity/bin"
   "$HOME/.opencode/bin"
   ${npm_global_prefix:+"$npm_global_prefix/bin"}
   "$HOME/.nix-profile/bin"
@@ -97,126 +95,46 @@ if [[ -d /opt/homebrew/bin ]]; then
   path=(/opt/homebrew/bin /opt/homebrew/sbin $path)
 fi
 
-[[ -x /run/current-system/sw/bin/aerospace ]] &&
-  export AEROSPACE_BIN=/run/current-system/sw/bin/aerospace
-
-_codex_read_theme_mode() {
-  local mode_file="$HOME/.local/state/theme/current"
-  if [[ -f "$mode_file" ]]; then
-    local mode
-    mode=$(tr -d '[:space:]' <"$mode_file")
-    if [[ "$mode" == light || "$mode" == dark ]]; then
-      printf '%s' "$mode"
-      return
-    fi
-  fi
-  printf 'dark'
-}
-
-_codex_source_theme_file() {
-  local mode="$1"
-  local theme_file="$HOME/.config/zsh/themes/$mode.zsh"
-  [[ -f "$theme_file" ]] && source "$theme_file"
-}
-
-_codex_apply_highlight_styles() {
-  local mode="$(_codex_read_theme_mode)"
-  [[ "$mode" == "${_CODEX_LAST_HIGHLIGHT_THEME:-}" ]] && return
-
+_theme_sync() {
+  local file="${XDG_STATE_HOME:-$HOME/.local/state}/theme/current" mode=dark
+  [[ -r $file && $(<$file) == light* ]] && mode=light
+  [[ $mode == $_theme_mode ]] && return
+  typeset -g _theme_mode=$mode
   typeset -gA ZSH_HIGHLIGHT_STYLES
-  _codex_source_theme_file "$mode"
-  typeset -g _CODEX_LAST_HIGHLIGHT_THEME="$mode"
+  source "$HOME/.config/zsh/themes/$mode.zsh"
+  export BAT_THEME=gruvbox-$mode
 }
-
-_codex_apply_bat_theme() {
-  local mode="$(_codex_read_theme_mode)"
-  if [[ "$mode" == light ]]; then
-    export BAT_THEME='gruvbox-light'
-  else
-    export BAT_THEME='gruvbox-dark'
-  fi
-}
-
-unalias ga 2>/dev/null
-
-git() {
-  command git "$@"
-  local exit_code=$?
-  case "$1" in
-    add | stage | reset | checkout)
-      if command -v critic >/dev/null 2>&1; then
-        (critic review 2>/dev/null &)
-      fi
-      ;;
-  esac
-  return $exit_code
-}
+_theme_sync
 
 autoload -Uz add-zle-hook-widget
-_codex_cursor() { printf '\e[%s q' "${1:-6}"; }
-_codex_cursor_select() { [[ "$KEYMAP" == vicmd ]] && _codex_cursor 2 || _codex_cursor 6; }
-_codex_cursor_beam() { _codex_cursor 6; }
-add-zle-hook-widget zle-keymap-select _codex_cursor_select
-add-zle-hook-widget zle-line-init _codex_cursor_beam
-add-zle-hook-widget zle-line-finish _codex_cursor_beam
+_cursor() { [[ $KEYMAP == vicmd ]] && printf '\e[2 q' || printf '\e[6 q'; }
+add-zle-hook-widget zle-keymap-select _cursor
+add-zle-hook-widget zle-line-init _cursor
 
 source "${DOTS_ZSH_DIR:-$HOME/Documents/Git/nix/dots/zsh}/prompt.zsh"
 
-precmd() {
-  _codex_apply_prompt_theme
-  _codex_apply_highlight_styles
-  _codex_apply_bat_theme
-  _codex_cursor_beam
-}
-preexec() { _codex_cursor_beam; }
+precmd() { _theme_sync; }
+preexec() { printf '\e[6 q'; }
 
-_codex_apply_prompt_theme
-_codex_apply_highlight_styles
-_codex_apply_bat_theme
-
+bindkey '^?' backward-delete-char
 bindkey '^k' forward-char
 bindkey '^j' backward-char
 
-_open_nvim() {
-  if [[ -n "$BUFFER" ]]; then
-    zle down-line-or-history
+# On an empty line these keys open nvim; otherwise they keep their usual widget.
+typeset -gA _nvim_cmd=('^N' 'nv' '^P' 'nvim +PR' '^G' 'nvim +Git +only' '^F' "nvim +'Pick files'")
+typeset -gA _nvim_fallback=('^N' down-line-or-history '^G' list-expand '^F' self-insert)
+_nvim_key() {
+  local key=${(V)KEYS}
+  if [[ -n $BUFFER && -n $_nvim_fallback[$key] ]]; then
+    zle $_nvim_fallback[$key]
     return
   fi
-  BUFFER="nv"
+  BUFFER=$_nvim_cmd[$key]
   zle accept-line
 }
-zle -N _open_nvim
-bindkey -M viins '^N' _open_nvim
-bindkey -M vicmd '^N' _open_nvim
-
-_open_pr() {
-  BUFFER="nvim +PR"
-  zle accept-line
-}
-zle -N _open_pr
-bindkey -M viins '^P' _open_pr
-bindkey -M vicmd '^P' _open_pr
-
-_open_fugitive() {
-  if [[ -n "$BUFFER" ]]; then
-    zle list-expand
-    return
-  fi
-  BUFFER="nvim +Git +only"
-  zle accept-line
-}
-zle -N _open_fugitive
-bindkey -M viins '^G' _open_fugitive
-bindkey -M vicmd '^G' _open_fugitive
-
-_open_files() {
-  if [[ -n "$BUFFER" ]]; then
-    zle self-insert
-    return
-  fi
-  BUFFER="nvim +'Pick files'"
-  zle accept-line
-}
-zle -N _open_files
-bindkey -M viins '^F' _open_files
-bindkey -M vicmd '^F' _open_files
+zle -N _nvim_key
+for key in ${(k)_nvim_cmd}; do
+  bindkey -M viins "$key" _nvim_key
+  bindkey -M vicmd "$key" _nvim_key
+done
+unset key

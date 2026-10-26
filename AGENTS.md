@@ -87,7 +87,8 @@ Add `modules/users/accounts/<name>.nix` (`sshKeys`, `shell`, `extraGroups`) and 
 
 ## Forgejo mirroring
 
-- `forgejo-mirror-sync` (`hosts/spark/services/forgejo/mirror.nix`) mirrors every GitHub org repo each account can see, every 30 minutes, with pruning off. It only adds; it never deletes, converts or pushes to GitHub. A same-named regular forge repo blocks the mirror: rename it to `<name>-bak` first.
+- `forgejo-mirror-sync` (`hosts/spark/services/forgejo/mirror.nix`) mirrors every GitHub org repo each account can see, every 30 minutes, with pruning off. It only adds; it never deletes or converts a repo. A same-named regular forge repo blocks the mirror: rename it to `<name>-bak` first.
+- The same unit gives every non-archived `harivansh-afk` forge repo without one a push mirror to `github.com/harivansh-afk/<name>`, creating the GitHub repo with the forge visibility and a deploy key. It needs `GITHUB_TOKEN` to be `harivansh-afk` with `repo` scope. An existing GitHub repo is adopted only when the forge has all of its branch heads; otherwise it is logged and skipped.
 - Accounts are `GITHUB_TOKEN` (`forgejo-mirror-github-token.env`) plus `GITHUB_TOKEN_<NAME>` in `forgejo-mirror-github-accounts.env` (separate Dueflow and Wiive logins). Forgejo stores the token each mirror was created with, encrypted per mirror, so a rotated token only applies to new mirrors.
 
 ## Agent desktop

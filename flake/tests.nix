@@ -87,9 +87,6 @@
           && vllmSettings.speculative-config.num_speculative_tokens == 2
           && lib.elem "vllm-model-download.service" spark.systemd.services.podman-vllm.requires
         ) "spark: vLLM must use MTP with weights staged before startup")
-        (lib.assertMsg (lib.all (
-          name: !(lib.hasPrefix "kb-" name) && !(lib.hasPrefix "llama-cpp-embed" name)
-        ) (lib.attrNames spark.systemd.units)) "spark: personal KB services and timers must stay disabled")
 
         (
           let

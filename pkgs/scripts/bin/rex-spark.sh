@@ -12,7 +12,6 @@ ssh -o BatchMode=yes -o ConnectTimeout=5 "$host" true 2>/dev/null || local_shell
 session="rex-$block"
 remote="exec zmx attach $session"
 if [ -n "${REX_CWD:-}" ]; then
-  # A split starts in its parent's directory; an existing session ignores it.
   printf -v dir '%q' "$REX_CWD"
   remote="cd $dir 2>/dev/null; $remote"
 fi
@@ -25,7 +24,6 @@ while :; do
     sleep 1
     continue
   fi
-  # zmx returns on shell exit and on detach (ctrl+\); a pane has no use for
-  # a detached session, so reattach while it lives.
+  # Reattach after a detach (ctrl+\) while the session lives.
   ssh "$host" zmx list --short 2>/dev/null | grep -qxF "$session" || exit "$status"
 done

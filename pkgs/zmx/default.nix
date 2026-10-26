@@ -20,8 +20,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "zmx";
   version = "0.8.1";
 
-  # Upstream's flake fetches its zig dependencies at build time, which the
-  # sandbox refuses, so this installs the release binary instead.
+  # Upstream's flake fetches zig deps at build time, which the sandbox blocks.
   src = fetchurl {
     url = "https://github.com/neurosnap/zmx/releases/download/v${finalAttrs.version}/zmx-${finalAttrs.version}-${target.target}.tar.gz";
     inherit (target) hash;

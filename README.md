@@ -1,4 +1,4 @@
-## Nix
+## dotfiles
 
 ```
 flake.nix            entrypoint - inputs and outputs

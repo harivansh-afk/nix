@@ -14,12 +14,15 @@ zstyle ':prompt:pure:git:stash' show yes
 typeset -g prompt_newline=' '
 prompt pure
 
-if [[ -n $ZMX_SESSION ]]; then
-  print() {
-    [[ $# -eq 0 && ${funcstack[-1]} == prompt_pure_precmd ]] || { builtin print "$@"; return }
-    unfunction print
-  }
-fi
+typeset -g _pure_skip_spacer=${ZMX_SESSION:+1}
+print() {
+  if [[ $# -eq 0 && -n $_pure_skip_spacer && ${funcstack[-1]} == prompt_pure_precmd ]]; then
+    _pure_skip_spacer=
+    return
+  fi
+  builtin print "$@"
+}
+clear() { command clear && _pure_skip_spacer=1 }
 
 # A dirty tree drops the marker and colours the branch, arrows and prompt symbol instead.
 prompt_pure_precustom() {

@@ -8,7 +8,11 @@ Only ever adds or protects; it never deletes or converts a repo.
    with that account's token, which forgejo stores encrypted per mirror.
 2. Every pull mirror has pruning off, so branches deleted upstream stay.
 3. Owned pull mirrors are GitHub-canonical and keep no push mirror.
-4. Forgejo Actions are on exactly for the manifest allowlist.
+4. Every other owned repo gets a push mirror to the same-named GitHub repo,
+   which is created with the forge visibility if missing. An existing GitHub
+   repo is only adopted when the forge already has every one of its branch
+   heads, so the mirror's force push cannot drop work.
+5. Forgejo Actions are on exactly for the manifest allowlist.
 
 Environment: MIRROR_MANIFEST, FORGEJO_API, FORGEJO_TOKEN, GITHUB_TOKEN,
 GITHUB_TOKEN_<NAME> (optional), DRY_RUN (optional, "1" logs only).
@@ -90,12 +94,16 @@ def act(message, fn, *args, **kwargs):
         return None
 
 
+def github_client(token):
+    def github(method, path, body=None):
+        return request("https://api.github.com", token, method, path, body)
+    return github
+
+
 def github_repos():
     repos = {}
     for account, token in sorted(TOKENS.items(), key=lambda t: t[0] != "default"):
-        def github(method, path, token=token):
-            return request("https://api.github.com", token, method, path)
-
+        github = github_client(token)
         try:
             github("GET", "/user")
         except HTTPError as e:
@@ -154,6 +162,68 @@ def protect_mirrors(repos):
                     forge, "DELETE", f"/repos/{name}/push_mirrors/{m['remote_name']}")
 
 
+def adoptable(github, forge_name, gh_name):
+    for branch in pages(github, f"/repos/{gh_name}/branches", 100):
+        try:
+            forge("GET", f"/repos/{forge_name}/git/commits/{branch['commit']['sha']}")
+        except HTTPError as e:
+            if e.status != 404:
+                raise
+            print(f"{forge_name}: GitHub branch {branch['name']} is not on the forge; "
+                  "not adding a push mirror")
+            return False
+    return True
+
+
+def sync_push_mirrors(repos):
+    github = github_client(TOKENS["default"])
+    try:
+        login = github("GET", "/user")["login"]
+    except HTTPError as e:
+        print(f"default GitHub token rejected ({e}); skipping push mirrors")
+        return
+    if login.lower() != OWNER:
+        print(f"default GitHub token is {login}, not {OWNER}; skipping push mirrors")
+        return
+    owned = [r for r in repos if r["owner"]["login"].lower() == OWNER]
+    pushes = {r["full_name"]: forge("GET", f"/repos/{r['full_name']}/push_mirrors")
+              for r in owned}
+    taken = {m["remote_address"].lower() for ms in pushes.values() for m in ms}
+    for repo in owned:
+        name = repo["full_name"]
+        if repo["mirror"] or repo["archived"] or repo["empty"] or pushes[name]:
+            continue
+        gh_name = f"{OWNER}/{repo['name']}"
+        target = f"ssh://github.com/{gh_name}.git"
+        if target.lower() in taken:
+            print(f"{name}: {target} is already push-mirrored by another repo")
+            continue
+        try:
+            github("GET", f"/repos/{gh_name}")
+        except HTTPError as e:
+            if e.status != 404:
+                raise
+            if not act(f"{name}: creating GitHub repo {gh_name}", github, "POST",
+                       "/user/repos", {"name": repo["name"], "private": repo["private"]}):
+                continue
+        else:
+            if not adoptable(github, name, gh_name):
+                continue
+        mirror = act(f"{name}: adding push mirror to {target}", forge, "POST",
+                     f"/repos/{name}/push_mirrors", {
+                         "remote_address": target,
+                         "use_ssh": True,
+                         "sync_on_commit": True,
+                         "interval": MANIFEST["push_mirror_interval"],
+                     })
+        if not mirror:
+            continue
+        if act(f"{name}: registering deploy key on {gh_name}", github, "POST",
+               f"/repos/{gh_name}/keys", {"title": "forgejo push-mirror (spark)",
+                                          "key": mirror["public_key"], "read_only": False}):
+            act(f"{name}: triggering first push", forge, "POST", f"/repos/{name}/push_mirrors-sync")
+
+
 def sync_actions(repos):
     for repo in repos:
         want = repo["full_name"].lower() in ACTIONS
@@ -171,6 +241,7 @@ def main():
     sync_pull_mirrors(gh_repos, repos, orgs)
     current = list(pages(forge, "/repos/search", 50, "data"))
     protect_mirrors(current)
+    sync_push_mirrors(current)
     sync_actions(current)
     return 0
 

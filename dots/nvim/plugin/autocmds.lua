@@ -23,6 +23,7 @@ api.nvim_create_autocmd("User", {
     local nonicons = require "nonicons"
     api.nvim_buf_clear_namespace(args.buf, dir_icons, 0, -1)
     for row, line in ipairs(api.nvim_buf_get_lines(args.buf, 0, -1, true)) do
+      if line == "" then goto continue end
       local icon, hl
       if line:sub(-1) == "/" then
         icon, hl = nonicons.get "file-directory-fill", "Directory"
@@ -31,6 +32,7 @@ api.nvim_create_autocmd("User", {
       end
       if not icon then icon, hl = nonicons.get "file" end
       api.nvim_buf_set_extmark(args.buf, dir_icons, row - 1, 0, { virt_text = { { icon .. " ", hl } }, virt_text_pos = "inline" })
+      ::continue::
     end
   end,
 })

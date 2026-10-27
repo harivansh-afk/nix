@@ -30,9 +30,9 @@
     "url": "https://github.com/nvim-mini/mini.pick"
   },
   "nonicons.nvim": {
-    "hash": "sha256-vHKMu/VrWgDn3hKtfjcj2/iwABq6RJRbzmRT/QwPBiM=",
-    "rev": "9690f6dab2a33f85f6551646983ca6407857010e",
-    "url": "https://github.com/barrettruth/nonicons.nvim"
+    "hash": "sha256-Tf9dXEWKx4o3pdBkK8kbU8BoJ2KaGfkYwZeoFenr0XI=",
+    "rev": "81d7760d0f360512151e1fdd63215b60aaf02b98",
+    "url": "https://github.com/harivansh-afk/nonicons.nvim"
   },
   "nvim-lspconfig": {
     "hash": "sha256-wwXYZ2WEfYiGWS2Lu5e9pwLZnw8i2VFNwhwopJRcCm8=",

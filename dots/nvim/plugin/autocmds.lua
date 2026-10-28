@@ -30,8 +30,16 @@ api.nvim_create_autocmd("User", {
       else
         icon, hl = nonicons.get_icon(line)
       end
-      if not icon then icon, hl = nonicons.get "file" end
-      api.nvim_buf_set_extmark(args.buf, dir_icons, row - 1, 0, { virt_text = { { icon .. " ", hl } }, virt_text_pos = "inline" })
+      if not icon then
+        icon, hl = nonicons.get "file"
+      end
+      api.nvim_buf_set_extmark(
+        args.buf,
+        dir_icons,
+        row - 1,
+        0,
+        { virt_text = { { icon .. " ", hl } }, virt_text_pos = "inline" }
+      )
       ::continue::
     end
   end,

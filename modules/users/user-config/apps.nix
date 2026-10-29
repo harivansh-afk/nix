@@ -30,10 +30,10 @@
     darkThemeID = (theme.renderRex "dark").id;
     lightThemeID = (theme.renderRex "light").id;
     appearance = "system";
-    interfaceStyle = "glass";
-    paneDensity = "compact";
+    interfaceStyle = "classic";
+    paneDensity = "comfortable";
     fadesInactivePanes = false;
-    usesPaneGlass = true;
+    usesPaneGlass = false;
     showsPaneHeaders = false;
     balancesSplitsOnCreation = true;
     sidebarPosition = "left";

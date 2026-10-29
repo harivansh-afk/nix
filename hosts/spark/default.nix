@@ -40,6 +40,7 @@ in
     ./services/mosh.nix
     ./services/vaultwarden.nix
     ./services/website.nix
+    ./services/o1.nix
     ./hardware.nix
     ./networking.nix
     ./users.nix

@@ -32,6 +32,7 @@
     appearance = "system";
     interfaceStyle = "classic";
     paneDensity = "comfortable";
+    animationStyle = "snappy";
     fadesInactivePanes = false;
     usesPaneGlass = false;
     showsPaneHeaders = false;

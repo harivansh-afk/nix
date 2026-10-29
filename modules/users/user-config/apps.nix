@@ -31,7 +31,7 @@
     lightThemeID = (theme.renderRex "light").id;
     appearance = "system";
     interfaceStyle = "classic";
-    paneDensity = "comfortable";
+    paneDensity = "compact";
     animationStyle = "snappy";
     fadesInactivePanes = false;
     usesPaneGlass = false;

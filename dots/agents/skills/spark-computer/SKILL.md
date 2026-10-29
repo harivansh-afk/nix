@@ -37,6 +37,8 @@ The Beeper desktop service must remain running.
 
 ## Browser
 
+always try using chrome saved password before claiming that u cannot sign in to some account.
+
 Load the version-matched guide with `agent-browser skills get core`.
 On Spark use `/run/current-system/sw/bin/agent-browser` explicitly: login/background
 shells may resolve an older user-installed binary that lacks `--pin-tab`.

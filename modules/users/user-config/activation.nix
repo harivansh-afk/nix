@@ -98,6 +98,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${dotsRoot}/npm/npmrc" "${configHome}/npm/npmrc"
   mkSymlink "${dotsRoot}/python/pythonrc" "${configHome}/python/pythonrc"
   mkSymlink "${dotsRoot}/ghostty/config" "${configHome}/ghostty/config"
+  mkSymlink "${dotsRoot}/ghostty/shaders" "${configHome}/ghostty/shaders"
   mkSymlink "${ghosttyThemes.dark}" "${configHome}/ghostty/themes/cozybox-dark"
   mkSymlink "${ghosttyThemes.light}" "${configHome}/ghostty/themes/cozybox-light"
 
@@ -189,6 +190,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   ${lib.optionalString isDarwin ''
     ghostty_appsupport="${homeDirectory}/Library/Application Support/com.mitchellh.ghostty"
     mkSymlink "${dotsRoot}/ghostty/config" "$ghostty_appsupport/config"
+    mkSymlink "${dotsRoot}/ghostty/shaders" "$ghostty_appsupport/shaders"
 
     mkSymlink "${dotsRoot}/karabiner" "${configHome}/karabiner"
 

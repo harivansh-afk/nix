@@ -33,6 +33,8 @@
     interfaceStyle = "classic";
     paneDensity = "compact";
     animationStyle = "snappy";
+    cursorShadersEnabled = true;
+    cursorShader = "warp";
     fadesInactivePanes = false;
     usesPaneGlass = false;
     showsPaneHeaders = false;

@@ -7,17 +7,6 @@ let
   }
   // zones;
 
-  forgejoExpensive = [
-    "/archive/"
-    "/blame/"
-    "/commit/"
-    "/commits/"
-    "/compare/"
-  ];
-  pathMatch = lib.concatMapStringsSep " or " (
-    p: ''http.request.uri.path contains "${p}"''
-  ) forgejoExpensive;
-
   searchableHosts = [
     "harivan.sh"
     "www.harivan.sh"
@@ -55,13 +44,6 @@ in
     kind = "zone";
     phase = "http_request_firewall_custom";
     rules = [
-      {
-        ref = "forgejo_expensive_challenge";
-        description = "Challenge Forgejo archive/blame/commit/compare pages";
-        expression = ''(http.host eq "git.harivan.sh" and (${pathMatch}))'';
-        action = "managed_challenge";
-        enabled = true;
-      }
       searchBotRule
     ];
   };

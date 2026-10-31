@@ -6,6 +6,11 @@ _: {
     '';
   };
 
+  security.acme = {
+    acceptTerms = true;
+    defaults.email = "rathiharivansh@gmail.com";
+  };
+
   _module.args.loopbackVhost = port: {
     listenAddresses = [ "127.0.0.1" ];
     extraConfig = ''

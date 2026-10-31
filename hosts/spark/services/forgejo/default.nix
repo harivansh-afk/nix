@@ -2,7 +2,6 @@
   config,
   inputs,
   lib,
-  loopbackVhost,
   pkgs,
   ...
 }:
@@ -76,24 +75,31 @@ in
     pierreForgejo.nixosModule
   ];
 
-  services.caddy.virtualHosts."http://${forgejoDomain}" =
-    lib.recursiveUpdate (loopbackVhost backendPort)
-      {
-        extraConfig = ''
-          encode zstd gzip
+  security.acme.certs.${forgejoDomain} = {
+    dnsProvider = "cloudflare";
+    dnsResolver = "1.1.1.1:53";
+    credentialFiles.CLOUDFLARE_DNS_API_TOKEN_FILE = config.sops.secrets."cloudflare-api-token".path;
+  };
 
-          @forgejoAssets path /assets/* /manifest.json /favicon.svg /favicon.png /apple-touch-icon.png
-          header @forgejoAssets Cache-Control "public, max-age=21600"
+  networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 443 ];
 
-          handle_path /assets/fonts/* {
-            root * /srv/harivan.sh/dist/fonts
-            header Cache-Control "public, max-age=31536000, immutable"
-            file_server
-          }
+  services.caddy.virtualHosts."https://${forgejoDomain}" = {
+    useACMEHost = forgejoDomain;
+    extraConfig = ''
+      encode zstd gzip
 
-          reverse_proxy 127.0.0.1:${toString backendPort}
-        '';
-      };
+      @forgejoAssets path /assets/* /manifest.json /favicon.svg /favicon.png /apple-touch-icon.png
+      header @forgejoAssets Cache-Control "public, max-age=21600"
+
+      handle_path /assets/fonts/* {
+        root * /srv/harivan.sh/dist/fonts
+        header Cache-Control "public, max-age=31536000, immutable"
+        file_server
+      }
+
+      reverse_proxy 127.0.0.1:${toString backendPort}
+    '';
+  };
 
   users.users.git = {
     isSystemUser = true;

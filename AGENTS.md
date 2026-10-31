@@ -9,7 +9,9 @@
 
 Host records live in `flake/args.nix`; `flake/hosts.nix` builds darwin and `flake/nixos.nix` builds NixOS.
 
-Spark web traffic: Cloudflare edge → cloudflared → Caddy on `127.0.0.1:80` → services on loopback ports. No ACME, no public web ports.
+Spark web traffic: Cloudflare edge → cloudflared → Caddy on `127.0.0.1:80` → services on loopback ports. No public web ports.
+
+Forgejo (`git.harivan.sh`) is tailnet-only: an unproxied A record points at spark's Tailscale IP, Caddy serves it on `:443` with a Let's Encrypt cert issued by DNS-01 through Cloudflare (`security.acme`, reusing `cloudflare-api-token`), and the firewall opens 443 only on `tailscale0`. Off the tailnet, use the GitHub mirrors.
 
 ## Secrets
 

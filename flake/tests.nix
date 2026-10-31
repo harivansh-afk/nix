@@ -37,8 +37,12 @@
           })"
         )
         (lib.assertMsg (lib.all (vh: vh.listenAddresses == [ "127.0.0.1" ]) (
-          lib.attrValues spark.services.caddy.virtualHosts
-        )) "spark: every caddy virtualHost must bind loopback only")
+          lib.attrValues (removeAttrs spark.services.caddy.virtualHosts [ "https://git.harivan.sh" ])
+        )) "spark: every caddy virtualHost but forgejo must bind loopback only")
+        (lib.assertMsg (
+          spark.networking.firewall.interfaces.tailscale0.allowedTCPPorts == [ 443 ]
+          && spark.services.caddy.virtualHosts."https://git.harivan.sh".useACMEHost == "git.harivan.sh"
+        ) "spark: forgejo must be served over TLS on the tailnet only")
         (lib.assertMsg (
           spark.services.vaultwarden.config.ROCKET_ADDRESS == "127.0.0.1"
         ) "spark: vaultwarden must bind loopback")

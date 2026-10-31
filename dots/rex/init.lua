@@ -1,4 +1,3 @@
-
 local terminal = "com.superlogical.terminal"
 local shells = { zsh = true, bash = true, fish = true, sh = true }
 

@@ -91,19 +91,7 @@ let
     };
   };
 
-  darwinPackages = {
-    rex-spark = mkScript {
-      name = "rex-spark";
-      file = ./bin/rex-spark.sh;
-      runtimeInputs = with pkgs; [
-        coreutils
-        gnugrep
-      ];
-      replacements = {
-        "@HOST@" = "spark";
-      };
-    };
-  };
+  darwinPackages = { };
 
   linuxPackages = { };
 in

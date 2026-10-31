@@ -1,10 +1,5 @@
 if [[ "$TERM_PROGRAM" == rex ]]; then
   export TERM=xterm-ghostty
-  if [[ -z "$REX_LOCAL" ]] && (( $+commands[rex-spark] )); then
-    trap 'ssh -o BatchMode=yes -o ConnectTimeout=3 spark zmx kill "rex-$REX_BLOCK" &>/dev/null' EXIT HUP
-    rex-spark
-    exit
-  fi
 fi
 if [[ "$TERM" == xterm-ghostty && "$TERM_PROGRAM" != ghostty ]]; then
   for _ghostty_zsh in \

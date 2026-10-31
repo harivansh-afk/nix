@@ -99,6 +99,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${dotsRoot}/python/pythonrc" "${configHome}/python/pythonrc"
   mkSymlink "${dotsRoot}/ghostty/config" "${configHome}/ghostty/config"
   mkSymlink "${dotsRoot}/ghostty/shaders" "${configHome}/ghostty/shaders"
+  mkSymlink "${dotsRoot}/rex/init.lua" "${configHome}/rex/init.lua"
   mkSymlink "${ghosttyThemes.dark}" "${configHome}/ghostty/themes/cozybox-dark"
   mkSymlink "${ghosttyThemes.light}" "${configHome}/ghostty/themes/cozybox-light"
 
@@ -201,7 +202,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     mkSymlink "${sketchybarThemes.light}" "${theme.paths.sketchybarDir}/cozybox-light.sh"
     ln -sfn "$THEME_SKETCHYBAR_TARGET" "${theme.paths.sketchybarCurrentFile}"
 
-    mkSymlink "${dotsRoot}/rex/init.lua" "${configHome}/rex/init.lua"
     for rex_bin in "/Applications/Rex Beta.app/Contents/Helpers/Rex Server."{rex,app}"/Contents/MacOS/rex"; do
       if [ -x "$rex_bin" ]; then
         mkSymlink "$rex_bin" "${homeDirectory}/.local/bin/rex"

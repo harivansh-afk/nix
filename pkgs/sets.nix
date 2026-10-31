@@ -30,7 +30,6 @@ in
       zoxide
     ])
     ++ [
-      (pkgs.callPackage ./zmx { })
       inputs.devin-codex.packages.${system}.default
       inputs.cc-proxy.packages.${system}.default
     ]

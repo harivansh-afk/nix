@@ -30,14 +30,14 @@
     darkThemeID = (theme.renderRex "dark").id;
     lightThemeID = (theme.renderRex "light").id;
     appearance = "system";
-    interfaceStyle = "classic";
+    interfaceStyle = "system";
     paneDensity = "compact";
     animationStyle = "snappy";
     cursorShadersEnabled = true;
     cursorShader = "warp";
     fadesInactivePanes = false;
     usesPaneGlass = false;
-    showsPaneHeaders = false;
+    showsPaneHeaders = true;
     balancesSplitsOnCreation = true;
     sidebarPosition = "left";
     tabStyle = "horizontal";

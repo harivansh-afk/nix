@@ -47,7 +47,7 @@ lib/          palette.json, theme.nix (renderers), neovim.nix, remotes.nix, agen
 modules/      common.nix, nix-settings.nix, users/ (user-config, accounts), security/sops.nix
 hosts/macbook defaults, homebrew, launchd services, startup guard, voiceink, logitech
 hosts/spark   hardware, networking, users, kernel hardening, services/ (one file per service)
-pkgs/         sets.nix, scripts/, zmx/, codex-mcp/, other derivations
+pkgs/         sets.nix, scripts/, codex-mcp/, other derivations
 dots/         live dotfiles
 terraform/    Cloudflare DNS via terranix
 scripts/      nvim-smoke.sh, nvim-update.sh
@@ -62,7 +62,7 @@ The cozybox palette is `lib/palette.json`; `lib/theme.nix` renders it for ghostt
 - `spark` / `macbook` connectors (`lib/remotes.nix`, `pkgs/scripts/bin/remote.sh`) open `mosh <host>`; `--ssh` forces ssh. Host settings live in `dots/ssh/config`. Portable scripts are flake packages for hosts outside this flake.
 - Rex (`/Applications/Rex Beta.app`) is installed by hand. `dots/rex/init.lua` holds the keymap (`rex config reload` applies it). Activation rewrites `com.superlogical.rex` defaults from `rexDefaults` and `theme.renderRex`, so settings changed in Rex's UI last until the next switch.
 - Activation builds `Berkeley Mono Nonicons` (`pkgs/scripts/lib/rex-font.py`) because Rex has a single font. Never use nerd-font-patcher; its glyph names collide with Berkeley Mono's.
-- A Rex pane runs `rex-spark`, which runs `ssh -t spark zmx attach rex-<REX_BLOCK>` and reconnects when ssh drops. Closing the pane kills the session. `REX_LOCAL=1` (the `ctrl+b shift+hjkl` splits) gives a plain Mac shell.
+- Spark runs the Rex login server (`hosts/spark/services/rex.nix`), published by Tailscale Serve at `https://spark.<tailnet>.ts.net:7297` and mapping the owner's Tailscale login to `rathi`. The Mac app adds it under Remote Hosts. A session lives on one server, and its tabs and splits open on that server. `init.lua` is linked on both hosts because each server loads its own keymap.
 
 ## Key dependencies
 

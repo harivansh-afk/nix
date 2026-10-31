@@ -24,7 +24,6 @@ rex.action{
 }
 rex.bind("cmd+k", "clear_screen")
 
-local home = os.getenv("HOME")
 local directions = { h = "left", j = "below", k = "above", l = "right" }
 local placements = {
   left = { direction = "horizontal", side = "before" },
@@ -45,40 +44,23 @@ local function split(ctx, direction, options)
   if err ~= nil then error(err, 0) end
 end
 
-local function remote_dir(ctx)
+local function pane_dir(ctx)
   local result = rex.block.call(terminal, "pwd", { block_id = ctx.block_id })
   local path = result and result.pwd and result.pwd:match("^[%w+.-]+://[^/]*(/.*)$")
   if not path then return nil end
   return (path:gsub("%%(%x%x)", function(hex) return string.char(tonumber(hex, 16)) end))
 end
 
-local function pane_dir(ctx)
-  local path = remote_dir(ctx)
-  if not path then return home end
-  return (path:gsub("^/home/[^/]+", home))
-end
-
 for key, direction in pairs(directions) do
   rex.action{
-    name = "local_split_" .. direction,
-    title = "Local Shell " .. direction:sub(1, 1):upper() .. direction:sub(2),
+    name = "split_" .. direction,
+    title = "Split " .. direction:sub(1, 1):upper() .. direction:sub(2),
     category = "Terminal",
     run = function(ctx)
-      split(ctx, direction, { cwd = pane_dir(ctx), command = { "env", "REX_LOCAL=1", "zsh", "-l" } })
+      split(ctx, direction, { cwd = pane_dir(ctx) })
     end,
   }
-  rex.bind("ctrl+b>shift+" .. key, "local_split_" .. direction)
-end
-
-for _, direction in ipairs({ "right", "below" }) do
-  rex.action{
-    name = "spark_split_" .. direction,
-    title = "Spark Shell " .. direction:sub(1, 1):upper() .. direction:sub(2),
-    category = "Terminal",
-    run = function(ctx)
-      split(ctx, direction, { command = { "env", "REX_CWD=" .. (remote_dir(ctx) or ""), "zsh", "-l" } })
-    end,
-  }
+  rex.bind("ctrl+b>shift+" .. key, "split_" .. direction)
 end
 
 local function neighbour(ctx, direction)
@@ -170,8 +152,8 @@ rex.bind("ctrl+b>left", "pane.focus.left")
 rex.bind("ctrl+b>down", "pane.focus.down")
 rex.bind("ctrl+b>up", "pane.focus.up")
 rex.bind("ctrl+b>right", "pane.focus.right")
-rex.bind("ctrl+b>'", "spark_split_right")
-rex.bind("ctrl+b>-", "spark_split_below")
+rex.bind("ctrl+b>'", "split_right")
+rex.bind("ctrl+b>-", "split_below")
 rex.bind("ctrl+b>z", "pane.zoom")
 rex.bind("ctrl+b>x", "pane.close")
 rex.bind("ctrl+b>c", "client.tab.new")

@@ -15,6 +15,7 @@ rex.action{
     local foreground = process and process.foreground
     local program = foreground
       and (basename(foreground.argv0) or basename(foreground.invoked_path) or foreground.name)
+    program = program and (program:gsub("^%-", ""))
     if program and not shells[program] and not relays[program] then
       return
     end

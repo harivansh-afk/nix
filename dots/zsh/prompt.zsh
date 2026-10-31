@@ -14,7 +14,7 @@ zstyle ':prompt:pure:git:stash' show yes
 typeset -g prompt_newline=' '
 prompt pure
 
-typeset -g _pure_skip_spacer=${ZMX_SESSION:+1}
+typeset -g _pure_skip_spacer=1
 print() {
   if [[ $# -eq 0 && -n $_pure_skip_spacer && ${funcstack[-1]} == prompt_pure_precmd ]]; then
     _pure_skip_spacer=

@@ -32,6 +32,7 @@ in
     ./services/cloudflared.nix
     ./services/sharefs.nix
     ./services/forgejo
+    ./services/hermes.nix
     ./services/roomcast.nix
     ./services/airplay-beacon.nix
     ./services/inference.nix

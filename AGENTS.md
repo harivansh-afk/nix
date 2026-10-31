@@ -109,6 +109,10 @@ rm -rf "$d"
 
 After changing the provider, run `codex app-server daemon restart`.
 
+## Hermes
+
+`hosts/spark/services/hermes.nix` runs the upstream NixOS module as the owner: `hermes-agent.service` is the gateway and `hermes-backend.service` is the dashboard plus desktop backend on `127.0.0.1:9119`, published by Tailscale Serve at `https://spark.<tailnet>.ts.net:9119` behind the basic-auth login in `hermes.env`. The model is Codex through codex-lb. `HERMES_HOME` is `~/.local/state/hermes/.hermes`: `config.yaml` is merged from `settings` on every switch, `.env` is rebuilt from the secret, and `SOUL.md` is copied from `dots/hermes/SOUL.md`. Skills are the Nix-selected set in `skills.external_dirs`; skills the agent writes land in `dots/hermes/skills` for review and commit, and bundled skills are off. Beeper is the only MCP server. There are no declared cron jobs, messaging platforms, or plugins.
+
 ## Beeper bridges
 
 `hosts/spark/services/beeper-bridges.nix` runs self-hosted mautrix bridges through `bbctl`, one user unit per entry in `bridges` (`beeper-<name>`, bot `@sh-<name>bot:beeper.local`). Binaries come from Nix, never from bbctl downloads. Setup: `bbctl login`, start the unit, then DM the bot `login`. State in `~/.config/bbctl` and `~/.local/share/bbctl` is private and mutable.

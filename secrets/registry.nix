@@ -75,5 +75,13 @@
       owner = "gitea-runner";
       restartUnits = [ "gitea-runner-spark.service" ];
     };
+
+    "hermes.env" = {
+      format = "dotenv";
+      restartUnits = [
+        "hermes-agent.service"
+        "hermes-backend.service"
+      ];
+    };
   };
 }

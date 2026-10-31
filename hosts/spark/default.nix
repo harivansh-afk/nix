@@ -38,6 +38,7 @@ in
     ./services/mixbridge.nix
     ./services/draw.nix
     ./services/mosh.nix
+    ./services/rex.nix
     ./services/vaultwarden.nix
     ./services/website.nix
     ./hardware.nix

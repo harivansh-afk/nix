@@ -8,18 +8,30 @@ let
   forgejoDomain = config.services.forgejo.settings.server.DOMAIN;
   runnerTokenFile = config.sops.secrets."forgejo-runner-token".path;
   runnerCacheRoot = "/var/cache/forgejo-runner";
+  nixRepo = "${config.services.forgejo.repositoryRoot}/harivansh-afk/nix.git";
+  sparkSwitchMain = pkgs.writeShellScript "spark-switch-main" ''
+    set -euo pipefail
+    dir=$(${pkgs.coreutils}/bin/mktemp -d /run/spark-deploy.XXXXXX)
+    trap '${pkgs.coreutils}/bin/rm -rf "$dir"' EXIT
+    ${pkgs.git}/bin/git -c safe.directory=${nixRepo} clone --quiet --branch main --single-branch ${nixRepo} "$dir/nix"
+    echo "deploying main at $(${pkgs.git}/bin/git -C "$dir/nix" rev-parse HEAD)"
+    /run/current-system/sw/bin/nixos-rebuild switch --flake "$dir/nix#spark"
+  '';
   sparkDeploy = pkgs.writeShellApplication {
     name = "spark-deploy";
     runtimeInputs = [ pkgs.systemd ];
     text = ''
-      flake="$1"
+      if [ "$#" -ne 0 ]; then
+        echo "spark-deploy takes no arguments; it always deploys main" >&2
+        exit 2
+      fi
       unit="spark-deploy-$(date +%s)"
       status=0
       systemd-run --unit="$unit" --wait --collect --quiet \
         --setenv=SUDO_UID="''${SUDO_UID:?run spark-deploy through sudo}" \
         --setenv=PATH=/run/wrappers/bin:/run/current-system/sw/bin \
         --property=TimeoutStartSec=40min \
-        /run/current-system/sw/bin/nixos-rebuild switch --flake "$flake#spark" || status=$?
+        ${sparkSwitchMain} || status=$?
       journalctl --unit="$unit" --output=cat --no-pager
       exit "$status"
     '';
@@ -52,7 +64,7 @@ in
       users = [ "gitea-runner" ];
       commands = [
         {
-          command = "/run/current-system/sw/bin/spark-deploy";
+          command = "/run/current-system/sw/bin/spark-deploy \"\"";
           options = [ "NOPASSWD" ];
         }
       ];

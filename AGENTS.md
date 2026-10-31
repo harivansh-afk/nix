@@ -83,7 +83,7 @@ Add `modules/users/accounts/<name>.nix` (`sshKeys`, `shell`, `extraGroups`) and 
 
 ## CI deploys
 
-`deploy.yml` runs `spark-deploy`, which runs `nixos-rebuild switch` as its own root unit. `gitea-runner-spark` is `restartIfChanged = false`, because restarting the runner mid-deploy kills the switch. A changed runner unit applies only after a manual restart. A red X that raced a deploy may be a cancelled sibling job, so check the runner journal.
+`deploy.yml` runs `spark-deploy`, which takes no arguments and runs `nixos-rebuild switch` as its own root unit on a fresh clone of `main` from Forgejo's on-disk repository, so no job can deploy a tree of its choosing. `gitea-runner-spark` is `restartIfChanged = false`, because restarting the runner mid-deploy kills the switch. A changed runner unit applies only after a manual restart. A red X that raced a deploy may be a cancelled sibling job, so check the runner journal.
 
 ## Forgejo mirroring
 

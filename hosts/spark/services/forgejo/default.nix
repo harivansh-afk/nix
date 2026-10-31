@@ -153,6 +153,7 @@ in
         LANDING_PAGE = "/harivansh-afk";
       };
       service = {
+        DISABLE_REGISTRATION = true;
         REGISTER_EMAIL_CONFIRM = true;
         SEND_NOTIFICATION_EMAIL_ON_NEW_USER = true;
       };

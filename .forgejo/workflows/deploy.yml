@@ -17,8 +17,9 @@ jobs:
     # concurrency group) for hours; cap it well below the runner's 3h timeout.
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
       # spark-deploy runs nixos-rebuild as its own root unit, so a switch that
-      # replaces or stops this runner cannot kill it.
+      # replaces or stops this runner cannot kill it. It clones main from
+      # Forgejo's own repository and takes no arguments, so a job cannot
+      # deploy a tree of its choosing.
       - name: nixos-rebuild switch
-        run: /run/wrappers/bin/sudo /run/current-system/sw/bin/spark-deploy "$PWD"
+        run: /run/wrappers/bin/sudo /run/current-system/sw/bin/spark-deploy

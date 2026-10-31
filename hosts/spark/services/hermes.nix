@@ -15,6 +15,7 @@ let
   port = 9119;
   url = "https://spark.${tailnet.domain}:${toString port}";
   tailscale = config.services.tailscale.package;
+  ccProxy = inputs.cc-proxy.packages.${pkgs.stdenv.hostPlatform.system}.default;
   soul = ../../../dots/hermes/SOUL.md;
   skills = pkgs.runCommand "hermes-skills" { } ''
     mkdir -p $out
@@ -63,10 +64,17 @@ in
         provider = "codex-lb";
         default = "gpt-6.1-sol";
       };
-      providers.codex-lb = {
-        base_url = "http://127.0.0.1:18475/backend-api/codex";
-        api_mode = "codex_responses";
-        api_key = "codex-lb";
+      providers = {
+        codex-lb = {
+          base_url = "http://127.0.0.1:18475/backend-api/codex";
+          api_mode = "codex_responses";
+          api_key = "codex-lb";
+        };
+        cc-proxy = {
+          base_url = "http://127.0.0.1:18473";
+          api_mode = "anthropic_messages";
+          key_cmd = "${ccProxy}/bin/cc-proxy key";
+        };
       };
       agent = {
         reasoning_effort = "medium";

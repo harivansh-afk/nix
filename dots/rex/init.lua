@@ -51,7 +51,7 @@ local function pane_dir(ctx)
   return (path:gsub("%%(%x%x)", function(hex) return string.char(tonumber(hex, 16)) end))
 end
 
-for key, direction in pairs(directions) do
+for _, direction in ipairs({ "right", "below" }) do
   rex.action{
     name = "split_" .. direction,
     title = "Split " .. direction:sub(1, 1):upper() .. direction:sub(2),
@@ -60,7 +60,6 @@ for key, direction in pairs(directions) do
       split(ctx, direction, { cwd = pane_dir(ctx) })
     end,
   }
-  rex.bind("ctrl+b>shift+" .. key, "split_" .. direction)
 end
 
 local function neighbour(ctx, direction)
@@ -154,6 +153,7 @@ rex.bind("ctrl+b>up", "pane.focus.up")
 rex.bind("ctrl+b>right", "pane.focus.right")
 rex.bind("ctrl+b>'", "split_right")
 rex.bind("ctrl+b>-", "split_below")
+rex.bind("ctrl+b>s", "session.switch")
 rex.bind("ctrl+b>z", "pane.zoom")
 rex.bind("ctrl+b>x", "pane.close")
 rex.bind("ctrl+b>c", "client.tab.new")

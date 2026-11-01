@@ -17,12 +17,32 @@ let
   tailscale = config.services.tailscale.package;
   ccProxy = inputs.cc-proxy.packages.${pkgs.stdenv.hostPlatform.system}.default;
   soul = ../../../dots/hermes/SOUL.md;
-  skills = pkgs.runCommand "hermes-skills" { } ''
-    mkdir -p $out
-    cp -rL ${inputs.hermes-agent}/skills/autonomous-ai-agents/hermes-agent $out/hermes-agent
-    cp -rL ${../../../dots/agents/skills/spark-computer} $out/spark-computer
-    cp -rL ${inputs.mattpocock-skills}/skills/productivity/writing-for-agents $out/writing-for-agents
-  '';
+  # Claude Code's skills plus Hermes's own manual.
+  skills = pkgs.linkFarm "hermes-skills" (
+    import ../../../lib/agent-skills.nix {
+      inherit pkgs;
+      mattpocock = inputs.mattpocock-skills;
+      spark = true;
+    }
+    ++ [
+      {
+        name = "hermes-agent";
+        path = "${inputs.hermes-agent}/skills/autonomous-ai-agents/hermes-agent";
+      }
+    ]
+  );
+  # Claude Code's MCP servers. Beeper's OAuth token lives in HERMES_HOME/mcp-tokens.
+  mcpServers = lib.mapAttrs (
+    name: server:
+    server
+    // {
+      connect_timeout = 20;
+    }
+    // lib.optionalAttrs (name == "beeper") {
+      auth = "oauth";
+      timeout = 60;
+    }
+  ) (import ../../../lib/agent-mcp.nix { inherit pkgs; });
   units = [
     "hermes-agent"
     "hermes-backend"
@@ -50,9 +70,10 @@ in
     environmentFiles = [ config.sops.secrets."hermes.env".path ];
     hermesHomeFiles = {
       "SOUL.md" = soul;
+      "profile.yaml" = "display_name: spark\n";
       ".no-bundled-skills" = "Skills come from hosts/spark/services/hermes.nix.\n";
     };
-    documents."AGENTS.md" = agentInstructions.codex;
+    documents."AGENTS.md" = agentInstructions.claude;
     backend = {
       mode = "dashboard";
       host = "127.0.0.1";
@@ -61,8 +82,8 @@ in
     settings = {
       timezone = "America/New_York";
       model = {
-        provider = "codex-lb";
-        default = "gpt-6.1-sol";
+        provider = "cc-proxy";
+        default = "claude-opus-5-5";
       };
       providers = {
         codex-lb = {
@@ -78,21 +99,20 @@ in
       };
       agent = {
         reasoning_effort = "medium";
+        # Off where Claude Code has no equivalent or denies the tool (CronCreate, AskUserQuestion);
+        # the computer MCP replaces computer_use.
         disabled_toolsets = [
           "browser"
+          "clarify"
           "computer_use"
+          "cronjob"
           "image_gen"
           "tts"
           "kanban"
         ];
       };
-      approvals = {
-        mode = "smart";
-        cron_mode = "deny";
-        smart_policy = ''
-          Always ESCALATE git push --force in any form, rm -rf outside the current repository or workspace, anything under /etc or /nix, systemctl changes, and any command that sends a message or spends money. Routine development inside a repository (tests, builds, uv and nix commands, git commit, git push to a feature branch, tea pr create) is safe.
-        '';
-      };
+      # Claude Code runs with bypassPermissions; match it.
+      approvals.mode = "off";
       skills = {
         external_dirs = [ "${skills}" ];
         create_dir = "${home}/Documents/Git/nix/dots/hermes/skills";
@@ -100,12 +120,7 @@ in
         project_discovery = false;
         creation_nudge_interval = 0;
       };
-      mcp_servers.beeper = {
-        url = "http://127.0.0.1:23373/v0/mcp";
-        auth = "oauth";
-        timeout = 30;
-        connect_timeout = 15;
-      };
+      mcp_servers = mcpServers;
       sessions.auto_prune = true;
       dashboard.public_url = url;
     };
@@ -120,7 +135,12 @@ in
       after = [ "user@${toString user.uid}.service" ];
       wants = [ "user@${toString user.uid}.service" ];
       environment.HOME = lib.mkForce home;
-      path = [ "/etc/profiles/per-user/${username}" ];
+      # Claude Code's PATH: the nix profile plus the curl-installed claude and npm codex.
+      path = [
+        "/etc/profiles/per-user/${username}"
+        "${home}/.local"
+        "${home}/.local/share/npm"
+      ];
       serviceConfig = {
         ReadWritePaths = [ home ];
         UMask = lib.mkForce "0077";

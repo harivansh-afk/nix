@@ -9,6 +9,7 @@ return {
     event = "BufReadPre",
     after = function()
       require("gitsigns").setup {
+        signcolumn = false,
         signs_staged_enable = false,
       }
 

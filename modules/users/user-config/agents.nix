@@ -11,17 +11,6 @@ let
   agentInstructions = import ../../../lib/agent-instructions.nix { inherit pkgs; };
   computer = import ../../../pkgs/computer-tools { inherit pkgs; };
 
-  pocockPick = [
-    "productivity/writing-for-agents"
-    "engineering/research"
-  ];
-  pocockSkills = lib.optionals (skillSources ? mattpocock) (
-    map (rel: {
-      name = baseNameOf rel;
-      path = "${skillSources.mattpocock}/skills/${rel}";
-    }) pocockPick
-  );
-
   jsonFormat = pkgs.formats.json { };
 
   mkReadXattr =
@@ -41,7 +30,6 @@ let
   codexXattr = "user.hari.codex-seed-source";
 
   delegateToCodex = hostname == "spark";
-  codexMcp = import ../../../pkgs/codex-mcp { inherit pkgs; };
 
 in
 {
@@ -76,46 +64,29 @@ in
       null;
   codexAgentsMd = agentInstructions.codex;
   agentSkills = pkgs.linkFarm "agent-skills" (
-    pocockSkills
-    ++ lib.optionals (hostname == "spark") [
-      {
-        name = "cua-driver";
-        path = (pkgs.callPackage ../../../pkgs/cua-driver { }).skills;
-      }
-      {
-        name = "spark-computer";
-        path = ../../../dots/agents/skills/spark-computer;
-      }
-    ]
-    ++ [
-      {
-        name = "crux";
-        path = ../../../dots/agents/skills/crux;
-      }
-    ]
+    import ../../../lib/agent-skills.nix {
+      inherit pkgs;
+      mattpocock = skillSources.mattpocock or null;
+      spark = hostname == "spark";
+    }
   );
   claudeMcpSource =
     if hostname == "spark" then
       jsonFormat.generate "claude-mcp.json" (
-        (lib.mapAttrs (
+        lib.mapAttrs (
           _: server:
-          server
-          // {
-            type = "stdio";
-            timeout = 60000;
-          }
-        ) computer.servers)
-        // {
-          beeper = {
-            type = "http";
-            url = "http://127.0.0.1:23373/v0/mcp";
-          };
-          codex = {
-            type = "stdio";
-            command = "${codexMcp}/bin/codex-mcp";
-            timeout = 14400000;
-          };
-        }
+          if server ? url then
+            {
+              type = "http";
+              inherit (server) url;
+            }
+          else
+            server
+            // {
+              type = "stdio";
+              timeout = server.timeout * 1000;
+            }
+        ) (import ../../../lib/agent-mcp.nix { inherit pkgs; })
       )
     else
       null;

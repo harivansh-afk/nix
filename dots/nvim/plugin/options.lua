@@ -12,7 +12,7 @@ o.ignorecase = true
 o.smartcase = true
 
 o.scrolloff = 8
-o.signcolumn = "yes"
+o.signcolumn = "number"
 o.wrap = false
 o.laststatus = 3
 o.cmdheight = 0

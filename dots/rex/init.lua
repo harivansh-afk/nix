@@ -51,6 +51,68 @@ rex.action{
 }
 rex.bind("cmd+k", "clear_screen")
 
+local placements = {
+  left = { direction = "horizontal", side = "before" },
+  down = { direction = "vertical", side = "after" },
+  up = { direction = "vertical", side = "before" },
+  right = { direction = "horizontal", side = "after" },
+}
+
+local function blocks(node, out)
+  if node.block_id then
+    local r = node.rect
+    out[#out + 1] = { id = node.block_id, x = r[1] + r[3] / 2, y = r[2] + r[4] / 2 }
+  elseif node.split then
+    blocks(node.split.before, out)
+    blocks(node.split.after, out)
+  end
+  return out
+end
+
+local function nearest(ctx, direction)
+  for _, window in ipairs((rex.session.view{} or {}).windows or {}) do
+    for _, layer in ipairs(window.layers or {}) do
+      local found = layer.layout and blocks(layer.layout, {}) or {}
+      local me
+      for _, b in ipairs(found) do
+        if b.id == ctx.block_id then me = b end
+      end
+      if me then
+        local best, best_score
+        for _, b in ipairs(found) do
+          if b.id ~= me.id then
+            local dx, dy = b.x - me.x, b.y - me.y
+            local ahead = (direction == "left" and dx < 0) or (direction == "right" and dx > 0)
+              or (direction == "up" and dy < 0) or (direction == "down" and dy > 0)
+            local score = dx * dx + dy * dy + (ahead and 0 or 1e9)
+            if not best or score < best_score then best, best_score = b.id, score end
+          end
+        end
+        return best
+      end
+    end
+  end
+end
+
+for direction, placement in pairs(placements) do
+  rex.action{
+    name = "move_pane_" .. direction,
+    title = "Move Pane " .. direction:sub(1, 1):upper() .. direction:sub(2),
+    category = "Layout",
+    run = function(ctx)
+      local anchor = nearest(ctx, direction)
+      if not anchor then return end
+      local _, err = rex.session.move_block{
+        block_id = ctx.block_id,
+        anchor_block_id = anchor,
+        direction = placement.direction,
+        side = placement.side,
+      }
+      if err then error(err, 0) end
+    end,
+  }
+end
+
 rex.bind("cmd+alt+left", "pane.focus.left")
 rex.bind("cmd+alt+down", "pane.focus.down")
 rex.bind("cmd+alt+up", "pane.focus.up")
@@ -88,9 +150,9 @@ rex.bind("resize/h", "pane.resize", { direction = "left" })
 rex.bind("resize/j", "pane.resize", { direction = "down" })
 rex.bind("resize/k", "pane.resize", { direction = "up" })
 rex.bind("resize/l", "pane.resize", { direction = "right" })
-rex.bind("resize/shift+h", "pane.move.left")
-rex.bind("resize/shift+j", "pane.move.down")
-rex.bind("resize/shift+k", "pane.move.up")
-rex.bind("resize/shift+l", "pane.move.right")
+rex.bind("resize/shift+h", "move_pane_left")
+rex.bind("resize/shift+j", "move_pane_down")
+rex.bind("resize/shift+k", "move_pane_up")
+rex.bind("resize/shift+l", "move_pane_right")
 rex.bind("resize/enter", "client.mode.exit")
 rex.bind("resize/q", "client.mode.exit")

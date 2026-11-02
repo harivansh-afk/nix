@@ -29,7 +29,7 @@ lib.optionals (mattpocock != null) (
   }
   {
     name = "bdu";
-    path = "${pkgs.callPackage ../pkgs/browser-dom-use { }}/share/bdu/skills/bdu";
+    path = "${pkgs.browser-dom-use}/share/bdu/skills/bdu";
   }
 ]
 ++ [

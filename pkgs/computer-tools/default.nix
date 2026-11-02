@@ -1,7 +1,7 @@
 { pkgs }:
 let
   cuaDriver = pkgs.callPackage ../cua-driver { };
-  browserDomUse = pkgs.callPackage ../browser-dom-use { };
+  browserDomUse = pkgs.browser-dom-use;
   cuaMcp = pkgs.writeShellApplication {
     name = "spark-cua-mcp";
     runtimeInputs = [ pkgs.coreutils ];

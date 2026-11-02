@@ -1,39 +1,28 @@
 local terminal = "com.superlogical.terminal"
 
-local hosts = {
-  macbook = "01fe5070-9629-4724-8a6e-bc2069dee2c5",
-  spark = "b6c8a0f1-5153-4e4d-a7e8-a4bad784d379",
-}
-
 local function call(server, method, args)
   local result, err = server.call(method, args)
   if not result then error(err, 0) end
   return result
 end
 
-local function server_for(host)
-  if call(rex, "server.status").host_id == hosts[host] then return rex end
-  local names = rex.servers()
-  for _, name in ipairs(names) do
-    local server = rex.server(name)
-    if call(server, "server.status").host_id == hosts[host] then return server end
-  end
-  error("not connected to " .. host .. " (servers: " .. table.concat(names, ", ") .. ")", 0)
+local function this_host()
+  return rex.exec{ "uname", "-s" }.stdout:match("Darwin") and "macbook" or "spark"
 end
 
 local function open_host(ctx, host)
-  local server = server_for(host)
+  if host == this_host() then return end
+  local name = rex.servers()[1]
+  if not name then error("not connected to " .. host, 0) end
+  local server = rex.server(name)
   local sessions = call(server, "session.list").sessions or {}
-  for _, session in ipairs(sessions) do
-    if session.session_id == ctx.session_id then return end
-  end
   local id = sessions[1] and sessions[1].session_id
     or call(server, "session.create", {
       initial_windows = { { layout = rex.layout.block{ flavor = terminal .. ".shell" } } },
     }).session_id
   local me = call(rex, "client.inspect", { client_id = ctx.client_id }).client.info
   for _, client in ipairs(call(server, "client.list").clients or {}) do
-    if client.info and client.info.kind == "app" and client.info.label == me.label then
+    if client.info.kind == "app" and client.info.label == me.label then
       call(server, "client.perform", {
         client_id = client.client_id,
         action = "session.select",

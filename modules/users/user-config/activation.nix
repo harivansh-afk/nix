@@ -216,6 +216,8 @@ pkgs.writeShellScript "user-config-${name}" ''
         rex_set Workspace.${key} ${
           if builtins.isBool value then
             "-bool ${lib.boolToString value}"
+          else if builtins.isInt value then
+            "-int ${toString value}"
           else if builtins.isFloat value then
             "-float ${toString value}"
           else

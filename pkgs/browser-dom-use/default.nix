@@ -9,7 +9,9 @@ let
   src = builtins.path {
     path = /home/rathi/Documents/Git/browser-dom-use;
     name = "browser-dom-use-src";
-    filter = path: _type: !(lib.hasInfix "/target" path || lib.hasInfix "/.worktrees" path || lib.hasInfix "/.git/" path);
+    filter =
+      path: _type:
+      !(lib.hasInfix "/target" path || lib.hasInfix "/.worktrees" path || lib.hasInfix "/.git/" path);
   };
 in
 rustPlatform.buildRustPackage {
@@ -28,6 +30,9 @@ rustPlatform.buildRustPackage {
     homepage = "https://git.harivan.sh/harivansh-afk/browser-dom-use";
     license = lib.licenses.mit;
     mainProgram = "bdu";
-    platforms = [ "aarch64-linux" "x86_64-linux" ];
+    platforms = [
+      "aarch64-linux"
+      "x86_64-linux"
+    ];
   };
 }

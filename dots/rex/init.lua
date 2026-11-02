@@ -1,23 +1,24 @@
 local terminal = "com.superlogical.terminal"
 
 local hosts = {
-  macbook = { "macbook", "local", "Local" },
-  spark = { "spark" },
+  macbook = "01fe5070-9629-4724-8a6e-bc2069dee2c5",
+  spark = "b6c8a0f1-5153-4e4d-a7e8-a4bad784d379",
 }
-
-local function server_for(host)
-  local listed = {}
-  for _, name in ipairs(rex.servers()) do listed[name] = true end
-  for _, name in ipairs(hosts[host]) do
-    if listed[name] then return rex.server(name) end
-  end
-  return rex
-end
 
 local function call(server, method, args)
   local result, err = server.call(method, args)
   if not result then error(err, 0) end
   return result
+end
+
+local function server_for(host)
+  if call(rex, "server.status").host_id == hosts[host] then return rex end
+  local names = rex.servers()
+  for _, name in ipairs(names) do
+    local server = rex.server(name)
+    if call(server, "server.status").host_id == hosts[host] then return server end
+  end
+  error("not connected to " .. host .. " (servers: " .. table.concat(names, ", ") .. ")", 0)
 end
 
 local function open_host(ctx, host)

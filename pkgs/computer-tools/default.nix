@@ -13,6 +13,7 @@ in
 {
   inherit cuaMcp;
   agentBrowser = pkgs.callPackage ../agent-browser { };
+  browserDomUse = pkgs.callPackage ../browser-dom-use { };
   servers = {
     computer = {
       command = "${cuaMcp}/bin/spark-cua-mcp";

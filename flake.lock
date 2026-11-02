@@ -55,6 +55,27 @@
         "type": "github"
       }
     },
+    "browser-dom-use": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793652529,
+        "narHash": "sha256-RmqjDWdhGSSSLjNrsgOgEQMzNNOZKDCAoEhBueSENrc=",
+        "ref": "main",
+        "rev": "e1c8d0f152a75c38031aad57ab322a4a6d2b80a3",
+        "revCount": 58,
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/browser-dom-use.git"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/browser-dom-use.git"
+      }
+    },
     "bun2nix": {
       "inputs": {
         "flake-parts": "flake-parts",
@@ -1419,6 +1440,7 @@
     "root": {
       "inputs": {
         "airplay-at-the-crib": "airplay-at-the-crib",
+        "browser-dom-use": "browser-dom-use",
         "cc-proxy": "cc-proxy",
         "codex-lb": "codex-lb",
         "determinate": "determinate",

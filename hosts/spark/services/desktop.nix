@@ -50,7 +50,6 @@ in
     beeper
     chromium
     computer.cuaMcp
-    computer.agentBrowser
     computer.browserDomUse
     cuaDriver
     pkgs.ghostty

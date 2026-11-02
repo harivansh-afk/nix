@@ -27,6 +27,10 @@ lib.optionals (mattpocock != null) (
     name = "spark-computer";
     path = ../dots/agents/skills/spark-computer;
   }
+  {
+    name = "bdu";
+    path = "${pkgs.browser-dom-use}/share/bdu/skills/bdu";
+  }
 ]
 ++ [
   {

@@ -46,6 +46,12 @@ let
     import (if lib.hasSuffix "-darwin" system then inputs.nixpkgs-macbook else inputs.nixpkgs) {
       inherit system;
       config.allowUnfree = true;
+      overlays = [
+        # Packages from private flake inputs that plain `pkgs` consumers need.
+        (_final: _prev: {
+          browser-dom-use = inputs.browser-dom-use.packages.${system}.default;
+        })
+      ];
     };
 
   mkSpecialArgs = host: {

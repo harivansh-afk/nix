@@ -57,6 +57,11 @@
 
     devin-codex.url = "git+https://git.harivan.sh/harivansh-afk/devin-codex.git";
 
+    browser-dom-use = {
+      url = "git+https://git.harivan.sh/harivansh-afk/browser-dom-use.git?ref=main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     codex-lb.url = "github:Soju06/codex-lb";
 
     hermes-agent.url = "github:NousResearch/hermes-agent/v0.22.5";

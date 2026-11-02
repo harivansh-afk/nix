@@ -15,6 +15,11 @@ let
     trap '${pkgs.coreutils}/bin/rm -rf "$dir"' EXIT
     ${pkgs.git}/bin/git -c safe.directory=${nixRepo} clone --quiet --branch main --single-branch ${nixRepo} "$dir/nix"
     echo "deploying main at $(${pkgs.git}/bin/git -C "$dir/nix" rev-parse HEAD)"
+    export GIT_CONFIG_COUNT=2
+    export GIT_CONFIG_KEY_0=url.file://${config.services.forgejo.repositoryRoot}/.insteadOf
+    export GIT_CONFIG_VALUE_0=https://${forgejoDomain}/
+    export GIT_CONFIG_KEY_1=safe.directory
+    export GIT_CONFIG_VALUE_1='*'
     /run/current-system/sw/bin/nixos-rebuild switch --flake "$dir/nix#spark"
   '';
   sparkDeploy = pkgs.writeShellApplication {

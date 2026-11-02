@@ -1,175 +1,64 @@
 local terminal = "com.superlogical.terminal"
-local shells = { zsh = true, bash = true, fish = true, sh = true }
 
-local relays = { ssh = true, ["mosh-client"] = true }
-local function basename(path)
-  return path and path:match("([^/]+)$")
+local hosts = {
+  macbook = { "macbook", "local", "Local" },
+  spark = { "spark" },
+}
+
+local function server_for(host)
+  local listed = {}
+  for _, name in ipairs(rex.servers()) do listed[name] = true end
+  for _, name in ipairs(hosts[host]) do
+    if listed[name] then return rex.server(name) end
+  end
+  return rex
 end
+
+local function call(server, method, args)
+  local result, err = server.call(method, args)
+  if not result then error(err, 0) end
+  return result
+end
+
+local function open_host(ctx, host)
+  local server = server_for(host)
+  local sessions = call(server, "session.list").sessions or {}
+  for _, session in ipairs(sessions) do
+    if session.session_id == ctx.session_id then return end
+  end
+  local id = sessions[1] and sessions[1].session_id
+    or call(server, "session.create", {
+      initial_windows = { { layout = rex.layout.block{ flavor = terminal .. ".shell" } } },
+    }).session_id
+  local me = call(rex, "client.inspect", { client_id = ctx.client_id }).client.info
+  for _, client in ipairs(call(server, "client.list").clients or {}) do
+    if client.info and client.info.kind == "app" and client.info.label == me.label then
+      call(server, "client.perform", {
+        client_id = client.client_id,
+        action = "session.select",
+        args = { session_id = id },
+      })
+    end
+  end
+end
+
+for key, host in pairs({ ["1"] = "macbook", ["2"] = "spark" }) do
+  rex.action{
+    name = "open_" .. host,
+    title = "Open " .. host,
+    category = "Session",
+    run = function(ctx) open_host(ctx, host) end,
+  }
+  rex.bind("cmd+shift+" .. key, "open_" .. host)
+end
+
 rex.action{
   name = "clear_screen",
   title = "Clear Screen",
   category = "Terminal",
-  run = function(ctx)
-    local process = rex.block.call(terminal, "process", { block_id = ctx.block_id })
-    local foreground = process and process.foreground
-    local program = foreground
-      and (basename(foreground.argv0) or basename(foreground.invoked_path) or foreground.name)
-    program = program and (program:gsub("^%-", ""))
-    if program and not shells[program] and not relays[program] then
-      return
-    end
-    rex.block.call(terminal, "clear", { block_id = ctx.block_id })
-    rex.block.call(terminal, "write", { block_id = ctx.block_id, data = "\f" })
-  end,
+  run = function() rex.block.call(terminal, "clear", {}) end,
 }
 rex.bind("cmd+k", "clear_screen")
-
-rex.host{ label = "macbook", endpoint = "https://macbook-1.taileb8b41.ts.net" }
-rex.host{ label = "spark", endpoint = "https://spark.taileb8b41.ts.net:7297" }
-
-local function this_host()
-  local r = rex.exec{ "uname", "-s" }
-  return r and r.ok and r.stdout:match("Darwin") and "macbook" or "spark"
-end
-
-local function goto_host(ctx, target)
-  local here = this_host()
-  local api = target == here and rex or rex.server(target)
-  if target == here and ctx.session_id then return end
-  local list, err = api.call("session.list")
-  if not list then error(err, 0) end
-  local first = list.sessions and list.sessions[1]
-  local id = first and first.session_id
-  if not id then
-    local created, cerr = api.call("session.create", {
-      initial_windows = { { layout = rex.layout.block{ flavor = terminal .. ".shell" } } },
-    })
-    if not created then error(cerr, 0) end
-    id = created.session_id or (created.session and created.session.session_id)
-  end
-  rex.client.queue("session.select", { session_id = id })
-end
-
-for key, target in pairs({ ["1"] = "macbook", ["2"] = "spark" }) do
-  rex.action{
-    name = "goto_" .. target,
-    title = "Go to " .. target,
-    category = "Session",
-    run = function(ctx) goto_host(ctx, target) end,
-  }
-  rex.bind("cmd+shift+" .. key, "goto_" .. target)
-end
-
-local directions = { h = "left", j = "below", k = "above", l = "right" }
-local placements = {
-  left = { direction = "horizontal", side = "before" },
-  right = { direction = "horizontal", side = "after" },
-  above = { direction = "vertical", side = "before" },
-  below = { direction = "vertical", side = "after" },
-}
-
-local function split(ctx, direction, options)
-  local placement = placements[direction]
-  local _, err = rex.session.new_split{
-    anchor_block_id = ctx.block_id,
-    direction = placement.direction,
-    side = placement.side,
-    focus = true,
-    layout = rex.layout.block{ flavor = terminal .. ".shell", options = options },
-  }
-  if err ~= nil then error(err, 0) end
-end
-
-local function pane_dir(ctx)
-  local result = rex.block.call(terminal, "pwd", { block_id = ctx.block_id })
-  local path = result and result.pwd and result.pwd:match("^[%w+.-]+://[^/]*(/.*)$")
-  if not path then return nil end
-  return (path:gsub("%%(%x%x)", function(hex) return string.char(tonumber(hex, 16)) end))
-end
-
-for _, direction in ipairs({ "right", "below" }) do
-  rex.action{
-    name = "split_" .. direction,
-    title = "Split " .. direction:sub(1, 1):upper() .. direction:sub(2),
-    category = "Terminal",
-    run = function(ctx)
-      split(ctx, direction, { cwd = pane_dir(ctx) })
-    end,
-  }
-end
-
-local function neighbour(ctx, direction)
-  local view = rex.session.view{}
-  if not view then return nil end
-  local function leaves(node, out)
-    if node.block_id then
-      local r = node.rect
-      out[#out + 1] = { block_id = node.block_id, rect = { x = r[1], y = r[2], w = r[3], h = r[4] } }
-    elseif node.split then
-      leaves(node.split.before, out)
-      leaves(node.split.after, out)
-    end
-    return out
-  end
-  local blocks, me
-  for _, window in ipairs(view.windows or {}) do
-    for _, layer in ipairs(window.layers or {}) do
-      local found = layer.layout and leaves(layer.layout, {}) or {}
-      for _, block in ipairs(found) do
-        if block.block_id == ctx.block_id then
-          blocks, me = found, block.rect
-        end
-      end
-    end
-  end
-  if not blocks then return nil end
-  local eps = 1e-6
-  local best, best_distance
-  for _, block in ipairs(blocks) do
-    if block.block_id ~= ctx.block_id then
-      local r = block.rect
-      local distance
-      if direction == "left" and r.x + r.w <= me.x + eps then
-        distance = me.x - (r.x + r.w)
-      elseif direction == "right" and r.x >= me.x + me.w - eps then
-        distance = r.x - (me.x + me.w)
-      elseif direction == "above" and r.y + r.h <= me.y + eps then
-        distance = me.y - (r.y + r.h)
-      elseif direction == "below" and r.y >= me.y + me.h - eps then
-        distance = r.y - (me.y + me.h)
-      end
-      if distance == nil then
-        local dx = (r.x + r.w / 2) - (me.x + me.w / 2)
-        local dy = (r.y + r.h / 2) - (me.y + me.h / 2)
-        distance = 10 + dx * dx + dy * dy
-      end
-      if best == nil or distance < best_distance then
-        best, best_distance = block.block_id, distance
-      end
-    end
-  end
-  return best
-end
-
-for key, direction in pairs(directions) do
-  rex.action{
-    name = "move_pane_" .. direction,
-    title = "Move Pane " .. direction:sub(1, 1):upper() .. direction:sub(2),
-    category = "Layout",
-    run = function(ctx)
-      local anchor = neighbour(ctx, direction)
-      if not anchor then return end
-      local placement = placements[direction]
-      local _, err = rex.session.move_block{
-        block_id = ctx.block_id,
-        anchor_block_id = anchor,
-        direction = placement.direction,
-        side = placement.side,
-      }
-      if err ~= nil then error(err, 0) end
-    end,
-  }
-end
 
 rex.bind("cmd+alt+left", "pane.focus.left")
 rex.bind("cmd+alt+down", "pane.focus.down")
@@ -187,15 +76,15 @@ rex.bind("ctrl+b>left", "pane.focus.left")
 rex.bind("ctrl+b>down", "pane.focus.down")
 rex.bind("ctrl+b>up", "pane.focus.up")
 rex.bind("ctrl+b>right", "pane.focus.right")
-rex.bind("ctrl+b>'", "split_right")
-rex.bind("ctrl+b>-", "split_below")
+rex.bind("ctrl+b>'", "pane.split.right")
+rex.bind("ctrl+b>-", "pane.split.down")
+rex.bind("ctrl+b>z", "pane.zoom")
+rex.bind("ctrl+b>x", "pane.close")
 rex.bind("ctrl+b>s", "session.switch")
 rex.bind("ctrl+b>shift+c", "session.new")
 rex.bind("ctrl+b>shift+4", "session.rename")
 rex.bind("ctrl+b>shift+x", "session.close")
 rex.bind("ctrl+b>shift+h", "client.host.switch")
-rex.bind("ctrl+b>z", "pane.zoom")
-rex.bind("ctrl+b>x", "pane.close")
 rex.bind("ctrl+b>c", "client.tab.new")
 rex.bind("ctrl+b>n", "client.tab.next")
 rex.bind("ctrl+b>p", "client.tab.previous")
@@ -203,16 +92,14 @@ for i = 1, 9 do
   rex.bind("ctrl+b>" .. i, "client.tab.goto", { index = i })
 end
 
-rex.mode("resize")
 rex.bind("ctrl+b>r", "client.mode.enter", { name = "resize" })
 rex.bind("resize/h", "pane.resize", { direction = "left" })
 rex.bind("resize/j", "pane.resize", { direction = "down" })
 rex.bind("resize/k", "pane.resize", { direction = "up" })
 rex.bind("resize/l", "pane.resize", { direction = "right" })
-rex.bind("resize/shift+h", "move_pane_left")
-rex.bind("resize/shift+j", "move_pane_below")
-rex.bind("resize/shift+k", "move_pane_above")
-rex.bind("resize/shift+l", "move_pane_right")
-rex.bind("resize/escape", "client.mode.exit")
+rex.bind("resize/shift+h", "pane.move.left")
+rex.bind("resize/shift+j", "pane.move.down")
+rex.bind("resize/shift+k", "pane.move.up")
+rex.bind("resize/shift+l", "pane.move.right")
 rex.bind("resize/enter", "client.mode.exit")
 rex.bind("resize/q", "client.mode.exit")

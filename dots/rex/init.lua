@@ -1,4 +1,6 @@
 local terminal = "com.superlogical.terminal"
+local here = rex.exec{ "uname", "-s" }.stdout:match("Darwin") and "macbook" or "spark"
+local rex_bin = rex.exec{ "sh", "-c", 'for c in ~/.local/bin/rex /run/current-system/sw/bin/rex; do [ -x "$c" ] && exec printf %s "$c"; done; printf rex' }.stdout
 
 local function call(server, method, args)
   local result, err = server.call(method, args)
@@ -6,41 +8,51 @@ local function call(server, method, args)
   return result
 end
 
-local function this_host()
-  return rex.exec{ "uname", "-s" }.stdout:match("Darwin") and "macbook" or "spark"
+local function peer(name)
+  for _, label in ipairs(rex.servers()) do
+    if label:lower() == name then return rex.server(label) end
+  end
+  error("not connected to " .. name, 0)
 end
 
-local function open_host(ctx, host)
-  if host == this_host() then return end
-  local name = rex.servers()[1]
-  if not name then error("not connected to " .. host, 0) end
-  local server = rex.server(name)
+local function open_host(name, ctx, args)
+  if name == (ctx.server or here) and not args.force then return end
+  if name == here and ctx.server then
+    local r, err = rex.exec{ rex_bin, "do", "open_" .. name, "force=true" }
+    if not r then error(err, 0) end
+    if not r.ok then error(r.stderr, 0) end
+    return
+  end
+  local server = name == here and rex or peer(name)
   local sessions = call(server, "session.list").sessions or {}
   local id = sessions[1] and sessions[1].session_id
     or call(server, "session.create", {
-      initial_windows = { { layout = rex.layout.block{ flavor = terminal .. ".shell" } } },
+      initial_windows = { { layout = { block = { flavor = terminal .. ".shell" } } } },
     }).session_id
-  local switched
-  for _, client in ipairs(call(server, "client.list").clients or {}) do
-    if client.info.kind == "app" and client.connection_state ~= "lost" then
-      switched = server.call("client.perform", {
+  local switched, err
+  for _, client in ipairs(call(server, "client.list", { kinds = { "app" } }).clients or {}) do
+    if client.connection_state ~= "lost" then
+      local ok, e = server.call("client.perform", {
         client_id = client.client_id,
         action = "session.select",
         args = { session_id = id },
-      }) or switched
+        timeout_ms = 5000,
+      })
+      if ok then switched = true else err = e end
     end
   end
-  if not switched then error("no Rex app connected to " .. host, 0) end
+  if not switched then error(err or ("no Rex app connected to " .. name), 0) end
 end
 
-for key, host in pairs({ ["1"] = "macbook", ["2"] = "spark" }) do
+for key, name in pairs({ ["1"] = "macbook", ["2"] = "spark" }) do
   rex.action{
-    name = "open_" .. host,
-    title = "Open " .. host,
+    name = "open_" .. name,
+    title = "Open " .. name,
     category = "Session",
-    run = function(ctx) open_host(ctx, host) end,
+    args = { force = "boolean?" },
+    run = function(ctx, args) open_host(name, ctx, args or {}) end,
   }
-  rex.bind("cmd+shift+" .. key, "open_" .. host)
+  rex.bind("cmd+shift+" .. key, "open_" .. name)
 end
 
 rex.action{

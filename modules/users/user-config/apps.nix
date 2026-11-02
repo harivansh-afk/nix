@@ -31,7 +31,7 @@
     lightThemeID = (theme.renderRex "light").id;
     appearance = "system";
     interfaceStyle = "system";
-    paneDensity = "compact";
+    paneDensity = "comfortable";
     animationStyle = "snappy";
     cursorShadersEnabled = true;
     cursorShader = "warp";
@@ -43,6 +43,8 @@
     tabStyle = "horizontal";
     tabsFillAvailableSpace = true;
     tabIconTintMode = "off";
+    tabIconCount = 5;
+    tabIconColorMode = "activePanes";
     showsProgramStatusInTabs = true;
     terminalFontName = "Berkeley Mono Nonicons";
     terminalFontPointSize = 18.0;

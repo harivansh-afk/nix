@@ -24,6 +24,42 @@ rex.action{
 }
 rex.bind("cmd+k", "clear_screen")
 
+rex.host{ label = "macbook", endpoint = "https://macbook-1.taileb8b41.ts.net" }
+rex.host{ label = "spark", endpoint = "https://spark.taileb8b41.ts.net:7297" }
+
+local function this_host()
+  local r = rex.exec{ "uname", "-s" }
+  return r and r.ok and r.stdout:match("Darwin") and "macbook" or "spark"
+end
+
+local function goto_host(ctx, target)
+  local here = this_host()
+  local api = target == here and rex or rex.server(target)
+  if target == here and ctx.session_id then return end
+  local list, err = api.call("session.list")
+  if not list then error(err, 0) end
+  local first = list.sessions and list.sessions[1]
+  local id = first and first.session_id
+  if not id then
+    local created, cerr = api.call("session.create", {
+      initial_windows = { { layout = rex.layout.block{ flavor = terminal .. ".shell" } } },
+    })
+    if not created then error(cerr, 0) end
+    id = created.session_id or (created.session and created.session.session_id)
+  end
+  rex.client.queue("session.select", { session_id = id })
+end
+
+for key, target in pairs({ ["1"] = "macbook", ["2"] = "spark" }) do
+  rex.action{
+    name = "goto_" .. target,
+    title = "Go to " .. target,
+    category = "Session",
+    run = function(ctx) goto_host(ctx, target) end,
+  }
+  rex.bind("cmd+shift+" .. key, "goto_" .. target)
+end
+
 local directions = { h = "left", j = "below", k = "above", l = "right" }
 local placements = {
   left = { direction = "horizontal", side = "before" },
@@ -158,8 +194,6 @@ rex.bind("ctrl+b>shift+c", "session.new")
 rex.bind("ctrl+b>shift+4", "session.rename")
 rex.bind("ctrl+b>shift+x", "session.close")
 rex.bind("ctrl+b>shift+h", "client.host.switch")
-rex.bind("cmd+shift+1", "session.previous")
-rex.bind("cmd+shift+2", "session.next")
 rex.bind("ctrl+b>z", "pane.zoom")
 rex.bind("ctrl+b>x", "pane.close")
 rex.bind("ctrl+b>c", "client.tab.new")

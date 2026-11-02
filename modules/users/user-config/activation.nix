@@ -111,9 +111,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   cp -f "${dotsRoot}/gh/config.yml" "${configHome}/gh/config.yml"
   chmod u+w "${configHome}/gh/config.yml"
 
-  ${lib.optionalString (hostname == "spark") ''
-    mkSymlink "${dotsRoot}/agent-browser/config.json" "${homeDirectory}/.agent-browser/config.json"
-  ''}
   mkSymlink "${claudeMd}" "${homeDirectory}/.claude/CLAUDE.md"
   mkSymlink "${agentSkills}" "${homeDirectory}/.agents/skills"
   mkSymlink "${agentSkills}" "${homeDirectory}/.claude/skills"

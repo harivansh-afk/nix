@@ -5,7 +5,7 @@ description: Use when browsing, driving apps or messaging on Spark.
 
 # Spark computer
 
-Use **agent-browser CLI** for websites and upstream **Cua Driver MCP** (`computer`)
+Use **bdu** (CLI or the `bdu` MCP) for websites and upstream **Cua Driver MCP** (`computer`)
 for native apps. Use **Beeper MCP** for messaging, not its GUI. Choose the route
 from the user's intent; they do not need to name tools. No custom execution server.
 
@@ -39,37 +39,33 @@ The Beeper desktop service must remain running.
 
 always try using chrome saved password before claiming that u cannot sign in to some account.
 
-Load the version-matched guide with `agent-browser skills get core`.
-On Spark use `/run/current-system/sw/bin/agent-browser` explicitly: login/background
-shells may resolve an older user-installed binary that lacks `--pin-tab`.
+`bdu` is the browser for agents: it attaches to the running Chromium over CDP, reads pages as
+typed state, and `bdu run` does a whole goal in one model call. Load the reference with
+`bdu skills get` (also linked as the `bdu` skill). The same tools are on the `bdu` MCP server.
 Start Chromium only for a requested browser task:
 
 ```sh
 systemctl --user start chromium
 curl --retry 20 --retry-connrefused --retry-delay 1 --max-time 2 --fail --silent http://127.0.0.1:19222/json/version
-/run/current-system/sw/bin/agent-browser --session <unique-task> --cdp 19222 --pin-tab open <url>
-/run/current-system/sw/bin/agent-browser --session <unique-task> --cdp 19222 --pin-tab snapshot -i --delta
+bdu --session <unique-task> run "<goal with the URL>"            # whole task, one model call
+bdu --session <unique-task> open <url>                           # or step by step:
+bdu --session <unique-task> snapshot -i
+bdu --session <unique-task> click link "Logout"
+bdu --session <unique-task> fill 'textbox "Username"' <text>
+bdu --session <unique-task> get text 'main ""'
 ```
 
-Use a unique session and `--pin-tab` on shared CDP. These create a task-owned
-page instead of navigating an existing user tab. Use observed refs to click/fill;
-refresh snapshots after page changes. Prefer `snapshot -i --delta` for repeated
-checks; use `--delta --full` after compaction or whenever the prior baseline is
-unavailable. Surviving DOM elements retain refs across same-document updates;
-replaced elements and navigated documents invalidate them.
+Use a unique `--session` per task on the shared CDP: it creates a task-owned tab and never
+attaches to an existing user tab. Refs (`e42`) are Chrome's node ids and stay valid across
+commands until the document changes; `snapshot` again after navigation. Every action settles
+on quiescence, so do not add waits; `expect` in programs waits up to ten seconds. Prefer
+`run` for anything with more than two steps; repeated goals replay from the registry with no
+model call (`bdu registry list`). `bdu --profile ...` prints where the milliseconds went.
 
-Batch known actions with `&&` or upstream `batch --bail`, then verify the result.
-Use `screenshot --if-changed` for repeated visual checks and load returned local
-image paths to view them. An unchanged capture returns no path;
-reuse the previous image only if it is still in context, otherwise take an
-unconditional screenshot. Keep the default zero threshold for correctness checks.
-
-Close only the task's pinned tab with `tab close`, then `close` its CLI session.
-Never use `close --all`. A closed pinned tab must produce an error, not silently
-switch to someone else's tab. Do not retry mutations blindly after transport loss.
-Cookies and account state remain shared: coordinate work on the same account.
-Do not export cookies, copy profiles, or launch a second browser on this profile.
-CDP stays loopback-only.
+Close only the task's own tab with `bdu --session <unique-task> close`. Never close other
+tabs. Do not retry mutations blindly after transport loss. Cookies and account state remain
+shared: coordinate work on the same account. Do not export cookies, copy profiles, or launch
+a second browser on this profile. CDP stays loopback-only.
 
 Chromium does not start at desktop login and normal window closure stays closed.
 If you started it and no other task/user needs it, stop it with

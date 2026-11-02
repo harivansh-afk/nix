@@ -13,7 +13,6 @@ let
 in
 {
   inherit cuaMcp;
-  agentBrowser = pkgs.callPackage ../agent-browser { };
   inherit browserDomUse;
   servers = {
     computer = {

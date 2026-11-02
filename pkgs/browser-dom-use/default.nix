@@ -19,6 +19,10 @@ rustPlatform.buildRustPackage {
   cargoLock.lockFile = src + "/Cargo.lock";
   nativeBuildInputs = [ pkg-config ];
   doCheck = false;
+  postInstall = ''
+    mkdir -p $out/share/bdu
+    cp -r $src/skills $out/share/bdu/skills
+  '';
   meta = {
     description = "A browser for agents that pays the model once per task";
     homepage = "https://git.harivan.sh/harivansh-afk/browser-dom-use";

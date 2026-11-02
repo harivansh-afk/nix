@@ -8,7 +8,6 @@
   stateHome,
   coreutilsBin,
   dotsRoot,
-  hostname,
   isDarwin,
   theme,
   customScripts,

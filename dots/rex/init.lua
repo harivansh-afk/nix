@@ -20,16 +20,17 @@ local function open_host(ctx, host)
     or call(server, "session.create", {
       initial_windows = { { layout = rex.layout.block{ flavor = terminal .. ".shell" } } },
     }).session_id
-  local me = call(rex, "client.inspect", { client_id = ctx.client_id }).client.info
+  local switched
   for _, client in ipairs(call(server, "client.list").clients or {}) do
-    if client.info.kind == "app" and client.info.label == me.label then
-      call(server, "client.perform", {
+    if client.info.kind == "app" and client.connection_state ~= "lost" then
+      switched = server.call("client.perform", {
         client_id = client.client_id,
         action = "session.select",
         args = { session_id = id },
-      })
+      }) or switched
     end
   end
+  if not switched then error("no Rex app connected to " .. host, 0) end
 end
 
 for key, host in pairs({ ["1"] = "macbook", ["2"] = "spark" }) do

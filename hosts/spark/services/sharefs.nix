@@ -15,7 +15,7 @@ let
     Documents = "${home}/Documents";
     Downloads = "${home}/Downloads";
     Uploads = "${home}/Uploads";
-    todo = "${home}/todo";
+    recruiting = "${home}/recruiting";
   };
   settings = (pkgs.formats.yaml { }).generate "sharefs.yaml" {
     serve-path = root;
@@ -100,7 +100,7 @@ in
       ];
       BindPaths = map (name: "${sources.${name}}:${root}/${name}") [
         "Uploads"
-        "todo"
+        "recruiting"
       ];
       PrivateTmp = true;
       PrivateDevices = true;

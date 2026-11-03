@@ -1,6 +1,6 @@
-model = "gpt-6.1-sol"
+model = "gpt-6-astra"
 model_verbosity = "low"
-model_reasoning_effort = "medium"
+model_reasoning_effort = "low"
 personality = "pragmatic"
 suppress_unstable_features_warning = true
 web_search = "live"

@@ -26,6 +26,29 @@
 
       invariants = [
         (lib.assertMsg (
+          lib.versionAtLeast spark.services.vaultwarden.package.version "1.37.5"
+          && lib.versionAtLeast spark.services.vaultwarden.webVaultPackage.version "2026.10.1"
+        ) "spark: vaultwarden and its web vault must include the November security fixes")
+        (lib.assertMsg (
+          lib.versions.major spark.services.forgejo.package.version == "17"
+          && spark.services.forgejo.settings.server.HTTP_ADDR == "127.0.0.1"
+        ) "spark: forgejo must use v17 and bind its backend to loopback")
+        (lib.assertMsg (
+          lib.hasInfix "redir @insecure https://vault.harivan.sh{uri} 308"
+            spark.services.caddy.virtualHosts."http://vault.harivan.sh".extraConfig
+          &&
+            lib.hasInfix "Strict-Transport-Security"
+              spark.services.caddy.virtualHosts."http://vault.harivan.sh".extraConfig
+        ) "spark: the vault must redirect plaintext requests and set HSTS")
+        (lib.assertMsg (
+          spark.security.auditd.settings.max_log_file_action == "rotate"
+          && spark.security.auditd.settings.num_logs == 16
+          && spark.security.auditd.settings.space_left == 2048
+          && spark.security.auditd.settings.admin_space_left == 1024
+          && spark.systemd.services.auditd.reloadIfChanged
+          && spark.systemd.timers.audit-resume.timerConfig.OnUnitActiveSec == "5min"
+        ) "spark: audit logging must have bounded retention, reload and disk recovery")
+        (lib.assertMsg (
           !(lib.elem 23373 proxiedPorts)
         ) "spark: Beeper's local API must not be reverse-proxied")
         (lib.assertMsg (proxiedPorts != [ ])

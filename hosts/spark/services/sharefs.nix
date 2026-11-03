@@ -63,7 +63,7 @@ in
     after = [ "network.target" ];
     script = ''
       password="$(cat "$CREDENTIALS_DIRECTORY/password")"
-      if [[ -z "$password" || "$password" == *'|'* || "$password" == *'@'* || "$password" == *$'\n'* || "$password" == *$'\r'* ]]; then
+      if [[ "''${#password}" -lt 32 || "$password" == *'|'* || "$password" == *'@'* || "$password" == *$'\n'* || "$password" == *$'\r'* ]]; then
         echo "sharefs: invalid account credential" >&2
         exit 1
       fi

@@ -1,4 +1,9 @@
-{ lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   security.lsm = lib.mkForce [
     "landlock"
@@ -74,13 +79,14 @@
     auditd = {
       enable = true;
       settings = {
-        admin_space_left = "5%";
+        admin_space_left = 1024;
         admin_space_left_action = "suspend";
         disk_error_action = "suspend";
         disk_full_action = "suspend";
         max_log_file = 256;
-        max_log_file_action = "keep_logs";
-        space_left = "10%";
+        max_log_file_action = "rotate";
+        num_logs = 16;
+        space_left = 2048;
         space_left_action = "syslog";
       };
     };
@@ -89,6 +95,37 @@
   };
 
   systemd = {
+    services.auditd = {
+      reloadIfChanged = true;
+      restartTriggers = [ config.environment.etc."audit/auditd.conf".source ];
+      serviceConfig.ExecReload = "${config.security.auditd.package}/bin/auditctl --signal reload";
+    };
+    services.audit-resume = {
+      description = "Resume audit logging after disk space recovers";
+      requires = [ "auditd.service" ];
+      after = [ "auditd.service" ];
+      serviceConfig.Type = "oneshot";
+      path = [
+        pkgs.coreutils
+        pkgs.gawk
+      ];
+      script = ''
+        available=$(df --output=avail -k /var/log/audit | awk 'NR == 2 { print $1 }')
+        if [ "$available" -ge 2097152 ]; then
+          ${config.security.auditd.package}/bin/auditctl --signal resume
+        else
+          echo "audit logging recovery deferred: less than 2 GiB free" >&2
+          exit 1
+        fi
+      '';
+    };
+    timers.audit-resume = {
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "2min";
+        OnUnitActiveSec = "5min";
+      };
+    };
     sleep.settings.Sleep = {
       AllowHibernation = false;
       AllowHybridSleep = false;

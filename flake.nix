@@ -2,6 +2,7 @@
   description = "Hari's nix config";
 
   inputs = {
+    nixpkgs-security.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-macbook.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 

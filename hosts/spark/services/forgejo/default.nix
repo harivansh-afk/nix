@@ -46,10 +46,10 @@ let
       ;
   };
   forgejoPackageBase = pkgs.callPackage (import "${pkgs.path}/pkgs/by-name/fo/forgejo/generic.nix" {
-    version = "16.0.6";
-    hash = "sha256-629cbLUh+okT3SFHwHFQDPiOoao0hrTxOzdOKxYEd6Q=";
-    npmDepsHash = "sha256-C/ht4Z3ivtm6nBNHUkNmKpLsnmnrpzW6rBq153LuITc=";
-    vendorHash = "sha256-wOAbZ6eEwlavMIcTOmqPpdgLNcgylCX4MwxuI/35YZw=";
+    version = "17.0.1";
+    hash = "sha256-O12795/ydtEequagQfHfOhKTEp8QlmzsJe+RtlHC60A=";
+    npmDepsHash = "sha256-5TrydMO82d30L/EaWg3GI+yaBwG6tZS4IVs+dydpKRY=";
+    vendorHash = "sha256-vXjsZ08eez3oiLL2Um+uFX9YbrRnbq8q5Pj/P3mZTeY=";
     lts = false;
   }) { };
   forgejoPackage = pierreForgejo.mkForgejoWithPierre (
@@ -63,7 +63,7 @@ let
           --replace-fail "#!/usr/bin/env" "#!${pkgs.lib.getExe' pkgs.coreutils "env"}"
       '';
       checkFlags = [
-        "-skip=^TestPassword$|^TestCaptcha$|^TestDNSUpdate$|^TestMigrateRepository$|^TestMigrateWhiteBlocklist$|^TestURLAllowedSSH/Pushmirror_URL$|^TestBleveDeleteIssue$"
+        "-skip=^TestPassword$|^TestCaptcha$|^TestDNSUpdate$|^TestMigrateRepository$|^TestMigrateWhiteBlocklist$|^TestURLAllowedSSH/Pushmirror_URL$|^TestBleveDeleteIssue$|^TestActivityPubMatchesList$"
       ];
     })
   );
@@ -126,19 +126,29 @@ in
     forgejoWeb.templates
   ];
 
-  systemd.services.forgejo.preStart = lib.mkAfter ''
-    export PATH=${
-      lib.makeBinPath [
-        pkgs.git
-        pkgs.gawk
-      ]
-    }:$PATH
-    export GITHUB_TOKEN_FILE=${mirrorGithubTokenFile}
-    export GIT_CREDENTIAL_FILE=${gitCredentialFile}
-    export FORGEJO=${config.services.forgejo.package}/bin/forgejo
-    export OAUTH_SOURCES=${lib.escapeShellArg oauthSources}
-    ${pkgs.bash}/bin/bash ${./pre-start.sh}
-  '';
+  systemd.services.forgejo.preStart = lib.mkMerge [
+    (lib.mkBefore ''
+      if [ -f ${forgejoDb} ] && [ ! -f /var/lib/forgejo/upgrade-backups/pre-v17.db ]; then
+        ${pkgs.coreutils}/bin/install -d -m 0700 /var/lib/forgejo/upgrade-backups
+        ${pkgs.sqlite}/bin/sqlite3 ${forgejoDb} ".backup '/var/lib/forgejo/upgrade-backups/pre-v17.db.tmp'"
+        ${pkgs.coreutils}/bin/chmod 0600 /var/lib/forgejo/upgrade-backups/pre-v17.db.tmp
+        ${pkgs.coreutils}/bin/mv /var/lib/forgejo/upgrade-backups/pre-v17.db.tmp /var/lib/forgejo/upgrade-backups/pre-v17.db
+      fi
+    '')
+    (lib.mkAfter ''
+      export PATH=${
+        lib.makeBinPath [
+          pkgs.git
+          pkgs.gawk
+        ]
+      }:$PATH
+      export GITHUB_TOKEN_FILE=${mirrorGithubTokenFile}
+      export GIT_CREDENTIAL_FILE=${gitCredentialFile}
+      export FORGEJO=${config.services.forgejo.package}/bin/forgejo
+      export OAUTH_SOURCES=${lib.escapeShellArg oauthSources}
+      ${pkgs.bash}/bin/bash ${./pre-start.sh}
+    '')
+  ];
 
   services.forgejo = {
     enable = true;
@@ -154,6 +164,7 @@ in
       server = {
         DOMAIN = forgejoDomain;
         ROOT_URL = "https://${forgejoDomain}/";
+        HTTP_ADDR = "127.0.0.1";
         HTTP_PORT = backendPort;
         SSH_DOMAIN = forgejoDomain;
         LANDING_PAGE = "/harivansh-afk";

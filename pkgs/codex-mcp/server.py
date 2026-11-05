@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import signal
+from typing import Literal
 
 from mcp.server.fastmcp import Context, FastMCP
 
@@ -10,6 +11,14 @@ SINGLE_AGENT = [
     "-c", "features.enable_fanout=false",
     "-c", "features.multi_agent_v2.enabled=false",
 ]
+MODELS = {"astra": "gpt-6-astra", "sol": "gpt-6.1-sol"}
+Model = Literal["astra", "sol"]
+Thinking = Literal["low", "medium", "high", "xhigh"]
+
+
+def model_args(model, thinking):
+    return ["-m", MODELS[model], "-c", f'model_reasoning_effort="{thinking}"']
+
 
 mcp = FastMCP(
     "codex",
@@ -66,15 +75,31 @@ async def run_codex(args, prompt, ctx):
 
 
 @mcp.tool()
-async def codex(prompt: str, ctx: Context) -> str:
-    """Start a Codex agent on a task and return its final report."""
-    return await run_codex([], prompt, ctx)
+async def codex(
+    prompt: str, ctx: Context, model: Model = "astra", thinking: Thinking = "low"
+) -> str:
+    """Start a Codex agent on a task and return its final report.
+
+    model: "astra" (gpt-6-astra) or "sol" (gpt-6.1-sol).
+    thinking: reasoning effort.
+    """
+    return await run_codex(model_args(model, thinking), prompt, ctx)
 
 
 @mcp.tool()
-async def codex_reply(thread_id: str, prompt: str, ctx: Context) -> str:
-    """Send a follow-up to an earlier Codex thread and return its final report."""
-    return await run_codex(["resume", thread_id], prompt, ctx)
+async def codex_reply(
+    thread_id: str,
+    prompt: str,
+    ctx: Context,
+    model: Model = "astra",
+    thinking: Thinking = "low",
+) -> str:
+    """Send a follow-up to an earlier Codex thread and return its final report.
+
+    model: "astra" (gpt-6-astra) or "sol" (gpt-6.1-sol).
+    thinking: reasoning effort.
+    """
+    return await run_codex(["resume", thread_id, *model_args(model, thinking)], prompt, ctx)
 
 
 if __name__ == "__main__":

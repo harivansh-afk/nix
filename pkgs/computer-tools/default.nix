@@ -1,7 +1,7 @@
 { pkgs }:
 let
   cuaDriver = pkgs.callPackage ../cua-driver { };
-  browserDomUse = pkgs.browser-dom-use;
+  webjit = pkgs.webjit;
   cuaMcp = pkgs.writeShellApplication {
     name = "spark-cua-mcp";
     runtimeInputs = [ pkgs.coreutils ];
@@ -13,16 +13,16 @@ let
 in
 {
   inherit cuaMcp;
-  inherit browserDomUse;
+  inherit webjit;
   servers = {
     computer = {
       command = "${cuaMcp}/bin/spark-cua-mcp";
       args = [ ];
     };
-    # bdu: browser for agents, one model call per task. Attaches to the running Chrome on
+    # webjit: browser JIT for agents, one model call per task. Attaches to the running Chrome on
     # port 19222; ANTHROPIC_* come from the harness environment.
-    bdu = {
-      command = "${browserDomUse}/bin/bdu";
+    webjit = {
+      command = "${webjit}/bin/webjit";
       args = [ "mcp" ];
     };
   };

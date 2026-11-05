@@ -95,7 +95,7 @@ Add `modules/users/accounts/<name>.nix` (`sshKeys`, `shell`, `extraGroups`) and 
 
 ## Agent desktop
 
-Browser and desktop work on spark goes through the `spark-computer` skill (bdu plus Cua MCP). Agents attach to the running Chromium and use their own tabs. Never commit profiles or put credentials in the store.
+Browser and desktop work on spark goes through the `spark-computer` skill (webjit plus Cua MCP). Agents attach to the running Chromium and use their own tabs. Never commit profiles or put credentials in the store.
 
 ## Codex account gateway
 

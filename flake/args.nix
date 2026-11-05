@@ -49,7 +49,7 @@ let
       overlays = [
         # Packages from private flake inputs that plain `pkgs` consumers need.
         (_final: _prev: {
-          browser-dom-use = inputs.browser-dom-use.packages.${system}.default;
+          webjit = inputs.webjit.packages.${system}.default;
         })
       ];
     };

@@ -28,8 +28,8 @@ lib.optionals (mattpocock != null) (
     path = ../dots/agents/skills/spark-computer;
   }
   {
-    name = "bdu";
-    path = "${pkgs.browser-dom-use}/share/bdu/skills/bdu";
+    name = "webjit";
+    path = "${pkgs.webjit}/share/webjit/skills/webjit";
   }
 ]
 ++ [

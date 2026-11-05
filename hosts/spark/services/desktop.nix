@@ -50,7 +50,7 @@ in
     beeper
     chromium
     computer.cuaMcp
-    computer.browserDomUse
+    computer.webjit
     cuaDriver
     pkgs.ghostty
     pkgs.sway

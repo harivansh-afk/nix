@@ -80,7 +80,7 @@ async def codex(
 ) -> str:
     """Start a Codex agent on a task and return its final report.
 
-    model: "astra" (gpt-6-astra) or "sol" (gpt-6.1-sol).
+    model: "astra" (strongest) or "sol" (cheaper).
     thinking: reasoning effort.
     """
     return await run_codex(model_args(model, thinking), prompt, ctx)
@@ -96,7 +96,7 @@ async def codex_reply(
 ) -> str:
     """Send a follow-up to an earlier Codex thread and return its final report.
 
-    model: "astra" (gpt-6-astra) or "sol" (gpt-6.1-sol).
+    model: "astra" (smartest) or "sol" (cheaper).
     thinking: reasoning effort.
     """
     return await run_codex(["resume", thread_id, *model_args(model, thinking)], prompt, ctx)

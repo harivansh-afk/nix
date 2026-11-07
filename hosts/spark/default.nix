@@ -90,9 +90,10 @@ in
     ];
   };
 
-  environment.systemPackages = with pkgs; [
-    clang
-  ];
+  environment.systemPackages = [
+    pkgs.clang
+  ]
+  ++ (import ../../lib/agent-mcp.nix { inherit pkgs; }).packages;
 
   programs.git = {
     enable = true;

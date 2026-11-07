@@ -58,10 +58,7 @@
 
     devin-codex.url = "git+https://git.harivan.sh/harivansh-afk/devin-codex.git";
 
-    webjit = {
-      url = "git+https://git.harivan.sh/harivansh-afk/webjit.git?ref=main";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    webjit.url = "git+https://git.harivan.sh/harivansh-afk/webjit.git?ref=main";
 
     codex-lb.url = "github:Soju06/codex-lb";
 

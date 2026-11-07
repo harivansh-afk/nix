@@ -3,7 +3,6 @@
 # each harness converts to its own unit.
 { pkgs }:
 let
-  inherit (pkgs) lib;
   webjit = import ../pkgs/webjit { inherit pkgs; };
   codexMcp = import ../pkgs/codex-mcp { inherit pkgs; };
 in

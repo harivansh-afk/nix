@@ -31,7 +31,7 @@
     lightThemeID = (theme.renderRex "light").id;
     appearance = "system";
     interfaceStyle = "system";
-    paneDensity = "comfortable";
+    paneDensity = "compact";
     animationStyle = "snappy";
     cursorShadersEnabled = true;
     cursorShader = "warp";
@@ -40,7 +40,7 @@
     showsPaneHeaders = true;
     balancesSplitsOnCreation = true;
     sidebarPosition = "left";
-    tabStyle = "horizontal";
+    tabStyle = "vertical";
     tabsFillAvailableSpace = true;
     tabIconTintMode = "off";
     tabIconCount = 5;

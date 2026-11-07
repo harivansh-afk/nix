@@ -44,7 +44,7 @@
     tabsFillAvailableSpace = true;
     tabIconTintMode = "off";
     tabIconCount = 5;
-    tabIconColorMode = "activePanes";
+    tabIconColorMode = "always";
     showsProgramStatusInTabs = true;
     terminalFontName = "Berkeley Mono Nonicons";
     terminalFontPointSize = 18.0;

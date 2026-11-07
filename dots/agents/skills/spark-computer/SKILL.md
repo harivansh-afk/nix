@@ -1,12 +1,12 @@
 ---
 name: spark-computer
-description: Use when browsing, driving apps or messaging on Spark.
+description: Use when browsing or messaging on Spark.
 ---
 
 # Spark computer
 
-Use **bdu** (CLI or the `bdu` MCP) for websites and upstream **Cua Driver MCP** (`computer`)
-for native apps. Use **Beeper MCP** for messaging, not its GUI. Choose the route
+Use **webjit** (the `webjit` MCP or CLI) for websites. Use **Beeper MCP** for messaging,
+not its GUI. Choose the route
 from the user's intent; they do not need to name tools. No custom execution server.
 
 ## Messaging
@@ -39,57 +39,24 @@ The Beeper desktop service must remain running.
 
 always try using chrome saved password before claiming that u cannot sign in to some account.
 
-`bdu` is the browser for agents: it attaches to the running Chromium over CDP, reads pages as
-typed state, and `bdu run` does a whole goal in one model call. Load the reference with
-`bdu skills get` (also linked as the `bdu` skill). The same tools are on the `bdu` MCP server.
-Start Chromium only for a requested browser task:
+`webjit` attaches to the shared Chromium over CDP (`WEBJIT_CDP=http://127.0.0.1:19222`, set
+by the Nix wrapper), so saved logins and cookies apply. Load the `webjit` skill for the program
+API. Start Chromium only for a requested browser task:
 
 ```sh
 systemctl --user start chromium
 curl --retry 20 --retry-connrefused --retry-delay 1 --max-time 2 --fail --silent http://127.0.0.1:19222/json/version
-bdu --session <unique-task> run "<goal with the URL>"            # whole task, one model call
-bdu --session <unique-task> open <url>                           # or step by step:
-bdu --session <unique-task> snapshot -i
-bdu --session <unique-task> click link "Logout"
-bdu --session <unique-task> fill 'textbox "Username"' <text>
-bdu --session <unique-task> get text 'main ""'
+webjit --session <unique-task> do - --task "<user request>" <<'PY'
+navigate("<url>")
+done(read("heading @1"))
+PY
 ```
 
-Use a unique `--session` per task on the shared CDP: it creates a task-owned tab and never
-attaches to an existing user tab. Refs (`e42`) are Chrome's node ids and stay valid across
-commands until the document changes; `snapshot` again after navigation. Every action settles
-on quiescence, so do not add waits; `expect` in programs waits up to ten seconds. Prefer
-`run` for anything with more than two steps; repeated goals replay from the registry with no
-model call (`bdu registry list`). `bdu --profile ...` prints where the milliseconds went.
-
-Close only the task's own tab with `bdu --session <unique-task> close`. Never close other
-tabs. Do not retry mutations blindly after transport loss. Cookies and account state remain
+Use a unique session per task: each gets its own background tab and never touches user tabs.
+Do not retry writes blindly after a DEOPT or transport loss. Cookies and account state are
 shared: coordinate work on the same account. Do not export cookies, copy profiles, or launch
 a second browser on this profile. CDP stays loopback-only.
 
 Chromium does not start at desktop login and normal window closure stays closed.
 If you started it and no other task/user needs it, stop it with
 `systemctl --user stop chromium`. Never stop a pre-existing shared browser.
-
-## Native apps
-
-Load `cua-driver` and its `LINUX.md`. The `computer` MCP connects directly to
-`cua-driver mcp --socket "$XDG_RUNTIME_DIR/cua-driver/control.sock"`.
-Discover exact schemas before unfamiliar calls.
-
-1. `list_windows`: select the observed PID and window ID.
-2. `get_window_state`: inspect that exact window; prefer fresh `element_token`s.
-3. Use upstream actions, then verify through fresh state, pixels, or application
-   output. `unknown` and `unverifiable` do not mean success.
-4. End named sessions after use. Serialize native interactions and yield to the
-   user: separate MCP clients are not separate input seats.
-
-Stock Sway cannot inject arbitrary background input into occluded windows.
-Foreground escalation needs explicit authorization. Never bypass a refusal.
-GTK field text may be absent from accessibility output; verify visually or through
-application output instead of trusting an action response alone.
-
-Normal window closure uses Alt+F4 or the top-right Waybar Close × control,
-not `kill_app` (force termination). Verify the selected window before closing it.
-
-Diagnostics: `hosts/spark/docs/browser.md` in the Nix repo.

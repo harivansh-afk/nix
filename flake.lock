@@ -55,27 +55,6 @@
         "type": "github"
       }
     },
-    "browser-dom-use": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1793652529,
-        "narHash": "sha256-RmqjDWdhGSSSLjNrsgOgEQMzNNOZKDCAoEhBueSENrc=",
-        "ref": "main",
-        "rev": "e1c8d0f152a75c38031aad57ab322a4a6d2b80a3",
-        "revCount": 58,
-        "type": "git",
-        "url": "https://git.harivan.sh/harivansh-afk/browser-dom-use.git"
-      },
-      "original": {
-        "ref": "main",
-        "type": "git",
-        "url": "https://git.harivan.sh/harivansh-afk/browser-dom-use.git"
-      }
-    },
     "bun2nix": {
       "inputs": {
         "flake-parts": "flake-parts",
@@ -120,6 +99,22 @@
         "ref": "main",
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/cc-proxy.git"
+      }
+    },
+    "chromium-nixpkgs": {
+      "locked": {
+        "lastModified": 1781607440,
+        "narHash": "sha256-rxO+uc/KFbSJp+pgyXRuAX6QlG9hJdnt0BXpEQRXY+U=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "3e41b24abd260e8f71dbe2f5737d24122f972158",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "3e41b24abd260e8f71dbe2f5737d24122f972158",
+        "type": "github"
       }
     },
     "codex-lb": {
@@ -1456,7 +1451,6 @@
     "root": {
       "inputs": {
         "airplay-at-the-crib": "airplay-at-the-crib",
-        "browser-dom-use": "browser-dom-use",
         "cc-proxy": "cc-proxy",
         "codex-lb": "codex-lb",
         "determinate": "determinate",
@@ -1482,7 +1476,8 @@
         "sharefs": "sharefs",
         "sops-nix": "sops-nix",
         "terranix": "terranix",
-        "voiceink-src": "voiceink-src"
+        "voiceink-src": "voiceink-src",
+        "webjit": "webjit"
       }
     },
     "rust-overlay": {
@@ -1706,6 +1701,28 @@
         "ref": "v2.21",
         "repo": "VoiceInk",
         "type": "github"
+      }
+    },
+    "webjit": {
+      "inputs": {
+        "chromium-nixpkgs": "chromium-nixpkgs",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1794007283,
+        "narHash": "sha256-AULyRXM1//nCXdtZaM5Wq6X/7Wx759P4vRKlXkncKLI=",
+        "ref": "main",
+        "rev": "c80be999b3be14e792e3a92ece2e30f96e8b143f",
+        "revCount": 950,
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/webjit.git"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "https://git.harivan.sh/harivansh-afk/webjit.git"
       }
     }
   },

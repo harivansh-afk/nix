@@ -19,7 +19,7 @@ let
           # its own pkgs, so the overlay in flake/args.nix does not reach host modules.
           nixpkgs.overlays = [
             (_final: _prev: {
-              browser-dom-use = inputs.browser-dom-use.packages.${host.system}.default;
+              webjit = inputs.webjit.packages.${host.system}.default;
             })
           ];
         }

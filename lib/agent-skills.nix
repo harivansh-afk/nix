@@ -20,16 +20,12 @@ lib.optionals (mattpocock != null) (
 )
 ++ lib.optionals spark [
   {
-    name = "cua-driver";
-    path = (pkgs.callPackage ../pkgs/cua-driver { }).skills;
-  }
-  {
     name = "spark-computer";
     path = ../dots/agents/skills/spark-computer;
   }
   {
-    name = "bdu";
-    path = "${pkgs.browser-dom-use}/share/bdu/skills/bdu";
+    name = "webjit";
+    path = "${pkgs.webjit}/share/webjit/skills/webjit";
   }
 ]
 ++ [

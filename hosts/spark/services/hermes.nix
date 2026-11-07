@@ -99,8 +99,7 @@ in
       };
       agent = {
         reasoning_effort = "medium";
-        # Off where Claude Code has no equivalent or denies the tool (CronCreate, AskUserQuestion);
-        # the computer MCP replaces computer_use.
+        # Off where Claude Code has no equivalent or denies the tool (CronCreate, AskUserQuestion).
         disabled_toolsets = [
           "browser"
           "clarify"

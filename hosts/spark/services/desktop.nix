@@ -7,8 +7,7 @@
 let
   tailnet = import ../../../lib/tailnet.nix;
   beeper = pkgs.callPackage ../../../pkgs/beeper { };
-  cuaDriver = pkgs.callPackage ../../../pkgs/cua-driver { };
-  computer = import ../../../pkgs/computer-tools { inherit pkgs; };
+  webjit = import ../../../pkgs/webjit { inherit pkgs; };
   chromium = pkgs.chromium.override {
     commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret --force-renderer-accessibility --remote-debugging-address=127.0.0.1 --remote-debugging-port=19222";
   };
@@ -26,7 +25,7 @@ let
     bindsym Mod4+f fullscreen toggle
     bindsym Mod4+Left focus left
     bindsym Mod4+Right focus right
-    exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE GTK_A11Y NO_AT_BRIDGE && ${pkgs.systemd}/bin/systemctl --user start wayvnc cua-driver beeper waybar
+    exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE GTK_A11Y NO_AT_BRIDGE && ${pkgs.systemd}/bin/systemctl --user start wayvnc beeper waybar
     exec ${pkgs.ghostty}/bin/ghostty
   '';
   waybarConfig = pkgs.writeText "spark-waybar.json" (
@@ -49,13 +48,11 @@ in
   environment.systemPackages = [
     beeper
     chromium
-    computer.cuaMcp
-    computer.browserDomUse
-    cuaDriver
     pkgs.ghostty
     pkgs.sway
     pkgs.grim
     pkgs.wtype
+    webjit
   ];
   fonts.packages = [ pkgs.dejavu_fonts ];
   services.dbus.packages = [ pkgs.at-spi2-core ];
@@ -79,26 +76,6 @@ in
     enable = true;
     extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
     config.sway.default = [ "gtk" ];
-  };
-
-  systemd.user.services.cua-driver = {
-    description = "Cua desktop automation";
-    partOf = [ "sway.service" ];
-    after = [ "sway.service" ];
-    unitConfig.ConditionUser = username;
-    environment = {
-      CUA_DRIVER_RS_ENABLE_WAYLAND = "1";
-      CUA_DRIVER_RS_TELEMETRY_ENABLED = "0";
-      XDG_SESSION_TYPE = "wayland";
-    };
-    serviceConfig = {
-      ExecStart = "${cuaDriver}/bin/cua-driver serve --socket %t/cua-driver/control.sock";
-      RuntimeDirectory = "cua-driver";
-      RuntimeDirectoryMode = "0700";
-      Restart = "on-failure";
-      RestartSec = 3;
-      UMask = "0077";
-    };
   };
 
   systemd.user.services.waybar = {

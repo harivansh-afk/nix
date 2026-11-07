@@ -4,11 +4,15 @@
 { pkgs }:
 let
   inherit (pkgs) lib;
-  computer = import ../pkgs/computer-tools { inherit pkgs; };
+  webjit = import ../pkgs/webjit { inherit pkgs; };
   codexMcp = import ../pkgs/codex-mcp { inherit pkgs; };
 in
-lib.mapAttrs (_: server: server // { timeout = 60; }) computer.servers
-// {
+{
+  webjit = {
+    command = "${webjit}/bin/webjit";
+    args = [ "mcp" ];
+    timeout = 300;
+  };
   beeper.url = "http://127.0.0.1:23373/v0/mcp";
   codex = {
     command = "${codexMcp}/bin/codex-mcp";

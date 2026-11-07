@@ -1225,11 +1225,11 @@
     },
     "nixpkgs_9": {
       "locked": {
-        "lastModified": 1793726008,
-        "narHash": "sha256-jQp1wKvbwWdLBASTXkSi/VYmDJ5AbBi1WvcMt9HWJC8=",
+        "lastModified": 1793540411,
+        "narHash": "sha256-fiPJ88izTVucjeo2EQ3jk4aWmLg03I1D4vxnX2QjEgE=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "1d060086d60cb76a40cf37109f979d88a5bd6396",
+        "rev": "0bb2eedc20e4739f29e8045034f2828ad7054f8f",
         "type": "github"
       },
       "original": {
@@ -1725,11 +1725,11 @@
         "nixpkgs": "nixpkgs_9"
       },
       "locked": {
-        "lastModified": 1794007283,
-        "narHash": "sha256-AULyRXM1//nCXdtZaM5Wq6X/7Wx759P4vRKlXkncKLI=",
+        "lastModified": 1794050608,
+        "narHash": "sha256-DFLZdA6e2bg1+JyuNtz+tFMWYOvCp7rVpIrSFJCnInE=",
         "ref": "main",
-        "rev": "c80be999b3be14e792e3a92ece2e30f96e8b143f",
-        "revCount": 950,
+        "rev": "0f403e2c273d9d11da0247dbe08b80c00eaac971",
+        "revCount": 1050,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/webjit.git"
       },

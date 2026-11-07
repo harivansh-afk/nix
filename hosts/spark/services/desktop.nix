@@ -7,7 +7,6 @@
 let
   tailnet = import ../../../lib/tailnet.nix;
   beeper = pkgs.callPackage ../../../pkgs/beeper { };
-  webjit = import ../../../pkgs/webjit { inherit pkgs; };
   chromium = pkgs.chromium.override {
     commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret --force-renderer-accessibility --remote-debugging-address=127.0.0.1 --remote-debugging-port=19222";
   };
@@ -52,7 +51,6 @@ in
     pkgs.sway
     pkgs.grim
     pkgs.wtype
-    webjit
   ];
   fonts.packages = [ pkgs.dejavu_fonts ];
   services.dbus.packages = [ pkgs.at-spi2-core ];

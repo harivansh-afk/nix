@@ -122,7 +122,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     target="${homeDirectory}/.claude.json"
     tmp=$(mktemp "${homeDirectory}/.claude.json.XXXXXX")
     if [ -e "$target" ]; then
-      ${pkgs.jq}/bin/jq --slurpfile servers ${claudeMcpSource} '.mcpServers = ((.mcpServers // {}) + $servers[0])' "$target" > "$tmp"
+      ${pkgs.jq}/bin/jq --slurpfile servers ${claudeMcpSource} '.mcpServers = $servers[0]' "$target" > "$tmp"
     else
       ${pkgs.jq}/bin/jq -n --slurpfile servers ${claudeMcpSource} '{mcpServers: $servers[0]}' > "$tmp"
     fi

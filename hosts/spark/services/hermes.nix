@@ -42,7 +42,7 @@ let
       auth = "oauth";
       timeout = 60;
     }
-  ) (import ../../../lib/agent-mcp.nix { inherit pkgs; });
+  ) (import ../../../lib/agent-mcp.nix { inherit pkgs; }).servers;
   units = [
     "hermes-agent"
     "hermes-backend"
@@ -123,6 +123,15 @@ in
       sessions.auto_prune = true;
       dashboard.public_url = url;
     };
+  };
+
+  system.activationScripts = {
+    hermes-mcp-reset = lib.stringAfter [ "users" ] ''
+      if [ -f ${stateDir}/.hermes/config.yaml ]; then
+        ${pkgs.yq-go}/bin/yq -i 'del(.mcp_servers)' ${stateDir}/.hermes/config.yaml
+      fi
+    '';
+    hermes-agent-setup.deps = [ "hermes-mcp-reset" ];
   };
 
   systemd.services =

@@ -85,7 +85,7 @@ in
               type = "stdio";
               timeout = server.timeout * 1000;
             }
-        ) (import ../../../lib/agent-mcp.nix { inherit pkgs; })
+        ) (import ../../../lib/agent-mcp.nix { inherit pkgs; }).servers
       )
     else
       null;

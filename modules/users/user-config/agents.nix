@@ -9,7 +9,6 @@
 }:
 let
   agentInstructions = import ../../../lib/agent-instructions.nix { inherit pkgs; };
-  computer = import ../../../pkgs/computer-tools { inherit pkgs; };
 
   jsonFormat = pkgs.formats.json { };
 
@@ -144,11 +143,6 @@ in
       supports_websockets = true
       supports_standalone_web_search = true
       requires_openai_auth = true
-
-      [mcp_servers.computer]
-      command = "${computer.servers.computer.command}"
-      startup_timeout_sec = 20
-      tool_timeout_sec = 60
 
       [mcp_servers.beeper]
       url = "http://127.0.0.1:23373/v0/mcp"

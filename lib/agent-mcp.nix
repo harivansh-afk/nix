@@ -4,6 +4,7 @@
 { pkgs }:
 let
   bin = name: "/run/current-system/sw/bin/${name}";
+  reload = "${import ../pkgs/mcp-reload { inherit pkgs; }}/bin/mcp-reload";
 in
 {
   packages = [
@@ -12,13 +13,17 @@ in
   ];
   servers = {
     webjit = {
-      command = bin "webjit";
-      args = [ "mcp" ];
+      command = reload;
+      args = [
+        (bin "webjit")
+        "mcp"
+      ];
       timeout = 300;
     };
     beeper.url = "http://127.0.0.1:23373/v0/mcp";
     codex = {
-      command = bin "codex-mcp";
+      command = reload;
+      args = [ (bin "codex-mcp") ];
       timeout = 14400;
     };
   };

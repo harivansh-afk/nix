@@ -39,6 +39,8 @@ Create task worktrees with `git worktree add .worktrees/<topic> -b <branch> main
 
 Skills come from the `mattpocock-skills` input and are linked into `~/.agents/skills` and `~/.claude/skills`. No harness has hooks, and none should be added. Claude Code's denied tools are `permissions.deny` in `modules/users/user-config/agents.nix`.
 
+Spark's MCP servers are declared once in `lib/agent-mcp.nix`; activation replaces Claude's `mcpServers` and Hermes' `mcp_servers` with that list. Local servers run under `pkgs/mcp-reload`, which swaps in the newly deployed build once no call is in flight and sends `tools/list_changed`, so running sessions update without a restart.
+
 On spark, Claude Code also gets the `codex` MCP server (`pkgs/codex-mcp`): `codex` and `codex_reply` run `codex exec --json` in the session directory, with Codex fan-out and multi-agent turned off, and come back as task notifications. Codex keeps MCP OAuth tokens in files because the headless keyring hangs `codex exec`. Reauthorize Beeper with `codex mcp login beeper --oauth-client-registration dcr`.
 
 ## Layout
@@ -111,7 +113,7 @@ After changing the provider, run `codex app-server daemon restart`.
 
 ## Hermes
 
-`hosts/spark/services/hermes.nix` runs the upstream NixOS module as the owner: `hermes-agent.service` is the gateway and `hermes-backend.service` is the dashboard plus desktop backend on `127.0.0.1:9119`, published by Tailscale Serve at `https://spark.<tailnet>.ts.net:9119` behind the basic-auth login in `hermes.env`. The default model is Codex through codex-lb; `/model claude-opus-5-5 --provider cc-proxy` switches a session to Claude through cc-proxy, whose client key Hermes reads at runtime with `cc-proxy key`. `HERMES_HOME` is `~/.local/state/hermes/.hermes`: `config.yaml` is merged from `settings` on every switch, `.env` is rebuilt from the secret, and `SOUL.md` is copied from `dots/hermes/SOUL.md`. Skills are the Nix-selected set in `skills.external_dirs`; skills the agent writes land in `dots/hermes/skills` for review and commit, and bundled skills are off. Beeper is the only MCP server. There are no declared cron jobs, messaging platforms, or plugins.
+`hosts/spark/services/hermes.nix` runs the upstream NixOS module as the owner: `hermes-agent.service` is the gateway and `hermes-backend.service` is the dashboard plus desktop backend on `127.0.0.1:9119`, published by Tailscale Serve at `https://spark.<tailnet>.ts.net:9119` behind the basic-auth login in `hermes.env`. The default model is Codex through codex-lb; `/model claude-opus-5-5 --provider cc-proxy` switches a session to Claude through cc-proxy, whose client key Hermes reads at runtime with `cc-proxy key`. `HERMES_HOME` is `~/.local/state/hermes/.hermes`: `config.yaml` is merged from `settings` on every switch, `.env` is rebuilt from the secret, and `SOUL.md` is copied from `dots/hermes/SOUL.md`. Skills are the Nix-selected set in `skills.external_dirs`; skills the agent writes land in `dots/hermes/skills` for review and commit, and bundled skills are off. There are no declared cron jobs, messaging platforms, or plugins.
 
 ## Beeper bridges
 

@@ -20,7 +20,7 @@
     };
 
     voiceink-src = {
-      url = "github:Beingpax/VoiceInk/v2.21";
+      url = "github:Beingpax/VoiceInk/v2.26";
       flake = false;
     };
 
@@ -65,7 +65,7 @@
 
     codex-lb.url = "github:Soju06/codex-lb";
 
-    hermes-agent.url = "github:NousResearch/hermes-agent/v0.22.5";
+    hermes-agent.url = "github:NousResearch/hermes-agent/v0.23.0";
 
     neovim-nightly = {
       url = "github:nix-community/neovim-nightly-overlay";

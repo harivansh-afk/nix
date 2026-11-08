@@ -48,8 +48,8 @@ let
       config.allowUnfree = true;
       overlays = [
         # Packages from private flake inputs that plain `pkgs` consumers need.
-        (_final: _prev: {
-          webjit = inputs.webjit.packages.${system}.default;
+        (final: _prev: {
+          agent-browser = final.callPackage ../pkgs/agent-browser { src = inputs.agent-browser; };
         })
       ];
     };

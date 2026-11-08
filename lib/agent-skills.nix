@@ -24,8 +24,8 @@ lib.optionals (mattpocock != null) (
     path = ../dots/agents/skills/spark-computer;
   }
   {
-    name = "webjit";
-    path = "${pkgs.webjit}/share/webjit/skills/webjit";
+    name = "agent-browser";
+    path = "${pkgs.agent-browser}/skills/agent-browser";
   }
 ]
 ++ [

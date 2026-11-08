@@ -92,6 +92,17 @@ in
 
   environment.systemPackages = [
     pkgs.clang
+    (pkgs.symlinkJoin {
+      name = "agent-browser";
+      paths = [ pkgs.agent-browser ];
+      nativeBuildInputs = [ pkgs.makeWrapper ];
+      postBuild = ''
+        wrapProgram $out/bin/agent-browser \
+          --set-default AGENT_BROWSER_CDP http://127.0.0.1:19222 \
+          --set-default AGENT_BROWSER_PIN_TAB 1 \
+          --set-default AGENT_BROWSER_CAPTURE flow
+      '';
+    })
   ]
   ++ (import ../../lib/agent-mcp.nix { inherit pkgs; }).packages;
 

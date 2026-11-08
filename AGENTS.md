@@ -39,7 +39,7 @@ Create task worktrees with `git worktree add .worktrees/<topic> -b <branch> main
 
 Skills come from the `mattpocock-skills` input and are linked into `~/.agents/skills` and `~/.claude/skills`. No harness has hooks, and none should be added. Claude Code's denied tools are `permissions.deny` in `modules/users/user-config/agents.nix`.
 
-Spark's MCP servers are declared once in `lib/agent-mcp.nix`; activation replaces Claude's `mcpServers` and Hermes' `mcp_servers` with that list. Local servers run under `pkgs/mcp-reload`, which swaps in the newly deployed build once no call is in flight and sends `tools/list_changed`, so running sessions update without a restart.
+Spark's MCP servers are declared once in `lib/agent-mcp.nix`; activation replaces Claude's `mcpServers` and Hermes' `mcp_servers` with that list. Running sessions pick up a changed server on restart.
 
 On spark, Claude Code also gets the `codex` MCP server (`pkgs/codex-mcp`): `codex` and `codex_reply` run `codex exec --json` in the session directory, with Codex fan-out and multi-agent turned off, and come back as task notifications. Codex keeps MCP OAuth tokens in files because the headless keyring hangs `codex exec`. Reauthorize Beeper with `codex mcp login beeper --oauth-client-registration dcr`.
 
@@ -97,7 +97,7 @@ Add `modules/users/accounts/<name>.nix` (`sshKeys`, `shell`, `extraGroups`) and 
 
 ## Agent desktop
 
-Browser and desktop work on spark goes through the `spark-computer` skill (webjit attached to the shared Chromium, plus Beeper MCP). Agents attach to the running Chromium and use their own tabs. Never commit profiles or put credentials in the store.
+Browser and desktop work on spark goes through the `spark-computer` skill (the agent-browser CLI attached to the shared Chromium, plus Beeper MCP). Agents attach to the running Chromium and use their own tabs. agent-browser is built from upstream `main` (`pkgs/agent-browser`, wrapped in `hosts/spark/default.nix` with CDP, tab pinning and flow capture on); bump it with `nix flake update agent-browser`. Chromium launches with WebMCP enabled. Never commit profiles or put credentials in the store.
 
 ## Codex account gateway
 

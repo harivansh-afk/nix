@@ -5,7 +5,7 @@ description: Use when browsing or messaging on Spark.
 
 # Spark computer
 
-Use **webjit** (the `webjit` MCP or CLI) for websites. Use **Beeper MCP** for messaging,
+Use **agent-browser** (the CLI) for websites. Use **Beeper MCP** for messaging,
 not its GUI. Choose the route
 from the user's intent; they do not need to name tools. No custom execution server.
 
@@ -39,23 +39,31 @@ The Beeper desktop service must remain running.
 
 always try using chrome saved password before claiming that u cannot sign in to some account.
 
-`webjit` attaches to the shared Chromium over CDP (`WEBJIT_CDP=http://127.0.0.1:19222`, set
-by the Nix wrapper), so saved logins and cookies apply. Load the `webjit` skill for the program
-API. Start Chromium only for a requested browser task:
+`agent-browser` attaches to the shared Chromium over CDP (`AGENT_BROWSER_CDP=http://127.0.0.1:19222`,
+set by the Nix wrapper with `AGENT_BROWSER_PIN_TAB=1`), so saved logins and cookies apply.
+Run `agent-browser skills get core` for the workflow. Start Chromium only for a requested
+browser task:
 
 ```sh
 systemctl --user start chromium
 curl --retry 20 --retry-connrefused --retry-delay 1 --max-time 2 --fail --silent http://127.0.0.1:19222/json/version
-webjit --session <unique-task> do - --task "<user request>" <<'PY'
-navigate("<url>")
-done(read("heading @1"))
-PY
+s=$(agent-browser session id --prefix task)
+agent-browser --session "$s" tab new "<url>"
+agent-browser --session "$s" snapshot -i
+agent-browser --session "$s" tab close
 ```
 
-Use a unique session per task: each gets its own background tab and never touches user tabs.
-Do not retry writes blindly after a DEOPT or transport loss. Cookies and account state are
-shared: coordinate work on the same account. Do not export cookies, copy profiles, or launch
-a second browser on this profile. CDP stays loopback-only.
+Use a unique session per task: each binds its own tab and never touches user tabs. Close
+every tab you opened when done; the shared browser accumulates leaked tabs otherwise.
+Prefer the logged-in site's own JSON API through `eval 'fetch(...)'` when one exists.
+
+Sessions record with `--capture flow` by default (experimental). After a task works, save it
+with `flow save <name>`; check `flow list` first and `flow run <name>` instead of driving the
+page when one covers the task. A failed run marks the flow unverified; fall back to the UI.
+
+Do not retry writes blindly after an error. Cookies and account state are shared: coordinate
+work on the same account. Do not export cookies, copy profiles, or launch a second browser on
+this profile. CDP stays loopback-only.
 
 Chromium does not start at desktop login and normal window closure stays closed.
 If you started it and no other task/user needs it, stop it with

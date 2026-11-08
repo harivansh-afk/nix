@@ -18,8 +18,8 @@ let
           # Packages from private flake inputs that plain `pkgs` consumers need. NixOS builds
           # its own pkgs, so the overlay in flake/args.nix does not reach host modules.
           nixpkgs.overlays = [
-            (_final: _prev: {
-              webjit = inputs.webjit.packages.${host.system}.default;
+            (final: _prev: {
+              agent-browser = final.callPackage ../pkgs/agent-browser { src = inputs.agent-browser; };
             })
           ];
         }

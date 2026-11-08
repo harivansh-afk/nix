@@ -8,7 +8,7 @@ let
   tailnet = import ../../../lib/tailnet.nix;
   beeper = pkgs.callPackage ../../../pkgs/beeper { };
   chromium = pkgs.chromium.override {
-    commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret --force-renderer-accessibility --remote-debugging-address=127.0.0.1 --remote-debugging-port=19222";
+    commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret --force-renderer-accessibility --remote-debugging-address=127.0.0.1 --remote-debugging-port=19222 --enable-features=WebMCPTesting,WebMCPSupport";
   };
   swayConfig = pkgs.writeText "sway.conf" ''
     xwayland disable

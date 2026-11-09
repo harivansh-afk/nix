@@ -23,4 +23,4 @@ in
 ++ nvimPackages
 ++ extraPackages
 ++ builtins.attrValues customScripts.commonPackages
-++ lib.optionals isDarwin (builtins.attrValues customScripts.darwinPackages ++ [ pkgs.aerospace ])
+++ lib.optionals isDarwin (builtins.attrValues customScripts.darwinPackages)

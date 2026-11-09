@@ -3,6 +3,7 @@ let
 
   trustedTaps = [
     "humanlayer/humanlayer"
+    "nikitabobko/tap"
     "peripheryapp/periphery"
   ];
 in
@@ -35,6 +36,7 @@ in
     ];
 
     casks = [
+      "nikitabobko/tap/aerospace"
       "beeper"
       "cap"
       "chatgpt"

@@ -11,6 +11,11 @@ let
     $CC -fobjc-arc -framework AppKit -o $out/bin/notch-inset ${./notch-inset/notch-inset.m}
   '';
 
+  aerospaceCli = pkgs.runCommand "aerospace-cli" { } ''
+    mkdir -p $out/bin
+    ln -s /opt/homebrew/bin/aerospace $out/bin/aerospace
+  '';
+
   sketchybarFeed = pkgs.runCommandCC "sketchybar-feed" { } ''
     mkdir -p $out/bin
     $CC -fobjc-arc -O2 -Wall -Wno-unused-parameter \
@@ -37,7 +42,7 @@ in
   services.sketchybar = {
     enable = true;
     extraPackages = [
-      pkgs.aerospace
+      aerospaceCli
       notchInset
       sketchybarFeed
     ];
@@ -49,7 +54,7 @@ in
       ProgramArguments = [
         "/bin/sh"
         "-c"
-        "/bin/wait4path /nix/store && exec ${pkgs.aerospace}/Applications/AeroSpace.app/Contents/MacOS/AeroSpace"
+        "/bin/wait4path /Applications/AeroSpace.app && exec /Applications/AeroSpace.app/Contents/MacOS/AeroSpace"
       ];
       RunAtLoad = true;
       KeepAlive = true;
@@ -73,7 +78,7 @@ in
         "-c"
         "/bin/wait4path /nix/store && exec ${sketchybarFeed}/bin/sketchybar-feed"
       ];
-      EnvironmentVariables.PATH = "${pkgs.aerospace}/bin:/usr/bin:/bin";
+      EnvironmentVariables.PATH = "${aerospaceCli}/bin:/usr/bin:/bin";
       RunAtLoad = true;
       KeepAlive = true;
       StandardOutPath = "/Users/${config.system.primaryUser}/Library/Logs/sketchybar-feed.log";

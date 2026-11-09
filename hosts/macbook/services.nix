@@ -51,11 +51,7 @@ in
   launchd.user.agents = {
 
     aerospace.serviceConfig = {
-      ProgramArguments = [
-        "/bin/sh"
-        "-c"
-        "/bin/wait4path /Applications/AeroSpace.app && exec /Applications/AeroSpace.app/Contents/MacOS/AeroSpace"
-      ];
+      ProgramArguments = [ "/Applications/AeroSpace.app/Contents/MacOS/AeroSpace" ];
       RunAtLoad = true;
       KeepAlive = true;
       StandardOutPath = "/Users/${config.system.primaryUser}/Library/Logs/aerospace.log";

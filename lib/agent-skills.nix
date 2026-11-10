@@ -16,6 +16,7 @@ lib.optionals (mattpocock != null) (
   map pocock [
     "productivity/writing-for-agents"
     "engineering/research"
+    "productivity/wait-what"
   ]
 )
 ++ lib.optionals spark [

@@ -1,7 +1,6 @@
 ## Claude Code
 
 Ask one concrete question at a time, in prose, with your recommendation.
-For Spark messaging, browser or desktop work, load `spark-computer`.
 
 ### Delegation
 

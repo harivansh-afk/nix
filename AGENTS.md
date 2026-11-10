@@ -97,7 +97,7 @@ Add `modules/users/accounts/<name>.nix` (`sshKeys`, `shell`, `extraGroups`) and 
 
 ## Agent desktop
 
-Browser and desktop work on spark goes through the `spark-computer` skill (the agent-browser CLI attached to the shared Chromium, plus Beeper MCP). Agents attach to the running Chromium and use their own tabs. agent-browser is built from upstream `main` (`pkgs/agent-browser`, wrapped in `hosts/spark/default.nix` with CDP, tab pinning and flow capture on); bump it with `nix flake update agent-browser`. Chromium launches with WebMCP enabled. Never commit profiles or put credentials in the store.
+Browser work on spark uses the agent-browser CLI and skill, attached to the shared Chromium; messaging uses the Beeper MCP. Agents attach to the running Chromium and use their own tabs. agent-browser is built from upstream `main` (`pkgs/agent-browser`, wrapped in `hosts/spark/default.nix` with CDP, tab pinning and flow capture on); bump it with `nix flake update agent-browser`. Chromium launches with WebMCP enabled. Never commit profiles or put credentials in the store.
 
 ## Codex account gateway
 

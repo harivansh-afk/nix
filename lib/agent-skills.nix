@@ -20,10 +20,6 @@ lib.optionals (mattpocock != null) (
 )
 ++ lib.optionals spark [
   {
-    name = "spark-computer";
-    path = ../dots/agents/skills/spark-computer;
-  }
-  {
     name = "agent-browser";
     path = "${pkgs.agent-browser}/skills/agent-browser";
   }

@@ -1,7 +1,6 @@
 ---
 name: crux
-description: Find the crux of a problem before solving it (Rumelt's method).
-disable-model-invocation: true
+description: Find the crux of a problem before solving it (Rumelt's method). Use when Hari asks for the crux, or before starting work on a hard or unclear problem.
 ---
 
 # Crux

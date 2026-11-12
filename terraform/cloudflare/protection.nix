@@ -27,19 +27,49 @@ let
     action = "block";
     enabled = true;
   };
-in
-{
-  resource.cloudflare_zone_setting = lib.mapAttrs' (
-    name: id:
-    lib.nameValuePair "${name}_always_https" {
-      zone_id = id;
-      setting_id = "always_use_https";
-      value = "on";
-    }
-  ) allZones;
 
-  resource.cloudflare_ruleset.sh_rate_limit = {
-    zone_id = zoneId;
+  probeExemptHosts = [
+    "files.harivan.sh"
+    "share.harivan.sh"
+  ];
+  probePathContains = [
+    "/.env"
+    "/.git"
+    "/.aws"
+    "/.ssh"
+    "/.vscode"
+    "/wp-"
+    ".php"
+    "phpmyadmin"
+    "/cgi-bin"
+    "/vendor/"
+  ];
+  probePathEndsWith = [
+    ".env"
+    ".log"
+    ".sql"
+    ".bak"
+    ".ini"
+    ".yml"
+    ".yaml"
+    ".json.bak"
+    "/.ds_store"
+  ];
+  path = "lower(http.request.uri.path)";
+  anyOf = f: l: lib.concatMapStringsSep " or " f l;
+
+  probeRule = {
+    ref = "block_secret_probes";
+    description = "Drop requests for secrets, dotfiles and PHP admin paths on public sites";
+    expression = "(not http.host in {${quoted probeExemptHosts}} and (${
+      anyOf (v: ''${path} contains "${v}"'') probePathContains
+    } or ${anyOf (v: ''ends_with(${path}, "${v}")'') probePathEndsWith}))";
+    action = "block";
+    enabled = true;
+  };
+
+  rateLimit = id: {
+    zone_id = id;
     name = "Request rate limit";
     kind = "zone";
     phase = "http_ratelimit";
@@ -62,6 +92,20 @@ in
       }
     ];
   };
+in
+{
+  resource.cloudflare_zone_setting = lib.mapAttrs' (
+    name: id:
+    lib.nameValuePair "${name}_always_https" {
+      zone_id = id;
+      setting_id = "always_use_https";
+      value = "on";
+    }
+  ) allZones;
+
+  resource.cloudflare_ruleset.sh_rate_limit = rateLimit zoneId;
+
+  resource.cloudflare_ruleset.cafe_rate_limit = rateLimit zones.cafe;
 
   resource.cloudflare_bot_management = lib.mapAttrs (_: id: {
     zone_id = id;
@@ -79,6 +123,7 @@ in
     phase = "http_request_firewall_custom";
     rules = [
       searchBotRule
+      probeRule
     ];
   };
 
@@ -87,6 +132,9 @@ in
     name = "default";
     kind = "zone";
     phase = "http_request_firewall_custom";
-    rules = [ searchBotRule ];
+    rules = [
+      searchBotRule
+      probeRule
+    ];
   };
 }

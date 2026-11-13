@@ -2,6 +2,7 @@
 # being built; this only makes it reachable from the phone over the tailnet:
 #   https://spark.<tailnet>:8780 -> 127.0.0.1:8780  the conductor's token endpoint
 #   https://spark.<tailnet>:7443 -> 127.0.0.1:7880  LiveKit signalling (wss)
+#   https://spark.<tailnet>:8790 -> 127.0.0.1:8790  the live dashboard (`conductor dash`), read-only
 #   UDP 7882 on tailscale0                           LiveKit media
 { config, ... }:
 let
@@ -15,6 +16,10 @@ let
     {
       port = 7443;
       target = "http://127.0.0.1:7880";
+    }
+    {
+      port = 8790;
+      target = "http://127.0.0.1:8790";
     }
   ];
 in

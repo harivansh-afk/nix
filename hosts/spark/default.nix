@@ -38,6 +38,7 @@ in
     ./services/inference.nix
     ./services/mixbridge.nix
     ./services/draw.nix
+    ./services/omnipresent.nix
     ./services/mosh.nix
     ./services/rex.nix
     ./services/vaultwarden.nix

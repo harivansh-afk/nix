@@ -20,6 +20,7 @@ let
         "deskctl"
         "draw"
         "nix"
+        "omnipresent"
         "pierrejo"
         "pr.nvim"
         "roomcast"

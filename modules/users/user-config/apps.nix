@@ -52,6 +52,7 @@
     terminalOptionKeyBehavior = "actsAsAlt";
     terminalPaddingColor = "extend";
     terminalCopyOnSelect = true;
+    "experiments.usesNewQuickSwitcher" = true;
   };
 
   rexThemes = pkgs.writeText "rex-themes.json" (

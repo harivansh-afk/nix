@@ -36,6 +36,8 @@ in
     enable = true;
     user = username;
     environmentFile = config.sops.secrets."omnipresent.env".path;
+    # The desktop's Chromium (services/desktop.nix): agents may drive it, signed in as the owner.
+    browserCdpPort = 19222;
   };
 
   networking.firewall.interfaces.tailscale0.allowedUDPPorts = [ 7882 ];

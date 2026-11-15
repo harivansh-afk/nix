@@ -28,6 +28,13 @@
       proxied = false;
       comment = "spark tailnet address, tailnet-only";
     };
+    omni = {
+      name = "omni.harivan.sh";
+      type = "A";
+      content = "100.67.49.31";
+      proxied = false;
+      comment = "spark tailnet address, tailnet-only";
+    };
     vault = {
       name = "vault.harivan.sh";
       type = "CNAME";

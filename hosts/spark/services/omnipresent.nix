@@ -1,10 +1,16 @@
-# omnipresent (git.harivan.sh/harivansh-afk/omnipresent) runs from its checkout under process-compose while it is
-# being built; this only makes it reachable from the phone over the tailnet:
+# omnipresent (git.harivan.sh/harivansh-afk/omnipresent): its own module runs the stack as the owner
+# (omnipresent-harnessd, -livekit, -core, -voice; -env builds the Python environment). Deploy a change with
+# `nix flake update omnipresent`. This file adds the keys and makes it reachable from the phone over the tailnet:
 #   https://spark.<tailnet>:8780 -> 127.0.0.1:8780  the conductor's token endpoint
 #   https://spark.<tailnet>:7443 -> 127.0.0.1:7880  LiveKit signalling (wss)
 #   https://spark.<tailnet>:8790 -> 127.0.0.1:8790  the live dashboard (`conductor dash`), read-only
 #   UDP 7882 on tailscale0                           LiveKit media
-{ config, ... }:
+{
+  config,
+  inputs,
+  username,
+  ...
+}:
 let
   tailscale = "${config.services.tailscale.package}/bin/tailscale";
   # One unit, applied in order: concurrent `tailscale serve` calls fail on the config's etag.
@@ -24,6 +30,14 @@ let
   ];
 in
 {
+  imports = [ inputs.omnipresent.nixosModules.default ];
+
+  services.omnipresent = {
+    enable = true;
+    user = username;
+    environmentFile = config.sops.secrets."omnipresent.env".path;
+  };
+
   networking.firewall.interfaces.tailscale0.allowedUDPPorts = [ 7882 ];
 
   systemd.services.omnipresent-tailscale-serve = {

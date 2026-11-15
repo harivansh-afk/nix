@@ -76,6 +76,15 @@
       restartUnits = [ "gitea-runner-spark.service" ];
     };
 
+    "omnipresent.env" = {
+      format = "dotenv";
+      restartUnits = [
+        "omnipresent-livekit.service"
+        "omnipresent-core.service"
+        "omnipresent-voice.service"
+      ];
+    };
+
     "hermes.env" = {
       format = "dotenv";
       restartUnits = [

@@ -92,12 +92,16 @@
           )
           && !(lib.hasInfix "protocols" spark.services.caddy.globalConfig)
         ) "spark: HTTP/3 must stay on in caddy, with UDP 443 open on the tailnet interface only")
-        (lib.assertMsg (
-          lib.hasInfix "handle @api {\n  respond \"The omni API is not served yet.\" 404\n}" omniRoutes
-          && lib.hasInfix "@api path /api /api/*\n" omniRoutes
-          && lib.hasInfix "handle_path /web/* {\n  reverse_proxy 127.0.0.1:8790 {" omniRoutes
-          && lib.length (lib.splitString "127.0.0.1:8790" omniRoutes) == 2
-        ) "spark: omni's /api must answer 404 itself; the dashboard on 8790 is proxied under /web/ only")
+        (lib.assertMsg
+          (
+            lib.hasInfix "handle_path /api/* {\n  reverse_proxy 127.0.0.1:8800 {\n    flush_interval -1\n  }\n}" omniRoutes
+            && lib.hasInfix "handle_path /web/* {\n  reverse_proxy 127.0.0.1:8790 {" omniRoutes
+            && lib.length (lib.splitString "127.0.0.1:8790" omniRoutes) == 2
+            && lib.length (lib.splitString "127.0.0.1:8800" omniRoutes) == 2
+            && lib.length (lib.splitString "/api" omniRoutes) == 2
+          )
+          "spark: omni's /api must go to the API on 8800 unbuffered; the dashboard on 8790 is proxied under /web/ only"
+        )
         (lib.assertMsg (
           spark.services.vaultwarden.config.ROCKET_ADDRESS == "127.0.0.1"
         ) "spark: vaultwarden must bind loopback")

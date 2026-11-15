@@ -13,7 +13,7 @@ Spark web traffic: Cloudflare edge → cloudflared → Caddy on `127.0.0.1:80` �
 
 Forgejo (`git.harivan.sh`) is tailnet-only: an unproxied A record points at spark's Tailscale IP, Caddy serves it on `:443` with a Let's Encrypt cert issued by DNS-01 through Cloudflare (`security.acme`, reusing `cloudflare-api-token`), and the firewall opens 443 only on `tailscale0`. Off the tailnet, use the GitHub mirrors.
 
-omnipresent (`omni.harivan.sh`) is tailnet-only the same way; its paths are listed at the top of `hosts/spark/services/omnipresent.nix`.
+omnipresent (`omni.harivan.sh`) is tailnet-only the same way, over HTTP/1.1, 2 and 3 (UDP 443 on `tailscale0`, which `git.harivan.sh` shares). Caddy routes `/web/` to the dashboard on 8790 and `/api/` to the API on 8800, each with the prefix taken off; `/rtc` and `/twirp/` to LiveKit on 7880; `/token` and `/sync/` to the phone's endpoints on 8780 (temporary); `/` redirects to `/web/`. LiveKit media is direct on UDP 7882. The Tailscale Serve ports 8780, 7443 and 8790 go once every client uses the hostname.
 
 ## Secrets
 

@@ -13,6 +13,8 @@ Spark web traffic: Cloudflare edge → cloudflared → Caddy on `127.0.0.1:80` �
 
 Forgejo (`git.harivan.sh`) is tailnet-only: an unproxied A record points at spark's Tailscale IP, Caddy serves it on `:443` with a Let's Encrypt cert issued by DNS-01 through Cloudflare (`security.acme`, reusing `cloudflare-api-token`), and the firewall opens 443 only on `tailscale0`. Off the tailnet, use the GitHub mirrors.
 
+omnipresent (`omni.harivan.sh`) is tailnet-only the same way; its paths are listed at the top of `hosts/spark/services/omnipresent.nix`.
+
 ## Secrets
 
 sops-nix with age keys derived from each host's ed25519 SSH key (`admin_macbook` edits everything, `host_spark` decrypts at activation). Secrets live in `secrets/hosts/<host>/` and `secrets/user/`, and every one is declared in `secrets/registry.nix`. Edit with `just sops-edit <file>`. `secrets/user/*.env` files are sourced into interactive zsh; raw tokens set `exposeToShell = false`.

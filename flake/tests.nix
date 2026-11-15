@@ -19,6 +19,8 @@
         lib.optional (m != null) (lib.toInt (builtins.head m))
       ) (lib.attrValues spark.services.caddy.virtualHosts);
 
+      omniRoutes = spark.services.caddy.virtualHosts."https://omni.harivan.sh".extraConfig;
+
       vllm = spark.virtualisation.oci-containers.containers.vllm;
       vllmSettings = builtins.fromJSON (
         builtins.readFile spark.environment.etc."vllm/config.yaml".source
@@ -60,12 +62,42 @@
           })"
         )
         (lib.assertMsg (lib.all (vh: vh.listenAddresses == [ "127.0.0.1" ]) (
-          lib.attrValues (removeAttrs spark.services.caddy.virtualHosts [ "https://git.harivan.sh" ])
-        )) "spark: every caddy virtualHost but forgejo must bind loopback only")
+          lib.attrValues (
+            removeAttrs spark.services.caddy.virtualHosts [
+              "https://git.harivan.sh"
+              "https://omni.harivan.sh"
+            ]
+          )
+        )) "spark: every caddy virtualHost but forgejo and omni must bind loopback only")
         (lib.assertMsg (
           spark.networking.firewall.interfaces.tailscale0.allowedTCPPorts == [ 443 ]
           && spark.services.caddy.virtualHosts."https://git.harivan.sh".useACMEHost == "git.harivan.sh"
         ) "spark: forgejo must be served over TLS on the tailnet only")
+        (lib.assertMsg (
+          spark.services.caddy.virtualHosts."https://omni.harivan.sh".useACMEHost == "omni.harivan.sh"
+          && spark.security.acme.certs."omni.harivan.sh".dnsProvider == "cloudflare"
+          && !(spark.services.caddy.virtualHosts ? "http://omni.harivan.sh")
+          &&
+            spark.services.caddy.virtualHosts."https://omni.harivan.sh".listenAddresses
+            == spark.services.caddy.virtualHosts."https://git.harivan.sh".listenAddresses
+          && spark.networking.firewall.interfaces.tailscale0.allowedTCPPorts == [ 443 ]
+          && spark.networking.firewall.allowedTCPPorts == [ ]
+          && lib.all (t: !(t.ingress ? "omni.harivan.sh")) (lib.attrValues spark.services.cloudflared.tunnels)
+        ) "spark: omni must be served over TLS like forgejo, reachable on the tailnet only")
+        (lib.assertMsg (
+          lib.elem 443 spark.networking.firewall.interfaces.tailscale0.allowedUDPPorts
+          && spark.networking.firewall.allowedUDPPorts == [ ]
+          && lib.all (i: !(lib.elem 443 i.allowedUDPPorts)) (
+            lib.attrValues (removeAttrs spark.networking.firewall.interfaces [ "tailscale0" ])
+          )
+          && !(lib.hasInfix "protocols" spark.services.caddy.globalConfig)
+        ) "spark: HTTP/3 must stay on in caddy, with UDP 443 open on the tailnet interface only")
+        (lib.assertMsg (
+          lib.hasInfix "handle @api {\n  respond \"The omni API is not served yet.\" 404\n}" omniRoutes
+          && lib.hasInfix "@api path /api /api/*\n" omniRoutes
+          && lib.hasInfix "handle_path /web/* {\n  reverse_proxy 127.0.0.1:8790 {" omniRoutes
+          && lib.length (lib.splitString "127.0.0.1:8790" omniRoutes) == 2
+        ) "spark: omni's /api must answer 404 itself; the dashboard on 8790 is proxied under /web/ only")
         (lib.assertMsg (
           spark.services.vaultwarden.config.ROCKET_ADDRESS == "127.0.0.1"
         ) "spark: vaultwarden must bind loopback")

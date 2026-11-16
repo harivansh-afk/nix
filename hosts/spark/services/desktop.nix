@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   pkgs,
   username,
   ...
@@ -7,8 +8,9 @@
 let
   tailnet = import ../../../lib/tailnet.nix;
   beeper = pkgs.callPackage ../../../pkgs/beeper { };
-  chromium = pkgs.chromium.override {
-    commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret --force-renderer-accessibility --remote-debugging-address=127.0.0.1 --remote-debugging-port=19222 --enable-features=WebMCPTesting,WebMCPSupport";
+  securityPkgs = import inputs.nixpkgs-security { system = pkgs.stdenv.hostPlatform.system; };
+  chromium = securityPkgs.chromium.override {
+    commandLineArgs = "--ozone-platform=wayland --password-store=gnome-libsecret --force-renderer-accessibility --enable-features=WebMCPTesting,WebMCPSupport";
   };
   swayConfig = pkgs.writeText "sway.conf" ''
     xwayland disable
@@ -24,7 +26,7 @@ let
     bindsym Mod4+f fullscreen toggle
     bindsym Mod4+Left focus left
     bindsym Mod4+Right focus right
-    exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE GTK_A11Y NO_AT_BRIDGE && ${pkgs.systemd}/bin/systemctl --user start wayvnc beeper waybar
+    exec ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE GTK_A11Y NO_AT_BRIDGE && ${pkgs.systemd}/bin/systemctl --user start wayvnc beeper waybar chromium
     exec ${pkgs.ghostty}/bin/ghostty
   '';
   waybarConfig = pkgs.writeText "spark-waybar.json" (
@@ -98,8 +100,8 @@ in
       NO_AT_BRIDGE = "0";
     };
     serviceConfig = {
-      ExecStart = "${chromium}/bin/chromium --restore-last-session";
-      Restart = "on-failure";
+      ExecStart = "${chromium}/bin/chromium --remote-debugging-address=127.0.0.1 --remote-debugging-port=19222 --restore-last-session";
+      Restart = "always";
       RestartSec = 3;
       UMask = "0077";
     };

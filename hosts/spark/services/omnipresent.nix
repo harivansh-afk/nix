@@ -39,6 +39,7 @@ in
     environmentFile = config.sops.secrets."omnipresent.env".path;
     # The desktop's Chromium (services/desktop.nix): agents may drive it, signed in as the owner.
     browserCdpPort = 19222;
+    workspaceRemote = "git@localhost:harivansh-afk/omni-workspace.git";
   };
 
   networking.firewall.interfaces.tailscale0.allowedUDPPorts = [

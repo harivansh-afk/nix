@@ -337,11 +337,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792518524,
-        "narHash": "sha256-VkOx8b865oK/ZjtLyOF3pXMuesnWsPkyW6BmDqmIr5E=",
+        "lastModified": 1794871792,
+        "narHash": "sha256-LvTqe0JuJOIHyHwEPDb66DdIp812zAClxYoBW3hkp1w=",
         "ref": "main",
-        "rev": "04f767181a006e208fe9398c99560ff5c7756d26",
-        "revCount": 4168,
+        "rev": "fca682f7500fb715a2f5142c7e6906b3d0af6e3a",
+        "revCount": 4220,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/draw.git"
       },

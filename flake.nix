@@ -54,10 +54,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    cc-proxy = {
-      url = "git+https://git.harivan.sh/harivansh-afk/cc-proxy.git?ref=main";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    cc-proxy.url = "git+https://git.harivan.sh/harivansh-afk/cc-proxy.git?ref=main";
 
     devin-codex.url = "git+https://git.harivan.sh/harivansh-afk/devin-codex.git";
 

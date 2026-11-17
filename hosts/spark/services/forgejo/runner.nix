@@ -9,6 +9,13 @@ let
   runnerTokenFile = config.sops.secrets."forgejo-runner-connection-token".path;
   runnerCacheRoot = "/var/cache/forgejo-runner";
   nixRepo = "${config.services.forgejo.repositoryRoot}/harivansh-afk/nix.git";
+  forgejoTokenCredential = "/run/credentials/forgejo-runner-spark.service/forgejo-token";
+  forgejoCredentialHelper = pkgs.writeShellScript "git-credential-forgejo-runner" ''
+    if [ "$1" = "get" ] && [ -r ${forgejoTokenCredential} ]; then
+      echo "username=harivansh-afk"
+      echo "password=$(${pkgs.coreutils}/bin/cat ${forgejoTokenCredential})"
+    fi
+  '';
   sparkSwitchMain = pkgs.writeShellScript "spark-switch-main" ''
     set -euo pipefail
     dir=$(${pkgs.coreutils}/bin/mktemp -d /run/spark-deploy.XXXXXX)
@@ -52,6 +59,7 @@ in
       Group = lib.mkForce "gitea-runner";
       NoNewPrivileges = lib.mkForce false;
       RestrictSUIDSGID = lib.mkForce false;
+      LoadCredential = [ "forgejo-token:${config.sops.secrets."forgejo-token".path}" ];
     };
   };
 
@@ -144,6 +152,9 @@ in
           RUSTUP_HOME = "${runnerCacheRoot}/rustup";
           UV_CACHE_DIR = "${runnerCacheRoot}/uv";
           npm_config_cache = "${runnerCacheRoot}/npm";
+          GIT_CONFIG_COUNT = "1";
+          GIT_CONFIG_KEY_0 = "credential.https://${forgejoDomain}.helper";
+          GIT_CONFIG_VALUE_0 = "${forgejoCredentialHelper}";
         };
       };
       cache = {

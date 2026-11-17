@@ -20,7 +20,7 @@
     };
 
     voiceink-src = {
-      url = "github:Beingpax/VoiceInk/v2.26";
+      url = "github:Beingpax/VoiceInk/v2.27";
       flake = false;
     };
 
@@ -54,7 +54,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    cc-proxy.url = "git+https://git.harivan.sh/harivansh-afk/cc-proxy.git?ref=main";
+    cc-proxy = {
+      url = "git+https://git.harivan.sh/harivansh-afk/cc-proxy.git?ref=main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     devin-codex.url = "git+https://git.harivan.sh/harivansh-afk/devin-codex.git";
 
@@ -90,7 +93,7 @@
     };
 
     lanzaboote = {
-      url = "github:nix-community/lanzaboote/v1.1.0";
+      url = "github:nix-community/lanzaboote/v1.2.0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

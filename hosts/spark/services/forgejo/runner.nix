@@ -6,7 +6,7 @@
 }:
 let
   forgejoDomain = config.services.forgejo.settings.server.DOMAIN;
-  runnerTokenFile = config.sops.secrets."forgejo-runner-token".path;
+  runnerTokenFile = config.sops.secrets."forgejo-runner-connection-token".path;
   runnerCacheRoot = "/var/cache/forgejo-runner";
   nixRepo = "${config.services.forgejo.repositoryRoot}/harivansh-afk/nix.git";
   sparkSwitchMain = pkgs.writeShellScript "spark-switch-main" ''
@@ -43,8 +43,9 @@ let
   };
 in
 {
-  systemd.services.gitea-runner-spark = {
+  systemd.services.forgejo-runner-spark = {
     restartIfChanged = false;
+    environment.DOCKER_HOST = "unix:///run/podman/podman.sock";
     serviceConfig = {
       DynamicUser = lib.mkForce false;
       User = lib.mkForce "gitea-runner";
@@ -87,68 +88,66 @@ in
     "d ${runnerCacheRoot}/actcache 0750 gitea-runner gitea-runner -"
   ];
 
-  services.gitea-actions-runner = {
-    package = pkgs.forgejo-runner;
+  services.forgejo-runner.instances.spark = {
+    enable = true;
 
-    instances.spark = {
-      enable = true;
-      name = "spark";
-      url = "https://${forgejoDomain}";
-      tokenFile = runnerTokenFile;
+    secrets.server.connections.default.token_url = runnerTokenFile;
 
-      labels = [
-        "native:host"
-        "spark:host"
-        "ubuntu-latest:docker://node:24-bookworm"
-      ];
+    hostPackages = with pkgs; [
+      bash
+      coreutils
+      curl
+      fd
+      gh
+      git
+      gnumake
+      gnused
+      gnutar
+      gzip
+      gawk
+      jq
+      nix
+      nixos-rebuild
+      nodejs_24
+      pkg-config
+      pnpm
+      python3
+      python3Packages.pip
+      ripgrep
+      rustup
+      stdenv.cc
+      unzip
+      uv
+      wget
+      xvfb-run
+      xz
+      zip
+    ];
 
-      hostPackages = with pkgs; [
-        bash
-        coreutils
-        curl
-        fd
-        gh
-        git
-        gnumake
-        gnused
-        gnutar
-        gzip
-        gawk
-        jq
-        nix
-        nixos-rebuild
-        nodejs_24
-        pkg-config
-        pnpm
-        python3
-        python3Packages.pip
-        ripgrep
-        rustup
-        stdenv.cc
-        unzip
-        uv
-        wget
-        xvfb-run
-        xz
-        zip
-      ];
-
-      settings = {
-        runner = {
-          capacity = 2;
-          timeout = "3h";
-          envs = {
-            CARGO_HOME = "${runnerCacheRoot}/cargo";
-            PIP_CACHE_DIR = "${runnerCacheRoot}/pip";
-            PRE_COMMIT_HOME = "${runnerCacheRoot}/pre-commit";
-            RUSTUP_HOME = "${runnerCacheRoot}/rustup";
-            UV_CACHE_DIR = "${runnerCacheRoot}/uv";
-            npm_config_cache = "${runnerCacheRoot}/npm";
-          };
+    settings = {
+      server.connections.default = {
+        url = "https://${forgejoDomain}";
+        uuid = "b9b84da8-4ebc-40b9-bd70-c4db566e535e";
+      };
+      runner = {
+        labels = [
+          "native:host"
+          "spark:host"
+          "ubuntu-latest:docker://node:24-bookworm"
+        ];
+        capacity = 2;
+        timeout = "3h";
+        envs = {
+          CARGO_HOME = "${runnerCacheRoot}/cargo";
+          PIP_CACHE_DIR = "${runnerCacheRoot}/pip";
+          PRE_COMMIT_HOME = "${runnerCacheRoot}/pre-commit";
+          RUSTUP_HOME = "${runnerCacheRoot}/rustup";
+          UV_CACHE_DIR = "${runnerCacheRoot}/uv";
+          npm_config_cache = "${runnerCacheRoot}/npm";
         };
-        cache = {
-          dir = "${runnerCacheRoot}/actcache";
-        };
+      };
+      cache = {
+        dir = "${runnerCacheRoot}/actcache";
       };
     };
   };

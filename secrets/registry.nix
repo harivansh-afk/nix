@@ -71,9 +71,8 @@
       restartUnits = [ "forgejo.service" ];
     };
 
-    "forgejo-runner-token" = {
-      owner = "gitea-runner";
-      restartUnits = [ "gitea-runner-spark.service" ];
+    "forgejo-runner-connection-token" = {
+      restartUnits = [ "forgejo-runner-spark.service" ];
     };
 
     "omnipresent.env" = {

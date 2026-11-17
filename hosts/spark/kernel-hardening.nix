@@ -135,10 +135,10 @@
     services.systemd-coredump.enable = false;
   };
 
-  services.journald.extraConfig = ''
-    Compress=yes
-    Seal=yes
-    Storage=persistent
-    SystemMaxUse=2G
-  '';
+  services.journald.settings.Journal = {
+    Compress = true;
+    Seal = true;
+    Storage = "persistent";
+    SystemMaxUse = "2G";
+  };
 }

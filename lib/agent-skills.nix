@@ -1,5 +1,3 @@
-# Skills that every agent harness gets: linked into ~/.agents/skills and
-# ~/.claude/skills.
 {
   pkgs,
   mattpocock ? null,

@@ -26,11 +26,17 @@
         claude-proxy = inputs.cc-proxy.checks.${pkgs.stdenv.hostPlatform.system}.gateway;
         cc-proxy = inputs.cc-proxy.checks.${pkgs.stdenv.hostPlatform.system}.cli;
 
-        ast-grep = lint "ast-grep" [ pkgs.ast-grep ] "ast-grep scan --error .";
+        ast-grep = lint "ast-grep" [ pkgs.ast-grep ] "ast-grep scan --no-ignore hidden --error .";
+        no-comments = lint "no-comments" [ pkgs.ripgrep ] ''
+          if rg -n --hidden --pcre2 -g '!.git' -g '!secrets' -g '!*.{css,md,json,lock.hcl,patch,svg}' \
+            '^\s*#(?!!|import\b|include\b|define\b|if\b|ifdef\b|ifndef\b|endif\b|else\b|elif\b|version\b|pragma\b|undef\b)' .; then
+            exit 1
+          fi
+        '';
         ast-grep-test = lint "ast-grep-test" [ pkgs.ast-grep ] "ast-grep test --skip-snapshot-tests";
         statix = lint "statix" [ pkgs.statix ] "statix check .";
         deadnix = lint "deadnix" [ pkgs.deadnix ] ''
-          deadnix --fail --exclude ./hosts/spark/hardware-configuration.nix -- . # generated file
+          deadnix --fail --exclude ./hosts/spark/hardware-configuration.nix -- .
         '';
 
         shfmt = lint "shfmt" [

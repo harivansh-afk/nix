@@ -4,7 +4,6 @@
   --is-dark-theme: true;
   color-scheme: dark;
 
-  /* steel ladder remapped to cozybox dark bg->fg shades */
   --steel-900: #1d2021;
   --steel-850: #232425;
   --steel-800: #282828;
@@ -23,7 +22,6 @@
   --steel-150: #e1d5a8;
   --steel-100: #ebdbb2;
 
-  /* surface / structure (cozybox.nvim Normal #101010, CursorLine #161616) */
   --color-body:               #101010;
   --color-box-body:           #101010;
   --color-box-body-highlight: #161616;
@@ -40,7 +38,6 @@
   --color-active:             #2a2a2a;
   --color-timeline:           #504945;
 
-  /* text */
   --color-text:             #ebdbb2;
   --color-text-dark:        #ffffff;
   --color-text-light:       #d5c4a1;
@@ -49,7 +46,6 @@
   --color-text-light-3:     #928374;
   --color-placeholder-text: #928374;
 
-  /* secondary */
   --color-secondary:           #504945;
   --color-secondary-bg:        #161616;
   --color-secondary-dark-1:    #504945;
@@ -68,18 +64,15 @@
   --color-secondary-alpha-80:  #504945cc;
   --color-secondary-alpha-90:  #504945e6;
 
-  /* inputs */
   --color-input-background:   #0c0c0c;
   --color-input-text:         #ebdbb2;
   --color-input-border:       #504945;
   --color-input-border-hover: #665c54;
   --color-input-toggle-background: #32302f;
 
-  /* links */
   --color-link:       #5b84de;
   --color-link-hover: #7596e8;
 
-  /* primary -> cozybox blue (#5b84de) */
   --color-primary:          #5b84de;
   --color-primary-contrast: #ffffff;
   --color-primary-dark-1:   #6c91e3;
@@ -109,7 +102,6 @@
   --color-primary-active:   var(--color-primary-light-2);
   --color-accent:           #5b84de;
 
-  /* cozybox dark accents (aligned to terminal palette in lib/palette.json) */
   --color-red:    #ea6962;
   --color-orange: #fe8019;
   --color-yellow: #d79921;
@@ -141,7 +133,6 @@
   --color-error:   #ea6962;
   --color-danger:  #ea6962;
 
-  /* console palette (actions runner / job log box) - neutral, no blue */
   --color-console-fg:          #ebdbb2;
   --color-console-fg-subtle:   #928374;
   --color-console-bg:          #0c0c0c;
@@ -151,7 +142,6 @@
   --color-console-menu-bg:     #161616;
   --color-console-menu-border: #504945;
 
-  /* info banner backdrop - neutralize the upstream blue */
   --color-info-border: #504945;
   --color-info-bg:     #232425;
   --color-info-text:   #ebdbb2;
@@ -160,7 +150,6 @@
   --color-markup-code-block:       #0c0c0c;
   --color-markup-code-inline:      #232425;
   --color-markup-table-row:        #ffffff06;
-  /* diff bgs from cozybox.nvim DiffAdd/Change/Delete */
   --color-diff-removed-row-bg:     #2a1818;
   --color-diff-removed-word-bg:    #3d2222;
   --color-diff-added-row-bg:       #1e2718;

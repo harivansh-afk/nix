@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# macOS-style `open` for Linux hosts; linked at ~/.local/bin/open on Linux only.
 set -euo pipefail
 
 if [ "$(uname -s)" = "Darwin" ]; then

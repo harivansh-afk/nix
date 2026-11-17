@@ -1,3 +1,4 @@
 - Use `rg` / `fd`; run Python through `uv`.
 - Worktrees belong in the repo's `.worktrees/`; keep the main checkout on `main`.
 - Edit declarative config at its source, then rebuild if wanna change spark/mac config (Git/nix)
+- No code comments in any codebase; put the why in the commit message or the docs.

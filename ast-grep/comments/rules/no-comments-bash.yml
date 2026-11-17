@@ -1,0 +1,10 @@
+id: no-comments-bash
+language: bash
+severity: error
+message: Comments are banned in this repo. Put the why in the commit message or AGENTS.md.
+rule:
+  kind: comment
+  not:
+    regex: "^#!"
+ignores:
+  - "secrets/**"

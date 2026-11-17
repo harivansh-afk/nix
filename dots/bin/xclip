@@ -1,22 +1,4 @@
 #!/usr/bin/env bash
-# xclip - clipboard shim for headless spark, the X11 twin of the wl-paste
-# shim (Claude Code falls back to xclip when wl-paste yields nothing).
-# Proxies to the Mac's pasteboard over SSH; image fetches delegate to the
-# wl-paste shim, which owns the extraction. See wl-paste for the full why;
-# delete both when Claude Code ships the Kitty clipboard protocol
-# (OSC 5522).
-#
-# Supported calls:
-#   xclip -selection clipboard -t TARGETS -o    print available MIME types
-#   xclip -selection clipboard [-t MIME] -o     print contents (image -> PNG)
-#   xclip -selection clipboard [-t text/*] -i   set the Mac clipboard (text)
-# The primary selection does not exist here and fails, as do image writes:
-# there is no image-aware pbcopy to hand them to.
-#
-# Env:
-#   PASTEIMG_HOST   ssh host/alias of the Mac (default: macbook)
-#
-# Exit codes: 0 ok, 1 nothing to serve / unsupported request.
 set -euo pipefail
 
 mac="${PASTEIMG_HOST:-macbook}"

@@ -1,10 +1,3 @@
-# omnipresent (git.harivan.sh/harivansh-afk/omnipresent): its own module runs the stack as the owner
-# (omnipresent-harnessd, -livekit, -core, -voice; -env builds the Python environment). Deploy a change with
-# `nix flake update omnipresent`. This file adds the keys and makes it reachable from the phone over the tailnet:
-#   https://spark.<tailnet>:8780 -> 127.0.0.1:8780  the conductor's token endpoint
-#   https://spark.<tailnet>:7443 -> 127.0.0.1:7880  LiveKit signalling (wss)
-#   https://spark.<tailnet>:8790 -> 127.0.0.1:8790  the live dashboard (`conductor dash`), read-only
-#   UDP 7882 on tailscale0                           LiveKit media
 {
   config,
   inputs,
@@ -14,7 +7,6 @@
 let
   tailscale = "${config.services.tailscale.package}/bin/tailscale";
   domain = "omni.harivan.sh";
-  # One unit, applied in order: concurrent `tailscale serve` calls fail on the config's etag.
   routes = [
     {
       port = 8780;
@@ -37,7 +29,6 @@ in
     enable = true;
     user = username;
     environmentFile = config.sops.secrets."omnipresent.env".path;
-    # The desktop's Chromium (services/desktop.nix): agents may drive it, signed in as the owner.
     browserCdpPort = 19222;
     browserStartCommand = "systemctl --user start chromium.service";
     workspaceRemote = "git@localhost:harivansh-afk/omni-workspace.git";

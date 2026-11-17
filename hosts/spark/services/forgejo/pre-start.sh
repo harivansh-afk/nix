@@ -2,7 +2,6 @@
 
 set -euo pipefail
 
-# shellcheck disable=SC1090
 . "$GITHUB_TOKEN_FILE"
 printf 'https://oauth2:%s@github.com\n' "$GITHUB_TOKEN" >"$GIT_CREDENTIAL_FILE"
 chmod 600 "$GIT_CREDENTIAL_FILE"
@@ -24,7 +23,6 @@ config=/var/lib/forgejo/custom/conf/app.ini
 
 credential_value() {
   set -a
-  # shellcheck disable=SC1090
   . "$CREDENTIALS_DIRECTORY/$1"
   set +a
   printenv "$2"

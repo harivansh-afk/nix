@@ -135,7 +135,6 @@ pkgs.writeShellScript "user-config-${name}" ''
 
   target="${homeDirectory}/.codex/config.toml"
   source="${codexConfigSource}"
-  # Reseed codex's writable config only when its nix source changes.
   if [ -L "$target" ] || [ "$(${readXattr} || true)" != "$source" ]; then
     tmp="$target.seed-tmp"
     rm -f "$target" "$tmp"

@@ -1,27 +1,3 @@
-// sketchybar-feed: one long-lived process that pushes every dynamic value in
-// the bar (workspace tabs, cpu/mem, volume, battery, clock, display watchdog)
-// straight into sketchybar over its mach port. It replaces the per-item
-// `script=` / `update_freq=` plugins: nothing here forks a shell, and the
-// child processes are one aerospace event subscription and background
-// window-list queries on workspace/app events.
-//
-// Sources, all push-based system APIs:
-//   volume    CoreAudio property listeners on the default output device
-//   battery   IOKit power-source notification
-//   displays  CoreGraphics reconfiguration callback (reloads the rc, which
-//             re-measures the notch height, when the display set changes)
-//   spaces    aerospace's event subscription plus
-//             NSWorkspace app activate/launch/terminate notifications
-//   clock     one timer aligned to the minute
-//   cpu/mem   host_processor_info deltas and kern.memorystatus_level, 5s
-//
-// Signals: SIGUSR1 = the rc finished (re)loading, re-read the theme and push
-// everything; SIGUSR2 = refresh occupancy (for older AeroSpace configs).
-//
-// CLI mode (`sketchybar-feed volume-event`) is the volume item's mouse
-// script: it sets the device volume/mute via CoreAudio and exits; the daemon's
-// listener renders the result.
-
 #import <AppKit/AppKit.h>
 #import <AudioToolbox/AudioServices.h>
 #import <CoreAudio/CoreAudio.h>
@@ -38,10 +14,6 @@
 #import <sys/sysctl.h>
 #import <unistd.h>
 
-// ---------------------------------------------------------------- mach ---
-
-// Wire format is sketchybar's own CLI encoding: argv joined by NUL, double NUL
-// at the end, sent as an out-of-line descriptor to "git.felix.sketchybar".
 struct mach_message {
   mach_msg_header_t header;
   mach_msg_size_t msgh_descriptor_count;
@@ -63,8 +35,6 @@ static mach_port_t sb_lookup(void) {
   return port;
 }
 
-// Returns sketchybar's response (may be empty), or nil when the daemon is
-// not reachable. Always awaits the reply so the daemon paces us.
 static NSString *sb_send(NSArray<NSString *> *argv) {
   if (g_sb_port == MACH_PORT_NULL) g_sb_port = sb_lookup();
   if (g_sb_port == MACH_PORT_NULL) return nil;
@@ -105,7 +75,6 @@ static NSString *sb_send(NSArray<NSString *> *argv) {
       rsp = @"";
     }
   } else {
-    // Send right went stale (sketchybar restarted): drop it, re-lookup next time.
     mach_port_deallocate(mach_task_self(), g_sb_port);
     g_sb_port = MACH_PORT_NULL;
   }
@@ -115,8 +84,6 @@ static NSString *sb_send(NSArray<NSString *> *argv) {
 }
 
 static void sb(NSArray<NSString *> *argv) { (void)sb_send(argv); }
-
-// --------------------------------------------------------------- theme ---
 
 static NSMutableDictionary<NSString *, NSString *> *g_theme;
 
@@ -134,8 +101,6 @@ static void theme_load(void) {
 }
 
 static NSString *color(NSString *key) { return g_theme[key] ?: @"0xffffffff"; }
-
-// --------------------------------------------------------------- clock ---
 
 static void clock_push(void) {
   time_t now = time(NULL);
@@ -155,8 +120,6 @@ static void clock_start(void) {
   CFRunLoopAddTimer(CFRunLoopGetMain(), t, kCFRunLoopCommonModes);
   clock_push();
 }
-
-// ------------------------------------------------------------- battery ---
 
 static void battery_push(void) {
   CFTypeRef info = IOPSCopyPowerSourcesInfo();
@@ -185,8 +148,6 @@ static void battery_start(void) {
   if (src) CFRunLoopAddSource(CFRunLoopGetMain(), src, kCFRunLoopCommonModes);
   battery_push();
 }
-
-// -------------------------------------------------------------- volume ---
 
 static AudioObjectID g_out_dev = kAudioObjectUnknown;
 
@@ -248,8 +209,6 @@ static void volume_start(void) {
   volume_attach();
 }
 
-// Mouse handler for the volume item, run as a short-lived CLI process by
-// sketchybar (SENDER / SCROLL_DELTA in the environment, like any plugin).
 static int volume_event(void) {
   AudioObjectID dev = default_output();
   if (dev == kAudioObjectUnknown) return 1;
@@ -269,8 +228,6 @@ static int volume_event(void) {
   }
   return 0;
 }
-
-// --------------------------------------------------------------- stats ---
 
 static uint64_t g_cpu_prev_busy, g_cpu_prev_total;
 
@@ -301,16 +258,11 @@ static void stats_push(void) {
 }
 
 static void stats_start(void) {
-  stats_push(); // primes the counters
+  stats_push();
   CFRunLoopTimerRef t = CFRunLoopTimerCreateWithHandler(NULL, CFAbsoluteTimeGetCurrent() + 1, 5, 0, 0, ^(CFRunLoopTimerRef _) { stats_push(); });
   CFRunLoopAddTimer(CFRunLoopGetMain(), t, kCFRunLoopCommonModes);
 }
 
-// ------------------------------------------------------------ displays ---
-
-// The rc measures the notch height and per-display edge spacers at load
-// time and sketchybar fires no event for a resolution change, so the display
-// set is stamped at each load and the rc reloaded when it drifts.
 static NSString *g_display_stamp;
 
 static void displays_check(void) {
@@ -324,7 +276,6 @@ static void displays_check(void) {
   }
 }
 
-// Called twice per change (begin, then end); act on the end callback only.
 static void displays_changed(CGDirectDisplayID d, CGDisplayChangeSummaryFlags flags, void *ctx) {
   if (flags & kCGDisplayBeginConfigurationFlag) return;
   dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC), dispatch_get_main_queue(), ^{ displays_check(); });
@@ -335,9 +286,7 @@ static void displays_start(void) {
   displays_check();
 }
 
-// -------------------------------------------------------------- spaces ---
-
-static NSString *g_aerospace; // resolved once from PATH
+static NSString *g_aerospace;
 static NSString *g_focused_workspace;
 static NSSet<NSString *> *g_occupied_workspaces;
 static NSTask *g_spaces_subscription;
@@ -488,8 +437,6 @@ static void spaces_start(void) {
   spaces_schedule();
 }
 
-// ---------------------------------------------------------------- main ---
-
 static void push_all(void) {
   theme_load();
   clock_push();
@@ -505,7 +452,6 @@ static void on_signal(int sig, dispatch_block_t handler) {
   dispatch_source_t s = dispatch_source_create(DISPATCH_SOURCE_TYPE_SIGNAL, sig, 0, dispatch_get_main_queue());
   dispatch_source_set_event_handler(s, handler);
   dispatch_resume(s);
-  // keep the source alive for the process lifetime
   static NSMutableArray *keep;
   if (!keep) keep = [NSMutableArray array];
   [keep addObject:s];
@@ -515,7 +461,6 @@ int main(int argc, char **argv) {
   @autoreleasepool {
     if (argc > 1 && strcmp(argv[1], "volume-event") == 0) return volume_event();
 
-    // sketchybar and this agent start together at login; wait for its port.
     while ((g_sb_port = sb_lookup()) == MACH_PORT_NULL) usleep(500 * 1000);
 
     theme_load();

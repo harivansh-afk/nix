@@ -1,0 +1,8 @@
+id: no-comments-nix
+language: nix
+severity: error
+message: Comments are banned in this repo. Put the why in the commit message or AGENTS.md.
+rule:
+  kind: comment
+ignores:
+  - "secrets/**"

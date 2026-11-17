@@ -21,7 +21,7 @@ sops-nix with age keys derived from each host's ed25519 SSH key (`admin_macbook`
 
 ## Conventions
 
-- No comments in `.nix` files.
+- No comments in any file. The `ast-grep` and `no-comments` flake checks enforce it; only shebangs and preprocessor lines pass.
 - `just switch` rebuilds the macbook, `just switch-spark` rebuilds spark, `just fmt` formats.
 - PRs go to Forgejo (`origin`, git.harivan.sh), never GitHub; `github` is a push mirror. Create them with `tea pr create --login harivan --repo harivansh-afk/nix --base main --head <branch>`, passing multiline bodies as real text, and check the rendered body afterwards.
 - Share package definitions across hosts; only macOS GUI integrations are Darwin-only.

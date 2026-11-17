@@ -1,5 +1,3 @@
-// Prints the largest NSScreen.safeAreaInsets.top (the notch strip height, in
-// points) across all screens, or 0 when no screen has one.
 #import <AppKit/AppKit.h>
 int main(void) {
   @autoreleasepool {

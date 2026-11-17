@@ -1,5 +1,3 @@
-# gh config, seed-copied to ~/.config/gh/config.yml on each activation
-# (gh rewrites its config at runtime, so it cannot be a read-only symlink).
 git_protocol: https
 prompt: enabled
 prefer_editor_prompt: disabled

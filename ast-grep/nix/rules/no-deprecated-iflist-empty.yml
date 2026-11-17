@@ -17,12 +17,7 @@ note: |
   `prefer-or-default-over-has-attr-guard` owns with the better `s.k or [ ]`.
 rule:
   any:
-    # Empty `else`: any non-empty `then` branch, except the `s ? k` / `s.k`
-    # guard shape that `prefer-or-default-over-has-attr-guard` rewrites to
-    # `s.k or [ ]`.
     - all:
         - pattern: if $COND then $THEN else [ ]
         - not: { pattern: "if $S ? $K then $S.$K else [ ]" }
-    # Empty `then`: any `else` branch. An empty-list `then` can never be the
-    # `s.k` attr access the guard rule keys on, so there is nothing to carve out.
     - pattern: if $COND then [ ] else $ELSE

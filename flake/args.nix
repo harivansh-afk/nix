@@ -47,7 +47,6 @@ let
       inherit system;
       config.allowUnfree = true;
       overlays = [
-        # Packages from private flake inputs that plain `pkgs` consumers need.
         (final: _prev: {
           agent-browser = final.callPackage ../pkgs/agent-browser { src = inputs.agent-browser; };
         })

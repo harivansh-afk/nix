@@ -116,7 +116,6 @@ bindkey '^?' backward-delete-char
 bindkey '^k' forward-char
 bindkey '^j' backward-char
 
-# On an empty line these keys open nvim; otherwise they keep their usual widget.
 typeset -gA _nvim_cmd=('^N' 'nv' '^P' 'nvim +PR' '^G' 'nvim +Git +only' '^F' "nvim +'Pick files'")
 typeset -gA _nvim_fallback=('^N' down-line-or-history '^G' list-expand '^F' self-insert)
 _nvim_key() {

@@ -24,7 +24,6 @@ print() {
 }
 clear() { command clear && _pure_skip_spacer=1 }
 
-# A dirty tree drops the marker and colours the branch, arrows and prompt symbol instead.
 prompt_pure_precustom() {
   prompt_pure_set_colors
   [[ -n $prompt_pure_git_dirty ]] || return

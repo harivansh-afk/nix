@@ -46,7 +46,6 @@
 
     sharefs.url = "git+https://git.harivan.sh/harivansh-afk/sharefs.git?ref=main";
 
-    # Its own nixpkgs: the kernel's node_modules hash is tied to the bun that installed them.
     omnipresent.url = "git+https://git.harivan.sh/harivansh-afk/omnipresent.git?ref=main";
 
     mixbridge-web = {

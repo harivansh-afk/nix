@@ -7,6 +7,5 @@
 *~
 rpi/
 
-# Leftover local state from earlier plugin managers.
 lazy-lock.json
 nvim-pack-lock.json

@@ -1,26 +1,4 @@
 #!/usr/bin/env bash
-# wl-paste - clipboard shim for headless spark. Answers the wl-clipboard CLI
-# by proxying to the Mac's pasteboard over SSH: one call, no daemon,
-# ControlMaster makes repeats cheap. The xclip shim delegates its image
-# fetches here, so this file is the one place the extraction lives.
-#
-# Why: Claude Code and other TUIs read clipboard images by running
-# `wl-paste -l` then `wl-paste --type image/png` on the machine they run on.
-# On spark that clipboard does not exist; the one that matters is the Mac's.
-# With this shim first in PATH those calls come back with the Mac clipboard,
-# so image paste works inside remote sessions. Delete it once Claude Code
-# and the terminal both speak the Kitty clipboard protocol (OSC 5522),
-# which asks permission where this shim bypasses it.
-#
-# Supported calls (the shapes Claude Code uses, plus text for convenience):
-#   wl-paste -l | --list-types             print available MIME types
-#   wl-paste [--no-newline] [-t|--type MIME]   print contents (image -> PNG)
-# The primary selection does not exist here and fails.
-#
-# Env:
-#   PASTEIMG_HOST   ssh host/alias of the Mac (default: macbook)
-#
-# Exit codes: 0 ok, 1 nothing to serve / unsupported request.
 set -euo pipefail
 
 mac="${PASTEIMG_HOST:-macbook}"
@@ -42,10 +20,6 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-# One remote call reports what the pasteboard can serve. `clipboard info`
-# lists flavor classes without transferring data, so listing stays cheap;
-# every image flavor is advertised as image/png because the fetch path
-# (pasteimg) always converts to PNG.
 if $list; then
   out="$(ssh -n -o BatchMode=yes -o ConnectTimeout=8 "$mac" '
     osascript -e "clipboard info" 2>/dev/null | grep -qE "PNGf|TIFF|JPEG|GIF" && echo image/png
@@ -57,12 +31,6 @@ if $list; then
   exit 0
 fi
 
-# Image extraction, run in the Mac shell. Streams PNG bytes to stdout;
-# diagnostics go to stderr. pngpaste first (fast, writes PNG directly),
-# then osascript across common clipboard flavors with sips converting
-# the result to PNG. Single quotes are the point: every expansion below
-# belongs to the remote shell.
-# shellcheck disable=SC2016
 remote='
 set -u
 out="$(mktemp -t clipimg).png"

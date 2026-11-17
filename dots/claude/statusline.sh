@@ -41,20 +41,13 @@ delta_info=""
 if [[ ! -f ~/.claude/statusline.conf ]]; then
   mkdir -p ~/.claude
   cat >~/.claude/statusline.conf <<'EOF'
-# Autocompact setting - sync with Claude Code's /config
 autocompact=true
-
-# Token display format
 token_detail=true
-
-# Show token delta since last refresh (adds file I/O on every refresh)
-# Disable if you don't need it to reduce overhead
 show_delta=true
 EOF
 fi
 
 if [[ -f ~/.claude/statusline.conf ]]; then
-  # shellcheck source=/dev/null
   source ~/.claude/statusline.conf
   if [[ "$autocompact" == "false" ]]; then
     autocompact_enabled=false

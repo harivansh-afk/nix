@@ -7,7 +7,7 @@
 | `macbook` | nix-darwin, aarch64-darwin | Workstation: Homebrew casks, Determinate Nix |
 | `spark` | NixOS, aarch64-linux | DGX Spark server: disko, sops-nix, Caddy, cloudflared, Tailscale |
 
-Host records live in `flake/args.nix`; `flake/hosts.nix` builds darwin and `flake/nixos.nix` builds NixOS.
+Host records live in `flake/args.nix`; `flake/hosts.nix` builds darwin and `flake/nixos.nix` builds NixOS. Both declare the overlay for private-input packages because NixOS builds its own `pkgs`.
 
 Spark web traffic: Cloudflare edge → cloudflared → Caddy on `127.0.0.1:80` → services on loopback ports. No public web ports.
 
@@ -21,7 +21,7 @@ sops-nix with age keys derived from each host's ed25519 SSH key (`admin_macbook`
 
 ## Conventions
 
-- No comments in any file. The `ast-grep` and `no-comments` flake checks enforce it; only shebangs and preprocessor lines pass.
+- No comments in any file; the `ast-grep` and `no-comments` flake checks reject them (shebangs and preprocessor lines pass). A line's why goes in its commit message, so read `git log -L` before changing it; how a component's parts fit goes in `docs/<component>.md`; facts every agent needs go here. Update a doc only when a change makes it wrong.
 - `just switch` rebuilds the macbook, `just switch-spark` rebuilds spark, `just fmt` formats.
 - PRs go to Forgejo (`origin`, git.harivan.sh), never GitHub; `github` is a push mirror. Create them with `tea pr create --login harivan --repo harivansh-afk/nix --base main --head <branch>`, passing multiline bodies as real text, and check the rendered body afterwards.
 - Share package definitions across hosts; only macOS GUI integrations are Darwin-only.
@@ -68,11 +68,13 @@ The cozybox palette is `lib/palette.json`; `lib/theme.nix` renders it for ghostt
 - `spark` / `macbook` connectors (`lib/remotes.nix`, `pkgs/scripts/bin/remote.sh`) open `mosh <host>`; `--ssh` forces ssh. Host settings live in `dots/ssh/config`. Portable scripts are flake packages for hosts outside this flake.
 - Rex (`/Applications/Rex Beta.app`) is installed by hand. `dots/rex/init.lua` holds the keymap (`rex config reload` applies it). Activation rewrites `com.superlogical.rex` defaults from `rexDefaults` and `theme.renderRex`, so settings changed in Rex's UI last until the next switch.
 - Activation builds `Berkeley Mono Nonicons` (`pkgs/scripts/lib/rex-font.py`) because Rex has a single font. Never use nerd-font-patcher; its glyph names collide with Berkeley Mono's.
+- On spark, `dots/bin/wl-paste` and `dots/bin/xclip` answer clipboard reads from the Mac's pasteboard over SSH, so image paste works in remote Claude Code sessions. Delete them once Claude Code and the terminal speak the Kitty clipboard protocol (OSC 5522).
 - Spark runs the Rex login server (`hosts/spark/services/rex.nix`), published by Tailscale Serve at `https://spark.<tailnet>.ts.net:7297` and mapping the owner's Tailscale login to `rathi`. The Mac app adds it under Remote Hosts. A session lives on one server, and its tabs and splits open on that server. `init.lua` is linked on both hosts because each server loads its own keymap.
 
 ## Key dependencies
 
 - `dgx-spark`: never set `inputs.nixpkgs.follows`; it pins nixpkgs for the NVIDIA kernel. Podman is the only container runtime (Docker API at `/run/podman/podman.sock`); never enable `virtualisation.docker`.
+- `omnipresent`: never set `inputs.nixpkgs.follows`; its kernel's `node_modules` hash is tied to the bun in its own nixpkgs.
 - `determinate`: owns Nix and `nix.conf`; on darwin use `determinateNix.customSettings`.
 - `neovim-nightly`: use its package, never its overlay (the overlay rebuilds every plugin and grammar).
 
@@ -89,7 +91,7 @@ Add `modules/users/accounts/<name>.nix` (`sshKeys`, `shell`, `extraGroups`) and 
 
 ## CI deploys
 
-`deploy.yml` runs `spark-deploy`, which takes no arguments and runs `nixos-rebuild switch` as its own root unit on a fresh clone of `main` from Forgejo's on-disk repository, so no job can deploy a tree of its choosing. `forgejo-runner-spark` is `restartIfChanged = false`, because restarting the runner mid-deploy kills the switch. A changed runner unit applies only after a manual restart. A red X that raced a deploy may be a cancelled sibling job, so check the runner journal.
+`deploy.yml` runs `spark-deploy`, which takes no arguments and runs `nixos-rebuild switch` as its own root unit on a fresh clone of `main` from Forgejo's on-disk repository, so no job can deploy a tree of its choosing. `forgejo-runner-spark` is `restartIfChanged = false`, because restarting the runner mid-deploy kills the switch. A changed runner unit applies only after a manual restart. The flake check's 60-minute timeout is a hang guard: it shares the runner with the 40-minute deploy. A red X that raced a deploy may be a cancelled sibling job, so check the runner journal.
 
 ## Forgejo mirroring
 

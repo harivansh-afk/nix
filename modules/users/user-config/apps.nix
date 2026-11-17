@@ -39,7 +39,7 @@
     usesPaneGlass = false;
     showsPaneHeaders = true;
     balancesSplitsOnCreation = true;
-    sidebarPosition = "above";
+    sidebarPosition = "left";
     tabStyle = "vertical";
     tabsFillAvailableSpace = true;
     tabIconTintMode = "off";

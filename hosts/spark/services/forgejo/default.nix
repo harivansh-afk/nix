@@ -53,19 +53,15 @@ let
     lts = false;
   }) { };
   forgejoPackage = pierreForgejo.mkForgejoWithPierre (
-    forgejoPackageBase.overrideAttrs (old: {
+    forgejoPackageBase.overrideAttrs {
       patches = [
         "${pkgs.path}/pkgs/by-name/fo/forgejo/static-root-path.patch"
       ];
 
-      preCheck = (old.preCheck or "") + ''
-        substituteInPlace modules/git/hook_generate.go \
-          --replace-fail "#!/usr/bin/env" "#!${pkgs.lib.getExe' pkgs.coreutils "env"}"
-      '';
       checkFlags = [
         "-skip=^TestPassword$|^TestCaptcha$|^TestDNSUpdate$|^TestMigrateRepository$|^TestMigrateWhiteBlocklist$|^TestURLAllowedSSH/Pushmirror_URL$|^TestBleveDeleteIssue$|^TestActivityPubMatchesList$"
       ];
-    })
+    }
   );
 in
 {

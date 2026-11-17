@@ -1178,11 +1178,11 @@
         "nixpkgs": "nixpkgs_7"
       },
       "locked": {
-        "lastModified": 1794902076,
-        "narHash": "sha256-kApf2hOv8k78PJqf3N3nZh+hsbES20hnXsqqvpP200o=",
+        "lastModified": 1794941807,
+        "narHash": "sha256-KRcL7W9mvQo8ZweThgOtJaQnS4ps8OK5ZOOArpKcXhw=",
         "ref": "main",
-        "rev": "9ab8d2a800d43666ba4bdd650fd4601a4bb582d8",
-        "revCount": 247,
+        "rev": "a83a016682eebd6ca7b9847a5d97a52daa118e65",
+        "revCount": 283,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/omnipresent.git"
       },

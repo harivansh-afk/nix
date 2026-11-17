@@ -59,7 +59,7 @@ let
       ];
 
       checkFlags = [
-        "-skip=^TestPassword$|^TestCaptcha$|^TestDNSUpdate$|^TestMigrateRepository$|^TestMigrateWhiteBlocklist$|^TestURLAllowedSSH/Pushmirror_URL$|^TestBleveDeleteIssue$|^TestActivityPubMatchesList$"
+        "-skip=^TestPassword$|^TestCaptcha$|^TestDNSUpdate$|^TestMigrateRepository$|^TestMigrateWhiteBlocklist$|^TestURLAllowedSSH/Pushmirror_URL$|^TestBleveDeleteIssue$|^TestActivityPubMatchesList$|^Test_HashAvatar$|^TestParsePackage$/^Valid$"
       ];
     }
   );

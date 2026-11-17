@@ -85,12 +85,5 @@
       ];
     };
 
-    "hermes.env" = {
-      format = "dotenv";
-      restartUnits = [
-        "hermes-agent.service"
-        "hermes-backend.service"
-      ];
-    };
   };
 }

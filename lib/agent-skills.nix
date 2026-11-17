@@ -1,5 +1,5 @@
 # Skills that every agent harness gets: linked into ~/.agents/skills and
-# ~/.claude/skills, and handed to Hermes as an external skills dir.
+# ~/.claude/skills.
 {
   pkgs,
   mattpocock ? null,

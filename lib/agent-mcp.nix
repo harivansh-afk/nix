@@ -1,6 +1,5 @@
 # MCP servers that every agent harness on spark gets: Claude Code renders
-# them into ~/.claude.json, Hermes into its config.yaml. Timeouts are seconds;
-# each harness converts to its own unit.
+# them into ~/.claude.json. Timeouts are seconds.
 { pkgs }:
 {
   packages = [

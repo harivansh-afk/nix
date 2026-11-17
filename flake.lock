@@ -1330,11 +1330,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792390526,
-        "narHash": "sha256-ZpZqvoa4ZzbFTZmFWwW/Qfr1KD0yx61DYF34342lz4k=",
+        "lastModified": 1794877680,
+        "narHash": "sha256-YZY3u2gU6TzhAfLFkdKYw/GzGAPtGGHYAA/URKVUYrI=",
         "ref": "main",
-        "rev": "ba3d069bcbd068a7ff9601a3f5f29c27fac95155",
-        "revCount": 25,
+        "rev": "a6042ec86690ec71c051914af97ee187c713777c",
+        "revCount": 27,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/roomcast.git"
       },

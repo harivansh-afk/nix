@@ -79,7 +79,7 @@
     };
 
     dgx-spark = {
-      url = "github:graham33/nixos-dgx-spark";
+      url = "github:graham33/nixos-dgx-spark/c215c456a3b0654fb5dc3dd0b5d6b0cc47fc3b30";
     };
 
     pierrejo = {

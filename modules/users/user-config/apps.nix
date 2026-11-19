@@ -31,7 +31,7 @@
     lightThemeID = (theme.renderRex "light").id;
     appearance = "system";
     interfaceStyle = "system";
-    paneDensity = "compact";
+    paneDensity = "comfortable";
     animationStyle = "snappy";
     cursorShadersEnabled = true;
     cursorShader = "warp";

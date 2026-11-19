@@ -34,6 +34,11 @@ in
     workspaceRemote = "git@localhost:harivansh-afk/omni-workspace.git";
   };
 
+  systemd.services.omnipresent-core.environment = {
+    OMNI_APNS_KEY = "/home/${username}/.secrets/touchtips/AuthKey_9JTP4D8B98.p8";
+    OMNI_APNS_TEAM = "G2U3K77U5W";
+  };
+
   networking.firewall.interfaces.tailscale0.allowedUDPPorts = [
     443
     7882

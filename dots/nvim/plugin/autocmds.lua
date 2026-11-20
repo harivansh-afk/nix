@@ -15,7 +15,14 @@ api.nvim_create_autocmd("TermOpen", {
   callback = function() vim.cmd.startinsert() end,
 })
 
-local dir_icons = api.nvim_create_namespace "dir.icons"
+api.nvim_create_autocmd("WinResized", {
+  group = augroup,
+  callback = function()
+    if vim.o.cmdheight ~= 1 then vim.o.cmdheight = 1 end
+  end,
+})
+
+local dir_icons =api.nvim_create_namespace "dir.icons"
 api.nvim_create_autocmd("User", {
   group = augroup,
   pattern = "DirReadPost",

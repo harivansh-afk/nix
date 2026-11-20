@@ -44,11 +44,6 @@
     "rev": "8b47db616ef658b8fc27e61db2896aa2f40134de",
     "url": "https://github.com/kylechui/nvim-surround"
   },
-  "nvim-treesitter-textobjects": {
-    "hash": "sha256-5f2oiz/c/7/cIj+AUaFuB+sm7ZAfwoQeY4r3+XfUDrI=",
-    "rev": "5c7b0263797dfd1bd6202f2b219f3b53a80b2187",
-    "url": "https://github.com/nvim-treesitter/nvim-treesitter-textobjects"
-  },
   "nvim-web-devicons": {
     "hash": "sha256-qnHuXUWOV/zXDRO6fTHL41x2wt9lUZbrmVh0IgPyWFc=",
     "rev": "ec309a0eaff6ea967e58c275996155ab5c16938d",
@@ -58,11 +53,6 @@
     "hash": "sha256-Ayjavu6Z4r+rl1+VLb1YJCVYxEhBPH9A03YIAzfC5u8=",
     "rev": "5e331d9931237ec5556e34736d68bb69092393b9",
     "url": "https://git.harivan.sh/harivansh-afk/pr.nvim"
-  },
-  "vim-eunuch": {
-    "hash": "sha256-Rs/ABLIT3ZvV8pJLZZtIrQEgtU9u3LSYgvBJOySYdRo=",
-    "rev": "929490937745cd96130d3e7948f762f0aa403314",
-    "url": "https://github.com/tpope/vim-eunuch"
   },
   "vim-fugitive": {
     "hash": "sha256-GK/bC8qc72Hw9kJP3pueYIPMNmwfNhiVRUbfI9AiRYg=",

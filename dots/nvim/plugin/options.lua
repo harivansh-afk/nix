@@ -15,18 +15,13 @@ o.scrolloff = 8
 o.signcolumn = "number"
 o.wrap = false
 o.laststatus = 3
-o.cmdheight = 0
 
 o.splitbelow = true
 o.splitright = true
 
 o.swapfile = false
 o.undofile = true
-
-o.foldlevel = 99
-o.foldmethod = "expr"
-o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
-o.foldtext = ""
+o.cmdheight = 1
 
 o.updatetime = 250
 o.clipboard = "unnamedplus"
@@ -55,4 +50,3 @@ if not has_clip_tool then
 end
 
 vim.cmd.packadd "nohlsearch"
-require("vim._core.ui2").enable()

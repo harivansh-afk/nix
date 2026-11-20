@@ -10,8 +10,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
 
     buf("n", "gd", vim.lsp.buf.definition)
     buf("n", "gD", vim.lsp.buf.declaration)
-    buf("n", "gi", vim.lsp.buf.implementation)
-    buf("n", "gr", vim.lsp.buf.references)
     buf("n", "<leader>rn", vim.lsp.buf.rename)
     buf({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action)
     buf("n", "<leader>lf", function() vim.lsp.buf.format { async = true } end)

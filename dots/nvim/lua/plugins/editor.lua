@@ -1,5 +1,4 @@
 return {
-  { "vim-eunuch" },
   {
     "mini.pairs",
     event = "InsertEnter",
@@ -12,10 +11,6 @@ return {
         if pumvisible() then return "<c-n>" end
         return vim.bo.omnifunc ~= "" and "<c-x><c-o>" or "<c-n>"
       end, { expr = true, desc = "complete next" })
-      vim.keymap.set("i", "<c-p>", function() return pumvisible() and "<c-p>" or "" end, {
-        expr = true,
-        desc = "complete previous",
-      })
       vim.keymap.set("i", "<c-j>", function() return pumvisible() and "<c-n>" or "<c-j>" end, {
         expr = true,
         desc = "complete next",
@@ -24,9 +19,6 @@ return {
         expr = true,
         desc = "complete previous",
       })
-      vim.keymap.set("i", "<c-t>", "<c-x><c-f>", { desc = "file completion" })
-      vim.keymap.set("i", "<c-;>", "<c-x><c-v>", { desc = "vim command completion" })
-      vim.keymap.set("i", "<c-r>", "<c-x><c-r>", { desc = "register completion" })
       vim.keymap.set("i", "<cr>", function()
         if pumvisible() then return vim.keycode(vim.fn.complete_info().selected == -1 and "<c-n><c-y>" or "<c-y>") end
         return MiniPairs.cr()

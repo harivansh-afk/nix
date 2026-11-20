@@ -33,7 +33,7 @@ local function check()
   } do
     require("lz.n").trigger_load(name)
   end
-  for _, command in ipairs { "PR", "Git", "Pick", "ThemeSync", "Rename", "Delete", "Chmod" } do
+  for _, command in ipairs { "PR", "Git", "Pick", "ThemeSync" } do
     assert(vim.fn.exists(":" .. command) == 2, command .. " missing")
   end
   local pr_source = debug.getinfo(require("pr").setup, "S").source
@@ -64,7 +64,6 @@ local function check()
     assert(vim.treesitter.highlighter.active[buf], lang .. " did not highlight")
     vim.api.nvim_buf_delete(buf, { force = true })
   end
-  assert(require("nvim-treesitter").indentexpr, "Treesitter indentation missing")
   assert(MiniPick and MiniPairs, "picker or pairs missing")
   for _, mode in ipairs { "dark", "light", "dark" } do
     require("theme").apply(mode)
@@ -75,7 +74,7 @@ local function check()
 
   assert(#vim.fn.getcompletion("mini.pick", "help") > 0, "plugin help tags missing")
   assert(#errors == 0, table.concat(errors, "\n"))
-  print "Neovim smoke passed: keymaps, lazy loading, commands, indentation, 11 parser/query pairs"
+  print "Neovim smoke passed: keymaps, lazy loading, commands, 11 parser/query pairs"
 end
 vim.defer_fn(function()
   local ok, err = xpcall(check, debug.traceback)

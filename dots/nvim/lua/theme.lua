@@ -42,6 +42,16 @@ function M.setup()
 
   ensure_server_socket()
 
+  vim.api.nvim_create_autocmd("ColorScheme", {
+    group = group,
+    callback = function()
+      local bar = vim.api.nvim_get_hl(0, { name = "TabLine", link = false })
+      local normal = vim.api.nvim_get_hl(0, { name = "Normal", link = false })
+      vim.api.nvim_set_hl(0, "StatusLine", { fg = normal.fg, bg = bar.bg })
+      vim.api.nvim_set_hl(0, "StatusLineNC", { fg = bar.fg, bg = bar.bg })
+    end,
+  })
+
   vim.api.nvim_create_autocmd({ "VimEnter", "FocusGained" }, {
     group = group,
     callback = function() M.apply() end,

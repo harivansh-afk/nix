@@ -1,6 +1,8 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = ","
 
+require("vim._core.ui2").enable {}
+
 vim.filetype.add { extension = { baml = "baml" } }
 
 do

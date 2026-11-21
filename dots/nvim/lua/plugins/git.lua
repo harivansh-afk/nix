@@ -10,6 +10,7 @@ return {
     after = function()
       require("gitsigns").setup {
         signcolumn = false,
+        numhl = true,
         signs_staged_enable = false,
       }
 

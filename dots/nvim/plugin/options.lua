@@ -23,6 +23,22 @@ o.swapfile = false
 o.undofile = true
 o.cmdheight = 1
 
+o.winborder = "rounded"
+o.pumborder = "rounded"
+o.pummaxwidth = 60
+o.smoothscroll = true
+o.scrolloffpad = 1
+o.cursorline = true
+o.cursorlineopt = "number"
+vim.opt.fillchars:append { eob = " ", fold = " " }
+vim.opt.diffopt:append "inline:word"
+vim.opt.shortmess:append "u"
+
+o.foldmethod = "expr"
+o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+o.foldtext = ""
+o.foldlevelstart = 99
+
 o.updatetime = 250
 o.clipboard = "unnamedplus"
 vim.opt.completeopt = { "menuone", "noselect", "noinsert", "fuzzy", "popup" }
@@ -50,3 +66,7 @@ if not has_clip_tool then
 end
 
 vim.cmd.packadd "nohlsearch"
+vim.cmd.packadd "nvim.undotree"
+vim.cmd.packadd "nvim.difftool"
+
+vim.diagnostic.config { virtual_lines = { current_line = true }, severity_sort = true }

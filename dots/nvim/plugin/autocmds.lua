@@ -15,14 +15,12 @@ api.nvim_create_autocmd("TermOpen", {
   callback = function() vim.cmd.startinsert() end,
 })
 
-api.nvim_create_autocmd("WinResized", {
+api.nvim_create_autocmd({ "TextYankPost", "TextPutPost" }, {
   group = augroup,
-  callback = function()
-    if vim.o.cmdheight ~= 1 then vim.o.cmdheight = 1 end
-  end,
+  callback = function() vim.hl.hl_op { higroup = "Visual", timeout = 150 } end,
 })
 
-local dir_icons =api.nvim_create_namespace "dir.icons"
+local dir_icons = api.nvim_create_namespace "dir.icons"
 api.nvim_create_autocmd("User", {
   group = augroup,
   pattern = "DirReadPost",

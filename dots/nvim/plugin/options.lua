@@ -23,8 +23,6 @@ o.swapfile = false
 o.undofile = true
 o.cmdheight = 1
 
-o.winborder = "rounded"
-o.pumborder = "rounded"
 o.pummaxwidth = 60
 o.smoothscroll = true
 o.scrolloffpad = 1

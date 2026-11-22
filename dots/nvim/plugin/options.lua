@@ -26,8 +26,6 @@ o.cmdheight = 1
 o.pummaxwidth = 60
 o.smoothscroll = true
 o.scrolloffpad = 1
-o.cursorline = true
-o.cursorlineopt = "number"
 vim.opt.fillchars:append { eob = " ", fold = " " }
 vim.opt.diffopt:append "inline:word"
 vim.opt.shortmess:append "u"

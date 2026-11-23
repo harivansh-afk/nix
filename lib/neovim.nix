@@ -20,7 +20,6 @@ let
   ) sources;
 
   parserNames = [
-    "baml"
     "bash"
     "comment"
     "css"
@@ -48,9 +47,7 @@ let
     "yaml"
   ];
 
-  grammarSet = pkgs.vimPlugins.nvim-treesitter-parsers // {
-    baml = pkgs.neovimUtils.grammarToPlugin (pkgs.callPackage ../pkgs/tree-sitter-baml { });
-  };
+  grammarSet = pkgs.vimPlugins.nvim-treesitter-parsers;
 
   sharedQueryNames = [
     "ecma"

@@ -17,7 +17,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
 })
 
 local servers = {
-  "baml",
   "bashls",
   "clangd",
   "cssls",

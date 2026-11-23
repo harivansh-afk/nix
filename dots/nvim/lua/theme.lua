@@ -49,6 +49,9 @@ function M.setup()
       local normal = vim.api.nvim_get_hl(0, { name = "Normal", link = false })
       vim.api.nvim_set_hl(0, "StatusLine", { fg = normal.fg, bg = bar.bg })
       vim.api.nvim_set_hl(0, "StatusLineNC", { fg = bar.fg, bg = bar.bg })
+      for name, link in pairs { Added = "DiagnosticOk", Removed = "DiagnosticError", Changed = "DiagnosticWarn" } do
+        vim.api.nvim_set_hl(0, name, { link = link })
+      end
     end,
   })
 

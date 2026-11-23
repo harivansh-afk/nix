@@ -36,12 +36,10 @@ local function check()
   for _, command in ipairs { "PR", "Git", "Pick", "ThemeSync" } do
     assert(vim.fn.exists(":" .. command) == 2, command .. " missing")
   end
-  local pr_source = debug.getinfo(require("pr").setup, "S").source
+  local pr_source = debug.getinfo(require("pr").list, "S").source
   assert(pr_source:find("/nix/store/", 1, true), "pr.nvim did not load from the pinned package")
-  assert(type(require("pr.gitstats").fugitive) == "function", "Fugitive stats integration missing")
-  assert(vim.fn.maparg("<C-p>", "n", false, true).desc == "pr: PR list", "PR shortcut missing")
-  assert(vim.fn.maparg("]c", "n", false, true).desc == "pr: next commit / diff jump", "PR next commit overridden")
-  assert(vim.fn.maparg("[c", "n", false, true).desc == "pr: prev commit / diff jump", "PR previous commit overridden")
+  assert(vim.fn.maparg("<C-p>", "n") == "<Cmd>PR<CR>", "PR shortcut missing")
+  assert(vim.fn.maparg("]c", "n") == "", "a pull request mapping leaked into every buffer")
   assert(#vim.fn.getcompletion("pr.nvim", "help") > 0, "pr.nvim help tags missing")
   for _, lang in ipairs {
     "bash",

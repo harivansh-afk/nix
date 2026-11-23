@@ -1,9 +1,5 @@
 return {
-  {
-    "pr.nvim",
-    priority = 0,
-    after = function() require("pr").setup { keymaps = true } end,
-  },
+  { "pr.nvim" },
   {
     "gitsigns.nvim",
     event = "BufReadPre",

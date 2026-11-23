@@ -3,8 +3,6 @@ vim.g.maplocalleader = ","
 
 require("vim._core.ui2").enable {}
 
-vim.filetype.add { extension = { baml = "baml" } }
-
 do
   local orig_notify = vim.notify
   vim.notify = function(msg, level, opts)

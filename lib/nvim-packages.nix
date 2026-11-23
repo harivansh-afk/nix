@@ -17,6 +17,4 @@
   typescript
   typescript-language-server
 ])
-++ [ (pkgs.callPackage ../pkgs/baml-cli { }) ]
-
 ++ lib.optionals (!pkgs.stdenv.isDarwin) [ pkgs.clang ]

@@ -41,7 +41,6 @@
         claude-proxy = inputs'.cc-proxy.packages.default;
         cbridge = inputs'.cc-proxy.packages.default;
         cc-proxy = inputs'.cc-proxy.packages.default;
-        baml-cli = pkgs.callPackage ../pkgs/baml-cli { };
         sharefs = inputs'.sharefs.packages.default;
         devin-codex = inputs'.devin-codex.packages.default;
         inherit (pkgs) btop;

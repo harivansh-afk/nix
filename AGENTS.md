@@ -29,7 +29,7 @@ sops-nix with age keys derived from each host's ed25519 SSH key (`admin_macbook`
 - No home-manager. `modules/users/user-config.nix` builds an activation script that symlinks `dots/` into the home directory. The owner's links point at the live checkout, so dotfile edits apply without a rebuild; other users get store copies.
 - Berkeley Mono and Ghostty (Homebrew cask) are installed out of band. Ghostty's terminfo is declared in `modules/common.nix`; never `tic` into `~/.terminfo`.
 - Neovim: one package in `lib/neovim.nix`. Plugin pins live in `dots/nvim/pack-sources.json`; bump one with `just nvim-update <plugin> [rev]`. No runtime plugin installs.
-- Claude and Codex are curl-installed and need nix-ld on NixOS. Devin's config is a mutable copy because Devin rewrites it.
+- Claude and Codex are curl-installed and need nix-ld on NixOS. Devin's and Droid's configs are mutable copies because each rewrites its own; Droid's custom models go through cc-proxy and codex-lb on spark.
 
 ## Worktrees
 

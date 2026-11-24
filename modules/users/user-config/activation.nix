@@ -145,6 +145,9 @@ pkgs.writeShellScript "user-config-${name}" ''
   fi
 
   install -m 600 "${dotsRoot}/devin/config.json" "${configHome}/devin/config.json"
+  ${lib.optionalString (!isDarwin) ''
+    install -D -m 600 "${dotsRoot}/droid/settings.json" "${homeDirectory}/.factory/settings.json"
+  ''}
 
   if [ -r /run/secrets/forgejo-token ] && harivanToken=$(cat /run/secrets/forgejo-token) && [ -n "$harivanToken" ]; then
     install -d -m 0700 "${configHome}/tea"

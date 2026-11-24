@@ -1,0 +1,44 @@
+{
+  "logoAnimation": "off",
+  "sessionDefaultSettings": {
+    "model": "custom:Opus-5.5-(cc-proxy)-0",
+    "reasoningEffort": "high",
+    "interactionMode": "spec",
+    "autonomyLevel": "off",
+    "specModeReasoningEffort": "low"
+  },
+  "customModels": [
+    {
+      "model": "claude-opus-5-5",
+      "displayName": "Opus 5.5 (cc-proxy)",
+      "baseUrl": "http://127.0.0.1:18473",
+      "apiKeyHelper": "jq -r '.access[\"api-keys\"][0]' ~/.local/state/claude-proxy/config.json",
+      "provider": "anthropic",
+      "maxOutputTokens": 64000
+    },
+    {
+      "model": "claude-fable-5-2",
+      "displayName": "Fable 5.2 (cc-proxy)",
+      "baseUrl": "http://127.0.0.1:18473",
+      "apiKeyHelper": "jq -r '.access[\"api-keys\"][0]' ~/.local/state/claude-proxy/config.json",
+      "provider": "anthropic",
+      "maxOutputTokens": 64000
+    },
+    {
+      "model": "gpt-6.2-sol",
+      "displayName": "GPT-6.2 Sol (codex-lb)",
+      "baseUrl": "http://127.0.0.1:18475/v1",
+      "apiKey": "codex-lb",
+      "provider": "openai",
+      "maxOutputTokens": 128000
+    },
+    {
+      "model": "gpt-6.2-astra",
+      "displayName": "GPT-6.2 Astra (codex-lb)",
+      "baseUrl": "http://127.0.0.1:18475/v1",
+      "apiKey": "codex-lb",
+      "provider": "openai",
+      "maxOutputTokens": 128000
+    }
+  ]
+}

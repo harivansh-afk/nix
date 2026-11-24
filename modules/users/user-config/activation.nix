@@ -202,7 +202,7 @@ pkgs.writeShellScript "user-config-${name}" ''
     mkSymlink "${sketchybarThemes.light}" "${theme.paths.sketchybarDir}/cozybox-light.sh"
     ln -sfn "$THEME_SKETCHYBAR_TARGET" "${theme.paths.sketchybarCurrentFile}"
 
-    for rex_bin in "/Applications/Rex Beta.app/Contents/Helpers/Rex Server."{rex,app}"/Contents/MacOS/rex"; do
+    for rex_bin in "/Applications/Rex.app/Contents/Helpers/Rex Server."{rex,app}"/Contents/MacOS/rex"; do
       if [ -x "$rex_bin" ]; then
         mkSymlink "$rex_bin" "${homeDirectory}/.local/bin/rex"
         break

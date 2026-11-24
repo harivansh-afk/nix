@@ -68,7 +68,7 @@ The cozybox palette is `lib/palette.json`; `lib/theme.nix` renders it for ghostt
 ## Remote sessions and Rex
 
 - `spark` / `macbook` connectors (`lib/remotes.nix`, `pkgs/scripts/bin/remote.sh`) open `mosh <host>`; `--ssh` forces ssh. Host settings live in `dots/ssh/config`. Portable scripts are flake packages for hosts outside this flake.
-- Rex (`/Applications/Rex Beta.app`) is installed by hand. `dots/rex/init.lua` holds the keymap (`rex config reload` applies it). Activation rewrites `com.superlogical.rex` defaults from `rexDefaults` and `theme.renderRex`, so settings changed in Rex's UI last until the next switch.
+- Rex (`/Applications/Rex.app`) is installed by hand. `dots/rex/init.lua` holds the keymap (`rex config reload` applies it). Activation rewrites `com.superlogical.rex` defaults from `rexDefaults` and `theme.renderRex`, so settings changed in Rex's UI last until the next switch.
 - Activation builds `Berkeley Mono Nonicons` (`pkgs/scripts/lib/rex-font.py`) because Rex has a single font. Never use nerd-font-patcher; its glyph names collide with Berkeley Mono's.
 - On spark, `dots/bin/wl-paste` and `dots/bin/xclip` answer clipboard reads from the Mac's pasteboard over SSH, so image paste works in remote Claude Code sessions. Delete them once Claude Code and the terminal speak the Kitty clipboard protocol (OSC 5522).
 - Spark runs the Rex login server (`hosts/spark/services/rex.nix`), published by Tailscale Serve at `https://spark.<tailnet>.ts.net:7297` and mapping the owner's Tailscale login to `rathi`. The Mac app adds it under Remote Hosts. A session lives on one server, and its tabs and splits open on that server. `init.lua` is linked on both hosts because each server loads its own keymap.

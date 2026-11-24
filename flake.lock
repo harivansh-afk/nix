@@ -1592,11 +1592,11 @@
         "nixpkgs": "nixpkgs_9"
       },
       "locked": {
-        "lastModified": 1795497560,
-        "narHash": "sha256-P0tqRRqTWXAyWIZgZ/rl2FtLOlT+MF8gkUjEFSuc81M=",
+        "lastModified": 1795498868,
+        "narHash": "sha256-a8DvTb0Fdngz/enEAc+LuwHtqB9NxFkz3MMfMcq7uvo=",
         "ref": "main",
-        "rev": "cc09eca3495d9f3b46a24df7bf43b7d55e817d62",
-        "revCount": 2,
+        "rev": "1290ddd928f814b4b51e24b058d6752a448cec06",
+        "revCount": 5,
         "type": "git",
         "url": "https://git.harivan.sh/harivansh-afk/ts-kernel.git"
       },

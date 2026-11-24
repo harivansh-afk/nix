@@ -23,3 +23,4 @@ audio/ogg=macbook-open.desktop
 x-scheme-handler/http=macbook-open.desktop
 x-scheme-handler/https=macbook-open.desktop
 x-scheme-handler/claude-cli=claude-code-url-handler.desktop
+x-scheme-handler/beeper=beepertexts.desktop

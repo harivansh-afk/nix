@@ -6,6 +6,10 @@ let
         url = "http://127.0.0.1:23373/v0/mcp";
         scope = "read write";
       };
+      browser = {
+        command = "/run/current-system/sw/bin/agent-browser";
+        args = [ "mcp" ];
+      };
     };
   };
   tsKernel = pkgs.writeShellScriptBin "ts-kernel" ''

@@ -92,11 +92,15 @@ in
 
   claudeSettings = jsonFormat.generate "claude-settings.json" {
     "$schema" = "https://json.schemastore.org/claude-code-settings.json";
-    env =
+    env = {
+      CLAUDE_CODE_EXPERIMENTAL_CODE_MODE = "1";
+    }
+    // (
       if delegateToCodex then
         { CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS = "10000"; }
       else
-        { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"; };
+        { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"; }
+    );
     model = "claude-fable-5-1";
     tui = "fullscreen";
     permissions = {
@@ -144,9 +148,10 @@ in
       supports_standalone_web_search = true
       requires_openai_auth = true
 
-      [mcp_servers.beeper]
-      url = "http://127.0.0.1:23373/v0/mcp"
-      startup_timeout_sec = 20
+      [mcp_servers.ts]
+      command = "/run/current-system/sw/bin/ts-kernel"
+      startup_timeout_sec = 30
+      tool_timeout_sec = 600
 
     ''
   );

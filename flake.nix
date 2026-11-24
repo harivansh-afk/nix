@@ -48,6 +48,8 @@
 
     omnipresent.url = "git+https://git.harivan.sh/harivansh-afk/omnipresent.git?ref=main";
 
+    ts-kernel.url = "git+https://git.harivan.sh/harivansh-afk/ts-kernel.git?ref=main";
+
     mixbridge-web = {
       url = "git+https://git.harivan.sh/harivansh-afk/mixbridge-web.git?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";

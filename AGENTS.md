@@ -41,9 +41,11 @@ Create task worktrees with `git worktree add .worktrees/<topic> -b <branch> main
 
 Skills come from the `mattpocock-skills` input and are linked into `~/.agents/skills` and `~/.claude/skills`. No harness has hooks, and none should be added. Claude Code's denied tools are `permissions.deny` in `modules/users/user-config/agents.nix`.
 
-Spark's MCP servers are declared once in `lib/agent-mcp.nix`; activation replaces Claude's `mcpServers` with that list. Running sessions pick up a changed server on restart.
+Spark's MCP servers are declared once in `lib/agent-mcp.nix`; activation replaces Claude's and Droid's `mcpServers` with that list, and Droid gets Codex's instructions and the shared skills. Running sessions pick up a changed server on restart.
 
-On spark, Claude Code also gets the `codex` MCP server (`pkgs/codex-mcp`): `codex` and `codex_reply` run `codex exec --json` in the session directory, with Codex fan-out and multi-agent turned off, and come back as task notifications. Codex keeps MCP OAuth tokens in files because the headless keyring hangs `codex exec`. Reauthorize Beeper with `codex mcp login beeper --oauth-client-registration dcr`.
+Third-party MCP servers go behind `ts-kernel` (the `ts-kernel` input), never into an agent's own config: add them to `kernelConfig` in `lib/agent-mcp.nix`. Claude Code, Codex and Droid each get its one tool, `ts`, which runs TypeScript with every such server as a typed global. The kernel holds the sign-ins: `ts-kernel login beeper`.
+
+On spark, Claude Code also gets the `codex` MCP server (`pkgs/codex-mcp`): `codex` and `codex_reply` run `codex exec --json` in the session directory, with Codex fan-out and multi-agent turned off, and come back as task notifications. Codex keeps MCP OAuth tokens in files because the headless keyring hangs `codex exec`.
 
 ## Layout
 
@@ -74,7 +76,7 @@ The cozybox palette is `lib/palette.json`; `lib/theme.nix` renders it for ghostt
 ## Key dependencies
 
 - `dgx-spark`: never set `inputs.nixpkgs.follows`; it pins nixpkgs for the NVIDIA kernel. Podman is the only container runtime (Docker API at `/run/podman/podman.sock`); never enable `virtualisation.docker`.
-- `omnipresent`: never set `inputs.nixpkgs.follows`; its kernel's `node_modules` hash is tied to the bun in its own nixpkgs.
+- `omnipresent`, `ts-kernel`: never set `inputs.nixpkgs.follows`; each one's `node_modules` hash is tied to the bun in its own nixpkgs.
 - `determinate`: owns Nix and `nix.conf`; on darwin use `determinateNix.customSettings`.
 - `neovim-nightly`: use its package, never its overlay (the overlay rebuilds every plugin and grammar).
 
@@ -101,7 +103,7 @@ Add `modules/users/accounts/<name>.nix` (`sshKeys`, `shell`, `extraGroups`) and 
 
 ## Agent desktop
 
-Browser work on spark uses the agent-browser CLI and skill, attached to the shared Chromium; messaging uses the Beeper MCP. Agents attach to the running Chromium and use their own tabs. agent-browser is built from upstream `main` (`pkgs/agent-browser`, wrapped in `hosts/spark/default.nix` with CDP, tab pinning and flow capture on); bump it with `nix flake update agent-browser`. Chromium launches with WebMCP enabled. Never commit profiles or put credentials in the store.
+Browser work on spark uses the agent-browser CLI and skill, attached to the shared Chromium; messaging uses Beeper through `ts`. Agents attach to the running Chromium and use their own tabs. agent-browser is built from upstream `main` (`pkgs/agent-browser`, wrapped in `hosts/spark/default.nix` with CDP, tab pinning and flow capture on); bump it with `nix flake update agent-browser`. Chromium launches with WebMCP enabled. Never commit profiles or put credentials in the store.
 
 ## Codex account gateway
 

@@ -18,6 +18,7 @@ let
           nixpkgs.overlays = [
             (final: _prev: {
               agent-browser = final.callPackage ../pkgs/agent-browser { src = inputs.agent-browser; };
+              ts-kernel = inputs.ts-kernel.packages.${final.stdenv.hostPlatform.system}.ts-kernel;
             })
           ];
         }

@@ -3,7 +3,7 @@
   "sessionDefaultSettings": {
     "model": "custom:Opus-5.5-(cc-proxy)-0",
     "reasoningEffort": "high",
-    "interactionMode": "spec",
+    "interactionMode": "auto",
     "autonomyLevel": "off",
     "specModeReasoningEffort": "low"
   },

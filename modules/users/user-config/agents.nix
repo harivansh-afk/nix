@@ -88,7 +88,7 @@ in
     if hostname == "spark" then jsonFormat.generate "claude-mcp.json" mcpServers else null;
   droidMcpSource =
     if hostname == "spark" then
-      jsonFormat.generate "droid-mcp.json" (removeAttrs mcpServers [ "codex" ])
+      jsonFormat.generate "droid-mcp.json" { mcpServers = removeAttrs mcpServers [ "codex" ]; }
     else
       null;
 

@@ -120,21 +120,16 @@ pkgs.writeShellScript "user-config-${name}" ''
   ''}
 
   ${lib.optionalString (claudeMcpSource != null) ''
-    setMcpServers() {
-      target="$1"
-      servers="$2"
-      mkdir -p "$(dirname "$target")"
-      tmp=$(mktemp "$target.XXXXXX")
-      if [ -e "$target" ]; then
-        ${pkgs.jq}/bin/jq --slurpfile servers "$servers" '.mcpServers = $servers[0]' "$target" > "$tmp"
-      else
-        ${pkgs.jq}/bin/jq -n --slurpfile servers "$servers" '{mcpServers: $servers[0]}' > "$tmp"
-      fi
-      chmod 600 "$tmp"
-      mv "$tmp" "$target"
-    }
-    setMcpServers "${homeDirectory}/.claude.json" ${claudeMcpSource}
-    setMcpServers "${homeDirectory}/.factory/mcp.json" ${droidMcpSource}
+    target="${homeDirectory}/.claude.json"
+    tmp=$(mktemp "${homeDirectory}/.claude.json.XXXXXX")
+    if [ -e "$target" ]; then
+      ${pkgs.jq}/bin/jq --slurpfile servers ${claudeMcpSource} '.mcpServers = $servers[0]' "$target" > "$tmp"
+    else
+      ${pkgs.jq}/bin/jq -n --slurpfile servers ${claudeMcpSource} '{mcpServers: $servers[0]}' > "$tmp"
+    fi
+    chmod 600 "$tmp"
+    mv "$tmp" "$target"
+    mkSymlink "${droidMcpSource}" "${homeDirectory}/.factory/mcp.json"
   ''}
   mkSymlink "${dotsRoot}/claude/statusline.sh" "${homeDirectory}/.claude/statusline.sh"
 
@@ -155,7 +150,6 @@ pkgs.writeShellScript "user-config-${name}" ''
   ${lib.optionalString (!isDarwin) ''
     install -D -m 600 "${dotsRoot}/droid/settings.json" "${homeDirectory}/.factory/settings.json"
     mkSymlink "${codexAgentsMd}" "${homeDirectory}/.factory/AGENTS.md"
-    mkSymlink "${agentSkills}" "${homeDirectory}/.factory/skills"
   ''}
 
   if [ -r /run/secrets/forgejo-token ] && harivanToken=$(cat /run/secrets/forgejo-token) && [ -n "$harivanToken" ]; then

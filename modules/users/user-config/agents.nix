@@ -30,6 +30,21 @@ let
 
   delegateToCodex = hostname == "spark";
 
+  mcpServers = lib.mapAttrs (
+    _: server:
+    if server ? url then
+      {
+        type = "http";
+        inherit (server) url;
+      }
+    else
+      server
+      // {
+        type = "stdio";
+        timeout = server.timeout * 1000;
+      }
+  ) (import ../../../lib/agent-mcp.nix { inherit pkgs; }).servers;
+
 in
 {
   claudeMd = agentInstructions.claude;
@@ -70,37 +85,20 @@ in
     }
   );
   claudeMcpSource =
+    if hostname == "spark" then jsonFormat.generate "claude-mcp.json" mcpServers else null;
+  droidMcpSource =
     if hostname == "spark" then
-      jsonFormat.generate "claude-mcp.json" (
-        lib.mapAttrs (
-          _: server:
-          if server ? url then
-            {
-              type = "http";
-              inherit (server) url;
-            }
-          else
-            server
-            // {
-              type = "stdio";
-              timeout = server.timeout * 1000;
-            }
-        ) (import ../../../lib/agent-mcp.nix { inherit pkgs; }).servers
-      )
+      jsonFormat.generate "droid-mcp.json" (removeAttrs mcpServers [ "codex" ])
     else
       null;
 
   claudeSettings = jsonFormat.generate "claude-settings.json" {
     "$schema" = "https://json.schemastore.org/claude-code-settings.json";
-    env = {
-      CLAUDE_CODE_EXPERIMENTAL_CODE_MODE = "1";
-    }
-    // (
+    env =
       if delegateToCodex then
         { CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS = "10000"; }
       else
-        { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"; }
-    );
+        { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"; };
     model = "claude-fable-5-1";
     tui = "fullscreen";
     permissions = {

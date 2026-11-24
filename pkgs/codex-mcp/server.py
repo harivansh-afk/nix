@@ -4,7 +4,7 @@ import os
 import signal
 from typing import Literal
 
-from mcp.server.fastmcp import Context, FastMCP
+from mcp.server.mcpserver import Context, MCPServer
 
 STALL_SECONDS = int(os.environ.get("CODEX_MCP_STALL_SECONDS", "1200"))
 SINGLE_AGENT = [
@@ -20,7 +20,7 @@ def model_args(model, thinking):
     return ["-m", MODELS[model], "-c", f'model_reasoning_effort="{thinking}"']
 
 
-mcp = FastMCP(
+mcp = MCPServer(
     "codex",
     instructions=(
         "Codex is a capable coding agent on this machine, working in this checkout. "

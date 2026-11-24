@@ -77,6 +77,7 @@ let
       inherit (agents)
         claudeSettings
         claudeMcpSource
+        droidMcpSource
         piModels
         claudeMd
         codexAgentsMd

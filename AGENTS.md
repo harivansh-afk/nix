@@ -41,7 +41,7 @@ Create task worktrees with `git worktree add .worktrees/<topic> -b <branch> main
 
 Skills come from the `mattpocock-skills` input and are linked into `~/.agents/skills` and `~/.claude/skills`. No harness has hooks, and none should be added. Claude Code's denied tools are `permissions.deny` in `modules/users/user-config/agents.nix`.
 
-Spark's MCP servers are declared once in `lib/agent-mcp.nix`; activation replaces Claude's `mcpServers` with that list and links Droid's `mcp.json` to it without `codex`, and Droid gets Codex's instructions. Droid reads the shared skills from `~/.agents/skills` itself. Running sessions pick up a changed server on restart.
+Spark's MCP servers are declared once in `lib/agent-mcp.nix`; activation replaces Claude's `mcpServers` with that list. Droid's servers are `dots/droid/mcp.json`, linked into `~/.factory`, and Droid gets Codex's instructions. Droid reads the shared skills from `~/.agents/skills` itself. Running sessions pick up a changed server on restart.
 
 Third-party MCP servers go behind `ts-kernel` (the `ts-kernel` input), never into an agent's own config: add them to `kernelConfig` in `lib/agent-mcp.nix`. Claude Code, Codex and Droid each get its one tool, `ts`, which runs TypeScript with every such server as a typed global. The kernel holds the sign-ins: `ts-kernel login beeper`.
 

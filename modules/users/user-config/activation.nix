@@ -22,7 +22,6 @@
   ghosttyThemes,
   claudeSettings,
   claudeMcpSource,
-  droidMcpSource,
   piModels,
   claudeMd,
   codexAgentsMd,
@@ -129,7 +128,6 @@ pkgs.writeShellScript "user-config-${name}" ''
     fi
     chmod 600 "$tmp"
     mv "$tmp" "$target"
-    mkSymlink "${droidMcpSource}" "${homeDirectory}/.factory/mcp.json"
   ''}
   mkSymlink "${dotsRoot}/claude/statusline.sh" "${homeDirectory}/.claude/statusline.sh"
 
@@ -149,6 +147,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   install -m 600 "${dotsRoot}/devin/config.json" "${configHome}/devin/config.json"
   ${lib.optionalString (!isDarwin) ''
     install -D -m 600 "${dotsRoot}/droid/settings.json" "${homeDirectory}/.factory/settings.json"
+    mkSymlink "${dotsRoot}/droid/mcp.json" "${homeDirectory}/.factory/mcp.json"
     mkSymlink "${codexAgentsMd}" "${homeDirectory}/.factory/AGENTS.md"
   ''}
 

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "ts": {
+      "type": "stdio",
+      "command": "/run/current-system/sw/bin/ts-kernel",
+      "timeout": 600000
+    }
+  }
+}

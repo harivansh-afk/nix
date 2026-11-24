@@ -4,7 +4,7 @@
     "model": "custom:Opus-5.5-(cc-proxy)-0",
     "reasoningEffort": "high",
     "interactionMode": "auto",
-    "autonomyLevel": "off",
+    "autonomyLevel": "high",
     "specModeReasoningEffort": "low"
   },
   "customModels": [

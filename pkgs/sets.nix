@@ -10,6 +10,7 @@ in
 {
   core =
     (with pkgs; [
+      aerc
       ast-grep
       fd
       gnupg

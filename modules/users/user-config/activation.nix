@@ -93,6 +93,8 @@ pkgs.writeShellScript "user-config-${name}" ''
 
   mkSymlink "${dotsRoot}/direnv/direnv.toml" "${configHome}/direnv/direnv.toml"
   mkSymlink "${pkgs.nix-direnv}/share/nix-direnv/direnvrc" "${configHome}/direnv/lib/nix-direnv.sh"
+  mkSymlink "${dotsRoot}/aerc/aerc.conf" "${configHome}/aerc/aerc.conf"
+  mkSymlink "${dotsRoot}/aerc/accounts.conf" "${configHome}/aerc/accounts.conf"
   mkSymlink "${dotsRoot}/wgetrc" "${configHome}/wgetrc"
   mkSymlink "${dotsRoot}/npm/npmrc" "${configHome}/npm/npmrc"
   mkSymlink "${dotsRoot}/python/pythonrc" "${configHome}/python/pythonrc"

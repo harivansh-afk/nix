@@ -39,7 +39,7 @@ Create task worktrees with `git worktree add .worktrees/<topic> -b <branch> main
 
 `dots/agents/core.md` (every agent) and `claude.md` (Claude Code only) are rendered by `lib/agent-instructions.nix` into `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`. Repo facts belong in the repo's `AGENTS.md`; the tracked `CLAUDE.md` only imports it.
 
-Skills come from the `mattpocock-skills` input and are linked into `~/.agents/skills` and `~/.claude/skills`. No harness has hooks, and none should be added. Claude Code's denied tools are `permissions.deny` in `modules/users/user-config/agents.nix`.
+Skills are registered in `lib/agent-skills.nix`, including local skills under `dots/agents/skills/` and skills from the `mattpocock-skills` input, and are linked into `~/.agents/skills` and `~/.claude/skills`. No harness has hooks, and none should be added. Claude Code's denied tools are `permissions.deny` in `modules/users/user-config/agents.nix`.
 
 Spark's MCP servers are declared once in `lib/agent-mcp.nix`; activation replaces Claude's `mcpServers` with that list. Droid's servers are `dots/droid/mcp.json`, linked into `~/.factory`, and Droid gets Codex's instructions. Droid reads the shared skills from `~/.agents/skills` itself. Running sessions pick up a changed server on restart.
 

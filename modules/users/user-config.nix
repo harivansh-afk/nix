@@ -78,6 +78,7 @@ let
         claudeSettings
         claudeMcpSource
         piModels
+        opencodeConfig
         claudeMd
         codexAgentsMd
         agentSkills

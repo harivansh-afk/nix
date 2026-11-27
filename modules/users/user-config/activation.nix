@@ -23,6 +23,7 @@
   claudeSettings,
   claudeMcpSource,
   piModels,
+  opencodeConfig,
   claudeMd,
   codexAgentsMd,
   agentSkills,
@@ -116,6 +117,9 @@ pkgs.writeShellScript "user-config-${name}" ''
   mkSymlink "${claudeSettings}" "${homeDirectory}/.claude/settings.json"
   ${lib.optionalString (piModels != null) ''
     mkSymlink "${piModels}" "${homeDirectory}/.pi/agent/models.json"
+  ''}
+  ${lib.optionalString (opencodeConfig != null) ''
+    mkSymlink "${opencodeConfig}" "${configHome}/opencode/opencode.jsonc"
   ''}
 
   ${lib.optionalString (claudeMcpSource != null) ''

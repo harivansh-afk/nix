@@ -61,6 +61,32 @@ in
       }
     else
       null;
+  opencodeConfig =
+    if hostname == "spark" then
+      jsonFormat.generate "opencode.json" {
+        "$schema" = "https://opencode.ai/config.json";
+        model = "spark/inkling";
+        small_model = "spark/inkling";
+        provider.spark = {
+          npm = "@ai-sdk/openai-compatible";
+          name = "Spark vLLM";
+          options = {
+            baseURL = "http://127.0.0.1:18081/v1";
+            apiKey = "local";
+          };
+          models.inkling = {
+            name = "Inkling 2 Mini (spark vLLM)";
+            tool_call = true;
+            reasoning = true;
+            limit = {
+              context = 131072;
+              output = 32768;
+            };
+          };
+        };
+      }
+    else
+      null;
   codexAgentsMd = agentInstructions.codex;
   agentSkills = pkgs.linkFarm "agent-skills" (
     import ../../../lib/agent-skills.nix {

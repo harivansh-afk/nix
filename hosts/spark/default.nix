@@ -35,6 +35,7 @@ in
     ./services/roomcast.nix
     ./services/airplay-beacon.nix
     ./services/inference.nix
+    ./services/inkling.nix
     ./services/mixbridge.nix
     ./services/draw.nix
     ./services/omnipresent.nix

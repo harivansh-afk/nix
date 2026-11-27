@@ -40,6 +40,10 @@ map invocable (
       path = ../dots/agents/skills/crux;
     }
     {
+      name = "deepen";
+      path = ../dots/agents/skills/deepen;
+    }
+    {
       name = "maintainable-code";
       path = ../dots/agents/skills/maintainable-code;
     }

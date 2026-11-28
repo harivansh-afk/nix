@@ -31,6 +31,7 @@ in
     environmentFile = config.sops.secrets."omnipresent.env".path;
     browserCdpPort = 19222;
     browserStartCommand = "systemctl --user start chromium.service";
+    workspace = "/home/${username}/omni-work";
     workspaceRemote = "git@localhost:harivansh-afk/omni-workspace.git";
   };
 

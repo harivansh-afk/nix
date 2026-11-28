@@ -10,12 +10,14 @@ let
   port = 39473;
   sharePort = 39474;
   home = config.users.users.${username}.home;
+  workspace = config.services.omnipresent.workspace;
   root = "/run/sharefs/files";
   sources = {
     Documents = "${home}/Documents";
     Downloads = "${home}/Downloads";
     Uploads = "${home}/Uploads";
     recruiting = "${home}/recruiting";
+    omni = "${workspace}/shared";
   };
   settings = (pkgs.formats.yaml { }).generate "sharefs.yaml" {
     serve-path = root;
@@ -53,6 +55,9 @@ in
         ${pkgs.coreutils}/bin/mv -T --update=none-fail -- /var/lib/sharefs/uploads "${home}/Uploads"
       fi
       ${pkgs.coreutils}/bin/install -d -m 0700 "${home}/Uploads"
+      if [ -d "${workspace}" ] && [ ! -L "${sources.omni}" ]; then
+        ${pkgs.coreutils}/bin/install -d -m 0700 "${sources.omni}"
+      fi
       SHAREFS_UPLOADS
     '';
   };
@@ -67,7 +72,7 @@ in
         echo "sharefs: invalid account credential" >&2
         exit 1
       fi
-      export SHAREFS_AUTH="${username}:$password@/:rw,/Documents:ro,/Downloads:ro"
+      export SHAREFS_AUTH="${username}:$password@/:rw,/Documents:ro,/Downloads:ro,/omni:ro"
       exec ${package}/bin/sharefs --config ${settings}
     '';
     serviceConfig = {
@@ -94,10 +99,12 @@ in
       RestrictNamespaces = true;
       ProtectSystem = "strict";
       ProtectHome = true;
-      BindReadOnlyPaths = map (name: "${sources.${name}}:${root}/${name}") [
-        "Documents"
-        "Downloads"
-      ];
+      BindReadOnlyPaths =
+        map (name: "${sources.${name}}:${root}/${name}") [
+          "Documents"
+          "Downloads"
+        ]
+        ++ [ "-${sources.omni}:${root}/omni" ];
       BindPaths = map (name: "${sources.${name}}:${root}/${name}") [
         "Uploads"
         "recruiting"

@@ -48,6 +48,10 @@ map invocable (
       path = ../dots/agents/skills/maintainable-code;
     }
     {
+      name = "prose";
+      path = ../dots/agents/skills/prose;
+    }
+    {
       name = "technical-writing";
       path = ../dots/agents/skills/technical-writing;
     }

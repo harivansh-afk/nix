@@ -79,8 +79,6 @@ let
         claudeMcpSource
         piModels
         opencodeConfig
-        claudeMd
-        codexAgentsMd
         agentSkills
         codexConfigSource
         readXattr

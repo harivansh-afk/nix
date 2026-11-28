@@ -24,8 +24,6 @@
   claudeMcpSource,
   piModels,
   opencodeConfig,
-  claudeMd,
-  codexAgentsMd,
   agentSkills,
   codexConfigSource,
   readXattr,
@@ -111,7 +109,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   cp -f "${dotsRoot}/gh/config.yml" "${configHome}/gh/config.yml"
   chmod u+w "${configHome}/gh/config.yml"
 
-  mkSymlink "${claudeMd}" "${homeDirectory}/.claude/CLAUDE.md"
+  mkSymlink "${dotsRoot}/agents/claude.md" "${homeDirectory}/.claude/CLAUDE.md"
   mkSymlink "${agentSkills}" "${homeDirectory}/.agents/skills"
   mkSymlink "${agentSkills}" "${homeDirectory}/.claude/skills"
   mkSymlink "${claudeSettings}" "${homeDirectory}/.claude/settings.json"
@@ -135,7 +133,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   ''}
   mkSymlink "${dotsRoot}/claude/statusline.sh" "${homeDirectory}/.claude/statusline.sh"
 
-  mkSymlink "${codexAgentsMd}" "${homeDirectory}/.codex/AGENTS.md"
+  mkSymlink "${dotsRoot}/agents/coding.md" "${homeDirectory}/.codex/AGENTS.md"
 
   target="${homeDirectory}/.codex/config.toml"
   source="${codexConfigSource}"
@@ -152,7 +150,7 @@ pkgs.writeShellScript "user-config-${name}" ''
   ${lib.optionalString (!isDarwin) ''
     install -D -m 600 "${dotsRoot}/droid/settings.json" "${homeDirectory}/.factory/settings.json"
     mkSymlink "${dotsRoot}/droid/mcp.json" "${homeDirectory}/.factory/mcp.json"
-    mkSymlink "${codexAgentsMd}" "${homeDirectory}/.factory/AGENTS.md"
+    mkSymlink "${dotsRoot}/agents/coding.md" "${homeDirectory}/.factory/AGENTS.md"
   ''}
 
   if [ -r /run/secrets/forgejo-token ] && harivanToken=$(cat /run/secrets/forgejo-token) && [ -n "$harivanToken" ]; then

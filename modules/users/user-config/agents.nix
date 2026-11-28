@@ -8,7 +8,6 @@
   ...
 }:
 let
-  agentInstructions = import ../../../lib/agent-instructions.nix { inherit pkgs; };
 
   jsonFormat = pkgs.formats.json { };
 
@@ -32,7 +31,6 @@ let
 
 in
 {
-  claudeMd = agentInstructions.claude;
 
   piModels =
     if hostname == "spark" then
@@ -87,7 +85,6 @@ in
       }
     else
       null;
-  codexAgentsMd = agentInstructions.codex;
   agentSkills = pkgs.linkFarm "agent-skills" (
     import ../../../lib/agent-skills.nix {
       inherit pkgs;

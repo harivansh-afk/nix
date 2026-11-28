@@ -1,2 +1,1 @@
-- Work stays in the main loop by default. delegation must be of smaller self-contained and verifiable tasks.
-- Verify through the finish line rather than by re-reading the diff, result/test based buliding is more important than just reading the code.
+coding.md

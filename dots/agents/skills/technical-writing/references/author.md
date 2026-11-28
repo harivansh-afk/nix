@@ -21,7 +21,12 @@ not evidence for a new document's technical claims.
 
 > The second thing Rust doesn't offer by default is pausing a function during execution. A function's locals live in its stack frame, which is popped on return, so compiled code can't hand control back to the VM mid-call and resume later.
 
+> The usual workaround is compiling every function that may suspend into a state machine (Rust's `async` does this). Since suspension is transitive, this design spreads to ~69% of compiled functions and makes them ~1.3–1.8x slower than the interpreter itself.
+
 > We solve this with stackful coroutines. Each VM owns a separate stack (a `fiber`) and compiled code runs on it, so suspending is just a context switch between two stacks on the same thread.
+
+> A function pauses by calling `vm.suspend` with a request such as `Await(future)`. `suspend` pushes the callee-saved registers onto the fiber and switches the stack pointer back to the thread's stack, returning control to the VM.
+> The VM handles the request the same way it would for the interpreter and schedules other tasks in the meantime.
 
 > To resume, the VM switches the stack pointer back to the fiber and restores the registers. `suspend` then returns the request's result like an ordinary function call.
 
@@ -29,6 +34,10 @@ The reader is assumed to know functions and stacks. The explanation supplies
 the missing connection between stack lifetime and suspension, then describes
 what changes to support suspension. Concrete headings such as Control flow,
 Pausing and Garbage collection mark different implementation problems.
+The suspension mechanism also makes the resume paragraph understandable:
+the reader now knows which stack and registers must be restored. Preserve
+that dependency when selecting a passage for Echo. Sentence-length statistics
+can reveal flat prose, but reproducing their values is not a writing goal.
 
 ## Handwritten research opening
 

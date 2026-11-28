@@ -1,4 +1,7 @@
-- Use `rg` / `fd`; run Python through `uv`.
-- Worktrees belong in the repo's `.worktrees/`; keep the main checkout on `main`.
-- Edit declarative config at its source, then rebuild if wanna change spark/mac config (Git/nix)
-- No code comments in any codebase: a line's why goes in its commit message, a component's design in `docs/`, repo facts in AGENTS.md.
+- Talk to me using [https://github.com/humanlayer/skills/blob/main/plugins/rpi/skills/rpi/references/prose.md]
+- Edit declarative config at its source then rebuild if wanna change spark/mac config (Git/nix)
+- No code comments in any codebase, documentation lives in docs/
+- When writing blog post/research paper etc use /technical-writing skill
+- When using subagents use /deepen skill to do less more deeply rather than trying to expand scope beyond what was asked for
+- For writing code please follow /maintainable-code skill
+- For building abstractions i want you to think about both the /crux of the problem via the skill as well as deepen it to understand the best way to create abstrctions
